@@ -2192,6 +2192,15 @@ fn handleSetConfigOption(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Me
             defer state.subagent_authority_mutex.unlock(io_mod.getIo());
             applySessionMode(state.cfg.mode_registry, session, value);
         }
+    } else if (std.mem.eql(u8, config_id, "fast_mode")) {
+        const enabled = if (std.mem.eql(u8, value, "on")) true else if (std.mem.eql(u8, value, "off")) false else return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid fast mode value" });
+        if (enabled and !sessions.fastModeSupported(state)) {
+            return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Fast mode is unavailable for the active model" });
+        }
+        const session = if (state.active_session) |*active| active else return;
+        commitActiveSessionFastMode(alloc, session, enabled) catch {
+            return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.internal_error, .message = "Failed to persist session fast mode" });
+        };
     } else if (std.mem.eql(u8, config_id, "effort")) {
         const session = if (state.active_session) |*active| active else return state.writer.writeError(alloc, msg.id, .{
             .code = ErrorCode.invalid_request,
@@ -2247,6 +2256,7 @@ fn handleSetConfigOption(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Me
         try out.writer.writeAll(",");
         try sessions.writeEffortConfigOption(&out.writer, config.efforts, config.current);
     }
+    try sessions.writeFastModeConfigOption(state, &out.writer);
     try out.writer.writeAll("]}");
     try state.writer.writeResponse(alloc, msg.id, out.writer.buffered());
 }
@@ -2334,6 +2344,23 @@ fn commitSessionModel(
     );
     alloc.free(active_model.*);
     active_model.* = staged_model;
+}
+
+fn commitActiveSessionFastMode(alloc: Allocator, session: *ActiveSessionState, enabled: bool) !void {
+    if (host_target.is_wasm and session.writable == null) {
+        const previous = session.fast_mode;
+        session.fast_mode = enabled;
+        sessions.commitWasmSession(alloc, session) catch |err| {
+            session.fast_mode = previous;
+            return err;
+        };
+        return;
+    }
+    session.session_write_mutex.lockUncancelable(io_mod.getIo());
+    defer session.session_write_mutex.unlock(io_mod.getIo());
+    const writable = if (session.writable) |*active| active else return error.SessionPersistenceUnavailable;
+    _ = try writable.appendEvent(alloc, .{ .preferences_changed = .{ .fast_mode = enabled } }, io_mod.milliTimestamp());
+    session.fast_mode = enabled;
 }
 
 fn commitActiveSessionEffort(
@@ -2844,6 +2871,19 @@ fn acpModelTestState(
         .total_input_tokens = 0,
         .total_output_tokens = 0,
     };
+}
+
+test "ACP fast mode keeps the previous preference when persistence is unavailable" {
+    if (host_target.is_wasm) return;
+    var active: ActiveSessionState = undefined;
+    active.writable = null;
+    active.session_write_mutex = .init;
+    active.fast_mode = false;
+    try std.testing.expectError(error.SessionPersistenceUnavailable, commitActiveSessionFastMode(std.testing.allocator, &active, true));
+    try std.testing.expect(!active.fast_mode);
+    active.fast_mode = true;
+    try std.testing.expectError(error.SessionPersistenceUnavailable, commitActiveSessionFastMode(std.testing.allocator, &active, false));
+    try std.testing.expect(active.fast_mode);
 }
 
 test "ACP model commits honor the active session write boundary" {

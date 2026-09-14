@@ -334,6 +334,7 @@ fn writeNewSessionResponse(
         try out.writer.writeAll(",");
         try writeEffortConfigOption(&out.writer, config.efforts, config.current);
     }
+    try writeFastModeConfigOption(state, &out.writer);
     try out.writer.writeAll("],\"modes\":{\"currentModeId\":");
     try writeJsonStr(state.cfg.mode_registry.default_mode_id, &out.writer);
     try out.writer.writeAll(",\"availableModes\":");
@@ -912,6 +913,7 @@ fn writeLoadSessionResponse(
         try out.writer.writeAll(",");
         try writeEffortConfigOption(&out.writer, config.efforts, config.current);
     }
+    try writeFastModeConfigOption(state, &out.writer);
     try out.writer.writeAll("],\"modes\":{\"currentModeId\":");
     try writeJsonStr(state.cfg.mode_registry.default_mode_id, &out.writer);
     try out.writer.writeAll(",\"availableModes\":");
@@ -1812,6 +1814,50 @@ fn writeModesArray(w: *std.Io.Writer, registry: mode_registry.Registry) !void {
         try w.writeAll("}");
     }
     try w.writeAll("]");
+}
+
+pub fn fastModeSupported(state: *server.ServerState) bool {
+    const active = if (state.active_session) |*session| session else return false;
+    const bundle = state.cfg.provider_set.select(active.provider);
+    return state.capability_resolver.available(
+        active.model,
+        bundle.fallbackModelCapabilities(active.model),
+    ).supports_fast_mode;
+}
+
+pub fn writeFastModeConfigOption(state: *server.ServerState, w: *std.Io.Writer) !void {
+    const active = if (state.active_session) |session| session else return;
+    try writeFastModeOption(w, fastModeSupported(state), active.fast_mode);
+}
+
+fn writeFastModeOption(w: *std.Io.Writer, supported: bool, enabled: bool) !void {
+    if (!supported and !enabled) return;
+    try w.writeAll(",{\"id\":\"fast_mode\",\"name\":\"Fast mode\",\"description\":\"Use faster service; additional usage costs may apply\",\"type\":\"select\",\"currentValue\":");
+    try writeJsonStr(if (enabled) "on" else "off", w);
+    try w.writeAll(",\"options\":[{\"value\":\"off\",\"name\":\"Off\"}");
+    try w.writeAll(",{\"value\":\"on\",\"name\":\"On\"}");
+    try w.writeAll("]}");
+}
+
+test "ACP fast mode option reflects support and retained session preference" {
+    const alloc = std.testing.allocator;
+    for ([_]bool{ false, true }) |supported| {
+        for ([_]bool{ false, true }) |enabled| {
+            var out: std.Io.Writer.Allocating = .init(alloc);
+            defer out.deinit();
+            try writeFastModeOption(&out.writer, supported, enabled);
+            const bytes = out.writer.buffered();
+            if (!supported and !enabled) {
+                try std.testing.expectEqual(@as(usize, 0), bytes.len);
+                continue;
+            }
+            var parsed = try std.json.parseFromSlice(std.json.Value, alloc, bytes[1..], .{});
+            defer parsed.deinit();
+            try std.testing.expectEqualStrings("fast_mode", parsed.value.object.get("id").?.string);
+            try std.testing.expectEqualStrings(if (enabled) "on" else "off", parsed.value.object.get("currentValue").?.string);
+            try std.testing.expectEqual(@as(usize, 2), parsed.value.object.get("options").?.array.items.len);
+        }
+    }
 }
 
 pub const EffortConfigState = struct {
