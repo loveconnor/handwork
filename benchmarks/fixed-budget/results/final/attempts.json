@@ -1,0 +1,425 @@
+[
+  {
+    "duration_s": 14.578,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30785536,
+      "tests": 0,
+      "tools": 0
+    },
+    "samples": 202,
+    "input_tokens": 13698,
+    "output_tokens": 196,
+    "cached_input_tokens": null,
+    "tool_calls": 2,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork",
+    "attempt": 1,
+    "position": 1,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-1-1-handwork/repo",
+    "log": "1-1-handwork",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.066,
+      "timeout": false,
+      "exit_code": 1,
+      "peak_rss_bytes": {
+        "harness": 5996544,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.342,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73400320,
+        "tests": 46530560,
+        "tools": 53264384
+      },
+      "samples": 5
+    },
+    "success": false
+  },
+  {
+    "duration_s": 50.109,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 809615360,
+      "tests": 74006528,
+      "tools": 128040960
+    },
+    "samples": 701,
+    "input_tokens": 52476,
+    "output_tokens": 1096,
+    "cached_input_tokens": 42752,
+    "tool_calls": 12,
+    "completed": true,
+    "harness": "opencode",
+    "attempt": 1,
+    "position": 2,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-1-2-opencode/repo",
+    "log": "1-2-opencode",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.07,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5079040,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.276,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73760768,
+        "tests": 90013696,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  },
+  {
+    "duration_s": 35.094,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 234340352,
+      "tests": 121618432,
+      "tools": 69992448
+    },
+    "samples": 485,
+    "input_tokens": 121994,
+    "output_tokens": 646,
+    "cached_input_tokens": 108672,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 25,
+    "harness": "codex",
+    "attempt": 1,
+    "position": 3,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-1-3-codex/repo",
+    "log": "1-3-codex",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.071,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5537792,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.282,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73760768,
+        "tests": 73629696,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  },
+  {
+    "duration_s": 52.568,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 791429120,
+      "tests": 74104832,
+      "tools": 56786944
+    },
+    "samples": 730,
+    "input_tokens": 58121,
+    "output_tokens": 1017,
+    "cached_input_tokens": 45952,
+    "tool_calls": 12,
+    "completed": true,
+    "harness": "opencode",
+    "attempt": 2,
+    "position": 1,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-2-1-opencode/repo",
+    "log": "2-1-opencode",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.069,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 8011776,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.274,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74088448,
+        "tests": 53542912,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  },
+  {
+    "duration_s": 32.669,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 191348736,
+      "tests": 123043840,
+      "tools": 74268672
+    },
+    "samples": 456,
+    "input_tokens": 108731,
+    "output_tokens": 601,
+    "cached_input_tokens": 90880,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 18,
+    "harness": "codex",
+    "attempt": 2,
+    "position": 2,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-2-2-codex/repo",
+    "log": "2-2-codex",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.073,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5652480,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.281,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73629696,
+        "tests": 74055680,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  },
+  {
+    "duration_s": 15.463,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 31244288,
+      "tests": 0,
+      "tools": 0
+    },
+    "samples": 214,
+    "input_tokens": 14118,
+    "output_tokens": 268,
+    "cached_input_tokens": null,
+    "tool_calls": 5,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork",
+    "attempt": 2,
+    "position": 3,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-2-3-handwork/repo",
+    "log": "2-3-handwork",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.069,
+      "timeout": false,
+      "exit_code": 1,
+      "peak_rss_bytes": {
+        "harness": 7487488,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.279,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74235904,
+        "tests": 53526528,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": false
+  },
+  {
+    "duration_s": 41.125,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 240713728,
+      "tests": 120995840,
+      "tools": 64880640
+    },
+    "samples": 571,
+    "input_tokens": 94901,
+    "output_tokens": 908,
+    "cached_input_tokens": 88192,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 10,
+    "harness": "codex",
+    "attempt": 3,
+    "position": 1,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-3-1-codex/repo",
+    "log": "3-1-codex",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.072,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6127616,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.281,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73531392,
+        "tests": 82640896,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  },
+  {
+    "duration_s": 9.546,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28672000,
+      "tests": 0,
+      "tools": 0
+    },
+    "samples": 134,
+    "input_tokens": 8971,
+    "output_tokens": 164,
+    "cached_input_tokens": null,
+    "tool_calls": 1,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork",
+    "attempt": 3,
+    "position": 2,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-3-2-handwork/repo",
+    "log": "3-2-handwork",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.07,
+      "timeout": false,
+      "exit_code": 1,
+      "peak_rss_bytes": {
+        "harness": 6111232,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.282,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73580544,
+        "tests": 84099072,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": false
+  },
+  {
+    "duration_s": 34.606,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 809615360,
+      "tests": 84246528,
+      "tools": 158072832
+    },
+    "samples": 487,
+    "input_tokens": 42044,
+    "output_tokens": 591,
+    "cached_input_tokens": 33536,
+    "tool_calls": 8,
+    "completed": true,
+    "harness": "opencode",
+    "attempt": 3,
+    "position": 3,
+    "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+    "workspace": "/private/tmp/handwork-pagination-pilot-z66pj7qk/final-3-3-opencode/repo",
+    "log": "3-3-opencode",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.068,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5849088,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.273,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73564160,
+        "tests": 75808768,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "success": true
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "reason": "Removed an overstrict cache-read-counter equality assertion. Denied requests must preserve stored data and cache entries; harmless reads are not prohibited.",
+  "initial_verifier_sha256": "c3fcf8f09cbe30078abb12937a170df96967a5c8cd7d69bfabc86c2a6f41ae97",
+  "final_verifier_sha256": "d9adca8fd76450c5c7b387591ca73d236047010268c5a6d8be74d222f2eae048",
+  "original_controls_rechecked": 6,
+  "additional_harmless_read_control_passed": true,
+  "attempts_rechecked": 15,
+  "outcomes_changed": 0,
+  "agent_time_memory_usage_unchanged": true
+}

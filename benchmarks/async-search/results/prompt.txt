@@ -1,0 +1,19 @@
+Fix the reported bug in this repository.
+
+Bug report:
+When a user changes their search quickly, results sometimes
+revert to an earlier query. An earlier request can also clear
+the loading indicator or display an error while the current
+request is still running.
+
+Required behavior:
+- Only the latest search may update results, loading, or errors.
+- Clearing the query must immediately clear results and errors
+  and stop the loading indicator.
+- Requests that finish after the query is cleared must not
+  repopulate the results.
+- Preserve the existing public API and normal search behavior.
+
+Inspect the relevant code, make the smallest appropriate change,
+and run the existing tests. Do not modify tests or install
+dependencies. Summarize your changes and verification.

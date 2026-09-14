@@ -1,0 +1,62 @@
+[
+  {
+    "duration_s": 17.745,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 32014336,
+      "tests": 0,
+      "tools": 77332480
+    },
+    "samples": 260,
+    "input_tokens": 18118,
+    "output_tokens": 168,
+    "cached_input_tokens": null,
+    "tool_calls": 3,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork",
+    "tool_probe_pass": true,
+    "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+  },
+  {
+    "duration_s": 15.767,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 757399552,
+      "tests": 0,
+      "tools": 6176768
+    },
+    "samples": 230,
+    "input_tokens": 24616,
+    "output_tokens": 204,
+    "cached_input_tokens": 17920,
+    "tool_calls": 3,
+    "completed": true,
+    "harness": "opencode",
+    "tool_probe_pass": true,
+    "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+  },
+  {
+    "duration_s": 15.06,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 189923328,
+      "tests": 0,
+      "tools": 70123520
+    },
+    "samples": 216,
+    "input_tokens": 57401,
+    "output_tokens": 200,
+    "cached_input_tokens": 53888,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "harness": "codex",
+    "tool_probe_pass": true,
+    "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+  }
+]

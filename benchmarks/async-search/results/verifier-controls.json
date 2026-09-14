@@ -1,0 +1,136 @@
+{
+  "broken": {
+    "exit_code": 1,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: 'react hooks',\n    results: [\n      {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n-       id: 'latest',\n-       title: 'Result latest',\n-       url: '/result/latest'\n      }\n    ]\n  }\n"
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   error: 'Old error',\n+   loading: false,\n-   error: null,\n-   loading: true,\n    query: 'react hooks',\n    results: []\n  }\n"
+      },
+      {
+        "name": "Latest request fails",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: 'Current error',\n    loading: false,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: '',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'third',\n+   results: [\n+     {\n+       id: 'stale-0',\n+       title: 'Result stale-0',\n+       url: '/result/stale-0'\n+     }\n+   ]\n-   results: []\n  }\n"
+      }
+    ],
+    "existing_tests_pass": true
+  },
+  "known_correct": {
+    "exit_code": 0,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true
+  },
+  "query_string_only": {
+    "exit_code": 1,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": false,
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "libhandwork",
+  "version": "0.0.0",
+  "description": "Embed handwork agents and terminals in JavaScript hosts",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loveconnor/handwork.git",
+    "directory": "sdk"
+  },
+  "homepage": "https://connorlove.com",
+  "bugs": "https://github.com/loveconnor/handwork/issues",
+  "scripts": {
+    "test:node-wasm": "node tests/test-node-wasm.mjs",
+    "test:node-napi": "node tests/test-node-napi.mjs",
+    "test:browser-wasm": "node tests/test-browser-wasm.mjs"
+  },
+  "exports": {
+    ".": {
+      "node": {
+        "import": "./node.js",
+        "require": "./node.cjs"
+      },
+      "browser": "./browser.js",
+      "default": "./browser.js"
+    },
+    "./node": {
+      "import": "./node.js",
+      "require": "./node.cjs"
+    },
+    "./browser": "./browser.js",
+    "./wasm": "./handwork-sdk.js",
+    "./mcp": "./mcp.js",
+    "./skills": "./skills.js",
+    "./skills/node": "./skills-node.js"
+  },
+  "files": [
+    "browser.js",
+    "node.js",
+    "node.cjs",
+    "handwork-sdk.js",
+    "wasm-module.js",
+    "core-output.js",
+    "mcp.js",
+    "skills.js",
+    "skills-node.js",
+    "handwork-core.wasm",
+    "handwork-term.wasm",
+    "*.node",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Connor Love",
+    "url": "https://connorlove.com"
+  }
+}

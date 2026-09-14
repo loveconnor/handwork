@@ -1,0 +1,24 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.734667ms)
+✔ organizations scoped to user (0.123583ms)
+✔ logout revokes session (0.108875ms)
+✔ foreign project reads and updates are forbidden without changing storage or cache (6.664125ms)
+✔ list authorization is checked before both cache misses and cache hits (0.164959ms)
+✔ organization switching isolates lists and updates invalidate every affected variant only (1.524041ms)
+✔ organization key boundaries cannot collide with delimiter-containing identifiers (0.066541ms)
+✔ authenticated detail (0.615917ms)
+✔ authenticated list (5.097041ms)
+✔ update then read (0.146834ms)
+✔ anonymous request rejected (0.482667ms)
+✔ invalid update rejected (0.124708ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.599917

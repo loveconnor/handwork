@@ -1,0 +1,72 @@
+[
+  {
+    "category": "authorization",
+    "name": "Member reads owning organization project",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Nonmember reads known project ID without data leak",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Nonmember update leaves storage unchanged",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Claimed organization cannot replace actual-owner membership",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Nonmember organization list denied",
+    "pass": true
+  },
+  {
+    "category": "cache_isolation",
+    "name": "Warm A then B with identical parameters",
+    "pass": true
+  },
+  {
+    "category": "cache_isolation",
+    "name": "Dual member has separate organization caches",
+    "pass": true
+  },
+  {
+    "category": "cache_isolation",
+    "name": "Pagination, page size, sort and direction remain distinct",
+    "pass": true
+  },
+  {
+    "category": "invalidation",
+    "name": "Authorized update refreshes every cached list variant",
+    "pass": true
+  },
+  {
+    "category": "invalidation",
+    "name": "Updating A preserves B cache hits including prefix IDs",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Unauthorized update preserves warmed data and cache entries",
+    "pass": true
+  },
+  {
+    "category": "authorization",
+    "name": "Revoked membership denied despite cached list",
+    "pass": true
+  },
+  {
+    "category": "regressions",
+    "name": "Repeated authorized lists actually use the injected cache",
+    "pass": true
+  },
+  {
+    "category": "regressions",
+    "name": "Status conventions and unrelated routes preserved",
+    "pass": true
+  }
+]

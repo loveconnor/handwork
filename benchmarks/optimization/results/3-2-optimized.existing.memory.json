@@ -1,0 +1,108 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5783552,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 65912,
+        "ppid": 60654,
+        "rss": 5783552,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.063,
+    "totals": {
+      "harness": 69287936,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 65912,
+        "ppid": 60654,
+        "rss": 69287936,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.13,
+    "totals": {
+      "harness": 73711616,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 65912,
+        "ppid": 60654,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "npm test"
+      },
+      {
+        "pid": 65933,
+        "ppid": 65912,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 0.199,
+    "totals": {
+      "harness": 73711616,
+      "tests": 46497792,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 65912,
+        "ppid": 60654,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "npm test"
+      },
+      {
+        "pid": 65933,
+        "ppid": 65912,
+        "rss": 46497792,
+        "kind": "tests",
+        "command": "node --test tests/search.test.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 0.266,
+    "totals": {
+      "harness": 73711616,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 65912,
+        "ppid": 60654,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "(node)"
+      },
+      {
+        "pid": 65933,
+        "ppid": 65912,
+        "rss": 0,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "duration_s": 15.616,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 32473088,
+      "tests": 0,
+      "tools": 78315520
+    },
+    "samples": 226,
+    "input_tokens": 18161,
+    "output_tokens": 174,
+    "cached_input_tokens": null,
+    "tool_calls": 3,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork",
+    "isolation_probe": "TRAVERSAL_AND_ISOLATION_OK",
+    "tool_probe_pass": true
+  },
+  {
+    "duration_s": 14.746,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 792657920,
+      "tests": 0,
+      "tools": 12058624
+    },
+    "samples": 214,
+    "input_tokens": 24680,
+    "output_tokens": 212,
+    "cached_input_tokens": 18048,
+    "tool_calls": 3,
+    "completed": true,
+    "harness": "opencode",
+    "isolation_probe": "TRAVERSAL_AND_ISOLATION_OK",
+    "tool_probe_pass": true
+  },
+  {
+    "duration_s": 15.879,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 190021632,
+      "tests": 0,
+      "tools": 76070912
+    },
+    "samples": 230,
+    "input_tokens": 57443,
+    "output_tokens": 204,
+    "cached_input_tokens": 53888,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "harness": "codex",
+    "isolation_probe": "TRAVERSAL_AND_ISOLATION_OK",
+    "tool_probe_pass": true
+  }
+]

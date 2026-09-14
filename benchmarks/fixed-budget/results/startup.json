@@ -1,0 +1,59 @@
+[
+  {
+    "harness": "handwork",
+    "attempt": 1,
+    "first_output_s": 0.025855208000000005,
+    "prompt_marker_s": 0.259157166,
+    "usable_prompt_s": 0.2691865,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": -15
+  },
+  {
+    "harness": "opencode",
+    "attempt": 1,
+    "first_output_s": 0.8192487079999999,
+    "prompt_marker_s": 2.5007050829999997,
+    "usable_prompt_s": 2.519318083,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": 0
+  },
+  {
+    "harness": "codex",
+    "attempt": 1,
+    "first_output_s": 0.015426415999999499,
+    "prompt_marker_s": null,
+    "usable_prompt_s": null,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": 2
+  },
+  {
+    "harness": "handwork",
+    "attempt": 2,
+    "first_output_s": 0.025089042000000006,
+    "prompt_marker_s": 0.25849679200000003,
+    "usable_prompt_s": 0.268451958,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": -15,
+    "note": null
+  },
+  {
+    "harness": "opencode",
+    "attempt": 2,
+    "first_output_s": 0.8699344160000002,
+    "prompt_marker_s": 2.525548875,
+    "usable_prompt_s": 2.5395481660000003,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": 0,
+    "note": null
+  },
+  {
+    "harness": "codex",
+    "attempt": 2,
+    "first_output_s": 0.01466737499999926,
+    "prompt_marker_s": 0.11755899999999997,
+    "usable_prompt_s": 0.12880637499999992,
+    "method": "PTY prompt accepted unsubmitted BENCH_READY_7",
+    "exit_code_after_termination": -15,
+    "note": "Codex TUI does not support exec ignore-user-config; CLI overrides model, effort, plugins and MCP, but may inherit other user settings."
+  }
+]

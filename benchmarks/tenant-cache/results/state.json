@@ -1,0 +1,70 @@
+{
+  "base": "/private/tmp/handwork-tenant-benchmark-4znq2rjy",
+  "frozen_at": "2026-09-11T20:51:36-0400",
+  "binaries": {
+    "handwork": {
+      "original": "/Users/connorlove/Projects/10 Project Series/tack/zig-out/bin/handwork",
+      "path": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/bin/handwork",
+      "sha256": "f64924a89be83446d46224e9b2a333f445a8bd2d1c214b8c0cc719a0080fe849"
+    },
+    "opencode": {
+      "original": "/Users/connorlove/.opencode/bin/opencode",
+      "path": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/bin/opencode",
+      "sha256": "88eed7b0c2431162422cb0625aa68a55239970446951e4c9aad6a4f1fbc232b9"
+    },
+    "codex": {
+      "original": "/Applications/ChatGPT.app/Contents/Resources/codex",
+      "path": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/bin/codex",
+      "sha256": "87a08119b8effa519f0ecb552dc98043f58a8200bf2ec5da60f76890c33e9c3a"
+    }
+  },
+  "fixture": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/private/fixture",
+  "private": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/private",
+  "commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+  "handwork": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/bin/handwork",
+  "profile_seed": "/private/tmp/handwork-search-benchmark-d5rjswig/preinstalled",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "context": 272000,
+  "machine": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "chip": "Apple M4 Pro",
+    "memory_bytes": "25769803776"
+  },
+  "prompt": "Fix the reported organization-isolation bugs in this repository.\n\nBug report:\n- A signed-in user can sometimes read or update a project belonging\n  to an organization they do not belong to.\n- After switching organizations, the project list sometimes shows\n  projects from the previous organization.\n- After updating a project, its organization's list can remain stale.\n\nRequired behavior:\n- Project reads and updates must require membership in the project's\n  owning organization.\n- Organization project lists must require membership in the requested\n  organization.\n- Unauthorized requests must not return project data or modify storage.\n- Project-list caching must isolate organizations and preserve all\n  existing pagination and sorting parameters.\n- A successful update must invalidate every cached list variant for\n  the affected organization.\n- Unrelated organizations' cached lists must remain usable.\n- Authorization must still be checked when serving cached results.\n- Preserve existing API signatures, response shapes, status-code\n  conventions, and ordinary authorized behavior.\n- Keep caching enabled.\n\nInspect the relevant code, implement the fix, and run the existing\ntests. Do not modify existing tests or install dependencies.\nYou may add new tests.\n\nSummarize the changes and the verification you performed.",
+  "prompt_sha256": "a54a5d9e043e7e5eeb06d750dce91145081804b8aa8225744eb93fa6cdd0e91b",
+  "created": "2026-09-11T20:59:20-0400",
+  "orders": [
+    [
+      "handwork",
+      "opencode",
+      "codex"
+    ],
+    [
+      "opencode",
+      "codex",
+      "handwork"
+    ],
+    [
+      "codex",
+      "handwork",
+      "opencode"
+    ],
+    [
+      "handwork",
+      "codex",
+      "opencode"
+    ],
+    [
+      "opencode",
+      "handwork",
+      "codex"
+    ]
+  ],
+  "time_limit_seconds": 600,
+  "attempts_per_harness": 5,
+  "codex_runtime": {
+    "path": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/bin/codex-code-mode-host",
+    "sha256": "038b9c6b60baacbfacba1fe81cf603c22b73697810e013d4efda040f1a7294e7"
+  }
+}

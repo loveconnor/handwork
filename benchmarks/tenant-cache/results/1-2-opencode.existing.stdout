@@ -1,0 +1,23 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.775ms)
+✔ organizations scoped to user (0.136417ms)
+✔ logout revokes session (0.10925ms)
+✔ cross-organization requests are forbidden and cannot mutate storage or cache (6.213708ms)
+✔ cached lists remain organization-scoped and membership revocation takes effect immediately (0.225167ms)
+✔ updates invalidate all owning-organization variants while preserving unrelated cache hits (1.31875ms)
+✔ authenticated detail (0.616833ms)
+✔ authenticated list (5.317666ms)
+✔ update then read (0.163792ms)
+✔ anonymous request rejected (0.364917ms)
+✔ invalid update rejected (0.079333ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85.3295

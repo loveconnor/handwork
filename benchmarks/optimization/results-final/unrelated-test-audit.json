@@ -1,0 +1,82 @@
+{
+  "original": {
+    "exit_code": 1,
+    "failures": [
+      "core.agent.runtime.assistant_stream.test.streamed presentation preserves ANSI OSC 8 code fence and table spans",
+      "core.app.app_input_runtime.test.app_input_runtime recalled image and skill resubmit with fresh provenance",
+      "core.app.app_input_runtime.test.app_input_runtime recalls image after post-ack finalization failure",
+      "core.app.app_input_runtime.test.app_input_runtime terminal pending cleanup preserves image history",
+      "core.app.app_input_runtime.test.app_input_runtime submit projects selected skill spans onto transformed prompt text",
+      "core.app.app_input_runtime.test.app_input_runtime submits an absolute image path instead of treating it as a command",
+      "core.app.app_input_runtime.test.app_input_runtime preserves punctuation after a submitted image path",
+      "core.app.app_input_runtime.test.app_input_runtime keeps a typed image lookalike literal beside a real image",
+      "core.app.app_input_runtime.test.app_input_runtime queues existing and typed images in placeholder order",
+      "core.app.app_input_runtime.test.app_input_runtime inline image rejection preserves the draft and rolls back only attempted snapshots",
+      "core.app.app_input_runtime.test.app_input_runtime pasted image rejection preserves the raw paste and existing images",
+      "core.app.app_input_runtime.test.app_input_runtime inline capture out of memory propagates without notice or mutation",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste commits complete text and attachments in order",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste replaces selection as one structured edit",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste keeps trailing punctuation outside the badge",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste stays atomic across allocation failures",
+      "core.app.app_input_runtime.test.app_input_runtime oversized image path paste reports rejection without a snapshot",
+      "core.app.app_input_runtime.test.app_input_runtime repeated image path paste appends keep pending images sorted",
+      "ui.footer.surface_frame.test.surface footer places the cursor after the AI Provider team query",
+      "ui.footer.surface_frame.test.surface footer keeps the AI Provider team query and cursor visible at minimum height",
+      "core.workspace.file_index.test.initial allocation failure reports failure and a later load retries",
+      "core.workspace.file_index.test.failed generation starts one queued refresh after reap",
+      "core.images.image_attachments.test.extractInlineImageAttachments preserves punctuation after attached paths",
+      "core.tooling.tool_runtime.test.run_command success exposes structured foreground metadata",
+      "core.tooling.tool_runtime.test.run_command returns model output and structured metadata",
+      "core.tooling.tool_runtime.test.run_command nonzero exit returns structured masked failure",
+      "core.tooling.tool_runtime.test.run_command huge output exposes truncation and artifact paths without stdout body",
+      "core.execution.command_runner.test.explicit captured profiles execute exact shells without synthetic stderr",
+      "core.execution.command_runner.test.runtime cancellation observed at the timeout deadline stays graceful",
+      "core.input.picker_state.test.provider picker columns anchor under the argument they belong to"
+    ],
+    "summary": [
+      "15 passed; 0 skipped; 30 failed.",
+      "error: the following test command failed with exit code 1:",
+      ".zig-cache/o/69c6be69ff3dc1a192651995bd4bc22f/root --seed=0x71700e0e"
+    ]
+  },
+  "current": {
+    "exit_code": 1,
+    "failures": [
+      "core.agent.runtime.assistant_stream.test.streamed presentation preserves ANSI OSC 8 code fence and table spans",
+      "core.app.app_input_runtime.test.app_input_runtime recalled image and skill resubmit with fresh provenance",
+      "core.app.app_input_runtime.test.app_input_runtime recalls image after post-ack finalization failure",
+      "core.app.app_input_runtime.test.app_input_runtime terminal pending cleanup preserves image history",
+      "core.app.app_input_runtime.test.app_input_runtime submit projects selected skill spans onto transformed prompt text",
+      "core.app.app_input_runtime.test.app_input_runtime submits an absolute image path instead of treating it as a command",
+      "core.app.app_input_runtime.test.app_input_runtime preserves punctuation after a submitted image path",
+      "core.app.app_input_runtime.test.app_input_runtime keeps a typed image lookalike literal beside a real image",
+      "core.app.app_input_runtime.test.app_input_runtime queues existing and typed images in placeholder order",
+      "core.app.app_input_runtime.test.app_input_runtime inline image rejection preserves the draft and rolls back only attempted snapshots",
+      "core.app.app_input_runtime.test.app_input_runtime pasted image rejection preserves the raw paste and existing images",
+      "core.app.app_input_runtime.test.app_input_runtime inline capture out of memory propagates without notice or mutation",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste commits complete text and attachments in order",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste replaces selection as one structured edit",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste keeps trailing punctuation outside the badge",
+      "core.app.app_input_runtime.test.app_input_runtime image path paste stays atomic across allocation failures",
+      "core.app.app_input_runtime.test.app_input_runtime oversized image path paste reports rejection without a snapshot",
+      "core.app.app_input_runtime.test.app_input_runtime repeated image path paste appends keep pending images sorted",
+      "ui.footer.surface_frame.test.surface footer places the cursor after the AI Provider team query",
+      "ui.footer.surface_frame.test.surface footer keeps the AI Provider team query and cursor visible at minimum height",
+      "core.workspace.file_index.test.initial allocation failure reports failure and a later load retries",
+      "core.workspace.file_index.test.failed generation starts one queued refresh after reap",
+      "core.images.image_attachments.test.extractInlineImageAttachments preserves punctuation after attached paths",
+      "core.tooling.tool_runtime.test.run_command success exposes structured foreground metadata",
+      "core.tooling.tool_runtime.test.run_command returns model output and structured metadata",
+      "core.tooling.tool_runtime.test.run_command nonzero exit returns structured masked failure",
+      "core.tooling.tool_runtime.test.run_command huge output exposes truncation and artifact paths without stdout body",
+      "core.execution.command_runner.test.explicit captured profiles execute exact shells without synthetic stderr",
+      "core.execution.command_runner.test.runtime cancellation observed at the timeout deadline stays graceful",
+      "core.input.picker_state.test.provider picker columns anchor under the argument they belong to"
+    ],
+    "summary": [
+      "15 passed; 0 skipped; 30 failed.",
+      "error: the following test command failed with exit code 1:",
+      ".zig-cache/o/38028d20daee88e565591f139de73990/root --seed=0x44b4825"
+    ]
+  }
+}

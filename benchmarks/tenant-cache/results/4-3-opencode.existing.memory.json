@@ -1,0 +1,150 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 6111232,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 6612,
+        "ppid": 82262,
+        "rss": 6111232,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.069,
+    "totals": {
+      "harness": 70762496,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 6612,
+        "ppid": 82262,
+        "rss": 70762496,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.135,
+    "totals": {
+      "harness": 73842688,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 6633,
+        "ppid": 6612,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 6612,
+        "ppid": 82262,
+        "rss": 73842688,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.203,
+    "totals": {
+      "harness": 73842688,
+      "tests": 53493760,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 6640,
+        "ppid": 6633,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node --test-concurrency=0 --heap-prof-interval=524288 --stack-trace-limit=10 --report-signal=SIGUSR2 --max-http-header-size=16384 --heapsnapshot-near-heap-limit=0 --tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA --watch-kill-signal=SIGTERM --inspect-publish-uid=stderr,http --test-isolation=process --test-coverage-lines=0 --cpu-prof-interval=1000 --test-coverage-functions=0 --test-timeout=0 --inspect-port=127.0.0.1:9229 --use-largepages=off --test-coverage-branches=0 --experimental-addon-modules --network-family-autoselection-attempt-timeout=250 --secure-heap-min=2 --v8-pool-size=4 --secure-heap=0 --node-snapshot --trace-event-file-pattern=node_trace.${rotation}.log tests/projects.test.ts"
+      },
+      {
+        "pid": 6612,
+        "ppid": 82262,
+        "rss": 73842688,
+        "kind": "harness",
+        "command": "npm test"
+      },
+      {
+        "pid": 6633,
+        "ppid": 6612,
+        "rss": 53395456,
+        "kind": "tests",
+        "command": "node --test tests/account.test.ts tests/project-isolation.test.ts tests/projects.test.ts"
+      },
+      {
+        "pid": 6637,
+        "ppid": 6633,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node --test-concurrency=0 --heap-prof-interval=524288 --stack-trace-limit=10 --report-signal=SIGUSR2 --max-http-header-size=16384 --heapsnapshot-near-heap-limit=0 --tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA --watch-kill-signal=SIGTERM --inspect-publish-uid=stderr,http --test-isolation=process --test-coverage-lines=0 --cpu-prof-interval=1000 --test-coverage-functions=0 --test-timeout=0 --inspect-port=127.0.0.1:9229 --use-largepages=off --test-coverage-branches=0 --experimental-addon-modules --network-family-autoselection-attempt-timeout=250 --secure-heap-min=2 --v8-pool-size=4 --secure-heap=0 --node-snapshot --trace-event-file-pattern=node_trace.${rotation}.log tests/account.test.ts"
+      },
+      {
+        "pid": 6639,
+        "ppid": 6633,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node --test-concurrency=0 --heap-prof-interval=524288 --stack-trace-limit=10 --report-signal=SIGUSR2 --max-http-header-size=16384 --heapsnapshot-near-heap-limit=0 --tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA --watch-kill-signal=SIGTERM --inspect-publish-uid=stderr,http --test-isolation=process --test-coverage-lines=0 --cpu-prof-interval=1000 --test-coverage-functions=0 --test-timeout=0 --inspect-port=127.0.0.1:9229 --use-largepages=off --test-coverage-branches=0 --experimental-addon-modules --network-family-autoselection-attempt-timeout=250 --secure-heap-min=2 --v8-pool-size=4 --secure-heap=0 --node-snapshot --trace-event-file-pattern=node_trace.${rotation}.log tests/project-isolation.test.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 0.275,
+    "totals": {
+      "harness": 73842688,
+      "tests": 0,
+      "tools": 313163776
+    },
+    "processes": [
+      {
+        "pid": 6640,
+        "ppid": 6633,
+        "rss": 86884352,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 6612,
+        "ppid": 82262,
+        "rss": 73842688,
+        "kind": "harness",
+        "command": "(node)"
+      },
+      {
+        "pid": 6633,
+        "ppid": 6612,
+        "rss": 53690368,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 6637,
+        "ppid": 6633,
+        "rss": 84770816,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 6639,
+        "ppid": 6633,
+        "rss": 87818240,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  }
+]

@@ -1,0 +1,136 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5701632,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 773,
+        "ppid": 82262,
+        "rss": 5701632,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.072,
+    "totals": {
+      "harness": 70385664,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 773,
+        "ppid": 82262,
+        "rss": 70385664,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.139,
+    "totals": {
+      "harness": 73711616,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 800,
+        "ppid": 773,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 773,
+        "ppid": 82262,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.209,
+    "totals": {
+      "harness": 73711616,
+      "tests": 52772864,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 800,
+        "ppid": 773,
+        "rss": 52740096,
+        "kind": "tests",
+        "command": "node --test tests/account.test.ts tests/project-isolation.test.ts tests/projects.test.ts"
+      },
+      {
+        "pid": 773,
+        "ppid": 82262,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "npm test"
+      },
+      {
+        "pid": 806,
+        "ppid": 800,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node --test-concurrency=0 --heap-prof-interval=524288 --stack-trace-limit=10 --report-signal=SIGUSR2 --max-http-header-size=16384 --heapsnapshot-near-heap-limit=0 --tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA --watch-kill-signal=SIGTERM --inspect-publish-uid=stderr,http --test-isolation=process --test-coverage-lines=0 --cpu-prof-interval=1000 --test-coverage-functions=0 --test-timeout=0 --inspect-port=127.0.0.1:9229 --use-largepages=off --test-coverage-branches=0 --experimental-addon-modules --network-family-autoselection-attempt-timeout=250 --secure-heap-min=2 --v8-pool-size=4 --secure-heap=0 --node-snapshot --trace-event-file-pattern=node_trace.${rotation}.log tests/account.test.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 0.28,
+    "totals": {
+      "harness": 73711616,
+      "tests": 0,
+      "tools": 317014016
+    },
+    "processes": [
+      {
+        "pid": 800,
+        "ppid": 773,
+        "rss": 53231616,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 773,
+        "ppid": 82262,
+        "rss": 73711616,
+        "kind": "harness",
+        "command": "(node)"
+      },
+      {
+        "pid": 806,
+        "ppid": 800,
+        "rss": 86966272,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 807,
+        "ppid": 800,
+        "rss": 89735168,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 809,
+        "ppid": 800,
+        "rss": 87080960,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  }
+]

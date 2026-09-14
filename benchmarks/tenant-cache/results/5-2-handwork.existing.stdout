@@ -1,0 +1,23 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.712208ms)
+✔ organizations scoped to user (0.1165ms)
+✔ logout revokes session (0.097458ms)
+✔ owning membership gates reads and writes without storage or cache mutations (6.451167ms)
+✔ organization switches, all list variants, and selective invalidation with opaque IDs (1.654375ms)
+✔ revocation is checked before cache access and project updates (0.230208ms)
+✔ authenticated detail (0.579417ms)
+✔ authenticated list (5.383334ms)
+✔ update then read (0.156667ms)
+✔ anonymous request rejected (0.499542ms)
+✔ invalid update rejected (0.093958ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.4105

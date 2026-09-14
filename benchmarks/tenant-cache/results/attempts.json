@@ -1,0 +1,2067 @@
+[
+  {
+    "duration_s": 73.68,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 32292864,
+      "tests": 348979200,
+      "tools": 73891840
+    },
+    "samples": 1035,
+    "input_tokens": 62713,
+    "output_tokens": 1825,
+    "cached_input_tokens": 9728,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 20,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "attempt": 1,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/1-1-handwork/repo",
+    "log": "1-1-handwork",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.134,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6144000,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.352,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73580544,
+        "tests": 53035008,
+        "tools": 231407616
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 213.673,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 831078400,
+      "tests": 342835200,
+      "tools": 49135616
+    },
+    "samples": 2959,
+    "input_tokens": 156624,
+    "output_tokens": 5662,
+    "cached_input_tokens": 129792,
+    "tool_calls": 43,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 124029,
+      "output_tokens": 2970,
+      "cached_input_tokens": 107776,
+      "tool_calls": 21
+    },
+    "reasoning_tokens": 36,
+    "accounted_sessions": 2,
+    "model_requests": 16,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "attempt": 1,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/1-2-opencode/repo",
+    "log": "1-2-opencode",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.134,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 84131840,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.348,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74170368,
+        "tests": 53051392,
+        "tools": 303169536
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 79.072,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 217186304,
+      "tests": 349405184,
+      "tools": 76414976
+    },
+    "samples": 1099,
+    "input_tokens": 129747,
+    "output_tokens": 2106,
+    "cached_input_tokens": 112128,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 12,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "attempt": 1,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/1-3-codex/repo",
+    "log": "1-3-codex",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.135,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6111232,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.345,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74104832,
+        "tests": 50561024,
+        "tools": 305889280
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 200.262,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 886751232,
+      "tests": 271908864,
+      "tools": 73744384
+    },
+    "samples": 2805,
+    "input_tokens": 163774,
+    "output_tokens": 5038,
+    "cached_input_tokens": 114048,
+    "tool_calls": 39,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 118620,
+      "output_tokens": 2722,
+      "cached_input_tokens": 90240,
+      "tool_calls": 21
+    },
+    "reasoning_tokens": 26,
+    "accounted_sessions": 2,
+    "model_requests": 18,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "attempt": 2,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/2-1-opencode/repo",
+    "log": "2-1-opencode",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.135,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6062080,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.347,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73646080,
+        "tests": 51101696,
+        "tools": 312868864
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 91.124,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 202801152,
+      "tests": 345784320,
+      "tools": 68206592
+    },
+    "samples": 1258,
+    "input_tokens": 133712,
+    "output_tokens": 2171,
+    "cached_input_tokens": 122496,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 43,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "attempt": 2,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/2-2-codex/repo",
+    "log": "2-2-codex",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.072,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 7176192,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.35,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73547776,
+        "tests": 51462144,
+        "tools": 315719680
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 88.463,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 33488896,
+      "tests": 349257728,
+      "tools": 69156864
+    },
+    "samples": 1232,
+    "input_tokens": 59746,
+    "output_tokens": 2105,
+    "cached_input_tokens": 14592,
+    "tool_calls": 23,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 16,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "attempt": 2,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/2-3-handwork/repo",
+    "log": "2-3-handwork",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.138,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5931008,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.345,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73891840,
+        "tests": 53051392,
+        "tools": 231096320
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 84.286,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 242139136,
+      "tests": 336805888,
+      "tools": 76218368
+    },
+    "samples": 1177,
+    "input_tokens": 111818,
+    "output_tokens": 2209,
+    "cached_input_tokens": 93056,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 39,
+    "rollout_files": 1,
+    "model_requests": 6,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "attempt": 3,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/3-1-codex/repo",
+    "log": "3-1-codex",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.134,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6144000,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.35,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73695232,
+        "tests": 53035008,
+        "tools": 229851136
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 85.415,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30818304,
+      "tests": 311181312,
+      "tools": 73891840
+    },
+    "samples": 1189,
+    "input_tokens": 55187,
+    "output_tokens": 2187,
+    "cached_input_tokens": 17024,
+    "tool_calls": 23,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 19,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "attempt": 3,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/3-2-handwork/repo",
+    "log": "3-2-handwork",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.137,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6062080,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.351,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73662464,
+        "tests": 52969472,
+        "tools": 208748544
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 199.054,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 850722816,
+      "tests": 355139584,
+      "tools": 73383936
+    },
+    "samples": 2797,
+    "input_tokens": 149443,
+    "output_tokens": 5368,
+    "cached_input_tokens": 118656,
+    "tool_calls": 40,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 117584,
+      "output_tokens": 3254,
+      "cached_input_tokens": 100224,
+      "tool_calls": 22
+    },
+    "reasoning_tokens": 83,
+    "accounted_sessions": 2,
+    "model_requests": 15,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "attempt": 3,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/3-3-opencode/repo",
+    "log": "3-3-opencode",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.136,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 72122368,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.346,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73711616,
+        "tests": 52772864,
+        "tools": 317014016
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 89.801,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 33046528,
+      "tests": 223576064,
+      "tools": 81084416
+    },
+    "samples": 1254,
+    "input_tokens": 60452,
+    "output_tokens": 2450,
+    "cached_input_tokens": 14592,
+    "tool_calls": 22,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 21,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "attempt": 4,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/4-1-handwork/repo",
+    "log": "4-1-handwork",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.072,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6848512,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.346,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73711616,
+        "tests": 53149696,
+        "tools": 233324544
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 71.567,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 224411648,
+      "tests": 303333376,
+      "tools": 61423616
+    },
+    "samples": 997,
+    "input_tokens": 113209,
+    "output_tokens": 1938,
+    "cached_input_tokens": 102656,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 17,
+    "rollout_files": 1,
+    "model_requests": 6,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "attempt": 4,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/4-2-codex/repo",
+    "log": "4-2-codex",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.139,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5652480,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.346,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73973760,
+        "tests": 51494912,
+        "tools": 313458688
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 197.23,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 831406080,
+      "tests": 277905408,
+      "tools": 62160896
+    },
+    "samples": 2671,
+    "input_tokens": 146104,
+    "output_tokens": 4985,
+    "cached_input_tokens": 115072,
+    "tool_calls": 41,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 121009,
+      "output_tokens": 2650,
+      "cached_input_tokens": 102016,
+      "tool_calls": 21
+    },
+    "reasoning_tokens": 28,
+    "accounted_sessions": 2,
+    "model_requests": 16,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "attempt": 4,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/4-3-opencode/repo",
+    "log": "4-3-opencode",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.136,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5767168,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.345,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73842688,
+        "tests": 53493760,
+        "tools": 313163776
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 207.46,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 865484800,
+      "tests": 336871424,
+      "tools": 55738368
+    },
+    "samples": 2906,
+    "input_tokens": 151514,
+    "output_tokens": 5462,
+    "cached_input_tokens": 124160,
+    "tool_calls": 41,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 128452,
+      "output_tokens": 3073,
+      "cached_input_tokens": 111616,
+      "tool_calls": 23
+    },
+    "reasoning_tokens": 17,
+    "accounted_sessions": 2,
+    "model_requests": 15,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "attempt": 5,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/5-1-opencode/repo",
+    "log": "5-1-opencode",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.067,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6111232,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.344,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73973760,
+        "tests": 53149696,
+        "tools": 316964864
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 81.11,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 32636928,
+      "tests": 328515584,
+      "tools": 71139328
+    },
+    "samples": 1137,
+    "input_tokens": 59617,
+    "output_tokens": 2075,
+    "cached_input_tokens": 12160,
+    "tool_calls": 23,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 18,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "attempt": 5,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/5-2-handwork/repo",
+    "log": "5-2-handwork",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.134,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5685248,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 2
+    },
+    "existing_tests": {
+      "duration_s": 0.348,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73416704,
+        "tests": 53166080,
+        "tools": 232505344
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  },
+  {
+    "duration_s": 87.073,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 226328576,
+      "tests": 266616832,
+      "tools": 130039808
+    },
+    "samples": 1211,
+    "input_tokens": 111137,
+    "output_tokens": 2186,
+    "cached_input_tokens": 96896,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 37,
+    "rollout_files": 1,
+    "model_requests": 6,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "attempt": 5,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-tenant-benchmark-4znq2rjy/5-3-codex/repo",
+    "log": "5-3-codex",
+    "starting_commit": "7dd2d093908a6399ad939a869a210e9a1c268469",
+    "protected_files_unchanged": true,
+    "dependency_directory_absent": true,
+    "verification": {
+      "duration_s": 0.072,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6111232,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.364,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73728000,
+        "tests": 56328192,
+        "tools": 0
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "category": "authorization",
+        "name": "Member reads owning organization project",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember reads known project ID without data leak",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember update leaves storage unchanged",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Claimed organization cannot replace actual-owner membership",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Nonmember organization list denied",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Warm A then B with identical parameters",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Dual member has separate organization caches",
+        "pass": true
+      },
+      {
+        "category": "cache_isolation",
+        "name": "Pagination, page size, sort and direction remain distinct",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Authorized update refreshes every cached list variant",
+        "pass": true
+      },
+      {
+        "category": "invalidation",
+        "name": "Updating A preserves B cache hits including prefix IDs",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Unauthorized update preserves warmed data and cache entries",
+        "pass": true
+      },
+      {
+        "category": "authorization",
+        "name": "Revoked membership denied despite cached list",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Repeated authorized lists actually use the injected cache",
+        "pass": true
+      },
+      {
+        "category": "regressions",
+        "name": "Status conventions and unrelated routes preserved",
+        "pass": true
+      },
+      {
+        "name": "Existing regression tests",
+        "category": "regressions",
+        "pass": true
+      }
+    ],
+    "categories": {
+      "authorization": true,
+      "cache_isolation": true,
+      "invalidation": true,
+      "regressions": true
+    },
+    "success": true
+  }
+]

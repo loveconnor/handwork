@@ -1,0 +1,201 @@
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+● Matching[0m
+Matching **/*
+Running git status --short && cat package.json && cat src/search/controller.ts && cat src/api/search.ts && cat src/ui/search-...
+/dev/fd/11:25: command not found: compdef
+{
+  "name": "async-search-benchmark",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
+import type { SearchApi, SearchResult } from '../api/search.ts';
+
+export interface SearchState {
+  query: string;
+  results: SearchResult[];
+  loading: boolean;
+  error: string | null;
+}
+
+export interface SearchController {
+  getState(): SearchState;
+  subscribe(listener: (state: SearchState) => void): () => void;
+  search(query: string): Promise<void>;
+}
+
+export function createSearchController(api: SearchApi): SearchController {
+  let state: SearchState = { query: '', results: [], loading: false, error: null };
+  const listeners = new Set<(state: SearchState) => void>();
+  const getState = (): SearchState => ({ ...state, results: [...state.results] });
+  const update = (patch: Partial<SearchState>): void => {
+    state = { ...state, ...patch };
+    for (const listener of listeners) listener(getState());
+  };
+
+  return {
+    getState,
+    subscribe(listener) {
+      listeners.add(listener);
+      listener(getState());
+      return () => { listeners.delete(listener); };
+    },
+    async search(query) {
+      const normalized = query.trim();
+      if (!normalized) {
+        update({ query: '', results: [], loading: false, error: null });
+        return;
+      }
+      update({ query: normalized, loading: true, error: null });
+      try {
+        const results = await api.search(normalized);
+        update({ results });
+      } catch (error) {
+        update({ error: error instanceof Error ? error.message : String(error) });
+      } finally {
+        update({ loading: false });
+      }
+    },
+  };
+}
+export interface SearchResult {
+  id: string;
+  title: string;
+  url: string;
+}
+
+export interface SearchApi {
+  search(query: string): Promise<SearchResult[]>;
+}
+
+export function createSearchApi(fetcher: typeof fetch = globalThis.fetch): SearchApi {
+  return {
+    async search(query) {
+      const response = await fetcher(`/api/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error(`Search request failed (${response.status})`);
+      const payload = await response.json() as { items: SearchResult[] };
+      return payload.items;
+    },
+  };
+}
+import type { SearchController, SearchState } from '../search/controller.ts';
+
+export interface SearchElements {
+  input: HTMLInputElement;
+  results: HTMLElement;
+  loading: HTMLElement;
+  error: HTMLElement;
+}
+
+export function mountSearchView(controller: SearchController, elements: SearchElements): () => void {
+  const render = (state: SearchState): void => {
+    elements.results.textContent = state.results.map(result => result.title).join('\n');
+    elements.loading.hidden = !state.loading;
+    elements.error.textContent = state.error ?? '';
+    elements.error.hidden = state.error === null;
+  };
+  const onInput = (): void => { void controller.search(elements.input.value); };
+  elements.input.addEventListener('input', onInput);
+  const unsubscribe = controller.subscribe(render);
+  return () => {
+    elements.input.removeEventListener('input', onInput);
+    unsubscribe();
+  };
+}
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createSearchApi } from '../src/api/search.ts';
+import { createSearchController } from '../src/search/controller.ts';
+import { mountSearchView } from '../src/ui/search-view.ts';
+import type { SearchElements } from '../src/ui/search-view.ts';
+
+const items = [{ id: '1', title: 'React guide', url: '/guides/react' }];
+
+test('initial state and empty input', async () => {
+  const c = createSearchController({ search: async () => items });
+  assert.deepEqual(c.getState(), { query: '', results: [], loading: false, error: null });
+  await c.search('  ');
+  assert.deepEqual(c.getState(), { query: '', results: [], loading: false, error: null });
+});
+
+test('ordinary API request encodes the query and displays results', async () => {
+  const urls: string[] = [];
+  const fetcher = (async (url: string) => {
+    urls.push(url);
+    return { ok: true, status: 200, json: async () => ({ items }) };
+  }) as unknown as typeof fetch;
+  const c = createSearchController(createSearchApi(fetcher));
+  await c.search(' react hooks ');
+  assert.deepEqual(urls, ['/api/search?q=react%20hooks']);
+  assert.deepEqual(c.getState(), { query: 'react hooks', results: items, loading: false, error: null });
+});
+
+test('ordinary failure becomes state and subscribers can unsubscribe', async () => {
+  const c = createSearchController({ search: async () => { throw new Error('Offline'); } });
+  let calls = 0;
+  const unsubscribe = c.subscribe(() => { calls++; });
+  await c.search('react');
+  assert.equal(c.getState().error, 'Offline');
+  assert.equal(c.getState().loading, false);
+  assert.ok(calls >= 2);
+  unsubscribe();
+  const before = calls;
+  await c.search('');
+  assert.equal(calls, before);
+});
+
+test('view handles input, renders state and detaches listeners', async () => {
+  const handlers = new Set<() => void>();
+  const elements = {
+    input: { value: '', addEventListener: (_: string, f: () => void) => handlers.add(f), removeEventListener: (_: string, f: () => void) => handlers.delete(f) },
+    results: { textContent: '' }, loading: { hidden: true }, error: { textContent: '', hidden: true },
+  };
+  const c = createSearchController({ search: async () => items });
+  let pending = Promise.resolve();
+  const viewController = { ...c, search: (query: string) => (pending = c.search(query)) };
+  const dispose = mountSearchView(viewController, elements as unknown as SearchElements);
+  elements.input.value = 'react';
+  for (const f of handlers) f();
+  assert.equal(elements.loading.hidden, false);
+  await pending;
+  assert.equal(elements.results.textContent, 'React guide');
+  assert.equal(elements.loading.hidden, true);
+  assert.equal(elements.error.hidden, true);
+  dispose();
+  assert.equal(handlers.size, 0);
+});
+# Search application
+
+Node 24 runs this TypeScript directly. Run `npm test`; no third-party dependencies.
+
+`src/api/search.ts` adapts HTTP requests, `src/search/controller.ts` owns query and state, and `src/ui/search-view.ts` connects an input to the controller and renders state.
+
+The controller exposes getState, subscribe (immediately emits a snapshot), and async search. Search trims surrounding whitespace and preserves existing results while the next search loads. Empty input clears the view without an HTTP request.
+Editing src/search/controller.ts
+Editing src/search/controller.ts
+Editing src/search/controller.ts
+Running npm test && node --input-type=module <<'NODE' import assert from 'node:assert/strict'; import { createSearchControlle...
+
+> test
+> node --test tests/*.test.ts
+
+✔ initial state and empty input (0.833583ms)
+✔ ordinary API request encodes the query and displays results (0.142667ms)
+✔ ordinary failure becomes state and subscribers can unsubscribe (0.151167ms)
+✔ view handles input, renders state and detaches listeners (0.138334ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.782833
+PASS: stale successes/failures, both completion orders, and clear during pending requests
+ src/search/controller.ts | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)

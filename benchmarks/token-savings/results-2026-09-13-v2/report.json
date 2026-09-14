@@ -1,0 +1,608 @@
+{
+  "scope": "Synthetic isolated production projections, not end-to-end tasks or provider/quota measurements",
+  "token_method": "Handwork StreamingEstimator on serialized text; not provider tokenization, excludes image token cost",
+  "model_generations": 0,
+  "provider_output_tokens": null,
+  "subscription_savings_percent": null,
+  "zig_version": "0.16.0",
+  "source_sha256": {
+    "baseline": {
+      "src/core/agent/runtime/execution_memory.zig": "e3c9aa99cf1de9e73799d5eafeab6c7a9396f3b45169e6febfa6d967fddf3ee9",
+      "src/provider/api_protocol.zig": "b42943c65dee1e08f876272292e0fa7fd14fd059bb9c5c9cac680ea7120fe332"
+    },
+    "optimized": {
+      "src/core/agent/runtime/execution_memory.zig": "57c60e8f59c586850efce112f089980150913419ab29330e0e3fccf8e06c2873",
+      "src/provider/api_protocol.zig": "c4eaf0718a7ebd398ce853e90e6cd045a7729f3c5674bf7fe01c21e1bd936a97"
+    }
+  },
+  "cases": [
+    {
+      "case": "grep_files",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "optimized": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "optimized": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "optimized": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "optimized": {
+        "model_bytes": 4096,
+        "estimated_text_tokens": 995
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4306,
+        "estimated_text_tokens": 1047
+      },
+      "optimized": {
+        "model_bytes": 4306,
+        "estimated_text_tokens": 1047
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 8708,
+        "estimated_text_tokens": 2206
+      },
+      "optimized": {
+        "model_bytes": 4528,
+        "estimated_text_tokens": 1147
+      },
+      "byte_reduction_percent": 48.0,
+      "estimated_text_token_reduction_percent": 48.01
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 4096,
+      "baseline": {
+        "model_bytes": 4513,
+        "estimated_text_tokens": 1143
+      },
+      "optimized": {
+        "model_bytes": 4513,
+        "estimated_text_tokens": 1143
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "grep_files",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "optimized": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "optimized": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "optimized": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "optimized": {
+        "model_bytes": 8192,
+        "estimated_text_tokens": 1990
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8402,
+        "estimated_text_tokens": 2042
+      },
+      "optimized": {
+        "model_bytes": 8141,
+        "estimated_text_tokens": 1980
+      },
+      "byte_reduction_percent": 3.11,
+      "estimated_text_token_reduction_percent": 3.04
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 17018,
+        "estimated_text_tokens": 4312
+      },
+      "optimized": {
+        "model_bytes": 8683,
+        "estimated_text_tokens": 2200
+      },
+      "byte_reduction_percent": 48.98,
+      "estimated_text_token_reduction_percent": 48.98
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 8192,
+      "baseline": {
+        "model_bytes": 8668,
+        "estimated_text_tokens": 2197
+      },
+      "optimized": {
+        "model_bytes": 8668,
+        "estimated_text_tokens": 2197
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "grep_files",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 63.73,
+      "estimated_text_token_reduction_percent": 63.58
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 63.73,
+      "estimated_text_token_reduction_percent": 63.58
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "optimized": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "optimized": {
+        "model_bytes": 12288,
+        "estimated_text_tokens": 2985
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12498,
+        "estimated_text_tokens": 3037
+      },
+      "optimized": {
+        "model_bytes": 8141,
+        "estimated_text_tokens": 1981
+      },
+      "byte_reduction_percent": 34.86,
+      "estimated_text_token_reduction_percent": 34.77
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 25326,
+        "estimated_text_tokens": 6420
+      },
+      "optimized": {
+        "model_bytes": 12837,
+        "estimated_text_tokens": 3253
+      },
+      "byte_reduction_percent": 49.31,
+      "estimated_text_token_reduction_percent": 49.33
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 12288,
+      "baseline": {
+        "model_bytes": 12822,
+        "estimated_text_tokens": 3250
+      },
+      "optimized": {
+        "model_bytes": 12822,
+        "estimated_text_tokens": 3250
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "grep_files",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 72.8,
+      "estimated_text_token_reduction_percent": 72.68
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 72.8,
+      "estimated_text_token_reduction_percent": 72.68
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "optimized": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "optimized": {
+        "model_bytes": 16384,
+        "estimated_text_tokens": 3979
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16594,
+        "estimated_text_tokens": 4031
+      },
+      "optimized": {
+        "model_bytes": 8141,
+        "estimated_text_tokens": 1981
+      },
+      "byte_reduction_percent": 50.94,
+      "estimated_text_token_reduction_percent": 50.86
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 33636,
+        "estimated_text_tokens": 8526
+      },
+      "optimized": {
+        "model_bytes": 16992,
+        "estimated_text_tokens": 4306
+      },
+      "byte_reduction_percent": 49.48,
+      "estimated_text_token_reduction_percent": 49.5
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 16384,
+      "baseline": {
+        "model_bytes": 16977,
+        "estimated_text_tokens": 4303
+      },
+      "optimized": {
+        "model_bytes": 16977,
+        "estimated_text_tokens": 4303
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "grep_files",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 4455,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4455,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 32768,
+        "estimated_text_tokens": 7958
+      },
+      "optimized": {
+        "model_bytes": 32768,
+        "estimated_text_tokens": 7958
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 32978,
+        "estimated_text_tokens": 8010
+      },
+      "optimized": {
+        "model_bytes": 8141,
+        "estimated_text_tokens": 1981
+      },
+      "byte_reduction_percent": 75.31,
+      "estimated_text_token_reduction_percent": 75.27
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 66872,
+        "estimated_text_tokens": 16952
+      },
+      "optimized": {
+        "model_bytes": 33610,
+        "estimated_text_tokens": 8519
+      },
+      "byte_reduction_percent": 49.74,
+      "estimated_text_token_reduction_percent": 49.75
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 32768,
+      "baseline": {
+        "model_bytes": 33595,
+        "estimated_text_tokens": 8516
+      },
+      "optimized": {
+        "model_bytes": 33595,
+        "estimated_text_tokens": 8516
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "grep_files",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "glob_files",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4457,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "read_file",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 4455,
+        "estimated_text_tokens": 1087
+      },
+      "optimized": {
+        "model_bytes": 4455,
+        "estimated_text_tokens": 1087
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "unstored_grep",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 65536,
+        "estimated_text_tokens": 15916
+      },
+      "optimized": {
+        "model_bytes": 65536,
+        "estimated_text_tokens": 15916
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    },
+    {
+      "case": "shell",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 65485,
+        "estimated_text_tokens": 15908
+      },
+      "optimized": {
+        "model_bytes": 8141,
+        "estimated_text_tokens": 1981
+      },
+      "byte_reduction_percent": 87.57,
+      "estimated_text_token_reduction_percent": 87.55
+    },
+    {
+      "case": "chat_image_request",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 133344,
+        "estimated_text_tokens": 33804
+      },
+      "optimized": {
+        "model_bytes": 66846,
+        "estimated_text_tokens": 16945
+      },
+      "byte_reduction_percent": 49.87,
+      "estimated_text_token_reduction_percent": 49.87
+    },
+    {
+      "case": "anthropic_image_request",
+      "raw_bytes": 65536,
+      "baseline": {
+        "model_bytes": 66831,
+        "estimated_text_tokens": 16942
+      },
+      "optimized": {
+        "model_bytes": 66831,
+        "estimated_text_tokens": 16942
+      },
+      "byte_reduction_percent": 0.0,
+      "estimated_text_token_reduction_percent": 0.0
+    }
+  ]
+}

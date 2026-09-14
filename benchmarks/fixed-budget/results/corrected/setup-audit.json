@@ -1,0 +1,18 @@
+{
+  "handwork_binary_unchanged": true,
+  "handwork_sha256": "17671eebfb0de6b432aa287d87be979b790b157f6c088d705e5f35c421177c49",
+  "starting_commit": "c2c4ccfce196c2ddd80a4e80759bde3286123123",
+  "native_tools_audit": {
+    "handwork": true,
+    "opencode": true,
+    "codex": true
+  },
+  "sandbox_regression": {
+    "ancestor_traversal": true,
+    "own_read_write": true,
+    "verifier_read_write_denied": true,
+    "sibling_read_write_denied": true,
+    "symlink_read_write_denied": true
+  },
+  "previous_sandbox_series_excluded_as": "benchmark configuration error"
+}

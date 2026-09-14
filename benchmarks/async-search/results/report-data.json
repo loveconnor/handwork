@@ -1,0 +1,3192 @@
+{
+  "task": "async-search",
+  "state": {
+    "base": "/private/tmp/handwork-search-benchmark-d5rjswig",
+    "private": "/private/tmp/handwork-search-benchmark-d5rjswig/private",
+    "fixture": "/private/tmp/handwork-search-benchmark-d5rjswig/private/fixture",
+    "commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "handwork": "/private/tmp/handwork-efficiency-m_m99ddq/bin/optimized",
+    "profile_seed": "/private/tmp/handwork-search-benchmark-d5rjswig/preinstalled",
+    "model": "gpt-6-astra",
+    "reasoning": "low",
+    "context": 272000,
+    "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+    "prompt_sha256": "cc89cabb9cbfe4d1be540fcf16e1c8c525517c0e05b6663dd96df9f87971599a",
+    "created": "2026-09-11T19:39:50-0400",
+    "machine": {
+      "platform": "macOS-26.5.2-arm64-arm-64bit",
+      "chip": "Apple M4 Pro",
+      "memory_bytes": "25769803776"
+    },
+    "binary_sha256": {
+      "handwork": "f64924a89be83446d46224e9b2a333f445a8bd2d1c214b8c0cc719a0080fe849",
+      "opencode": "88eed7b0c2431162422cb0625aa68a55239970446951e4c9aad6a4f1fbc232b9",
+      "codex": "87a08119b8effa519f0ecb552dc98043f58a8200bf2ec5da60f76890c33e9c3a"
+    },
+    "attempts_per_harness": 5,
+    "time_limit_seconds": 300,
+    "controls": {
+      "broken": {
+        "exit_code": 1,
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: 'react hooks',\n    results: [\n      {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n-       id: 'latest',\n-       title: 'Result latest',\n-       url: '/result/latest'\n      }\n    ]\n  }\n"
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   error: 'Old error',\n+   loading: false,\n-   error: null,\n-   loading: true,\n    query: 'react hooks',\n    results: []\n  }\n"
+          },
+          {
+            "name": "Latest request fails",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: 'Current error',\n    loading: false,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: '',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'third',\n+   results: [\n+     {\n+       id: 'stale-0',\n+       title: 'Result stale-0',\n+       url: '/result/stale-0'\n+     }\n+   ]\n-   results: []\n  }\n"
+          }
+        ],
+        "existing_tests_pass": true
+      },
+      "known_correct": {
+        "exit_code": 0,
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "existing_tests_pass": true
+      },
+      "query_string_only": {
+        "exit_code": 1,
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": false,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "existing_tests_pass": true
+      }
+    }
+  },
+  "summary": {
+    "handwork": {
+      "success": 5,
+      "attempts": 5,
+      "timeouts": 0,
+      "median_peak_mib": 27.84375,
+      "median_solved_s": 48.636,
+      "input_tokens": 176899,
+      "output_tokens": 5223,
+      "tool_calls": 52
+    },
+    "opencode": {
+      "success": 5,
+      "attempts": 5,
+      "timeouts": 0,
+      "median_peak_mib": 757.234375,
+      "median_solved_s": 79.869,
+      "input_tokens": 302288,
+      "output_tokens": 9567,
+      "tool_calls": 89
+    },
+    "codex": {
+      "success": 5,
+      "attempts": 5,
+      "timeouts": 0,
+      "median_peak_mib": 227.484375,
+      "median_solved_s": 32.907,
+      "input_tokens": 395974,
+      "output_tokens": 3421,
+      "tool_calls": 25
+    }
+  },
+  "runs": [
+    {
+      "duration_s": 44.039,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 28966912,
+        "tests": 201457664,
+        "tools": 78315520
+      },
+      "samples": 602,
+      "input_tokens": 32914,
+      "output_tokens": 871,
+      "cached_input_tokens": 4864,
+      "tool_calls": 10,
+      "completed": true,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0,
+      "reported_model": "gpt-6-astra",
+      "variant": "optimized",
+      "attempt": 1,
+      "position": 2,
+      "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/1-2-optimized/repo",
+      "log": "1-2-optimized",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "protected_files_unchanged": true,
+      "verification": {
+        "duration_s": 0.071,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5685248,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.276,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73842688,
+          "tests": 81231872,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "harness": "handwork",
+      "evidence": "benchmarks/optimization/results-final/"
+    },
+    {
+      "duration_s": 48.636,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 30228480,
+        "tests": 130711552,
+        "tools": 81903616
+      },
+      "samples": 691,
+      "input_tokens": 38180,
+      "output_tokens": 1109,
+      "cached_input_tokens": 12160,
+      "tool_calls": 11,
+      "completed": true,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 15,
+      "reported_model": "gpt-6-astra",
+      "variant": "optimized",
+      "attempt": 2,
+      "position": 1,
+      "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/2-1-optimized/repo",
+      "log": "2-1-optimized",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "protected_files_unchanged": true,
+      "verification": {
+        "duration_s": 0.067,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5865472,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.334,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73695232,
+          "tests": 47726592,
+          "tools": 0
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "harness": "handwork",
+      "evidence": "benchmarks/optimization/results-final/"
+    },
+    {
+      "duration_s": 47.975,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 29196288,
+        "tests": 186056704,
+        "tools": 73269248
+      },
+      "samples": 689,
+      "input_tokens": 33430,
+      "output_tokens": 1052,
+      "cached_input_tokens": 7296,
+      "tool_calls": 10,
+      "completed": true,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 11,
+      "reported_model": "gpt-6-astra",
+      "variant": "optimized",
+      "attempt": 3,
+      "position": 2,
+      "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/3-2-optimized/repo",
+      "log": "3-2-optimized",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "protected_files_unchanged": true,
+      "verification": {
+        "duration_s": 0.067,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 6144000,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.334,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73777152,
+          "tests": 45416448,
+          "tools": 133660672
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "harness": "handwork",
+      "evidence": "benchmarks/optimization/results-final/"
+    },
+    {
+      "duration_s": 52.421,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 28246016,
+        "tests": 191676416,
+        "tools": 72351744
+      },
+      "samples": 754,
+      "input_tokens": 33265,
+      "output_tokens": 1134,
+      "cached_input_tokens": 6400,
+      "tool_calls": 10,
+      "completed": true,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 8,
+      "reported_model": "gpt-6-astra",
+      "variant": "optimized",
+      "attempt": 4,
+      "position": 1,
+      "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/4-1-optimized/repo",
+      "log": "4-1-optimized",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "protected_files_unchanged": true,
+      "verification": {
+        "duration_s": 0.069,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5308416,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.34,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 74301440,
+          "tests": 36012032,
+          "tools": 132349952
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "harness": "handwork",
+      "evidence": "benchmarks/optimization/results-final/"
+    },
+    {
+      "duration_s": 52.613,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 30588928,
+        "tests": 147013632,
+        "tools": 71303168
+      },
+      "samples": 756,
+      "input_tokens": 39110,
+      "output_tokens": 1057,
+      "cached_input_tokens": 7296,
+      "tool_calls": 11,
+      "completed": true,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 8,
+      "reported_model": "gpt-6-astra",
+      "variant": "optimized",
+      "attempt": 5,
+      "position": 2,
+      "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/5-2-optimized/repo",
+      "log": "5-2-optimized",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "protected_files_unchanged": true,
+      "verification": {
+        "duration_s": 0.069,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5652480,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.334,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73695232,
+          "tests": 44220416,
+          "tools": 52674560
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "harness": "handwork",
+      "evidence": "benchmarks/optimization/results-final/"
+    },
+    {
+      "duration_s": 79.869,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 785547264,
+        "tests": 124960768,
+        "tools": 73842688
+      },
+      "samples": 1166,
+      "input_tokens": 65025,
+      "output_tokens": 1920,
+      "cached_input_tokens": 48896,
+      "tool_calls": 19,
+      "completed": true,
+      "harness": "opencode",
+      "attempt": 1,
+      "position": 2,
+      "started_at": "2026-09-11T19:41:56-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/1-2-opencode/repo",
+      "log": "1-2-opencode",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.068,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5685248,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.27,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73596928,
+          "tests": 53198848,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "reasoning_tokens": 22,
+      "accounted_sessions": 2,
+      "parent_only_usage": {
+        "input_tokens": 48030,
+        "output_tokens": 1132,
+        "cached_input_tokens": 38144,
+        "tool_calls": 9
+      },
+      "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 62.092,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 794017792,
+        "tests": 158171136,
+        "tools": 12500992
+      },
+      "samples": 902,
+      "input_tokens": 55181,
+      "output_tokens": 1408,
+      "cached_input_tokens": 35072,
+      "tool_calls": 16,
+      "completed": true,
+      "harness": "opencode",
+      "attempt": 2,
+      "position": 1,
+      "started_at": "2026-09-11T19:43:56-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/2-1-opencode/repo",
+      "log": "2-1-opencode",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.066,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5472256,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.339,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73728000,
+          "tests": 51429376,
+          "tools": 0
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "reasoning_tokens": 10,
+      "accounted_sessions": 2,
+      "parent_only_usage": {
+        "input_tokens": 38995,
+        "output_tokens": 759,
+        "cached_input_tokens": 29312,
+        "tool_calls": 9
+      },
+      "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 88.21,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 767901696,
+        "tests": 139132928,
+        "tools": 54165504
+      },
+      "samples": 1268,
+      "input_tokens": 67238,
+      "output_tokens": 2279,
+      "cached_input_tokens": 41344,
+      "tool_calls": 19,
+      "completed": true,
+      "harness": "opencode",
+      "attempt": 3,
+      "position": 3,
+      "started_at": "2026-09-11T19:48:03-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/3-3-opencode/repo",
+      "log": "3-3-opencode",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.07,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5718016,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.338,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73515008,
+          "tests": 124092416,
+          "tools": 0
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "reasoning_tokens": 28,
+      "accounted_sessions": 2,
+      "parent_only_usage": {
+        "input_tokens": 49920,
+        "output_tokens": 1124,
+        "cached_input_tokens": 30464,
+        "tool_calls": 9
+      },
+      "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 81.377,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 805093376,
+        "tests": 197738496,
+        "tools": 13467648
+      },
+      "samples": 1174,
+      "input_tokens": 59972,
+      "output_tokens": 2040,
+      "cached_input_tokens": 43520,
+      "tool_calls": 17,
+      "completed": true,
+      "harness": "opencode",
+      "attempt": 4,
+      "position": 3,
+      "started_at": "2026-09-11T19:50:59-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/4-3-opencode/repo",
+      "log": "4-3-opencode",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.069,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5668864,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.272,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73711616,
+          "tests": 53067776,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "reasoning_tokens": 22,
+      "accounted_sessions": 2,
+      "parent_only_usage": {
+        "input_tokens": 39819,
+        "output_tokens": 1148,
+        "cached_input_tokens": 29696,
+        "tool_calls": 9
+      },
+      "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 76.472,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 823181312,
+        "tests": 177438720,
+        "tools": 98844672
+      },
+      "samples": 1104,
+      "input_tokens": 54872,
+      "output_tokens": 1920,
+      "cached_input_tokens": 38784,
+      "tool_calls": 18,
+      "completed": true,
+      "harness": "opencode",
+      "attempt": 5,
+      "position": 1,
+      "started_at": "2026-09-11T19:52:22-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/5-1-opencode/repo",
+      "log": "5-1-opencode",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.069,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5668864,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.33,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 74268672,
+          "tests": 47677440,
+          "tools": 52838400
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "reasoning_tokens": 10,
+      "accounted_sessions": 2,
+      "parent_only_usage": {
+        "input_tokens": 39341,
+        "output_tokens": 1100,
+        "cached_input_tokens": 29440,
+        "tool_calls": 9
+      },
+      "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 38.863,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 238665728,
+        "tests": 127680512,
+        "tools": 70582272
+      },
+      "samples": 561,
+      "input_tokens": 78371,
+      "output_tokens": 725,
+      "cached_input_tokens": 72064,
+      "tool_calls": 5,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 9,
+      "harness": "codex",
+      "attempt": 1,
+      "position": 3,
+      "started_at": "2026-09-11T19:43:16-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/1-3-codex/repo",
+      "log": "1-3-codex",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.07,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5849088,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.272,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 74039296,
+          "tests": 52510720,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 30.837,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 239009792,
+        "tests": 207372288,
+        "tools": 62521344
+      },
+      "samples": 443,
+      "input_tokens": 79108,
+      "output_tokens": 667,
+      "cached_input_tokens": 72576,
+      "tool_calls": 5,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 0,
+      "harness": "codex",
+      "attempt": 2,
+      "position": 2,
+      "started_at": "2026-09-11T19:44:59-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/2-2-codex/repo",
+      "log": "2-2-codex",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.07,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 4980736,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.268,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 74137600,
+          "tests": 52412416,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 34.896,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 238534656,
+        "tests": 183582720,
+        "tools": 75317248
+      },
+      "samples": 499,
+      "input_tokens": 79204,
+      "output_tokens": 741,
+      "cached_input_tokens": 72576,
+      "tool_calls": 5,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 10,
+      "harness": "codex",
+      "attempt": 3,
+      "position": 1,
+      "started_at": "2026-09-11T19:46:32-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/3-1-codex/repo",
+      "log": "3-1-codex",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.067,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 6111232,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.338,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73760768,
+          "tests": 47824896,
+          "tools": 132218880
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 30.292,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 237633536,
+        "tests": 180633600,
+        "tools": 74268672
+      },
+      "samples": 435,
+      "input_tokens": 79930,
+      "output_tokens": 586,
+      "cached_input_tokens": 72960,
+      "tool_calls": 5,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 0,
+      "harness": "codex",
+      "attempt": 4,
+      "position": 2,
+      "started_at": "2026-09-11T19:50:28-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/4-2-codex/repo",
+      "log": "4-2-codex",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.066,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 6062080,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.338,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73777152,
+          "tests": 52609024,
+          "tools": 0
+        },
+        "samples": 5
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "evidence": "benchmarks/async-search/results/"
+    },
+    {
+      "duration_s": 32.907,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 197148672,
+        "tests": 203522048,
+        "tools": 62324736
+      },
+      "samples": 470,
+      "input_tokens": 79361,
+      "output_tokens": 702,
+      "cached_input_tokens": 67456,
+      "tool_calls": 5,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 12,
+      "harness": "codex",
+      "attempt": 5,
+      "position": 3,
+      "started_at": "2026-09-11T19:54:38-0400",
+      "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+      "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/5-3-codex/repo",
+      "log": "5-3-codex",
+      "protected_files_unchanged": true,
+      "dependency_directory_absent": true,
+      "verification": {
+        "duration_s": 0.07,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 5849088,
+          "tests": 0,
+          "tools": 0
+        },
+        "samples": 1
+      },
+      "existing_tests": {
+        "duration_s": 0.273,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 73531392,
+          "tests": 52510720,
+          "tools": 0
+        },
+        "samples": 4
+      },
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "success": true,
+      "evidence": "benchmarks/async-search/results/"
+    }
+  ],
+  "matched_pairs": [],
+  "preflight": [
+    {
+      "duration_s": 17.745,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 32014336,
+        "tests": 0,
+        "tools": 77332480
+      },
+      "samples": 260,
+      "input_tokens": 18118,
+      "output_tokens": 168,
+      "cached_input_tokens": null,
+      "tool_calls": 3,
+      "completed": true,
+      "reported_model": "gpt-6-astra",
+      "harness": "handwork",
+      "tool_probe_pass": true,
+      "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+    },
+    {
+      "duration_s": 15.767,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 757399552,
+        "tests": 0,
+        "tools": 6176768
+      },
+      "samples": 230,
+      "input_tokens": 24616,
+      "output_tokens": 204,
+      "cached_input_tokens": 17920,
+      "tool_calls": 3,
+      "completed": true,
+      "harness": "opencode",
+      "tool_probe_pass": true,
+      "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+    },
+    {
+      "duration_s": 15.06,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 189923328,
+        "tests": 0,
+        "tools": 70123520
+      },
+      "samples": 216,
+      "input_tokens": 57401,
+      "output_tokens": 200,
+      "cached_input_tokens": 53888,
+      "tool_calls": 3,
+      "completed": true,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 0,
+      "harness": "codex",
+      "tool_probe_pass": true,
+      "isolation": "ancestor traversal allowed; verifier/sibling/symlink read and write denied"
+    }
+  ],
+  "controls": {
+    "broken": {
+      "exit_code": 1,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: 'react hooks',\n    results: [\n      {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n-       id: 'latest',\n-       title: 'Result latest',\n-       url: '/result/latest'\n      }\n    ]\n  }\n"
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   error: 'Old error',\n+   loading: false,\n-   error: null,\n-   loading: true,\n    query: 'react hooks',\n    results: []\n  }\n"
+        },
+        {
+          "name": "Latest request fails",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: 'Current error',\n    loading: false,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: '',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'third',\n+   results: [\n+     {\n+       id: 'stale-0',\n+       title: 'Result stale-0',\n+       url: '/result/stale-0'\n+     }\n+   ]\n-   results: []\n  }\n"
+        }
+      ],
+      "existing_tests_pass": true
+    },
+    "known_correct": {
+      "exit_code": 0,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "existing_tests_pass": true
+    },
+    "query_string_only": {
+      "exit_code": 1,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "existing_tests_pass": true
+    }
+  },
+  "installation": {
+    "handwork": {
+      "version": "Updated Handwork \u00b7 f64924a89be8"
+    },
+    "opencode": {
+      "version": "Recorded OpenCode build"
+    },
+    "codex": {
+      "version": "Recorded Codex build"
+    }
+  },
+  "server_isolation": {
+    "report_http_server_paused_before_scored_runs": true,
+    "port": 8765,
+    "reason": "Prevent HTTP access to verifier and fixture source"
+  },
+  "comparison": {
+    "summary": {
+      "handwork": {
+        "success": 5,
+        "attempts": 5,
+        "timeouts": 0,
+        "median_peak_mib": 27.84375,
+        "median_solved_s": 48.636,
+        "input_tokens": 176899,
+        "output_tokens": 5223,
+        "tool_calls": 52
+      },
+      "opencode": {
+        "success": 5,
+        "attempts": 5,
+        "timeouts": 0,
+        "median_peak_mib": 757.234375,
+        "median_solved_s": 79.869,
+        "input_tokens": 302288,
+        "output_tokens": 9567,
+        "tool_calls": 89
+      },
+      "codex": {
+        "success": 5,
+        "attempts": 5,
+        "timeouts": 0,
+        "median_peak_mib": 227.484375,
+        "median_solved_s": 32.907,
+        "input_tokens": 395974,
+        "output_tokens": 3421,
+        "tool_calls": 25
+      }
+    },
+    "runs": [
+      {
+        "duration_s": 44.039,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 28966912,
+          "tests": 201457664,
+          "tools": 78315520
+        },
+        "samples": 602,
+        "input_tokens": 32914,
+        "output_tokens": 871,
+        "cached_input_tokens": 4864,
+        "tool_calls": 10,
+        "completed": true,
+        "cache_write_tokens": 0,
+        "reasoning_tokens": 0,
+        "reported_model": "gpt-6-astra",
+        "variant": "optimized",
+        "attempt": 1,
+        "position": 2,
+        "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/1-2-optimized/repo",
+        "log": "1-2-optimized",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "protected_files_unchanged": true,
+        "verification": {
+          "duration_s": 0.071,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5685248,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.276,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73842688,
+            "tests": 81231872,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "harness": "handwork",
+        "evidence": "benchmarks/optimization/results-final/"
+      },
+      {
+        "duration_s": 48.636,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 30228480,
+          "tests": 130711552,
+          "tools": 81903616
+        },
+        "samples": 691,
+        "input_tokens": 38180,
+        "output_tokens": 1109,
+        "cached_input_tokens": 12160,
+        "tool_calls": 11,
+        "completed": true,
+        "cache_write_tokens": 0,
+        "reasoning_tokens": 15,
+        "reported_model": "gpt-6-astra",
+        "variant": "optimized",
+        "attempt": 2,
+        "position": 1,
+        "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/2-1-optimized/repo",
+        "log": "2-1-optimized",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "protected_files_unchanged": true,
+        "verification": {
+          "duration_s": 0.067,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5865472,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.334,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73695232,
+            "tests": 47726592,
+            "tools": 0
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "harness": "handwork",
+        "evidence": "benchmarks/optimization/results-final/"
+      },
+      {
+        "duration_s": 47.975,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 29196288,
+          "tests": 186056704,
+          "tools": 73269248
+        },
+        "samples": 689,
+        "input_tokens": 33430,
+        "output_tokens": 1052,
+        "cached_input_tokens": 7296,
+        "tool_calls": 10,
+        "completed": true,
+        "cache_write_tokens": 0,
+        "reasoning_tokens": 11,
+        "reported_model": "gpt-6-astra",
+        "variant": "optimized",
+        "attempt": 3,
+        "position": 2,
+        "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/3-2-optimized/repo",
+        "log": "3-2-optimized",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "protected_files_unchanged": true,
+        "verification": {
+          "duration_s": 0.067,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 6144000,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.334,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73777152,
+            "tests": 45416448,
+            "tools": 133660672
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "harness": "handwork",
+        "evidence": "benchmarks/optimization/results-final/"
+      },
+      {
+        "duration_s": 52.421,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 28246016,
+          "tests": 191676416,
+          "tools": 72351744
+        },
+        "samples": 754,
+        "input_tokens": 33265,
+        "output_tokens": 1134,
+        "cached_input_tokens": 6400,
+        "tool_calls": 10,
+        "completed": true,
+        "cache_write_tokens": 0,
+        "reasoning_tokens": 8,
+        "reported_model": "gpt-6-astra",
+        "variant": "optimized",
+        "attempt": 4,
+        "position": 1,
+        "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/4-1-optimized/repo",
+        "log": "4-1-optimized",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "protected_files_unchanged": true,
+        "verification": {
+          "duration_s": 0.069,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5308416,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.34,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 74301440,
+            "tests": 36012032,
+            "tools": 132349952
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "harness": "handwork",
+        "evidence": "benchmarks/optimization/results-final/"
+      },
+      {
+        "duration_s": 52.613,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 30588928,
+          "tests": 147013632,
+          "tools": 71303168
+        },
+        "samples": 756,
+        "input_tokens": 39110,
+        "output_tokens": 1057,
+        "cached_input_tokens": 7296,
+        "tool_calls": 11,
+        "completed": true,
+        "cache_write_tokens": 0,
+        "reasoning_tokens": 8,
+        "reported_model": "gpt-6-astra",
+        "variant": "optimized",
+        "attempt": 5,
+        "position": 2,
+        "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/5-2-optimized/repo",
+        "log": "5-2-optimized",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "protected_files_unchanged": true,
+        "verification": {
+          "duration_s": 0.069,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5652480,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.334,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73695232,
+            "tests": 44220416,
+            "tools": 52674560
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "harness": "handwork",
+        "evidence": "benchmarks/optimization/results-final/"
+      },
+      {
+        "duration_s": 79.869,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 785547264,
+          "tests": 124960768,
+          "tools": 73842688
+        },
+        "samples": 1166,
+        "input_tokens": 65025,
+        "output_tokens": 1920,
+        "cached_input_tokens": 48896,
+        "tool_calls": 19,
+        "completed": true,
+        "harness": "opencode",
+        "attempt": 1,
+        "position": 2,
+        "started_at": "2026-09-11T19:41:56-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/1-2-opencode/repo",
+        "log": "1-2-opencode",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.068,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5685248,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.27,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73596928,
+            "tests": 53198848,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "reasoning_tokens": 22,
+        "accounted_sessions": 2,
+        "parent_only_usage": {
+          "input_tokens": 48030,
+          "output_tokens": 1132,
+          "cached_input_tokens": 38144,
+          "tool_calls": 9
+        },
+        "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 62.092,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 794017792,
+          "tests": 158171136,
+          "tools": 12500992
+        },
+        "samples": 902,
+        "input_tokens": 55181,
+        "output_tokens": 1408,
+        "cached_input_tokens": 35072,
+        "tool_calls": 16,
+        "completed": true,
+        "harness": "opencode",
+        "attempt": 2,
+        "position": 1,
+        "started_at": "2026-09-11T19:43:56-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/2-1-opencode/repo",
+        "log": "2-1-opencode",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.066,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5472256,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.339,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73728000,
+            "tests": 51429376,
+            "tools": 0
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "reasoning_tokens": 10,
+        "accounted_sessions": 2,
+        "parent_only_usage": {
+          "input_tokens": 38995,
+          "output_tokens": 759,
+          "cached_input_tokens": 29312,
+          "tool_calls": 9
+        },
+        "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 88.21,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 767901696,
+          "tests": 139132928,
+          "tools": 54165504
+        },
+        "samples": 1268,
+        "input_tokens": 67238,
+        "output_tokens": 2279,
+        "cached_input_tokens": 41344,
+        "tool_calls": 19,
+        "completed": true,
+        "harness": "opencode",
+        "attempt": 3,
+        "position": 3,
+        "started_at": "2026-09-11T19:48:03-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/3-3-opencode/repo",
+        "log": "3-3-opencode",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.07,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5718016,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.338,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73515008,
+            "tests": 124092416,
+            "tools": 0
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "reasoning_tokens": 28,
+        "accounted_sessions": 2,
+        "parent_only_usage": {
+          "input_tokens": 49920,
+          "output_tokens": 1124,
+          "cached_input_tokens": 30464,
+          "tool_calls": 9
+        },
+        "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 81.377,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 805093376,
+          "tests": 197738496,
+          "tools": 13467648
+        },
+        "samples": 1174,
+        "input_tokens": 59972,
+        "output_tokens": 2040,
+        "cached_input_tokens": 43520,
+        "tool_calls": 17,
+        "completed": true,
+        "harness": "opencode",
+        "attempt": 4,
+        "position": 3,
+        "started_at": "2026-09-11T19:50:59-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/4-3-opencode/repo",
+        "log": "4-3-opencode",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.069,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5668864,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.272,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73711616,
+            "tests": 53067776,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "reasoning_tokens": 22,
+        "accounted_sessions": 2,
+        "parent_only_usage": {
+          "input_tokens": 39819,
+          "output_tokens": 1148,
+          "cached_input_tokens": 29696,
+          "tool_calls": 9
+        },
+        "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 76.472,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 823181312,
+          "tests": 177438720,
+          "tools": 98844672
+        },
+        "samples": 1104,
+        "input_tokens": 54872,
+        "output_tokens": 1920,
+        "cached_input_tokens": 38784,
+        "tool_calls": 18,
+        "completed": true,
+        "harness": "opencode",
+        "attempt": 5,
+        "position": 1,
+        "started_at": "2026-09-11T19:52:22-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/5-1-opencode/repo",
+        "log": "5-1-opencode",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.069,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5668864,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.33,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 74268672,
+            "tests": 47677440,
+            "tools": 52838400
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "reasoning_tokens": 10,
+        "accounted_sessions": 2,
+        "parent_only_usage": {
+          "input_tokens": 39341,
+          "output_tokens": 1100,
+          "cached_input_tokens": 29440,
+          "tool_calls": 9
+        },
+        "accounting_note": "Includes parent and descendant OpenCode sessions; recovered from the read-only session database.",
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 38.863,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 238665728,
+          "tests": 127680512,
+          "tools": 70582272
+        },
+        "samples": 561,
+        "input_tokens": 78371,
+        "output_tokens": 725,
+        "cached_input_tokens": 72064,
+        "tool_calls": 5,
+        "completed": true,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 9,
+        "harness": "codex",
+        "attempt": 1,
+        "position": 3,
+        "started_at": "2026-09-11T19:43:16-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/1-3-codex/repo",
+        "log": "1-3-codex",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.07,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5849088,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.272,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 74039296,
+            "tests": 52510720,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 30.837,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 239009792,
+          "tests": 207372288,
+          "tools": 62521344
+        },
+        "samples": 443,
+        "input_tokens": 79108,
+        "output_tokens": 667,
+        "cached_input_tokens": 72576,
+        "tool_calls": 5,
+        "completed": true,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 0,
+        "harness": "codex",
+        "attempt": 2,
+        "position": 2,
+        "started_at": "2026-09-11T19:44:59-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/2-2-codex/repo",
+        "log": "2-2-codex",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.07,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 4980736,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.268,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 74137600,
+            "tests": 52412416,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 34.896,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 238534656,
+          "tests": 183582720,
+          "tools": 75317248
+        },
+        "samples": 499,
+        "input_tokens": 79204,
+        "output_tokens": 741,
+        "cached_input_tokens": 72576,
+        "tool_calls": 5,
+        "completed": true,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 10,
+        "harness": "codex",
+        "attempt": 3,
+        "position": 1,
+        "started_at": "2026-09-11T19:46:32-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/3-1-codex/repo",
+        "log": "3-1-codex",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.067,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 6111232,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.338,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73760768,
+            "tests": 47824896,
+            "tools": 132218880
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 30.292,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 237633536,
+          "tests": 180633600,
+          "tools": 74268672
+        },
+        "samples": 435,
+        "input_tokens": 79930,
+        "output_tokens": 586,
+        "cached_input_tokens": 72960,
+        "tool_calls": 5,
+        "completed": true,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 0,
+        "harness": "codex",
+        "attempt": 4,
+        "position": 2,
+        "started_at": "2026-09-11T19:50:28-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/4-2-codex/repo",
+        "log": "4-2-codex",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.066,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 6062080,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.338,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73777152,
+            "tests": 52609024,
+            "tools": 0
+          },
+          "samples": 5
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "evidence": "benchmarks/async-search/results/"
+      },
+      {
+        "duration_s": 32.907,
+        "timeout": false,
+        "exit_code": 0,
+        "peak_rss_bytes": {
+          "harness": 197148672,
+          "tests": 203522048,
+          "tools": 62324736
+        },
+        "samples": 470,
+        "input_tokens": 79361,
+        "output_tokens": 702,
+        "cached_input_tokens": 67456,
+        "tool_calls": 5,
+        "completed": true,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 12,
+        "harness": "codex",
+        "attempt": 5,
+        "position": 3,
+        "started_at": "2026-09-11T19:54:38-0400",
+        "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+        "workspace": "/private/tmp/handwork-search-benchmark-d5rjswig/5-3-codex/repo",
+        "log": "5-3-codex",
+        "protected_files_unchanged": true,
+        "dependency_directory_absent": true,
+        "verification": {
+          "duration_s": 0.07,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 5849088,
+            "tests": 0,
+            "tools": 0
+          },
+          "samples": 1
+        },
+        "existing_tests": {
+          "duration_s": 0.273,
+          "timeout": false,
+          "exit_code": 0,
+          "peak_rss_bytes": {
+            "harness": 73531392,
+            "tests": 52510720,
+            "tools": 0
+          },
+          "samples": 4
+        },
+        "checks": [
+          {
+            "name": "Ordinary search succeeds",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives after newer success",
+            "pass": true
+          },
+          {
+            "name": "Older success arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Older failure arrives while newer request is pending",
+            "pass": true
+          },
+          {
+            "name": "Latest request fails",
+            "pass": true
+          },
+          {
+            "name": "Query cleared during a request",
+            "pass": true
+          },
+          {
+            "name": "Pending request finishes after clearing",
+            "pass": true
+          },
+          {
+            "name": "Query changes A \u2192 B \u2192 A",
+            "pass": true
+          },
+          {
+            "name": "Three requests complete in different orders",
+            "pass": true
+          }
+        ],
+        "success": true,
+        "evidence": "benchmarks/async-search/results/"
+      }
+    ],
+    "updated_cohort": "2026-09-11T20:30:24-0400",
+    "original_cohort": "2026-09-11T19:39:50-0400"
+  }
+}

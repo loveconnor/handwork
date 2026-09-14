@@ -1,0 +1,20 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.745958ms)
+✔ organizations scoped to user (0.12525ms)
+✔ logout revokes session (0.093625ms)
+✔ authenticated detail (0.544542ms)
+✔ authenticated list (4.860417ms)
+✔ update then read (0.106167ms)
+✔ anonymous request rejected (0.301291ms)
+✔ invalid update rejected (0.065917ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.662584

@@ -1,0 +1,32 @@
+{
+  "name": "handwork",
+  "version": "0.0.9",
+  "description": "Fast, native coding agent for the terminal",
+  "homepage": "https://connorlove.com",
+  "author": {
+    "name": "Connor Love",
+    "url": "https://connorlove.com"
+  },
+  "bin": {
+    "handwork": "zig-out/bin/handwork"
+  },
+  "files": [
+    "zig-out/bin/handwork",
+    "README.md",
+    "docs/provider-terms-audit.md",
+    "zig-out/lib/handwork"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@github/copilot-sdk": "1.0.13"
+  }
+}

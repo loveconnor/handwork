@@ -1,0 +1,75 @@
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+● Matching[0m
+Matching **/*
+Running git status --short
+/dev/fd/11:25: command not found: compdef
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+Reading src/search/controller.ts
+Reading src/api/search.ts
+Reading src/ui/search-view.ts
+Reading tests/search.test.ts
+Reading package.json
+Reading README.md
+Editing src/search/controller.ts
+Running npm test && node --input-type=module <<'NODE' import assert from 'node:assert/strict'; import { createSearchControlle...
+
+> test
+> node --test tests/*.test.ts
+
+✔ initial state and empty input (0.5625ms)
+✔ ordinary API request encodes the query and displays results (0.116792ms)
+✔ ordinary failure becomes state and subscribers can unsubscribe (0.132292ms)
+✔ view handles input, renders state and detaches listeners (0.114459ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.449125
+Race and clearing probe passed
+ src/search/controller.ts | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+diff --git a/src/search/controller.ts b/src/search/controller.ts
+index d6ab5ca..2d091c0 100644
+--- a/src/search/controller.ts
++++ b/src/search/controller.ts
+@@ -15,6 +15,7 @@ export interface SearchController {
+ 
+ export function createSearchController(api: SearchApi): SearchController {
+   let state: SearchState = { query: '', results: [], loading: false, error: null };
++  let latestSearchId = 0;
+   const listeners = new Set<(state: SearchState) => void>();
+   const getState = (): SearchState => ({ ...state, results: [...state.results] });
+   const update = (patch: Partial<SearchState>): void => {
+@@ -30,6 +31,7 @@ export function createSearchController(api: SearchApi): SearchController {
+       return () => { listeners.delete(listener); };
+     },
+     async search(query) {
++      const searchId = ++latestSearchId;
+       const normalized = query.trim();
+       if (!normalized) {
+         update({ query: '', results: [], loading: false, error: null });
+@@ -38,11 +40,13 @@ export function createSearchController(api: SearchApi): SearchController {
+       update({ query: normalized, loading: true, error: null });
+       try {
+         const results = await api.search(normalized);
+-        update({ results });
++        if (searchId === latestSearchId) update({ results });
+       } catch (error) {
+-        update({ error: error instanceof Error ? error.message : String(error) });
++        if (searchId === latestSearchId) {
++          update({ error: error instanceof Error ? error.message : String(error) });
++        }
+       } finally {
+-        update({ loading: false });
++        if (searchId === latestSearchId) update({ loading: false });
+       }
+     },
+   };

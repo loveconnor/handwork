@@ -1,0 +1,98 @@
+[
+  {
+    "seconds": 0.001,
+    "totals": {
+      "harness": 4947968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 22796,
+        "ppid": 19498,
+        "rss": 4947968,
+        "kind": "harness",
+        "comm": "node"
+      }
+    ]
+  },
+  {
+    "seconds": 0.079,
+    "totals": {
+      "harness": 73924608,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 22796,
+        "ppid": 19498,
+        "rss": 73924608,
+        "kind": "harness",
+        "comm": "npm"
+      },
+      {
+        "pid": 22813,
+        "ppid": 22796,
+        "rss": 0,
+        "kind": "tools",
+        "comm": "(node)"
+      }
+    ]
+  },
+  {
+    "seconds": 0.152,
+    "totals": {
+      "harness": 73924608,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 22817,
+        "ppid": 22796,
+        "rss": 32768,
+        "kind": "tests",
+        "comm": "node"
+      },
+      {
+        "pid": 22796,
+        "ppid": 19498,
+        "rss": 73924608,
+        "kind": "harness",
+        "comm": "npm"
+      }
+    ]
+  },
+  {
+    "seconds": 0.23,
+    "totals": {
+      "harness": 73924608,
+      "tests": 101203968,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 22817,
+        "ppid": 22796,
+        "rss": 52346880,
+        "kind": "tests",
+        "comm": "node"
+      },
+      {
+        "pid": 22819,
+        "ppid": 22817,
+        "rss": 48857088,
+        "kind": "tests",
+        "comm": "/Users/connorlov"
+      },
+      {
+        "pid": 22796,
+        "ppid": 19498,
+        "rss": 73924608,
+        "kind": "harness",
+        "comm": "npm"
+      }
+    ]
+  }
+]

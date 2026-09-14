@@ -1,0 +1,358 @@
+1789174951418 [agent] event=prompt_start turn_id=1 prompt_bytes=1324 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789174953844 [agent] step start step=1 limit=0 messages=9
+1789174953844 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=9
+1789174953844 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=9
+1789174953844 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174953844 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+● Matching[0m
+1789174957195 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=0 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=true
+1789174957195 [agent] step completion step=1 content_bytes=127 tool_calls=1 finish_reason=tool-calls
+1789174957195 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=127 tool_call_count=1 finish_reason=tool-calls
+Matching **/*
+1789174957203 [agent] step start step=2 limit=0 messages=11
+1789174957203 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789174957203 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789174957203 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174957203 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+1789174961221 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=2 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789174961221 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789174961221 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running git status --short; cat package.json; cat src/{app.ts,types.ts} src/auth/*.ts src/cache/*.ts src/routes/{projects,org...
+/dev/fd/11:25: command not found: compdef
+{
+  "name": "tenant-cache-benchmark",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}import { createDatabase } from './db/database.ts';
+import type { Seed } from './db/database.ts';
+import { createCache } from './cache/project-cache.ts';
+import type { Cache } from './cache/project-cache.ts';
+import { createRouter } from './http/router.ts';
+import { registerProjects } from './routes/projects.ts';
+import { registerOrganizations } from './routes/organizations.ts';
+import { registerAccount } from './routes/account.ts';
+export function createApp(seed:Seed,cache:Cache=createCache()) {
+  const db=createDatabase(seed),router=createRouter();
+  registerProjects(router,db,cache);registerOrganizations(router,db);registerAccount(router,db);
+  return {request:router.handle,db,cache};
+}
+export type Project = { id: string; organizationId: string; name: string; updatedAt: number };
+export type Organization = { id: string; name: string };
+export type User = { id: string; name: string };
+export type ListOptions = { page: number; pageSize: number; sort: 'name' | 'updatedAt'; direction: 'asc' | 'desc' };
+export type Request = { method: string; path: string; token?: string; query?: Record<string,string>; body?: unknown };
+export type Response = { status: number; body: unknown };
+import { membershipRepository } from '../db/membership-repository.ts';
+import type { Database } from '../db/database.ts';
+import { HttpError } from '../http/response.ts';
+export function requireMembership(db:Database,userId:string,organizationId:string) {
+  if(!membershipRepository(db).has(userId,organizationId)) throw new HttpError(403,'forbidden');
+}
+import type { Database } from '../db/database.ts';
+import { HttpError } from '../http/response.ts';
+export function requireSession(db:Database,token?:string) {
+  const id=token ? db.sessions.get(token) : undefined;
+  const user=id ? db.users.get(id) : undefined;
+  if(!user) throw new HttpError(401,'unauthorized');
+  return {...user};
+}
+import type { ListOptions } from '../types.ts';
+export function projectListKey(organizationId:string,options:ListOptions):string {
+  return `projects:list:${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
+}
+export function projectDetailKey(projectId:string):string { return `projects:detail:${projectId}`; }
+export interface Cache {
+  get(key:string): unknown;
+  set(key:string,value:unknown): void;
+  delete(key:string): void;
+  keys(): string[];
+}
+export function createCache() {
+  const entries=new Map<string,unknown>();
+  const metrics={hits:0,misses:0,writes:0,deletes:0};
+  return {
+    metrics,
+    get(key:string){if(entries.has(key)){metrics.hits++;return structuredClone(entries.get(key));}metrics.misses++;return undefined;},
+    set(key:string,value:unknown){metrics.writes++;entries.set(key,structuredClone(value));},
+    delete(key:string){metrics.deletes++;entries.delete(key);},
+    keys(){return [...entries.keys()];},
+  };
+}
+import type { Router } from '../http/router.ts';
+import type { Database } from '../db/database.ts';
+import type { Cache } from '../cache/project-cache.ts';
+import { requireSession } from '../auth/session.ts';
+import { projectService } from '../services/project-service.ts';
+import { listOptions } from '../http/list-options.ts';
+import { ok } from '../http/response.ts';
+export function registerProjects(router:Router,db:Database,cache:Cache) {
+  const service=projectService(db,cache);
+  router.add('GET','/projects/:projectId',(req,p)=>ok(service.detail(requireSession(db,req.token).id,p.projectId)));
+  router.add('PATCH','/projects/:projectId',(req,p)=>ok(service.update(requireSession(db,req.token).id,p.projectId,req.body)));
+  router.add('GET','/organizations/:organizationId/projects',(req,p)=>ok(service.list(requireSession(db,req.token).id,p.organizationId,listOptions(req.query))));
+}
+import type { Router } from '../http/router.ts';
+import type { Database } from '../db/database.ts';
+import { requireSession } from '../auth/session.ts';
+import { organizationService } from '../services/organization-service.ts';
+import { ok } from '../http/response.ts';
+export function registerOrganizations(router:Router,db:Database) {
+  const service=organizationService(db);
+  router.add('GET','/organizations',(req)=>ok(service.list(requireSession(db,req.token).id)));
+  router.add('GET','/organizations/:organizationId',(req,p)=>ok(service.detail(requireSession(db,req.token).id,p.organizationId)));
+}
+import type { Database } from '../db/database.ts';
+import { membershipRepository } from '../db/membership-repository.ts';
+import { requireMembership } from '../auth/membership.ts';
+import { HttpError } from '../http/response.ts';
+export function organizationService(db:Database){return {
+  list(userId:string){return {items:membershipRepository(db).organizationsFor(userId)};},
+  detail(userId:string,id:string){requireMembership(db,userId,id);const org=db.organizations.get(id);if(!org)throw new HttpError(404,'not_found');return {...org};},
+};}
+import type { Database } from '../db/database.ts';
+import type { Cache } from '../cache/project-cache.ts';
+import type { ListOptions } from '../types.ts';
+import { projectRepository } from '../db/project-repository.ts';
+import { requireMembership } from '../auth/membership.ts';
+import { projectListKey, projectDetailKey } from '../cache/keys.ts';
+import { HttpError } from '../http/response.ts';
+export function projectService(db:Database,cache:Cache) {
+  const projects=projectRepository(db);
+  function detail(userId:string,projectId:string) {
+    const project=projects.find(projectId);
+    if(!project)throw new HttpError(404,'not_found');
+    return project;
+  }
+  return {
+    detail,
+    list(userId:string,organizationId:string,options:ListOptions) {
+      requireMembership(db,userId,organizationId);
+      const key=projectListKey(organizationId,options);
+      const cached=cache.get(key);
+      if(cached!==undefined)return cached;
+      const result=projects.list(organizationId,options);cache.set(key,result);return result;
+    },
+    update(userId:string,projectId:string,body:unknown) {
+      detail(userId,projectId);
+      if(!body||typeof body!=='object'||typeof (body as any).name!=='string'||!(body as any).name.trim())throw new HttpError(400,'invalid_body');
+      const updated=projects.update(projectId,(body as any).name.trim())!;
+      cache.delete(projectDetailKey(projectId));
+      return updated;
+    },
+  };
+}
+import type { Project, Organization, User } from '../types.ts';
+export type Seed = { projects: Project[]; organizations: Organization[]; users: User[]; memberships: {userId:string; organizationId:string}[]; sessions: Record<string,string> };
+export function createDatabase(seed: Seed) {
+  return {
+    projects: new Map(seed.projects.map(p => [p.id, structuredClone(p)])),
+    organizations: new Map(seed.organizations.map(o => [o.id, {...o}])),
+    users: new Map(seed.users.map(u => [u.id, {...u}])),
+    memberships: new Set(seed.memberships.map(m => JSON.stringify([m.userId,m.organizationId]))),
+    sessions: new Map(Object.entries(seed.sessions)),
+    counters: { projectReads: 0, projectLists: 0, projectUpdates: 0 },
+  };
+}
+export type Database = ReturnType<typeof createDatabase>;
+import type { Database } from './database.ts';
+export function membershipRepository(db:Database) {
+  const key=(userId:string,organizationId:string)=>JSON.stringify([userId,organizationId]);
+  return {
+    has(userId:string,organizationId:string){return db.memberships.has(key(userId,organizationId));},
+    revoke(userId:string,organizationId:string){db.memberships.delete(key(userId,organizationId));},
+    organizationsFor(userId:string){return [...db.organizations.values()].filter(o=>db.memberships.has(key(userId,o.id))).map(o=>({...o}));},
+  };
+}
+import type { Database } from './database.ts';
+import type { ListOptions } from '../types.ts';
+export function projectRepository(db: Database) {
+  return {
+    find(id: string) { db.counters.projectReads++; const p=db.projects.get(id); return p ? {...p} : undefined; },
+    list(organizationId: string, options: ListOptions) {
+      db.counters.projectLists++;
+      const rows=[...db.projects.values()].filter(p=>p.organizationId===organizationId);
+      rows.sort((a,b)=> {
+        const primary=options.sort==='name' ? a.name.localeCompare(b.name) : a.updatedAt-b.updatedAt;
+        return (primary || a.id.localeCompare(b.id)) * (options.direction==='asc' ? 1 : -1);
+      });
+      const start=(options.page-1)*options.pageSize;
+      return { items: rows.slice(start,start+options.pageSize).map(p=>({...p})), total: rows.length, ...options };
+    },
+    update(id:string, name:string) {
+      db.counters.projectUpdates++;
+      const p=db.projects.get(id); if(!p) return undefined;
+      const updated={...p,name,updatedAt:p.updatedAt+1}; db.projects.set(id,updated); return {...updated};
+    },
+  };
+}
+import type { ListOptions } from '../types.ts';
+import { HttpError } from './response.ts';
+export function listOptions(query:Record<string,string>={}):ListOptions {
+  const page=Number(query.page??1),pageSize=Number(query.pageSize??10),sort=query.sort??'name',direction=query.direction??'asc';
+  if(!Number.isInteger(page)||page<1||!Number.isInteger(pageSize)||pageSize<1||pageSize>100||!['name','updatedAt'].includes(sort)||!['asc','desc'].includes(direction))throw new HttpError(400,'invalid_query');
+  return {page,pageSize,sort:sort as ListOptions['sort'],direction:direction as ListOptions['direction']};
+}
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createApp } from '../src/app.ts';
+import { sampleSeed } from '../src/seed.ts';
+test('authenticated detail',()=>{const a=createApp(sampleSeed());assert.equal(a.request({method:'GET',path:'/projects/a1',token:'alice'}).status,200);});
+test('authenticated list',()=>{const a=createApp(sampleSeed());const r=a.request({method:'GET',path:'/organizations/org-a/projects',token:'alice'});assert.equal(r.status,200);assert.equal((r.body as any).items.length,3);});
+test('update then read',()=>{const a=createApp(sampleSeed());assert.equal(a.request({method:'PATCH',path:'/projects/a1',token:'alice',body:{name:'New'}}).status,200);assert.equal((a.request({method:'GET',path:'/projects/a1',token:'alice'}).body as any).name,'New');});
+test('anonymous request rejected',()=>{const a=createApp(sampleSeed());assert.deepEqual(a.request({method:'GET',path:'/projects/a1'}),{status:401,body:{error:'unauthorized'}});});
+test('invalid update rejected',()=>{const a=createApp(sampleSeed());assert.equal(a.request({method:'PATCH',path:'/projects/a1',token:'alice',body:{name:''}}).status,400);});
+# Project-management API
+
+Node 24 runs TypeScript directly. Run `npm test`; no third-party dependencies are needed.
+
+`createApp(seed, cache?)` returns a synchronous `request({method,path,token?,query?,body?})` dispatcher plus the in-memory `db` and injected `cache`. The fixture uses no network, clock or database service. Database counters expose project reads, list queries and updates for instrumentation. Cache values are snapshots, not references into storage.
+
+## API conventions
+
+- Successful reads and updates return status 200 with the resource, or a list `{items,total,page,pageSize,sort,direction}`. Logout returns 204 with null.
+- Missing/invalid sessions return 401 `{error:"unauthorized"}`.
+- Authenticated nonmembers return 403 `{error:"forbidden"}` with no resource fields. Known project IDs use the project's actual owning organization, regardless of organization IDs supplied in query/body. Only `name` is editable; ownership cannot be reassigned.
+- Missing projects return 404 `{error:"not_found"}`. Unknown routes also return 404.
+- Invalid list options return 400 `{error:"invalid_query"}`; invalid project names return 400 `{error:"invalid_body"}`. Unexpected failures return 500 `{error:"internal_error"}`.
+
+GET/PATCH `/projects/:projectId` require membership in the project's owning organization. GET `/organizations/:organizationId/projects` requires current membership, including on cache hits. GET `/organizations` lists the current user's organizations; GET `/organizations/:organizationId`, GET `/me`, DELETE `/session`, and GET `/health` also work.
+
+## Lists and caching
+
+Page and pageSize default to 1 and 10 (positive integers, size at most 100). Sort is name or updatedAt (default name); direction is asc or desc (default asc). Ties sort by ID in the same direction. The cache must keep organizations, pages, page sizes, sort fields and directions distinct. A successful project update invalidates every list variant for only the owning organization; unrelated cached lists must remain usable. Unauthorized requests must not mutate storage or cached entries. Revoked membership takes effect immediately. Caching must remain enabled, with repeated identical authorized lists avoiding another repository list query.
+
+The injected cache interface is get/set/delete/keys; callers may supply an instrumented implementation. Organization IDs are opaque strings, so cache grouping must distinguish IDs that share prefixes or contain punctuation.
+1789174961421 [agent] step start step=3 limit=0 messages=13
+1789174961421 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789174961421 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789174961421 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174961421 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Reading[0m
+1789174963800 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=2 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789174963800 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789174963800 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading src/seed.ts
+1789174963801 [agent] step start step=4 limit=0 messages=15
+1789174963801 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1789174963801 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=15
+1789174963801 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174963801 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+1789174973225 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=0 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=true
+1789174973225 [agent] step completion step=4 content_bytes=301 tool_calls=1 finish_reason=tool-calls
+1789174973225 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=301 tool_call_count=1 finish_reason=tool-calls
+Editing src/cache/keys.ts
+1789174973226 [agent] step start step=5 limit=0 messages=17
+1789174973226 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=17
+1789174973226 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=17
+1789174973226 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174973227 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+1789174980883 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789174980883 [agent] step completion step=5 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789174980883 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Editing src/services/project-service.ts
+1789174980884 [agent] step start step=6 limit=0 messages=19
+1789174980884 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=19
+1789174980884 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=19
+1789174980884 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789174980885 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+1789175016032 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789175016032 [agent] step completion step=6 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789175016032 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/project-isolation.test.ts
+1789175016034 [agent] step start step=7 limit=0 messages=21
+1789175016034 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=21
+1789175016034 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=21
+1789175016034 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789175016034 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+1789175020516 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789175020516 [agent] step completion step=7 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789175020516 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm test; git diff --check; git diff --stat; git diff -- src/cache/keys.ts src/services/project-service.ts; git statu...
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.785375ms)
+✔ organizations scoped to user (0.120542ms)
+✔ logout revokes session (0.099875ms)
+✔ nonmembers cannot read or update projects, including forged ownership (5.88825ms)
+✔ all list variants isolate organizations and only owning lists are invalidated (1.370708ms)
+✔ revoked membership denies cached lists and project access without mutation (0.19575ms)
+✔ authenticated detail (0.61525ms)
+✔ authenticated list (5.227125ms)
+✔ update then read (0.266542ms)
+✔ anonymous request rejected (0.456958ms)
+✔ invalid update rejected (0.107583ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.233958
+ src/cache/keys.ts               | 5 ++++-
+ src/services/project-service.ts | 5 ++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+diff --git a/src/cache/keys.ts b/src/cache/keys.ts
+index 08f7c8d..ba76dc7 100644
+--- a/src/cache/keys.ts
++++ b/src/cache/keys.ts
+@@ -1,5 +1,8 @@
+ import type { ListOptions } from '../types.ts';
++export function projectListPrefix(organizationId:string):string {
++  return `projects:list:${JSON.stringify(organizationId)}:`;
++}
+ export function projectListKey(organizationId:string,options:ListOptions):string {
+-  return `projects:list:${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
++  return `${projectListPrefix(organizationId)}${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
+ }
+ export function projectDetailKey(projectId:string):string { return `projects:detail:${projectId}`; }
+diff --git a/src/services/project-service.ts b/src/services/project-service.ts
+index e7699bc..c03b656 100644
+--- a/src/services/project-service.ts
++++ b/src/services/project-service.ts
+@@ -3,13 +3,14 @@ import type { Cache } from '../cache/project-cache.ts';
+ import type { ListOptions } from '../types.ts';
+ import { projectRepository } from '../db/project-repository.ts';
+ import { requireMembership } from '../auth/membership.ts';
+-import { projectListKey, projectDetailKey } from '../cache/keys.ts';
++import { projectListKey, projectListPrefix, projectDetailKey } from '../cache/keys.ts';
+ import { HttpError } from '../http/response.ts';
+ export function projectService(db:Database,cache:Cache) {
+   const projects=projectRepository(db);
+   function detail(userId:string,projectId:string) {
+     const project=projects.find(projectId);
+     if(!project)throw new HttpError(404,'not_found');
++    requireMembership(db,userId,project.organizationId);
+     return project;
+   }
+   return {
+@@ -26,6 +27,8 @@ export function projectService(db:Database,cache:Cache) {
+       if(!body||typeof body!=='object'||typeof (body as any).name!=='string'||!(body as any).name.trim())throw new HttpError(400,'invalid_body');
+       const updated=projects.update(projectId,(body as any).name.trim())!;
+       cache.delete(projectDetailKey(projectId));
++      const prefix=projectListPrefix(updated.organizationId);
++      for(const key of cache.keys())if(key.startsWith(prefix))cache.delete(key);
+       return updated;
+     },
+   };
+ M src/cache/keys.ts
+ M src/services/project-service.ts
+?? tests/project-isolation.test.ts
+1789175020878 [agent] step start step=8 limit=0 messages=23
+1789175020878 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=23
+1789175020878 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=23
+1789175020878 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789175020879 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+1789175025018 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789175025018 [agent] step completion step=8 content_bytes=443 tool_calls=0 finish_reason=stop
+1789175025018 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=443 tool_call_count=0 finish_reason=stop
+1789175025019 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

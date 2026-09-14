@@ -1,0 +1,862 @@
+[
+  {
+    "duration_s": 64.52,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 47120384,
+      "tests": 126025728,
+      "tools": 78479360
+    },
+    "samples": 889,
+    "input_tokens": 71296,
+    "output_tokens": 1143,
+    "cached_input_tokens": null,
+    "tool_calls": 15,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "variant": "baseline",
+    "attempt": 1,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/1-1-baseline/repo",
+    "log": "1-1-baseline",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.07,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5996544,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.34,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73728000,
+        "tests": 52641792,
+        "tools": 0
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 44.039,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28966912,
+      "tests": 201457664,
+      "tools": 78315520
+    },
+    "samples": 602,
+    "input_tokens": 32914,
+    "output_tokens": 871,
+    "cached_input_tokens": 4864,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "variant": "optimized",
+    "attempt": 1,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/1-2-optimized/repo",
+    "log": "1-2-optimized",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.071,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5685248,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.276,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73842688,
+        "tests": 81231872,
+        "tools": 0
+      },
+      "samples": 4
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 48.636,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30228480,
+      "tests": 130711552,
+      "tools": 81903616
+    },
+    "samples": 691,
+    "input_tokens": 38180,
+    "output_tokens": 1109,
+    "cached_input_tokens": 12160,
+    "tool_calls": 11,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 15,
+    "reported_model": "gpt-6-astra",
+    "variant": "optimized",
+    "attempt": 2,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/2-1-optimized/repo",
+    "log": "2-1-optimized",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.067,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5865472,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.334,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73695232,
+        "tests": 47726592,
+        "tools": 0
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 63.839,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 49381376,
+      "tests": 202391552,
+      "tools": 76677120
+    },
+    "samples": 919,
+    "input_tokens": 75092,
+    "output_tokens": 1136,
+    "cached_input_tokens": null,
+    "tool_calls": 14,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "variant": "baseline",
+    "attempt": 2,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/2-2-baseline/repo",
+    "log": "2-2-baseline",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.065,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5701632,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.328,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73744384,
+        "tests": 43696128,
+        "tools": 133070848
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 60.838,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 45318144,
+      "tests": 132431872,
+      "tools": 72826880
+    },
+    "samples": 876,
+    "input_tokens": 62525,
+    "output_tokens": 1126,
+    "cached_input_tokens": null,
+    "tool_calls": 14,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "variant": "baseline",
+    "attempt": 3,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/3-1-baseline/repo",
+    "log": "3-1-baseline",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.063,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6029312,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.333,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73891840,
+        "tests": 41500672,
+        "tools": 131792896
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 47.975,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 29196288,
+      "tests": 186056704,
+      "tools": 73269248
+    },
+    "samples": 689,
+    "input_tokens": 33430,
+    "output_tokens": 1052,
+    "cached_input_tokens": 7296,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 11,
+    "reported_model": "gpt-6-astra",
+    "variant": "optimized",
+    "attempt": 3,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/3-2-optimized/repo",
+    "log": "3-2-optimized",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.067,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 6144000,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.334,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73777152,
+        "tests": 45416448,
+        "tools": 133660672
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 52.421,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28246016,
+      "tests": 191676416,
+      "tools": 72351744
+    },
+    "samples": 754,
+    "input_tokens": 33265,
+    "output_tokens": 1134,
+    "cached_input_tokens": 6400,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 8,
+    "reported_model": "gpt-6-astra",
+    "variant": "optimized",
+    "attempt": 4,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/4-1-optimized/repo",
+    "log": "4-1-optimized",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.069,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5308416,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.34,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74301440,
+        "tests": 36012032,
+        "tools": 132349952
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 60.085,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 46284800,
+      "tests": 131514368,
+      "tools": 71172096
+    },
+    "samples": 863,
+    "input_tokens": 64589,
+    "output_tokens": 1102,
+    "cached_input_tokens": null,
+    "tool_calls": 15,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "variant": "baseline",
+    "attempt": 4,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/4-2-baseline/repo",
+    "log": "4-2-baseline",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.067,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5619712,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.325,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73580544,
+        "tests": 37076992,
+        "tools": 129843200
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 61.271,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 45498368,
+      "tests": 208568320,
+      "tools": 64585728
+    },
+    "samples": 880,
+    "input_tokens": 64686,
+    "output_tokens": 1150,
+    "cached_input_tokens": null,
+    "tool_calls": 15,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "variant": "baseline",
+    "attempt": 5,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/5-1-baseline/repo",
+    "log": "5-1-baseline",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.067,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5619712,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.333,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 74088448,
+        "tests": 48021504,
+        "tools": 52887552
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  },
+  {
+    "duration_s": 52.613,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30588928,
+      "tests": 147013632,
+      "tools": 71303168
+    },
+    "samples": 756,
+    "input_tokens": 39110,
+    "output_tokens": 1057,
+    "cached_input_tokens": 7296,
+    "tool_calls": 11,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 8,
+    "reported_model": "gpt-6-astra",
+    "variant": "optimized",
+    "attempt": 5,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-efficiency-m_m99ddq/5-2-optimized/repo",
+    "log": "5-2-optimized",
+    "starting_commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+    "protected_files_unchanged": true,
+    "verification": {
+      "duration_s": 0.069,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 5652480,
+        "tests": 0,
+        "tools": 0
+      },
+      "samples": 1
+    },
+    "existing_tests": {
+      "duration_s": 0.334,
+      "timeout": false,
+      "exit_code": 0,
+      "peak_rss_bytes": {
+        "harness": 73695232,
+        "tests": 44220416,
+        "tools": 52674560
+      },
+      "samples": 5
+    },
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "success": true
+  }
+]

@@ -1,0 +1,30 @@
+Fix the reported organization-isolation bugs in this repository.
+
+Bug report:
+- A signed-in user can sometimes read or update a project belonging
+  to an organization they do not belong to.
+- After switching organizations, the project list sometimes shows
+  projects from the previous organization.
+- After updating a project, its organization's list can remain stale.
+
+Required behavior:
+- Project reads and updates must require membership in the project's
+  owning organization.
+- Organization project lists must require membership in the requested
+  organization.
+- Unauthorized requests must not return project data or modify storage.
+- Project-list caching must isolate organizations and preserve all
+  existing pagination and sorting parameters.
+- A successful update must invalidate every cached list variant for
+  the affected organization.
+- Unrelated organizations' cached lists must remain usable.
+- Authorization must still be checked when serving cached results.
+- Preserve existing API signatures, response shapes, status-code
+  conventions, and ordinary authorized behavior.
+- Keep caching enabled.
+
+Inspect the relevant code, implement the fix, and run the existing
+tests. Do not modify existing tests or install dependencies.
+You may add new tests.
+
+Summarize the changes and the verification you performed.

@@ -1,0 +1,41 @@
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+● Reading[0m
+● Reading[0m
+Reading src/pagination.ts
+Reading package.json
+Running git status --short
+/dev/fd/11:25: command not found: compdef
+● Searching[0m
+Searching paginate
+Editing src/pagination.ts
+Running npm test && node --input-type=module -e "import assert from 'node:assert/strict'; import { paginate } from './src/pag...
+
+> test
+> node --test test/*.test.ts
+
+✔ empty collection (0.516041ms)
+✔ page beyond collection (0.062958ms)
+✔ reject invalid page (0.12875ms)
+✔ reject invalid page size (0.046208ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.510291
+Page boundary and final partial page checks passed
+diff --git a/src/pagination.ts b/src/pagination.ts
+index 1fdb5bf..9d741c5 100644
+--- a/src/pagination.ts
++++ b/src/pagination.ts
+@@ -2,6 +2,6 @@ export function paginate<T>(items: readonly T[], page: number, pageSize: number)
+   if (!Number.isInteger(page) || page < 1) throw new RangeError('page must be a positive integer');
+   if (!Number.isInteger(pageSize) || pageSize < 1) throw new RangeError('pageSize must be a positive integer');
+   const start = (page - 1) * pageSize;
+-  const end = Math.min(start + pageSize - 1, items.length);
++  const end = Math.min(start + pageSize, items.length);
+   return items.slice(start, end);
+ }
+ M src/pagination.ts

@@ -1,0 +1,56 @@
+[
+  {
+    "duration_s": 5.918,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 163676160,
+      "tests": 0,
+      "tools": 70270976
+    },
+    "samples": 72,
+    "input_tokens": 14164,
+    "output_tokens": 5,
+    "cached_input_tokens": 11520,
+    "tool_calls": 0,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "harness": "codex"
+  },
+  {
+    "duration_s": 3.854,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 856834048,
+      "tests": 0,
+      "tools": 6258688
+    },
+    "samples": 47,
+    "input_tokens": 5975,
+    "output_tokens": 5,
+    "cached_input_tokens": 0,
+    "tool_calls": 0,
+    "completed": true,
+    "harness": "opencode"
+  },
+  {
+    "duration_s": 2.899,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25526272,
+      "tests": 0,
+      "tools": 0
+    },
+    "samples": 36,
+    "input_tokens": 4380,
+    "output_tokens": 5,
+    "cached_input_tokens": null,
+    "tool_calls": 0,
+    "completed": true,
+    "reported_model": "gpt-6-astra",
+    "harness": "handwork"
+  }
+]

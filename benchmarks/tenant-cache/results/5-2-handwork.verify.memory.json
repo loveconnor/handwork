@@ -1,0 +1,36 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5685248,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 11195,
+        "ppid": 82262,
+        "rss": 5685248,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-tenant-benchmark-4znq2rjy/private/verify.mjs /private/tmp/handwork-tenant-benchmark-4znq2rjy/5-2-handwork/repo"
+      }
+    ]
+  },
+  {
+    "seconds": 0.067,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 11195,
+        "ppid": 82262,
+        "rss": 0,
+        "kind": "harness",
+        "command": "<defunct>"
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ initial state and empty input (0.537541ms)
+✔ ordinary API request encodes the query and displays results (0.118459ms)
+✔ ordinary failure becomes state and subscribers can unsubscribe (0.11325ms)
+✔ view handles input, renders state and detaches listeners (0.109917ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69.97525

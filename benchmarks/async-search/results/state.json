@@ -1,0 +1,189 @@
+{
+  "base": "/private/tmp/handwork-search-benchmark-d5rjswig",
+  "private": "/private/tmp/handwork-search-benchmark-d5rjswig/private",
+  "fixture": "/private/tmp/handwork-search-benchmark-d5rjswig/private/fixture",
+  "commit": "773fba86ec9932608b8e8ca36f66173eed9aed3c",
+  "handwork": "/private/tmp/handwork-search-benchmark-d5rjswig/bin/handwork",
+  "profile_seed": "/private/tmp/handwork-search-benchmark-d5rjswig/preinstalled",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "context": 272000,
+  "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+  "prompt_sha256": "cc89cabb9cbfe4d1be540fcf16e1c8c525517c0e05b6663dd96df9f87971599a",
+  "created": "2026-09-11T19:39:50-0400",
+  "machine": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "chip": "Apple M4 Pro",
+    "memory_bytes": "25769803776"
+  },
+  "binary_sha256": {
+    "handwork": "17671eebfb0de6b432aa287d87be979b790b157f6c088d705e5f35c421177c49",
+    "opencode": "88eed7b0c2431162422cb0625aa68a55239970446951e4c9aad6a4f1fbc232b9",
+    "codex": "87a08119b8effa519f0ecb552dc98043f58a8200bf2ec5da60f76890c33e9c3a"
+  },
+  "orders": [
+    [
+      "handwork",
+      "opencode",
+      "codex"
+    ],
+    [
+      "opencode",
+      "codex",
+      "handwork"
+    ],
+    [
+      "codex",
+      "handwork",
+      "opencode"
+    ],
+    [
+      "handwork",
+      "codex",
+      "opencode"
+    ],
+    [
+      "opencode",
+      "handwork",
+      "codex"
+    ]
+  ],
+  "attempts_per_harness": 5,
+  "time_limit_seconds": 300,
+  "controls": {
+    "broken": {
+      "exit_code": 1,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: 'react hooks',\n    results: [\n      {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n-       id: 'latest',\n-       title: 'Result latest',\n-       url: '/result/latest'\n      }\n    ]\n  }\n"
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   error: 'Old error',\n+   loading: false,\n-   error: null,\n-   loading: true,\n    query: 'react hooks',\n    results: []\n  }\n"
+        },
+        {
+          "name": "Latest request fails",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: 'Current error',\n    loading: false,\n    query: 'react hooks',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n    loading: false,\n    query: '',\n+   results: [\n+     {\n+       id: 'old',\n+       title: 'Result old',\n+       url: '/result/old'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'third',\n+   results: [\n+     {\n+       id: 'stale-0',\n+       title: 'Result stale-0',\n+       url: '/result/stale-0'\n+     }\n+   ]\n-   results: []\n  }\n"
+        }
+      ],
+      "existing_tests_pass": true
+    },
+    "known_correct": {
+      "exit_code": 0,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": true
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "existing_tests_pass": true
+    },
+    "query_string_only": {
+      "exit_code": 1,
+      "checks": [
+        {
+          "name": "Ordinary search succeeds",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives after newer success",
+          "pass": true
+        },
+        {
+          "name": "Older success arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Older failure arrives while newer request is pending",
+          "pass": true
+        },
+        {
+          "name": "Latest request fails",
+          "pass": true
+        },
+        {
+          "name": "Query cleared during a request",
+          "pass": true
+        },
+        {
+          "name": "Pending request finishes after clearing",
+          "pass": true
+        },
+        {
+          "name": "Query changes A \u2192 B \u2192 A",
+          "pass": false,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    error: null,\n+   loading: false,\n-   loading: true,\n    query: 'A',\n+   results: [\n+     {\n+       id: 'first-A',\n+       title: 'Result first-A',\n+       url: '/result/first-A'\n+     }\n+   ]\n-   results: []\n  }\n"
+        },
+        {
+          "name": "Three requests complete in different orders",
+          "pass": true
+        }
+      ],
+      "existing_tests_pass": true
+    }
+  }
+}

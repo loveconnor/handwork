@@ -1,0 +1,108 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5619712,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52055,
+        "ppid": 36698,
+        "rss": 5619712,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.069,
+    "totals": {
+      "harness": 70647808,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52055,
+        "ppid": 36698,
+        "rss": 70647808,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.134,
+    "totals": {
+      "harness": 73760768,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52076,
+        "ppid": 52055,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 52055,
+        "ppid": 36698,
+        "rss": 73760768,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.199,
+    "totals": {
+      "harness": 73760768,
+      "tests": 50692096,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52076,
+        "ppid": 52055,
+        "rss": 50692096,
+        "kind": "tests",
+        "command": "node --test tests/search.test.ts"
+      },
+      {
+        "pid": 52055,
+        "ppid": 36698,
+        "rss": 73760768,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.265,
+    "totals": {
+      "harness": 73760768,
+      "tests": 0,
+      "tools": 53100544
+    },
+    "processes": [
+      {
+        "pid": 52076,
+        "ppid": 52055,
+        "rss": 53100544,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 52055,
+        "ppid": 36698,
+        "rss": 73760768,
+        "kind": "harness",
+        "command": "(node)"
+      }
+    ]
+  }
+]

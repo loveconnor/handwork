@@ -1,0 +1,16 @@
+
+> test
+> node --test test/*.test.ts
+
+✔ empty collection (0.483917ms)
+✔ page beyond collection (0.050708ms)
+✔ reject invalid page (0.129291ms)
+✔ reject invalid page size (0.045958ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.406833

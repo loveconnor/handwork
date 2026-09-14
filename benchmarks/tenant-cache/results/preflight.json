@@ -1,0 +1,78 @@
+[
+  {
+    "duration_s": 15.993,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24723456,
+      "tests": 0,
+      "tools": 79052800
+    },
+    "samples": 225,
+    "input_tokens": 16196,
+    "output_tokens": 172,
+    "cached_input_tokens": 9728,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Shared runtime usage and provider-admission trace",
+    "harness": "handwork",
+    "tool_probe_pass": true
+  },
+  {
+    "duration_s": 18.652,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 773046272,
+      "tests": 0,
+      "tools": 12320768
+    },
+    "samples": 263,
+    "input_tokens": 24630,
+    "output_tokens": 208,
+    "cached_input_tokens": 21760,
+    "tool_calls": 3,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 24630,
+      "output_tokens": 208,
+      "cached_input_tokens": 21760,
+      "tool_calls": 3
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 4,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "tool_probe_pass": true
+  },
+  {
+    "duration_s": 16.331,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 216367104,
+      "tests": 0,
+      "tools": 76316672
+    },
+    "samples": 230,
+    "input_tokens": 61994,
+    "output_tokens": 189,
+    "cached_input_tokens": 57856,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 4,
+    "accounted_sessions": 1,
+    "request_count_basis": "Distinct cumulative-usage updates in isolated session rollouts, including descendants; unbilled retries not exposed",
+    "harness": "codex",
+    "tool_probe_pass": true
+  }
+]

@@ -1,0 +1,101 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5685248,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 24334,
+        "ppid": 19498,
+        "rss": 5685248,
+        "kind": "harness",
+        "comm": "node"
+      }
+    ]
+  },
+  {
+    "seconds": 0.078,
+    "totals": {
+      "harness": 66502656,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 24334,
+        "ppid": 19498,
+        "rss": 66502656,
+        "kind": "harness",
+        "comm": "npm"
+      }
+    ]
+  },
+  {
+    "seconds": 0.16,
+    "totals": {
+      "harness": 73613312,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 24355,
+        "ppid": 24334,
+        "rss": 32768,
+        "kind": "tests",
+        "comm": "sh"
+      },
+      {
+        "pid": 24334,
+        "ppid": 19498,
+        "rss": 73613312,
+        "kind": "harness",
+        "comm": "npm"
+      }
+    ]
+  },
+  {
+    "seconds": 0.239,
+    "totals": {
+      "harness": 73613312,
+      "tests": 45203456,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 24355,
+        "ppid": 24334,
+        "rss": 45203456,
+        "kind": "tests",
+        "comm": "node"
+      },
+      {
+        "pid": 24334,
+        "ppid": 19498,
+        "rss": 73613312,
+        "kind": "harness",
+        "comm": "npm"
+      }
+    ]
+  },
+  {
+    "seconds": 0.319,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 24334,
+        "ppid": 19498,
+        "rss": 0,
+        "kind": "harness",
+        "comm": "<defunct>"
+      }
+    ]
+  }
+]
