@@ -260,6 +260,7 @@ fn providerTabLabel(index: usize) []const u8 {
         .openai => "OpenAI",
         .xai => "xAI",
         .zai => "Z.AI",
+        .opencode => "OpenCode Zen",
         .others => "Others",
     };
 }
@@ -514,7 +515,7 @@ test "model menu keeps active provider visible and omits unknown metadata" {
         .active = true,
         .load_state = .ready,
         .items = &items,
-        .provider_index = 5,
+        .provider_index = @intFromEnum(model_cache_runtime.ModelProviderFilter.others),
     };
 
     const rows = menuRowCount(projection, 42, 5);
@@ -696,6 +697,24 @@ test "model menu status follows provenance and retryable failure precedence" {
     }
 }
 
+test "model menu header labels OpenCode Zen models" {
+    const alloc = std.testing.allocator;
+    const items = [_]model_cache_runtime.ModelMenuItem{
+        .{ .id = @constCast("opencode/nemotron-3-ultra-free"), .provider = "opencode", .capabilities = .{} },
+        .{ .id = @constCast("zai/glm-5"), .provider = "zai", .capabilities = .{} },
+    };
+    const projection: ModelMenuProjection = .{
+        .active = true,
+        .load_state = .ready,
+        .items = &items,
+        .provider_index = @intFromEnum(model_cache_runtime.ModelProviderFilter.opencode),
+    };
+
+    var header = try composeModelMenuRow(alloc, projection, 0, 80, 3);
+    defer header.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, header.items, "[OpenCode Zen]") != null);
+}
+
 test "model menu header shows only vendor filters represented by the catalog" {
     const alloc = std.testing.allocator;
     const items = [_]model_cache_runtime.ModelMenuItem{
@@ -717,6 +736,7 @@ test "model menu header shows only vendor filters represented by the catalog" {
     try std.testing.expect(std.mem.find(u8, header.items, "Others") != null);
     try std.testing.expect(std.mem.find(u8, header.items, "xAI") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "Z.AI") == null);
+    try std.testing.expect(std.mem.find(u8, header.items, "OpenCode Zen") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "…") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "Provider ") == null);
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(header.items) <= 60);
@@ -741,6 +761,7 @@ test "model menu header hides redundant vendor filters for a single-vendor catal
     try std.testing.expect(std.mem.find(u8, header.items, "OpenAI") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "xAI") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "Z.AI") == null);
+    try std.testing.expect(std.mem.find(u8, header.items, "OpenCode Zen") == null);
     try std.testing.expect(std.mem.find(u8, header.items, "Others") == null);
 }
 

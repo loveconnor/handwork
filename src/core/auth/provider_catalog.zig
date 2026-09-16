@@ -42,6 +42,7 @@ pub const entries = [_]Entry{
     .{ .id = .together, .slug = "together", .name = "Together AI", .route_name = "Together AI", .description = "Enter an API key to connect", .subscription = false, .login_source = .together_key },
     .{ .id = .fireworks, .slug = "fireworks", .name = "Fireworks AI", .route_name = "Fireworks AI", .description = "Enter an API key to connect", .subscription = false, .login_source = .fireworks_key },
     .{ .id = .openrouter, .slug = "openrouter", .name = "OpenRouter", .route_name = "OpenRouter", .description = "Enter an API key to connect", .subscription = false, .login_source = .openrouter_key },
+    .{ .id = .opencode, .slug = "opencode", .name = "OpenCode Local", .route_name = "OpenCode Local", .description = "Start and connect to OpenCode locally", .subscription = false, .login_source = .opencode_local },
     .{ .id = .minimax, .slug = "minimax", .name = "MiniMax Token Plan", .route_name = "MiniMax Token Plan", .description = "Enter an API key to connect", .subscription = true, .login_source = .minimax_key },
     .{ .id = .qwen, .slug = "qwen", .name = "QwenCloud Token Plan", .route_name = "QwenCloud Token Plan", .description = "Enter an API key to connect", .subscription = true, .login_source = .qwen_key },
     .{ .id = .ollama, .slug = "ollama", .name = "Ollama Local", .route_name = "Ollama Local", .description = "Connect to your running Ollama server; no API key required", .subscription = false, .login_source = .ollama_local },
@@ -68,6 +69,7 @@ pub fn label(id: model_provider.ProviderId) []const u8 {
 test "auth provider catalog uses the model provider identity and explicit aliases" {
     try std.testing.expectEqual(model_provider.ProviderId.codex, parse("codex").?);
     try std.testing.expectEqual(model_provider.ProviderId.grok, parse("grok").?);
+    try std.testing.expectEqual(model_provider.ProviderId.opencode, parse("opencode").?);
     try std.testing.expect(parse("openai-codex") == null);
     try std.testing.expect(parse("chatgpt") == null);
     try std.testing.expect(parse("unknown") == null);

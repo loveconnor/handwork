@@ -23,5 +23,5 @@ test "provider policy blocks unapproved native subscription paths" {
         try std.testing.expectError(error.ProviderIntegrationDisabled, requireNative(id));
         try std.testing.expect(reason(id).len > 0);
     }
-    for ([_]model.ProviderId{ .codex, .openai, .anthropic, .gemini, .xai, .deepseek, .mistral, .groq, .together, .fireworks, .openrouter, .minimax, .ollama, .ollama_cloud }) |id| try requireNative(id);
+    for ([_]model.ProviderId{ .codex, .openai, .anthropic, .gemini, .xai, .deepseek, .mistral, .groq, .together, .fireworks, .openrouter, .opencode, .minimax, .ollama, .ollama_cloud }) |id| try requireNative(id);
 }

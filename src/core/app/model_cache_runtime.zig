@@ -90,6 +90,7 @@ pub const ModelProviderFilter = enum {
     openai,
     xai,
     zai,
+    opencode,
     others,
 };
 
@@ -250,6 +251,8 @@ fn providerFilter(provider: []const u8) ModelProviderFilter {
         .xai
     else if (std.ascii.eqlIgnoreCase(provider, "zai"))
         .zai
+    else if (std.ascii.eqlIgnoreCase(provider, "opencode"))
+        .opencode
     else
         .others;
 }
@@ -1076,6 +1079,25 @@ test "model menu owns resolved catalog state and filters without changing catalo
     const selected = (try runtime.menu.selectedModelAlloc(alloc)).?;
     defer alloc.free(selected);
     try std.testing.expectEqualStrings("standalone", selected);
+}
+
+test "model menu exposes OpenCode Zen models as a provider filter" {
+    const alloc = std.testing.allocator;
+    const entries = [_]model_catalog.ModelCatalogEntry{
+        .{ .id = @constCast("opencode/nemotron-3-ultra-free"), .model_type = @constCast("language") },
+        .{ .id = @constCast("opencode/mimo-v2.5-free"), .model_type = @constCast("language") },
+        .{ .id = @constCast("zai/glm-5"), .model_type = @constCast("language") },
+    };
+    var menu: ModelMenu = .{};
+    defer menu.deinit(alloc);
+    try hydrateMenuSnapshot(alloc, &menu, &entries);
+    menu.active = true;
+    menu.provider_index = @intFromEnum(ModelProviderFilter.opencode);
+
+    try std.testing.expect(modelProviderFilterAvailable(menu.items.items, .opencode));
+    try std.testing.expectEqual(@as(usize, 2), menu.filteredItemCount());
+    try std.testing.expectEqualStrings("opencode/nemotron-3-ultra-free", menu.itemAt(0).?.id);
+    try std.testing.expectEqualStrings("opencode/mimo-v2.5-free", menu.itemAt(1).?.id);
 }
 
 test "model menu provider navigation skips absent and redundant filters" {

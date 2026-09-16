@@ -42,6 +42,7 @@ const credential_source_order = [_]credentials.Source{
     .together_key,
     .fireworks_key,
     .openrouter_key,
+    .opencode_local,
     .minimax_key,
     .qwen_key,
     .ollama_local,

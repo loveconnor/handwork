@@ -210,7 +210,11 @@ pub fn Runtime(comptime App: type) type {
             });
             if (@import("../config/api_providers.zig").find(logout_provider)) |entry| {
                 if (entry.anonymous) {
-                    try writeAuthNotice(app, .{ .topic = "auth", .tone = .neutral, .body = "Ollama Local has no saved login. Stop your Ollama server or choose another provider to disconnect." });
+                    const body: []const u8 = if (logout_provider == .opencode)
+                        "OpenCode Local has no saved login. Stop the OpenCode server or choose another provider to disconnect."
+                    else
+                        "Ollama Local has no saved login. Stop your Ollama server or choose another provider to disconnect.";
+                    try writeAuthNotice(app, .{ .topic = "auth", .tone = .neutral, .body = body });
                     return;
                 }
                 if (app.stream.active or !app.worker.tryHoldTurnStart()) {
@@ -977,7 +981,12 @@ pub fn Runtime(comptime App: type) type {
                     try app.writeDomainNotice(.{
                         .topic = "provider",
                         .tone = .@"error",
-                        .body = if (failure.category == .cancellation) "Provider switching was cancelled. The current provider is unchanged." else providerFailureMessage(intent, "The target provider catalog could not be validated. The current provider is unchanged.", "Subscription sign-in completed, but its model catalog could not be validated. The current provider is unchanged."),
+                        .body = if (failure.category == .cancellation)
+                            "Provider switching was cancelled. The current provider is unchanged."
+                        else if (target == .opencode and failure.category == .transport)
+                            "Handwork could not reach OpenCode Local. Install opencode and make sure it is available on PATH. If HANDWORK_OPENCODE_BASE_URL is set, check that server address."
+                        else
+                            providerFailureMessage(intent, "The target provider catalog could not be validated. The current provider is unchanged.", "Subscription sign-in completed, but its model catalog could not be validated. The current provider is unchanged."),
                     }, true);
                     return false;
                 },
@@ -1085,7 +1094,11 @@ pub fn Runtime(comptime App: type) type {
         fn openApiKeyPrompt(app: *App, target: model_provider.ProviderId) !void {
             const entry = @import("../config/api_providers.zig").find(target) orelse return;
             if (entry.anonymous) {
-                try app.writeDomainNotice(.{ .topic = "auth", .tone = .neutral, .body = "Start Ollama with ollama serve and pull a model, then choose Ollama Local. No API key is required. HANDWORK_OLLAMA_BASE_URL and HANDWORK_OLLAMA_MODEL override the endpoint and model." }, true);
+                const body: []const u8 = if (target == .opencode)
+                    "Choose OpenCode Local and Handwork will start opencode serve on demand. No API key is required. HANDWORK_OPENCODE_BASE_URL disables automatic startup and overrides the endpoint; HANDWORK_OPENCODE_MODEL overrides the model."
+                else
+                    "Start Ollama with ollama serve and pull a model, then choose Ollama Local. No API key is required. HANDWORK_OLLAMA_BASE_URL and HANDWORK_OLLAMA_MODEL override the endpoint and model.";
+                try app.writeDomainNotice(.{ .topic = "auth", .tone = .neutral, .body = body }, true);
                 return;
             }
             if (comptime @hasDecl(@TypeOf(app.auth), "openApiKeyEntry")) {

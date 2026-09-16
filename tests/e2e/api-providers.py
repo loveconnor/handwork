@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import textwrap
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import unittest
@@ -17,13 +18,26 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
         self.server.requests.append((self.path, dict(self.headers), None))
-        data=json.dumps({'data':[{'id':'gpt-test'}]}).encode()
+        if self.path == '/provider':
+            data=json.dumps({'all':[{'id':'mock','models':{'model':{'id':'model','capabilities':{'toolcall':True},'limit':{'context':32000,'output':4096}}}}],'connected':['mock']}).encode()
+        elif self.path == '/experimental/tool/ids':
+            data=json.dumps(['bash','read','write','plugin_tool']).encode()
+        else:
+            data=json.dumps({'data':[{'id':'gpt-test'}]}).encode()
         self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_POST(self):
         body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         self.server.requests.append((self.path, dict(self.headers),body))
+        if self.path == '/session':
+            data=json.dumps({'id':'session-test'}).encode()
+            self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
+        if self.path == '/session/session-test/message':
+            data=json.dumps({'info':{'tokens':{'input':5,'output':3},'structured':{'content':'MOCK SUCCESS','tool_calls':[]}},'parts':[{'type':'text','text':'MOCK SUCCESS'}]}).encode()
+            self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
         if self.path.endswith('/messages'):
             events=[{'type':'message_start','message':{'usage':{'input_tokens':5}}},{'type':'content_block_delta','index':0,'delta':{'type':'text_delta','text':'MOCK SUCCESS'}},{'type':'message_delta','delta':{'stop_reason':'end_turn'},'usage':{'output_tokens':3}},{'type':'message_stop'}]
+        elif self.path.endswith('/responses'):
+            events=[{'type':'response.output_item.done','output_index':0,'item':{'type':'message','id':'msg_1','content':[{'type':'output_text','text':'MOCK SUCCESS'}]}},{'type':'response.completed','response':{'id':'resp_1','status':'completed','usage':{'input_tokens':5,'output_tokens':3}}}]
         else:
             events=[{'choices':[{'delta':{'content':'MOCK SUCCESS'},'finish_reason':None}]},{'choices':[{'delta':{},'finish_reason':'stop'}],'usage':{'prompt_tokens':5,'completion_tokens':3}},'[DONE]']
         data=''.join('data: '+(e if isinstance(e,str) else json.dumps(e))+'\n\n' for e in events).encode()
@@ -65,6 +79,55 @@ class Providers(unittest.TestCase):
                     self.assertNotIn('authorization',lower)
                     self.assertNotIn('must-not-leak-to-local',json.dumps(self.server.requests))
                 else: self.assertEqual(lower['authorization'],'Bearer '+secret)
+    def test_opencode_connects_to_local_server_without_api_key(self):
+        with tempfile.TemporaryDirectory(prefix='handwork-opencode-') as home:
+            env={'PATH':os.environ['PATH'],'HOME':home,'USER':'test','TERM':'dumb','HANDWORK_OPENCODE_BASE_URL':f'http://127.0.0.1:{self.server.server_port}'}
+            def run(*args):
+                return subprocess.run([str(EXE),*args],cwd=home,env=env,text=True,capture_output=True,timeout=30)
+            before=len(self.server.requests)
+            login=run('login','opencode')
+            self.assertEqual(login.returncode,0,login.stderr)
+            self.assertIn('OpenCode Local connected',login.stdout)
+            settings=json.loads((Path(home)/'.handwork/settings.json').read_text())
+            self.assertEqual(settings['provider'],'opencode')
+            answer=run('ask','--no-save','--json','Say hello.')
+            self.assertEqual(answer.returncode,0,answer.stderr)
+            self.assertIn('MOCK SUCCESS',answer.stdout)
+            requests=self.server.requests[before:]
+            self.assertTrue(any(path == '/provider' for path,_,_ in requests))
+            path,headers,body=requests[-1]
+            self.assertEqual(path,'/session/session-test/message')
+            self.assertEqual(body['model'],{'providerID':'mock','modelID':'model'})
+            self.assertEqual(body['tools'],{'bash':False,'read':False,'write':False,'plugin_tool':False})
+            self.assertIn('format',body)
+            self.assertNotIn('authorization',{key.lower():value for key,value in headers.items()})
+    def test_opencode_starts_local_server_on_demand(self):
+        with tempfile.TemporaryDirectory(prefix='handwork-opencode-autostart-') as home:
+            root=Path(home);bin_dir=root/'bin';bin_dir.mkdir()
+            args_path=root/'opencode-args.json'
+            launcher=bin_dir/'opencode'
+            launcher.write_text(textwrap.dedent('''\
+                #!/usr/bin/env python3
+                import json, os, sys
+                from http.server import BaseHTTPRequestHandler, HTTPServer
+                class Handler(BaseHTTPRequestHandler):
+                    def log_message(self, *args): pass
+                    def do_GET(self):
+                        if self.path != '/provider': self.send_response(404);self.end_headers();return
+                        data=json.dumps({'all':[{'id':'mock','models':{'model':{'id':'model'}}}],'connected':['mock']}).encode()
+                        self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
+                server=HTTPServer(('127.0.0.1',4096),Handler)
+                open(os.environ['FAKE_OPENCODE_ARGS'],'w').write(json.dumps(sys.argv[1:]))
+                server.handle_request();server.server_close()
+            '''))
+            launcher.chmod(0o755)
+            env={'PATH':str(bin_dir)+os.pathsep+os.environ['PATH'],'HOME':home,'USER':'test','TERM':'dumb','FAKE_OPENCODE_ARGS':str(args_path)}
+            login=subprocess.run([str(EXE),'login','opencode'],cwd=home,env=env,text=True,capture_output=True,timeout=30)
+            self.assertEqual(login.returncode,0,login.stderr)
+            self.assertIn('OpenCode Local connected',login.stdout)
+            self.assertEqual(json.loads(args_path.read_text()),['serve','--hostname','127.0.0.1','--port','4096'])
+            settings=json.loads((root/'.handwork/settings.json').read_text())
+            self.assertEqual(settings['provider'],'opencode')
     def test_disabled_subscription_routes_never_connect(self):
         for provider in ('grok','qwen'):
             with self.subTest(provider=provider), tempfile.TemporaryDirectory(prefix='handwork-policy-') as home:

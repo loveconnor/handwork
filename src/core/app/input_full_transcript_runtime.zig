@@ -52,12 +52,12 @@ pub fn Runtime(comptime App: type) type {
         }
 
         pub fn routeComposerAction(app: *App, resolved: input_action.Action) !bool {
-            return switch (keyForAction(resolved) orelse return false) {
-                .toggle => {
+            return switch (resolved) {
+                .toggle_full_transcript => {
                     try transitionScreen(app, .toggle);
                     return true;
                 },
-                .close => {
+                .escape => {
                     if (comptime @hasDecl(
                         @TypeOf(app.shell),
                         "cancelPendingFullTranscriptOpen",
@@ -66,8 +66,36 @@ pub fn Runtime(comptime App: type) type {
                     }
                     return false;
                 },
+                .mouse_wheel => |direction| try routeInlineScroll(
+                    app,
+                    direction,
+                    .wheel,
+                ),
+                .page_up => try routeInlineScroll(app, .up, .page),
+                .page_down => try routeInlineScroll(app, .down, .page),
                 else => false,
             };
+        }
+
+        fn routeInlineScroll(
+            app: *App,
+            direction: input_action.MouseWheel,
+            unit: transcript_runtime.TranscriptRuntime.FullTranscriptScrollUnit,
+        ) !bool {
+            if (direction != .up) return false;
+            if (comptime !@hasField(App, "terminal")) return false;
+            if (comptime @hasDecl(
+                @TypeOf(app.shell),
+                "fullTranscriptOpenPending",
+            )) {
+                if (app.shell.fullTranscriptOpenPending()) return true;
+            }
+
+            try transitionScreen(app, .toggle);
+            if (!screenOwnsInput(app)) return true;
+            app.shell.scrollFullTranscript(direction, unit);
+            requestActiveSurfaceFrame(app);
+            return true;
         }
 
         pub fn cancelPendingOpenForInput(app: *App) bool {

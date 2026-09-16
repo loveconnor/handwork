@@ -1002,6 +1002,8 @@ fn runNonInteractiveWithDeps(
             try writeStdout(deps, switch (login_provider) {
                 .codex => "Signed in with Codex.\n",
                 .grok => "Signed in with Grok.\n",
+                .opencode => "OpenCode Local connected.\n",
+                .ollama => "Ollama Local connected.\n",
                 else => "Provider key connected.\n",
             });
             return .handled_success;
@@ -1019,7 +1021,10 @@ fn runNonInteractiveWithDeps(
             const login_provider = maybe_login_provider orelse .codex;
             if (@import("../config/api_providers.zig").find(login_provider)) |entry| {
                 if (entry.anonymous) {
-                    try writeStdout(deps, "Ollama Local has no saved login. Stop your Ollama server or choose another provider to disconnect.\n");
+                    try writeStdout(deps, if (login_provider == .opencode)
+                        "OpenCode Local has no saved login. Stop the OpenCode server or choose another provider to disconnect.\n"
+                    else
+                        "Ollama Local has no saved login. Stop your Ollama server or choose another provider to disconnect.\n");
                     return .handled_success;
                 }
                 try @import("../auth/api_key_store.zig").remove(alloc, login_provider);

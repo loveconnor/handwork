@@ -6640,17 +6640,21 @@ pub const TranscriptRuntime = struct {
             .wheel => full_transcript_wheel_rows,
             .page => self.fullTranscriptPageRows(),
         };
-        const before = self.full_transcript.scroll_rows;
-        self.full_transcript = self.full_transcript.scroll(switch (direction) {
-            .up => .up,
-            .down => .down,
-        }, rows);
         const local_visible_rows = @max(@as(u32, 1), self.layout.rows -| 4);
         const local_total_rows = if (self.full_transcript_installed_page) |*page|
             self.installedPageMeasurement(page).total_rows
         else
             0;
         const local_max_offset = local_total_rows -| local_visible_rows;
+        const before = if (self.full_transcript.follow_tail)
+            local_max_offset
+        else
+            self.full_transcript.scroll_rows;
+        self.full_transcript.scroll_rows = before;
+        self.full_transcript = self.full_transcript.scroll(switch (direction) {
+            .up => .up,
+            .down => .down,
+        }, rows);
         const adjacent_anchor = switch (direction) {
             .up => if (before == 0 and self.full_transcript.scroll_rows == 0)
                 if (self.full_transcript_installed_page) |*page|
@@ -10242,8 +10246,12 @@ pub const TranscriptRuntime = struct {
         );
     }
 
+    pub fn fullTranscriptOpenPending(self: *const TranscriptRuntime) bool {
+        return self.full_transcript_open_request != null;
+    }
+
     pub fn cancelPendingFullTranscriptOpen(self: *TranscriptRuntime) bool {
-        if (self.full_transcript_open_request == null) return false;
+        if (!self.fullTranscriptOpenPending()) return false;
         self.full_transcript_open_request = null;
         self.full_transcript_restore_open_pending = false;
         debug_trace.logf("full_transcript", "open_request state=cancelled", .{});

@@ -322,7 +322,7 @@ pub fn loadApiKey(alloc: std.mem.Allocator, source: Source) !?Credential {
     if (!@import("../config/provider_policy.zig").nativeEnabled(entry.id)) return null;
     const saved = if (entry.anonymous) null else try @import("api_key_store.zig").load(alloc, entry.id);
     defer if (saved) |bytes| secret.zeroAndFree(alloc, bytes);
-    const key = saved orelse if (entry.anonymous) "ollama-local" else io_mod.getenv(entry.key_env) orelse return null;
+    const key = saved orelse if (entry.anonymous) @tagName(entry.id) else io_mod.getenv(entry.key_env) orelse return null;
     if (!api_providers.validProviderKey(entry.id, key)) return error.InvalidApiKey;
     const token = try alloc.dupe(u8, key);
     errdefer secret.zeroAndFree(alloc, token);
@@ -452,7 +452,9 @@ pub fn sourceLabel(source: Source) []const u8 {
         .chatgpt_subscription => "Codex subscription",
         .grok_subscription => "Grok subscription",
         .host_managed => "host managed",
-        else => if (source == .ollama_local) "Ollama Local (no key)" else api_providers.forSource(source).?.key_env,
+        .ollama_local => "Ollama Local (no key)",
+        .opencode_local => "OpenCode Local (no key)",
+        else => api_providers.forSource(source).?.key_env,
     };
 }
 

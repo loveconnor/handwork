@@ -14,6 +14,7 @@ pub const ProviderId = enum {
     together,
     fireworks,
     openrouter,
+    opencode,
     minimax,
     qwen,
     ollama,
@@ -50,6 +51,7 @@ pub fn authorizesCredential(provider: ProviderId, source: ?types.CredentialSourc
         .together => selected == .together_key,
         .fireworks => selected == .fireworks_key,
         .openrouter => selected == .openrouter_key,
+        .opencode => selected == .opencode_local,
         .minimax => selected == .minimax_key,
         .qwen => selected == .qwen_key,
         .ollama => selected == .ollama_local,
@@ -70,6 +72,7 @@ test "explicit providers authorize only their own credential origins" {
 test "provider parsing accepts subscriptions and rejects the removed provider" {
     try std.testing.expectEqual(ProviderId.codex, parse("CODEX").?);
     try std.testing.expectEqual(ProviderId.grok, parse("GROK").?);
+    try std.testing.expectEqual(ProviderId.opencode, parse("OPENCODE").?);
     try std.testing.expect(parse("openai-codex") == null);
     try std.testing.expect(parse("") == null);
 }

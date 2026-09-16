@@ -1726,8 +1726,9 @@ test "ACP provider catalog parity native public APIs include ollama without unav
     try std.testing.expectEqualStrings("ollama", parsed.value.object.get("currentValue").?.string);
     const options = parsed.value.object.get("options").?.array.items;
     const expected = [_]model_provider.ProviderId{
-        .codex, .openai,   .anthropic, .gemini,     .xai,     .deepseek, .mistral,
-        .groq,  .together, .fireworks, .openrouter, .minimax, .ollama,   .ollama_cloud,
+        .codex,        .openai,   .anthropic, .gemini,     .xai,      .deepseek, .mistral,
+        .groq,         .together, .fireworks, .openrouter, .opencode, .minimax,  .ollama,
+        .ollama_cloud,
     };
     try std.testing.expectEqual(expected.len, options.len);
     for (expected) |id| {

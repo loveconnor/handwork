@@ -813,7 +813,11 @@ pub fn Runtime(comptime App: type) type {
             const event = ingress.event orelse return false;
             return switch (event) {
                 .paste_byte, .raw => true,
-                .action => |decoded| decoded.action != .toggle_full_transcript,
+                .action => |decoded| switch (decoded.action) {
+                    .toggle_full_transcript, .page_up => false,
+                    .mouse_wheel => |direction| direction != .up,
+                    else => true,
+                },
             };
         }
 
@@ -4374,6 +4378,31 @@ test "app_input_runtime slash completion movement works while stream is active" 
     app.input_runtime.picker.dismissInlinePicker(.slash);
     try std.testing.expect(!Runtime(FakeApprovalCancelApp).routeSlashCompletionMove(&app, 1));
     try std.testing.expectEqual(@as(usize, 0), app.input_runtime.picker.slash_completion_index);
+}
+
+test "app_input_runtime slash picker receives arrow keys without opening transcript" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var sink = try tmp.dir.createFile(std.testing.io, "slash-picker-arrows.log", .{ .read = true });
+    defer sink.close(io_mod.getIo());
+
+    for ([_]bool{ false, true }) |stream_active| {
+        var app = try RoutingFakeApp.init(alloc);
+        defer app.deinit();
+        app.shell.stdout_file = sink;
+        app.stream.active = stream_active;
+        try app.input_runtime.textReplacementState().replace(alloc, "/");
+
+        try feedRoutingBytes(&app, "\x1b[B");
+        try std.testing.expectEqual(@as(usize, 1), app.input_runtime.picker.slash_completion_index);
+
+        try feedRoutingBytes(&app, "\x1b[A");
+        try std.testing.expectEqual(@as(usize, 0), app.input_runtime.picker.slash_completion_index);
+        try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
+        try std.testing.expect(!app.shell.fullTranscriptOpenPending());
+        try std.testing.expectEqualStrings("/", app.input_runtime.edit_state.input.items);
+    }
 }
 
 test "app_input_runtime slash completion window moves up before reverse scrolling" {
@@ -10231,19 +10260,39 @@ test "app_input_runtime false paste starts preserve stale paste and gestures" {
     try std.testing.expect(!app.shell.render_requests.hasReason(.footer));
 }
 
-test "app_input_runtime inline scroll actions do not open the transcript viewer" {
+test "app_input_runtime inline upward scroll opens the transcript viewer" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var sink = try tmp.dir.createFile(std.testing.io, "inline-scroll-open.log", .{ .read = true });
+    defer sink.close(io_mod.getIo());
+
+    for ([_][]const u8{ "\x1b[<64;1;1M", "\x1b[5~" }) |bytes| {
+        var app = try RoutingFakeApp.init(alloc);
+        defer app.deinit();
+        app.shell.stdout_file = sink;
+        app.stream.active = true;
+
+        try feedRoutingBytes(&app, bytes);
+
+        try std.testing.expect(app.terminal.fullTranscriptScreenActive());
+        try std.testing.expectEqual(
+            transcript_presentation.Depth.full,
+            app.shell.transcriptPresentationDepth(),
+        );
+        try std.testing.expect(!app.shell.full_transcript.follow_tail);
+        try std.testing.expect(app.stream.active);
+        try std.testing.expect(!app.worker.cancel_requested);
+    }
+}
+
+test "app_input_runtime inline downward scroll does not open the transcript viewer" {
     const alloc = std.testing.allocator;
     var app = try RoutingFakeApp.init(alloc);
     defer app.deinit();
     app.stream.active = true;
 
-    const cases = [_][]const u8{
-        "\x1b[<64;1;1M",
-        "\x1b[<65;1;1M",
-        "\x1b[5~",
-        "\x1b[6~",
-    };
-    for (cases) |bytes| {
+    for ([_][]const u8{ "\x1b[<65;1;1M", "\x1b[6~" }) |bytes| {
         try feedRoutingBytes(&app, bytes);
         try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
         try std.testing.expectEqual(
@@ -10253,6 +10302,21 @@ test "app_input_runtime inline scroll actions do not open the transcript viewer"
         try std.testing.expect(app.stream.active);
         try std.testing.expect(!app.worker.cancel_requested);
     }
+}
+
+test "app_input_runtime repeated upward scroll preserves a pending transcript open" {
+    const alloc = std.testing.allocator;
+    var app = try RoutingFakeApp.init(alloc);
+    defer app.deinit();
+    app.shell.repaintRestoredPrimaryTranscriptAfterResize();
+
+    try feedRoutingBytes(&app, "\x1b[<64;1;1M");
+    try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
+    try std.testing.expect(app.shell.fullTranscriptOpenPending());
+
+    try feedRoutingBytes(&app, "\x1b[<64;1;1M");
+    try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
+    try std.testing.expect(app.shell.fullTranscriptOpenPending());
 }
 
 test "app_input_runtime ctrl-o toggles full transcript while arrows preserve detail" {

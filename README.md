@@ -1,10 +1,10 @@
 # handwork
 
-Handwork is a coding agent for the terminal, written in Zig by [Connor Love](https://connorlove.com). You give it a task in a project directory. It can inspect files, search code, make edits, run commands and tests, and report what changed.
+Handwork is an AI coding harness for the terminal, written in Zig by [Connor Love](https://connorlove.com). It connects a language model to your project through a native agent loop. The model can inspect files, search code, edit files, run commands and tests, and report what changed.
 
-Handwork supplies the agent loop, terminal interface, tools, permissions, and saved conversations. A model provider supplies the model. You can use cloud APIs or an Ollama server, run one request from a script, or embed the agent in a JavaScript application.
+Handwork provides the terminal interface, tools, permission checks, and saved conversations. You can bring a model through a cloud API or an Ollama server. You can also run one request from a script or embed the agent in a JavaScript application.
 
-The goal is a native coding agent that you can use across providers and reuse outside the terminal. The project puts the agent runtime and terminal code in Zig, with a separate JavaScript SDK for hosts that need their own interface, tools, or authentication. Fast startup and a responsive terminal are design goals, not claims that Handwork produces better code or runs faster than every alternative.
+Handwork works across model providers and outside the terminal. Its agent runtime and terminal code are written in Zig. A separate JavaScript SDK lets other applications provide their own interface, tools, or authentication. Fast startup and a responsive terminal are design goals, not claims that Handwork produces better code or runs faster than every alternative.
 
 The npm CLI is currently version 0.0.9 and ships for macOS on Apple Silicon only. The repository also contains source builds, an SDK, and official Codex and Copilot runtime adapters. Those adapters run the provider's agent engine rather than Handwork's native agent loop.
 
@@ -252,9 +252,9 @@ There are two execution paths. Keep them separate when choosing credentials or d
 | Native Handwork | `handwork`, `handwork ask`, `/provider` | Handwork uses the selected model transport and its own permission and session systems. |
 | Official runtime | `handwork runtime codex ...`, `handwork runtime copilot ...` | The provider's engine owns tools, saved sessions, configuration, sandbox behavior, and billing. |
 
-### Native API providers
+### Native providers
 
-Use `/provider` in the terminal to save a key without shell configuration. `/login` is an alias. For automation, you can supply an environment key:
+Use `/provider` in the terminal to connect a provider. `/login` is an alias. Providers that require an API key can save it without shell configuration. For automation, you can supply an environment key:
 
 ```sh
 export OPENAI_API_KEY="your-api-key"
@@ -276,21 +276,35 @@ Replace the placeholder with your own key. Do not commit credentials or put them
 | `together` | `TOGETHER_API_KEY` | Together AI API |
 | `fireworks` | `FIREWORKS_API_KEY` | Fireworks AI API |
 | `openrouter` | `OPENROUTER_API_KEY` | OpenRouter API |
+| `opencode` | None | Your local OpenCode server |
 | `minimax` | `MINIMAX_SUBSCRIPTION_KEY` | MiniMax Token Plan |
 | `ollama` | None | Your Ollama server |
 | `ollama_cloud` | `OLLAMA_API_KEY` | Ollama cloud plan |
 
-Saved keys take precedence over environment keys. Handwork stores keys in provider-specific `~/.handwork/api-key-*` files with owner-only mode `0600`, separate from settings and conversation history. These files are not encrypted at rest.
+For providers that require keys, saved keys take precedence over environment keys. Handwork stores them in provider-specific `~/.handwork/api-key-*` files with owner-only mode `0600`, separate from settings and conversation history. These files are not encrypted at rest.
 
 `handwork logout <provider>` or `/logout <provider>` removes the saved key. If you also set an environment key, unset it separately.
 
-For the API providers, set `HANDWORK_<ID>_MODEL` or `HANDWORK_<ID>_BASE_URL` to override the model or endpoint. Use the provider ID in uppercase. For example, `HANDWORK_OPENAI_MODEL` selects an explicit OpenAI model.
+Set `HANDWORK_<ID>_MODEL` or `HANDWORK_<ID>_BASE_URL` to override a model or endpoint. Use the provider ID in uppercase. For example, `HANDWORK_OPENAI_MODEL` selects an explicit OpenAI model.
 
-A base URL includes the API version prefix, but not `/chat/completions`, `/messages`, or `/models`. Custom endpoints require HTTPS. Loopback HTTP requires an explicit port. Handwork sends the key to that endpoint, so use only an endpoint you trust.
+For public API providers, a base URL includes the API version prefix but not `/chat/completions`, `/messages`, or `/models`. Custom endpoints require HTTPS. Loopback HTTP requires an explicit port. Handwork sends the key to that endpoint, so use only an endpoint you trust.
 
 Most providers discover models through their official API. An explicit model override supplies a one-model catalog for private models or services without model discovery. MiniMax has a default model. Available models and account entitlements depend on the provider.
 
 Native API adapters support text streaming, tool calls, and token counts. Capability support varies. The public API adapters do not currently advertise reasoning-effort controls or provider-specific caching. Vision request serialization exists, but model discovery uses conservative vision metadata. Anthropic structured-output requests return an explicit unsupported error.
+
+### OpenCode local
+
+Connect Handwork to OpenCode:
+
+```sh
+handwork login opencode
+handwork
+```
+
+Handwork connects to `http://127.0.0.1:4096` by default. If no server is running there, Handwork starts `opencode serve --hostname 127.0.0.1 --port 4096` and discovers models from the providers connected in OpenCode. No OpenCode Zen key is used or stored. OpenCode handles access to the selected model, while Handwork retains its own tools and permission flow. If the server uses `OPENCODE_SERVER_PASSWORD`, Handwork reads it and `OPENCODE_SERVER_USERNAME` from the environment for Basic authentication.
+
+`HANDWORK_OPENCODE_BASE_URL` disables automatic startup and overrides the server address. `HANDWORK_OPENCODE_MODEL` selects an explicit model as `providerID/modelID`, such as `anthropic/claude-sonnet-4-6`.
 
 ### Ollama local and cloud
 

@@ -1,4 +1,5 @@
 const api = @import("../provider/api.zig");
+const opencode = @import("../provider/opencode.zig");
 const provider_set = @import("../core/provider/provider_set.zig");
 pub const native = provider_set.Set{
     .openai = api.bundle(.openai),
@@ -11,6 +12,7 @@ pub const native = provider_set.Set{
     .together = api.bundle(.together),
     .fireworks = api.bundle(.fireworks),
     .openrouter = api.bundle(.openrouter),
+    .opencode = opencode.bundle(),
     .minimax = api.bundle(.minimax),
     .qwen = .{},
     .ollama = api.bundle(.ollama),
