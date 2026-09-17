@@ -1140,8 +1140,8 @@ pub const Runtime = struct {
     pub fn credentialLease(self: *const Self) ?types.CredentialLease {
         if (self.isHostManaged()) return .host_managed;
         const credential = self.selected_credential orelse return null;
-        if (!credentials.sourceRefreshable(credential.source) or credential.token.len == 0 or
-            credential.needsRefreshAt(io_mod.milliTimestamp())) return null;
+        if (credential.token.len == 0 or
+            (credentials.sourceRefreshable(credential.source) and credential.needsRefreshAt(io_mod.milliTimestamp()))) return null;
         const account_id = credential.accountId() orelse return null;
         if (!types.validCredentialAccountId(account_id)) return null;
         return .{ .direct = .{
@@ -2119,7 +2119,7 @@ test "manual code visibility cannot toggle without provider capability" {
     try std.testing.expect(!runtime.signInCodeEntryActive());
 }
 
-test "auth runtime leases only usable subscriptions and host authority" {
+test "auth runtime leases usable direct credentials and host authority" {
     const alloc = std.testing.allocator;
     var runtime: Runtime = undefined;
     Runtime.initInto(&runtime, oauth_transport.unavailable_provider, host.unavailable_secret_store);
@@ -2143,6 +2143,18 @@ test "auth runtime leases only usable subscriptions and host authority" {
         alloc.free(runtime.selected_credential.?.account_id.?);
         runtime.selected_credential.?.account_id = null;
         try std.testing.expect(runtime.credentialLease() == null);
+    }
+    for ([_]credentials.Source{ .opencode_local, .ollama_local }) |source| {
+        var candidate = credentials.Credential{
+            .token = try alloc.dupe(u8, "local-provider"),
+            .source = source,
+            .account_id = try alloc.dupe(u8, "local-provider-account"),
+        };
+        defer candidate.deinit(alloc);
+        _ = runtime.adoptPreparedCredential(alloc, &candidate);
+        const lease = runtime.credentialLease().?;
+        try std.testing.expectEqual(source, lease.credentialSource().?);
+        try std.testing.expectEqualStrings("local-provider", lease.secret().?);
     }
     runtime.auth_mode = .host_managed;
     const host_lease = runtime.credentialLease().?;

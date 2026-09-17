@@ -307,7 +307,8 @@ fn buildSystem(alloc: Allocator, request: stream_provider.ModelRequest, tools_js
     }
     if (has_tools) {
         try out.writer.writeAll(
-            "\n\nHandwork, not OpenCode, owns tool execution. Return the requested structured object. " ++
+            "\n\nHandwork, not OpenCode, owns tool execution. Return exactly one compact JSON object and no markdown. " ++
+                "The object must be strict JSON with balanced braces. " ++
                 "Set content to the assistant response and tool_calls to an empty array, or set content to an empty string and list the tools Handwork must execute. " ++
                 "Each tool call must contain a name and an arguments object. Do not claim that a tool ran. Available tools: ",
         );
@@ -324,18 +325,6 @@ fn buildToolsObject(alloc: Allocator, tools: stream_provider.ToolSelection) !str
     const count = try responses_protocol.writeTools(&out.writer, alloc, tools);
     try out.writer.writeByte('}');
     return .{ .json = try out.toOwnedSlice(), .count = count };
-}
-
-fn writeToolResultSchema(writer: *std.Io.Writer) !void {
-    try writer.writeAll(
-        "{\"type\":\"object\",\"properties\":{" ++
-            "\"content\":{\"type\":\"string\"}," ++
-            "\"tool_calls\":{\"type\":\"array\",\"items\":{" ++
-            "\"type\":\"object\",\"properties\":{" ++
-            "\"name\":{\"type\":\"string\"},\"arguments\":{\"type\":\"object\"}}," ++
-            "\"required\":[\"name\",\"arguments\"],\"additionalProperties\":false}}}," ++
-            "\"required\":[\"content\",\"tool_calls\"],\"additionalProperties\":false}",
-    );
 }
 
 fn buildMessagePayload(alloc: Allocator, request: stream_provider.ModelRequest, provider_id: []const u8, model_id: []const u8, opencode_tools: []const std.json.Value) !struct { body: []u8, has_tools: bool } {
@@ -366,9 +355,7 @@ fn buildMessagePayload(alloc: Allocator, request: stream_provider.ModelRequest, 
     try std.json.Stringify.value(transcript, .{}, writer);
     try writer.writeAll("}]");
     if (tools.count > 0) {
-        try writer.writeAll(",\"format\":{\"type\":\"json_schema\",\"schema\":");
-        try writeToolResultSchema(writer);
-        try writer.writeByte('}');
+        try writer.writeAll(",\"format\":{\"type\":\"text\"}");
     } else if (request.response_format) |format| {
         if (format.schema != .object) return error.InvalidStructuredResponseSchema;
         try writer.writeAll(",\"format\":{\"type\":\"json_schema\",\"schema\":");
@@ -478,6 +465,76 @@ fn parseToolCompletion(alloc: Allocator, structured: std.json.Value, usage: type
     } };
 }
 
+fn toolEnvelopeText(text: []const u8) []const u8 {
+    var trimmed = std.mem.trim(u8, text, " \t\r\n");
+    if (!std.mem.startsWith(u8, trimmed, "```")) return trimmed;
+    const first_line_end = std.mem.indexOfScalar(u8, trimmed, '\n') orelse return trimmed;
+    trimmed = std.mem.trim(u8, trimmed[first_line_end + 1 ..], " \t\r\n");
+    if (std.mem.endsWith(u8, trimmed, "```")) {
+        trimmed = std.mem.trim(u8, trimmed[0 .. trimmed.len - 3], " \t\r\n");
+    }
+    return trimmed;
+}
+
+fn repairJsonDelimiters(alloc: Allocator, text: []const u8) ![]u8 {
+    var repaired: std.ArrayList(u8) = .empty;
+    errdefer repaired.deinit(alloc);
+    try repaired.ensureTotalCapacity(alloc, text.len);
+    var delimiters: std.ArrayList(u8) = .empty;
+    defer delimiters.deinit(alloc);
+    var in_string = false;
+    var escaped = false;
+    for (text) |byte| {
+        if (in_string) {
+            try repaired.append(alloc, byte);
+            if (escaped) {
+                escaped = false;
+            } else if (byte == '\\') {
+                escaped = true;
+            } else if (byte == '"') {
+                in_string = false;
+            }
+            continue;
+        }
+        switch (byte) {
+            '"' => {
+                in_string = true;
+                try repaired.append(alloc, byte);
+            },
+            '{', '[' => {
+                try delimiters.append(alloc, byte);
+                try repaired.append(alloc, byte);
+            },
+            '}', ']' => {
+                const expected: u8 = if (byte == '}') '{' else '[';
+                if (delimiters.items.len == 0 or delimiters.items[delimiters.items.len - 1] != expected) continue;
+                _ = delimiters.pop();
+                try repaired.append(alloc, byte);
+            },
+            else => try repaired.append(alloc, byte),
+        }
+    }
+    if (in_string) return error.MalformedProviderResponse;
+    while (delimiters.pop()) |opening| {
+        try repaired.append(alloc, if (opening == '{') '}' else ']');
+    }
+    return repaired.toOwnedSlice(alloc);
+}
+
+fn parseTextToolCompletion(alloc: Allocator, root: std.json.ObjectMap, usage: types.Usage, events: stream_provider.EventSink, message_id: []const u8) !stream_provider.Result {
+    const text = try parseTextParts(alloc, root) orelse return error.MalformedProviderResponse;
+    defer alloc.free(text);
+    const envelope = toolEnvelopeText(text);
+    var parsed = std.json.parseFromSlice(std.json.Value, alloc, envelope, .{}) catch |err| repaired: {
+        if (err == error.OutOfMemory) return error.OutOfMemory;
+        const repaired_text = try repairJsonDelimiters(alloc, envelope);
+        defer alloc.free(repaired_text);
+        break :repaired try std.json.parseFromSlice(std.json.Value, alloc, repaired_text, .{});
+    };
+    defer parsed.deinit();
+    return parseToolCompletion(alloc, parsed.value, usage, events, message_id);
+}
+
 fn parseCompletion(alloc: Allocator, response_body: []const u8, has_tools: bool, structured_requested: bool, events: stream_provider.EventSink) !stream_provider.Result {
     var parsed = try std.json.parseFromSlice(std.json.Value, alloc, response_body, .{});
     defer parsed.deinit();
@@ -492,7 +549,10 @@ fn parseCompletion(alloc: Allocator, response_body: []const u8, has_tools: bool,
     const usage = parseUsage(info);
     const structured = info.get("structured") orelse info.get("structured_output");
     const message_id = if (info.get("id")) |value| if (value == .string and value.string.len > 0) value.string else "message" else "message";
-    if (has_tools) return parseToolCompletion(alloc, structured orelse return error.MalformedProviderResponse, usage, events, message_id);
+    if (has_tools) {
+        if (structured) |value| return parseToolCompletion(alloc, value, usage, events, message_id);
+        return parseTextToolCompletion(alloc, root, usage, events, message_id);
+    }
 
     const content = if (structured_requested)
         try std.json.Stringify.valueAlloc(alloc, structured orelse return error.MalformedProviderResponse, .{})
@@ -583,7 +643,12 @@ fn appendModel(alloc: Allocator, list: *std.ArrayList(model_catalog.ModelCatalog
     };
     const kind = try alloc.dupe(u8, "language");
     errdefer alloc.free(kind);
-    var entry: model_catalog.ModelCatalogEntry = .{ .id = id, .model_type = kind };
+    const display_name = if (model.get("name")) |name_value|
+        if (name_value == .string and name_value.string.len > 0) try alloc.dupe(u8, name_value.string) else null
+    else
+        null;
+    errdefer if (display_name) |name| alloc.free(name);
+    var entry: model_catalog.ModelCatalogEntry = .{ .id = id, .display_name = display_name, .model_type = kind };
     if (model.get("capabilities")) |capabilities_value| if (capabilities_value == .object) {
         const capabilities = capabilities_value.object;
         entry.has_tool_use = jsonBool(capabilities.get("toolcall"));
@@ -726,11 +791,33 @@ test "local OpenCode structured output becomes a Handwork tool call" {
     try std.testing.expectEqual(@as(?u64, 7), result.completed.completion.usage.input_tokens);
 }
 
+test "local OpenCode text tool envelope becomes a Handwork tool call" {
+    const Sink = struct {
+        fn emit(_: *anyopaque, _: stream_provider.Event) void {}
+    };
+    const fixture =
+        "{\"info\":{\"id\":\"message-2\",\"tokens\":{\"input\":5,\"output\":2}}," ++
+        "\"parts\":[{\"type\":\"text\",\"text\":\"```json\\n{\\\"content\\\":\\\"\\\",\\\"tool_calls\\\":[{\\\"name\\\":\\\"read_file\\\",\\\"arguments\\\":{\\\"path\\\":\\\"package.json\\\"}}}]}\\n```\"}]}";
+    var tag: u8 = 0;
+    var result = try parseCompletion(
+        std.testing.allocator,
+        fixture,
+        true,
+        false,
+        .{ .context = &tag, .emit_fn = Sink.emit },
+    );
+    defer result.deinit(std.testing.allocator);
+    try std.testing.expectEqual(@as(usize, 1), result.completed.completion.tool_calls.len);
+    try std.testing.expectEqualStrings("opencode-message-2-0", result.completed.completion.tool_calls[0].id);
+    try std.testing.expectEqualStrings("read_file", result.completed.completion.tool_calls[0].name);
+    try std.testing.expectEqualStrings("{\"path\":\"package.json\"}", result.completed.completion.tool_calls[0].arguments_json);
+}
+
 test "local OpenCode provider catalog includes built-in models and connected providers" {
     const fixture =
         "{\"all\":[" ++
         "{\"id\":\"anthropic\",\"models\":{\"claude\":{\"id\":\"claude\",\"capabilities\":{\"toolcall\":true,\"reasoning\":true},\"limit\":{\"context\":200000,\"output\":8192}}}}," ++
-        "{\"id\":\"opencode\",\"models\":{\"union-alpha\":{\"id\":\"union-alpha\",\"capabilities\":{\"toolcall\":true,\"reasoning\":true}}}}," ++
+        "{\"id\":\"opencode\",\"models\":{\"union-alpha\":{\"id\":\"union-alpha\",\"name\":\"Union Alpha Free\",\"capabilities\":{\"toolcall\":true,\"reasoning\":true}}}}," ++
         "{\"id\":\"openai\",\"models\":{\"gpt\":{\"id\":\"gpt\"}}}]," ++
         "\"connected\":[\"anthropic\"]}";
     var models = try parseModels(std.testing.allocator, fixture);
@@ -741,6 +828,7 @@ test "local OpenCode provider catalog includes built-in models and connected pro
     try std.testing.expect(models.items[0].has_reasoning);
     try std.testing.expectEqual(@as(u32, 200000), models.items[0].context_window);
     try std.testing.expectEqualStrings("opencode/union-alpha", models.items[1].id);
+    try std.testing.expectEqualStrings("Union Alpha Free", models.items[1].display_name.?);
     try std.testing.expect(models.items[1].has_tool_use);
     try std.testing.expect(models.items[1].has_reasoning);
 }

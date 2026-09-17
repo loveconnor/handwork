@@ -254,6 +254,7 @@ fn traceCatalogLoadOutcome(
 
 pub const ModelCatalogEntry = struct {
     id: []u8,
+    display_name: ?[]u8 = null,
     model_type: []u8,
     released: i64 = 0,
     has_tool_use: bool = false,
@@ -277,6 +278,7 @@ pub fn freeModelCatalog(alloc: std.mem.Allocator, entries: *std.ArrayList(ModelC
 
 pub fn freeModelCatalogEntry(alloc: std.mem.Allocator, entry: ModelCatalogEntry) void {
     alloc.free(entry.id);
+    if (entry.display_name) |name| alloc.free(name);
     alloc.free(entry.model_type);
     var reasoning_efforts = entry.reasoning_efforts;
     reasoning_efforts.deinit(alloc);
@@ -305,6 +307,8 @@ fn appendClonedModelCatalogEntry(alloc: std.mem.Allocator, entries: *std.ArrayLi
 fn cloneModelCatalogEntry(alloc: std.mem.Allocator, entry: ModelCatalogEntry) !ModelCatalogEntry {
     const id = try alloc.dupe(u8, entry.id);
     errdefer alloc.free(id);
+    const display_name = if (entry.display_name) |name| try alloc.dupe(u8, name) else null;
+    errdefer if (display_name) |name| alloc.free(name);
     const model_type = try alloc.dupe(u8, entry.model_type);
     errdefer alloc.free(model_type);
     var reasoning_efforts: std.ArrayList(types.ReasoningEffort) = .empty;
@@ -313,6 +317,7 @@ fn cloneModelCatalogEntry(alloc: std.mem.Allocator, entry: ModelCatalogEntry) !M
 
     var cloned = ModelCatalogEntry{
         .id = id,
+        .display_name = display_name,
         .model_type = model_type,
         .released = entry.released,
         .has_tool_use = entry.has_tool_use,

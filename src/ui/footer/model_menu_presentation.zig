@@ -285,6 +285,10 @@ fn providerRangeWidth(
     return width;
 }
 
+fn modelItemTitle(item: model_cache_runtime.ModelMenuItem) []const u8 {
+    return item.display_name orelse item.id;
+}
+
 fn modelFactsColumn(projection: ModelMenuProjection, width: u16) ?usize {
     const indent_width: usize = if (width <= 2) 0 else 2;
     const content_width: usize = width;
@@ -292,7 +296,7 @@ fn modelFactsColumn(projection: ModelMenuProjection, width: u16) ?usize {
     var longest_name_width: usize = 8;
     for (projection.items) |item| {
         facts_width = @max(facts_width, compactFactsWidth(item.capabilities));
-        longest_name_width = @max(longest_name_width, display_width.visibleWidth(item.id));
+        longest_name_width = @max(longest_name_width, display_width.visibleWidth(modelItemTitle(item)));
     }
     if (facts_width == 0 or content_width < indent_width + 8 + 2 + facts_width) return null;
     const natural_column = indent_width + longest_name_width + 2;
@@ -321,7 +325,7 @@ fn composeTitleRow(
     const facts_start = facts_column orelse content_width;
     const show_facts = facts.items.len > 0 and facts_start >= prefix_width + 8 + 2;
     const id_budget = if (show_facts) facts_start - prefix_width - 2 else content_width -| prefix_width;
-    try row_text.appendSingleLineMiddleEllipsized(alloc, &row, item.id, id_budget);
+    try row_text.appendSingleLineMiddleEllipsized(alloc, &row, modelItemTitle(item), id_budget);
     if (selected) try row.appendSlice(alloc, ui_render.reset_style);
 
     if (show_facts) {
@@ -697,10 +701,10 @@ test "model menu status follows provenance and retryable failure precedence" {
     }
 }
 
-test "model menu header labels OpenCode Zen models" {
+test "model menu labels OpenCode Zen models with provider display names" {
     const alloc = std.testing.allocator;
     const items = [_]model_cache_runtime.ModelMenuItem{
-        .{ .id = @constCast("opencode/nemotron-3-ultra-free"), .provider = "opencode", .capabilities = .{} },
+        .{ .id = @constCast("opencode/union-alpha"), .display_name = @constCast("Union Alpha Free"), .provider = "opencode", .capabilities = .{} },
         .{ .id = @constCast("zai/glm-5"), .provider = "zai", .capabilities = .{} },
     };
     const projection: ModelMenuProjection = .{
@@ -713,6 +717,10 @@ test "model menu header labels OpenCode Zen models" {
     var header = try composeModelMenuRow(alloc, projection, 0, 80, 3);
     defer header.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, header.items, "[OpenCode Zen]") != null);
+
+    var title = try composeModelMenuRow(alloc, projection, 2, 80, 3);
+    defer title.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, title.items, "Union Alpha Free") != null);
 }
 
 test "model menu header shows only vendor filters represented by the catalog" {

@@ -98,11 +98,13 @@ pub const model_provider_filter_count = std.meta.fields(ModelProviderFilter).len
 
 pub const ModelMenuItem = struct {
     id: []u8,
+    display_name: ?[]u8 = null,
     provider: []const u8,
     capabilities: model_capabilities.Capabilities,
 
     fn deinit(self: ModelMenuItem, alloc: Allocator) void {
         alloc.free(self.id);
+        if (self.display_name) |name| alloc.free(name);
     }
 };
 
@@ -239,6 +241,7 @@ fn modelMenuItemMatches(
     const query_text = std.mem.trim(u8, query, " \t\r\n");
     return query_text.len == 0 or
         text_utils.containsIgnoreCase(item.id, query_text) or
+        (if (item.display_name) |name| text_utils.containsIgnoreCase(name, query_text) else false) or
         text_utils.containsIgnoreCase(item.provider, query_text);
 }
 
@@ -765,8 +768,11 @@ fn hydrateMenuSnapshot(
         const item = item: {
             const id = try alloc.dupe(u8, entry.id);
             errdefer alloc.free(id);
+            const display_name = if (entry.display_name) |name| try alloc.dupe(u8, name) else null;
+            errdefer if (display_name) |name| alloc.free(name);
             break :item ModelMenuItem{
                 .id = id,
+                .display_name = display_name,
                 .provider = modelProvider(id),
                 .capabilities = model_capabilities.resolveCapabilities(
                     id,
@@ -1084,8 +1090,8 @@ test "model menu owns resolved catalog state and filters without changing catalo
 test "model menu exposes OpenCode Zen models as a provider filter" {
     const alloc = std.testing.allocator;
     const entries = [_]model_catalog.ModelCatalogEntry{
-        .{ .id = @constCast("opencode/nemotron-3-ultra-free"), .model_type = @constCast("language") },
-        .{ .id = @constCast("opencode/mimo-v2.5-free"), .model_type = @constCast("language") },
+        .{ .id = @constCast("opencode/union-alpha"), .display_name = @constCast("Union Alpha Free"), .model_type = @constCast("language") },
+        .{ .id = @constCast("opencode/mimo-v2.5-free"), .display_name = @constCast("MiMo V2.5 Free"), .model_type = @constCast("language") },
         .{ .id = @constCast("zai/glm-5"), .model_type = @constCast("language") },
     };
     var menu: ModelMenu = .{};
@@ -1096,8 +1102,13 @@ test "model menu exposes OpenCode Zen models as a provider filter" {
 
     try std.testing.expect(modelProviderFilterAvailable(menu.items.items, .opencode));
     try std.testing.expectEqual(@as(usize, 2), menu.filteredItemCount());
-    try std.testing.expectEqualStrings("opencode/nemotron-3-ultra-free", menu.itemAt(0).?.id);
+    try std.testing.expectEqualStrings("opencode/union-alpha", menu.itemAt(0).?.id);
+    try std.testing.expectEqualStrings("Union Alpha Free", menu.itemAt(0).?.display_name.?);
     try std.testing.expectEqualStrings("opencode/mimo-v2.5-free", menu.itemAt(1).?.id);
+
+    menu.setQuery("Union Alpha Free");
+    try std.testing.expectEqual(@as(usize, 1), menu.filteredItemCount());
+    try std.testing.expectEqualStrings("opencode/union-alpha", menu.itemAt(0).?.id);
 }
 
 test "model menu provider navigation skips absent and redundant filters" {
