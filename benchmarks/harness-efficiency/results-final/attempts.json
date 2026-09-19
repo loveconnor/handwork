@@ -1,0 +1,2210 @@
+[
+  {
+    "duration_s": 29.128,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24641536,
+      "tests": 167362560,
+      "tools": 77611008
+    },
+    "samples": 392,
+    "input_tokens": 31400,
+    "output_tokens": 560,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/pagination-1-baseline/repo",
+    "log": "pagination-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 26.076,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22216704,
+      "tests": 181796864,
+      "tools": 63127552
+    },
+    "samples": 351,
+    "input_tokens": 25584,
+    "output_tokens": 535,
+    "cached_input_tokens": 4864,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 11,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9166,
+        "conversation_bytes": 436,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 26129,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9166,
+        "conversation_bytes": 582,
+        "tool_result_bytes": 7925,
+        "tool_argument_bytes": 282,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35561,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9164,
+        "conversation_bytes": 867,
+        "tool_result_bytes": 7961,
+        "tool_argument_bytes": 452,
+        "replay_bytes": 1687,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 37949,
+        "messages": 7
+      },
+      {
+        "instruction_bytes": 9164,
+        "conversation_bytes": 867,
+        "tool_result_bytes": 9378,
+        "tool_argument_bytes": 981,
+        "replay_bytes": 1687,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 40170,
+        "messages": 9
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/pagination-1-optimized/repo",
+    "log": "pagination-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 36.478,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24018944,
+      "tests": 135954432,
+      "tools": 79331328
+    },
+    "samples": 491,
+    "input_tokens": 36861,
+    "output_tokens": 853,
+    "cached_input_tokens": 2432,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_composition": [
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 771,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 26558,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 923,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 33615,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 923,
+        "tool_result_bytes": 13598,
+        "tool_argument_bytes": 291,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 41986,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9236,
+        "conversation_bytes": 923,
+        "tool_result_bytes": 13642,
+        "tool_argument_bytes": 1197,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 43173,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9236,
+        "conversation_bytes": 923,
+        "tool_result_bytes": 16236,
+        "tool_argument_bytes": 2580,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 47472,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "search",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/search-1-optimized/repo",
+    "log": "search-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 49.882,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28803072,
+      "tests": 136282112,
+      "tools": 77414400
+    },
+    "samples": 670,
+    "input_tokens": 50593,
+    "output_tokens": 1084,
+    "cached_input_tokens": 22784,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "search",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/search-1-baseline/repo",
+    "log": "search-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 77.774,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28065792,
+      "tests": 335003648,
+      "tools": 69926912
+    },
+    "samples": 1042,
+    "input_tokens": 63501,
+    "output_tokens": 1995,
+    "cached_input_tokens": 17024,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 18,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 25,
+    "task": "tenant-cache",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/tenant-cache-1-baseline/repo",
+    "log": "tenant-cache-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 97.963,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 32440320,
+      "tests": 228802560,
+      "tools": 78102528
+    },
+    "samples": 1308,
+    "input_tokens": 97842,
+    "output_tokens": 2398,
+    "cached_input_tokens": 17024,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 122,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "request_composition": [
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1324,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 27565,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1431,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 34577,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1431,
+        "tool_result_bytes": 14618,
+        "tool_argument_bytes": 504,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 44124,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1431,
+        "tool_result_bytes": 24062,
+        "tool_argument_bytes": 784,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 54354,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9660,
+        "conversation_bytes": 1683,
+        "tool_result_bytes": 24149,
+        "tool_argument_bytes": 1982,
+        "replay_bytes": 1794,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 58130,
+        "messages": 11
+      },
+      {
+        "instruction_bytes": 9697,
+        "conversation_bytes": 1683,
+        "tool_result_bytes": 24204,
+        "tool_argument_bytes": 7127,
+        "replay_bytes": 1794,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 63660,
+        "messages": 13
+      },
+      {
+        "instruction_bytes": 9697,
+        "conversation_bytes": 1683,
+        "tool_result_bytes": 24832,
+        "tool_argument_bytes": 7304,
+        "replay_bytes": 3517,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 66430,
+        "messages": 15
+      },
+      {
+        "instruction_bytes": 9697,
+        "conversation_bytes": 1683,
+        "tool_result_bytes": 28402,
+        "tool_argument_bytes": 7499,
+        "replay_bytes": 5303,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 72288,
+        "messages": 17
+      },
+      {
+        "instruction_bytes": 9697,
+        "conversation_bytes": 1683,
+        "tool_result_bytes": 29575,
+        "tool_argument_bytes": 7586,
+        "replay_bytes": 6980,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 75486,
+        "messages": 19
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 27,
+    "task": "tenant-cache",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/tenant-cache-1-optimized/repo",
+    "log": "tenant-cache-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 47.535,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26951680,
+      "tests": 131006464,
+      "tools": 83394560
+    },
+    "samples": 633,
+    "input_tokens": 39885,
+    "output_tokens": 1122,
+    "cached_input_tokens": 12160,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 12,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_composition": [
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25920,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 344,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 32941,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 344,
+        "tool_result_bytes": 8284,
+        "tool_argument_bytes": 299,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35726,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 613,
+        "tool_result_bytes": 8505,
+        "tool_argument_bytes": 333,
+        "replay_bytes": 1706,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 38169,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9163,
+        "conversation_bytes": 613,
+        "tool_result_bytes": 8566,
+        "tool_argument_bytes": 1225,
+        "replay_bytes": 1706,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 39535,
+        "messages": 11
+      },
+      {
+        "instruction_bytes": 9163,
+        "conversation_bytes": 613,
+        "tool_result_bytes": 10480,
+        "tool_argument_bytes": 2719,
+        "replay_bytes": 1706,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 43269,
+        "messages": 13
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "queue",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/queue-1-optimized/repo",
+    "log": "queue-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "bounded overlap and order",
+        "pass": true
+      },
+      {
+        "name": "sync and async failure settle and continue",
+        "pass": true
+      },
+      {
+        "name": "invalid limits do not start work",
+        "pass": true
+      },
+      {
+        "name": "sequential limit and immutable input",
+        "pass": true
+      },
+      {
+        "name": "empty and excess capacity",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 51.183,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30261248,
+      "tests": 90144768,
+      "tools": 81199104
+    },
+    "samples": 683,
+    "input_tokens": 58442,
+    "output_tokens": 1070,
+    "cached_input_tokens": 25472,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 6,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 12,
+    "task": "queue",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/queue-1-baseline/repo",
+    "log": "queue-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "bounded overlap and order",
+        "pass": true
+      },
+      {
+        "name": "sync and async failure settle and continue",
+        "pass": true
+      },
+      {
+        "name": "invalid limits do not start work",
+        "pass": true
+      },
+      {
+        "name": "sequential limit and immutable input",
+        "pass": true
+      },
+      {
+        "name": "empty and excess capacity",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 57.599,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26640384,
+      "tests": 131022848,
+      "tools": 66813952
+    },
+    "samples": 770,
+    "input_tokens": 39906,
+    "output_tokens": 1348,
+    "cached_input_tokens": 12160,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 31,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 13,
+    "task": "ledger",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/ledger-1-baseline/repo",
+    "log": "ledger-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "tenant isolated idempotency",
+        "pass": true
+      },
+      {
+        "name": "same replay is stable changed payload rejected",
+        "pass": true
+      },
+      {
+        "name": "missing source and target atomic",
+        "pass": true
+      },
+      {
+        "name": "invalid amounts atomic",
+        "pass": true
+      },
+      {
+        "name": "self transfer and overdraft atomic",
+        "pass": true
+      },
+      {
+        "name": "balance overflow atomic",
+        "pass": true
+      },
+      {
+        "name": "independent keys and conservation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 52.154,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22872064,
+      "tests": 83738624,
+      "tools": 77496320
+    },
+    "samples": 696,
+    "input_tokens": 27287,
+    "output_tokens": 1363,
+    "cached_input_tokens": 9728,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 12,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9184,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25940,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9184,
+        "conversation_bytes": 340,
+        "tool_result_bytes": 8965,
+        "tool_argument_bytes": 298,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 36425,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9182,
+        "conversation_bytes": 537,
+        "tool_result_bytes": 9029,
+        "tool_argument_bytes": 2130,
+        "replay_bytes": 1709,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 40661,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9182,
+        "conversation_bytes": 537,
+        "tool_result_bytes": 9817,
+        "tool_argument_bytes": 3795,
+        "replay_bytes": 1709,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 43401,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "ledger",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/ledger-1-optimized/repo",
+    "log": "ledger-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "tenant isolated idempotency",
+        "pass": true
+      },
+      {
+        "name": "same replay is stable changed payload rejected",
+        "pass": true
+      },
+      {
+        "name": "missing source and target atomic",
+        "pass": true
+      },
+      {
+        "name": "invalid amounts atomic",
+        "pass": true
+      },
+      {
+        "name": "self transfer and overdraft atomic",
+        "pass": true
+      },
+      {
+        "name": "balance overflow atomic",
+        "pass": true
+      },
+      {
+        "name": "independent keys and conservation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 46.914,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 23330816,
+      "tests": 143310848,
+      "tools": 76890112
+    },
+    "samples": 628,
+    "input_tokens": 27125,
+    "output_tokens": 1223,
+    "cached_input_tokens": 7296,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 22,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9171,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25926,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9171,
+        "conversation_bytes": 333,
+        "tool_result_bytes": 8472,
+        "tool_argument_bytes": 269,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35865,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9169,
+        "conversation_bytes": 538,
+        "tool_result_bytes": 8536,
+        "tool_argument_bytes": 1597,
+        "replay_bytes": 1773,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 39683,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9169,
+        "conversation_bytes": 538,
+        "tool_result_bytes": 10861,
+        "tool_argument_bytes": 3223,
+        "replay_bytes": 1773,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 44007,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "stream",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/stream-1-optimized/repo",
+    "log": "stream-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "every split boundary preserves unicode and escaped strings",
+        "pass": true
+      },
+      {
+        "name": "malformed record recovery line numbering",
+        "pass": true
+      },
+      {
+        "name": "unterminated final record exactly once and close",
+        "pass": true
+      },
+      {
+        "name": "callbacks errors propagate without parse misclassification",
+        "pass": true
+      },
+      {
+        "name": "blank chunks and empty close",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 53.212,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25804800,
+      "tests": 128483328,
+      "tools": 64421888
+    },
+    "samples": 712,
+    "input_tokens": 39513,
+    "output_tokens": 1267,
+    "cached_input_tokens": 12160,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 43,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "stream",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/stream-1-baseline/repo",
+    "log": "stream-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "every split boundary preserves unicode and escaped strings",
+        "pass": true
+      },
+      {
+        "name": "malformed record recovery line numbering",
+        "pass": true
+      },
+      {
+        "name": "unterminated final record exactly once and close",
+        "pass": true
+      },
+      {
+        "name": "callbacks errors propagate without parse misclassification",
+        "pass": true
+      },
+      {
+        "name": "blank chunks and empty close",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 28.345,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22757376,
+      "tests": 203112448,
+      "tools": 68747264
+    },
+    "samples": 380,
+    "input_tokens": 25700,
+    "output_tokens": 541,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9166,
+        "conversation_bytes": 436,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 26129,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9166,
+        "conversation_bytes": 575,
+        "tool_result_bytes": 7925,
+        "tool_argument_bytes": 545,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35831,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9164,
+        "conversation_bytes": 575,
+        "tool_result_bytes": 7961,
+        "tool_argument_bytes": 715,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 36234,
+        "messages": 7
+      },
+      {
+        "instruction_bytes": 9164,
+        "conversation_bytes": 575,
+        "tool_result_bytes": 9421,
+        "tool_argument_bytes": 1220,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 38472,
+        "messages": 9
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/pagination-2-optimized/repo",
+    "log": "pagination-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 27.438,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24199168,
+      "tests": 186236928,
+      "tools": 68861952
+    },
+    "samples": 369,
+    "input_tokens": 31291,
+    "output_tokens": 485,
+    "cached_input_tokens": 12160,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/pagination-2-baseline/repo",
+    "log": "pagination-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 43.605,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26148864,
+      "tests": 129302528,
+      "tools": 70762496
+    },
+    "samples": 582,
+    "input_tokens": 43220,
+    "output_tokens": 1038,
+    "cached_input_tokens": 9728,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 10,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "search",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/search-2-baseline/repo",
+    "log": "search-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 51.951,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25559040,
+      "tests": 136249344,
+      "tools": 83345408
+    },
+    "samples": 696,
+    "input_tokens": 37090,
+    "output_tokens": 1027,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_composition": [
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 771,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 26558,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 928,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 33620,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9238,
+        "conversation_bytes": 928,
+        "tool_result_bytes": 13598,
+        "tool_argument_bytes": 330,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 42030,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9236,
+        "conversation_bytes": 928,
+        "tool_result_bytes": 13642,
+        "tool_argument_bytes": 1245,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 43226,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9236,
+        "conversation_bytes": 1236,
+        "tool_result_bytes": 16274,
+        "tool_argument_bytes": 2914,
+        "replay_bytes": 1678,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 49858,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "search",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/search-2-optimized/repo",
+    "log": "search-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 83.591,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 27869184,
+      "tests": 219906048,
+      "tools": 82493440
+    },
+    "samples": 1118,
+    "input_tokens": 66265,
+    "output_tokens": 2183,
+    "cached_input_tokens": 18432,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 49,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_composition": [
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1324,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 27565,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1443,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 34589,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1443,
+        "tool_result_bytes": 13083,
+        "tool_argument_bytes": 423,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 42476,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9662,
+        "conversation_bytes": 1443,
+        "tool_result_bytes": 20849,
+        "tool_argument_bytes": 715,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 51000,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9660,
+        "conversation_bytes": 1692,
+        "tool_result_bytes": 20936,
+        "tool_argument_bytes": 2067,
+        "replay_bytes": 1726,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 54857,
+        "messages": 11
+      },
+      {
+        "instruction_bytes": 9692,
+        "conversation_bytes": 1692,
+        "tool_result_bytes": 20986,
+        "tool_argument_bytes": 6938,
+        "replay_bytes": 1726,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 60090,
+        "messages": 13
+      },
+      {
+        "instruction_bytes": 9692,
+        "conversation_bytes": 1692,
+        "tool_result_bytes": 24759,
+        "tool_argument_bytes": 7143,
+        "replay_bytes": 3386,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 66040,
+        "messages": 15
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 23,
+    "task": "tenant-cache",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/tenant-cache-2-optimized/repo",
+    "log": "tenant-cache-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 83.075,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 31703040,
+      "tests": 397213696,
+      "tools": 78479360
+    },
+    "samples": 1108,
+    "input_tokens": 78391,
+    "output_tokens": 2048,
+    "cached_input_tokens": 19456,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 24,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "development",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 22,
+    "task": "tenant-cache",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/tenant-cache-2-baseline/repo",
+    "log": "tenant-cache-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 53.581,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 29851648,
+      "tests": 84246528,
+      "tools": 75563008
+    },
+    "samples": 711,
+    "input_tokens": 52435,
+    "output_tokens": 1070,
+    "cached_input_tokens": 21120,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 6,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 12,
+    "task": "queue",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/queue-2-baseline/repo",
+    "log": "queue-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "bounded overlap and order",
+        "pass": true
+      },
+      {
+        "name": "sync and async failure settle and continue",
+        "pass": true
+      },
+      {
+        "name": "invalid limits do not start work",
+        "pass": true
+      },
+      {
+        "name": "sequential limit and immutable input",
+        "pass": true
+      },
+      {
+        "name": "empty and excess capacity",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 39.055,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22446080,
+      "tests": 84426752,
+      "tools": 70942720
+    },
+    "samples": 522,
+    "input_tokens": 26518,
+    "output_tokens": 1017,
+    "cached_input_tokens": 7296,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25920,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9165,
+        "conversation_bytes": 352,
+        "tool_result_bytes": 8284,
+        "tool_argument_bytes": 266,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35701,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9163,
+        "conversation_bytes": 352,
+        "tool_result_bytes": 8345,
+        "tool_argument_bytes": 1158,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 37067,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9163,
+        "conversation_bytes": 352,
+        "tool_result_bytes": 10341,
+        "tool_argument_bytes": 2655,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 40891,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "queue",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/queue-2-optimized/repo",
+    "log": "queue-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "bounded overlap and order",
+        "pass": true
+      },
+      {
+        "name": "sync and async failure settle and continue",
+        "pass": true
+      },
+      {
+        "name": "invalid limits do not start work",
+        "pass": true
+      },
+      {
+        "name": "sequential limit and immutable input",
+        "pass": true
+      },
+      {
+        "name": "empty and excess capacity",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 51.712,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 23429120,
+      "tests": 131039232,
+      "tools": 83427328
+    },
+    "samples": 689,
+    "input_tokens": 27909,
+    "output_tokens": 1395,
+    "cached_input_tokens": 9728,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 16,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_composition": [
+      {
+        "instruction_bytes": 9184,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25940,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9184,
+        "conversation_bytes": 328,
+        "tool_result_bytes": 8965,
+        "tool_argument_bytes": 298,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 36413,
+        "messages": 5
+      },
+      {
+        "instruction_bytes": 9182,
+        "conversation_bytes": 532,
+        "tool_result_bytes": 9029,
+        "tool_argument_bytes": 2142,
+        "replay_bytes": 1747,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 40707,
+        "messages": 8
+      },
+      {
+        "instruction_bytes": 9182,
+        "conversation_bytes": 532,
+        "tool_result_bytes": 11896,
+        "tool_argument_bytes": 3924,
+        "replay_bytes": 1747,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 45688,
+        "messages": 10
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "ledger",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/ledger-2-optimized/repo",
+    "log": "ledger-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "tenant isolated idempotency",
+        "pass": true
+      },
+      {
+        "name": "same replay is stable changed payload rejected",
+        "pass": true
+      },
+      {
+        "name": "missing source and target atomic",
+        "pass": true
+      },
+      {
+        "name": "invalid amounts atomic",
+        "pass": true
+      },
+      {
+        "name": "self transfer and overdraft atomic",
+        "pass": true
+      },
+      {
+        "name": "balance overflow atomic",
+        "pass": true
+      },
+      {
+        "name": "independent keys and conservation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 62.201,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 29294592,
+      "tests": 136986624,
+      "tools": 83755008
+    },
+    "samples": 830,
+    "input_tokens": 53823,
+    "output_tokens": 1419,
+    "cached_input_tokens": 19456,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 43,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 13,
+    "task": "ledger",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/ledger-2-baseline/repo",
+    "log": "ledger-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "tenant isolated idempotency",
+        "pass": true
+      },
+      {
+        "name": "same replay is stable changed payload rejected",
+        "pass": true
+      },
+      {
+        "name": "missing source and target atomic",
+        "pass": true
+      },
+      {
+        "name": "invalid amounts atomic",
+        "pass": true
+      },
+      {
+        "name": "self transfer and overdraft atomic",
+        "pass": true
+      },
+      {
+        "name": "balance overflow atomic",
+        "pass": true
+      },
+      {
+        "name": "independent keys and conservation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 57.179,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 29982720,
+      "tests": 157532160,
+      "tools": 74989568
+    },
+    "samples": 759,
+    "input_tokens": 53965,
+    "output_tokens": 1202,
+    "cached_input_tokens": 18816,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 32,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_composition": [],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 12,
+    "task": "stream",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/stream-2-baseline/repo",
+    "log": "stream-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "every split boundary preserves unicode and escaped strings",
+        "pass": true
+      },
+      {
+        "name": "malformed record recovery line numbering",
+        "pass": true
+      },
+      {
+        "name": "unterminated final record exactly once and close",
+        "pass": true
+      },
+      {
+        "name": "callbacks errors propagate without parse misclassification",
+        "pass": true
+      },
+      {
+        "name": "blank chunks and empty close",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 49.447,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26017792,
+      "tests": 131284992,
+      "tools": 63619072
+    },
+    "samples": 660,
+    "input_tokens": 41294,
+    "output_tokens": 1197,
+    "cached_input_tokens": 14592,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 24,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_composition": [
+      {
+        "instruction_bytes": 9171,
+        "conversation_bytes": 228,
+        "tool_result_bytes": 0,
+        "tool_argument_bytes": 0,
+        "replay_bytes": 0,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 25926,
+        "messages": 1
+      },
+      {
+        "instruction_bytes": 9171,
+        "conversation_bytes": 365,
+        "tool_result_bytes": 6282,
+        "tool_argument_bytes": 46,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 32968,
+        "messages": 3
+      },
+      {
+        "instruction_bytes": 9171,
+        "conversation_bytes": 365,
+        "tool_result_bytes": 8472,
+        "tool_argument_bytes": 274,
+        "replay_bytes": 65,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 35902,
+        "messages": 6
+      },
+      {
+        "instruction_bytes": 9169,
+        "conversation_bytes": 634,
+        "tool_result_bytes": 8536,
+        "tool_argument_bytes": 1495,
+        "replay_bytes": 1746,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 39649,
+        "messages": 9
+      },
+      {
+        "instruction_bytes": 9169,
+        "conversation_bytes": 634,
+        "tool_result_bytes": 9350,
+        "tool_argument_bytes": 2957,
+        "replay_bytes": 1746,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 42238,
+        "messages": 11
+      },
+      {
+        "instruction_bytes": 9169,
+        "conversation_bytes": 634,
+        "tool_result_bytes": 11213,
+        "tool_argument_bytes": 3055,
+        "replay_bytes": 3214,
+        "schema_json_bytes": 16106,
+        "wire_bytes": 45958,
+        "messages": 13
+      }
+    ],
+    "duplicate_saved_bytes": 0,
+    "recovery_hints": 0,
+    "split": "held_out",
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "stream",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-efficiency-apul1kbx/stream-2-optimized/repo",
+    "log": "stream-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "every split boundary preserves unicode and escaped strings",
+        "pass": true
+      },
+      {
+        "name": "malformed record recovery line numbering",
+        "pass": true
+      },
+      {
+        "name": "unterminated final record exactly once and close",
+        "pass": true
+      },
+      {
+        "name": "callbacks errors propagate without parse misclassification",
+        "pass": true
+      },
+      {
+        "name": "blank chunks and empty close",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  }
+]

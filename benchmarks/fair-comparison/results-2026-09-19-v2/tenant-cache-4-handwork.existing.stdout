@@ -1,0 +1,23 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.786708ms)
+✔ organizations scoped to user (0.122709ms)
+✔ logout revokes session (0.099083ms)
+✔ nonmembers cannot read or update projects, even with a spoofed organization (6.780708ms)
+✔ all list variants are isolated, cached, and invalidated only for their owner (1.133375ms)
+✔ revocation is enforced before cache access and before updates (0.210167ms)
+✔ authenticated detail (0.602583ms)
+✔ authenticated list (5.767709ms)
+✔ update then read (0.191125ms)
+✔ anonymous request rejected (0.356375ms)
+✔ invalid update rejected (0.08175ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.727834

@@ -1,0 +1,36 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5472256,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 39388,
+        "ppid": 29170,
+        "rss": 5472256,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-fair-2tip6hsn/private/tenant-cache/verify.mjs /private/tmp/handwork-fair-2tip6hsn/tenant-cache-1-opencode/repo"
+      }
+    ]
+  },
+  {
+    "seconds": 0.069,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 39388,
+        "ppid": 29170,
+        "rss": 0,
+        "kind": "harness",
+        "command": "(node)"
+      }
+    ]
+  }
+]

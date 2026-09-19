@@ -1,0 +1,98 @@
+{
+  "pagination": {
+    "handwork": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 25.376,
+      "median_peak_mib": 21.90625,
+      "mean_input_tokens": 27880.2,
+      "mean_output_tokens": 462,
+      "mean_tool_calls": 5,
+      "mean_model_requests": 4.4
+    },
+    "opencode": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 41.656,
+      "median_peak_mib": 748.1875,
+      "mean_input_tokens": 42015.8,
+      "mean_output_tokens": 734.4,
+      "mean_tool_calls": 11,
+      "mean_model_requests": 7.4
+    },
+    "codex": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 27.981,
+      "median_peak_mib": 237.671875,
+      "mean_input_tokens": 66153.2,
+      "mean_output_tokens": 566.4,
+      "mean_tool_calls": 3.4,
+      "mean_model_requests": 4.4
+    }
+  },
+  "search": {
+    "handwork": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 40.622,
+      "median_peak_mib": 23.65625,
+      "mean_input_tokens": 37086.6,
+      "mean_output_tokens": 991.8,
+      "mean_tool_calls": 5,
+      "mean_model_requests": 5
+    },
+    "opencode": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 55.151,
+      "median_peak_mib": 790.0625,
+      "mean_input_tokens": 78781.2,
+      "mean_output_tokens": 1138.8,
+      "mean_tool_calls": 15.8,
+      "mean_model_requests": 11
+    },
+    "codex": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 32.841,
+      "median_peak_mib": 234.015625,
+      "mean_input_tokens": 82758.2,
+      "mean_output_tokens": 763.4,
+      "mean_tool_calls": 4.2,
+      "mean_model_requests": 5.2
+    }
+  },
+  "tenant-cache": {
+    "handwork": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 86.128,
+      "median_peak_mib": 27.265625,
+      "mean_input_tokens": 71894.8,
+      "mean_output_tokens": 2136.2,
+      "mean_tool_calls": 8.4,
+      "mean_model_requests": 7.2
+    },
+    "opencode": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 121.552,
+      "median_peak_mib": 785.3125,
+      "mean_input_tokens": 115747.8,
+      "mean_output_tokens": 3056.8,
+      "mean_tool_calls": 24.2,
+      "mean_model_requests": 12.4
+    },
+    "codex": {
+      "attempts": 5,
+      "successes": 5,
+      "median_success_seconds": 83.48,
+      "median_peak_mib": 235.09375,
+      "mean_input_tokens": 129680.2,
+      "mean_output_tokens": 2236,
+      "mean_tool_calls": 6.2,
+      "mean_model_requests": 7.2
+    }
+  }
+}

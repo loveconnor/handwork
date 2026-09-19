@@ -1,0 +1,50 @@
+{
+  "broken": [
+    {
+      "name": "every split boundary preserves unicode and escaped strings",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    {\n      text: 'hello\ud83d\ude00\\nworld'\n    },\n-   0,\n-   false,\n-   null\n  ]\n"
+    },
+    {
+      "name": "malformed record recovery line numbering",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n-   {\n-     x: 1\n-   },\n    2\n  ]\n"
+    },
+    {
+      "name": "unterminated final record exactly once and close",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   12\n+ ]\n- []\n"
+    },
+    {
+      "name": "callbacks errors propagate without parse misclassification",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "blank chunks and empty close",
+      "pass": true
+    }
+  ],
+  "known_correct": [
+    {
+      "name": "every split boundary preserves unicode and escaped strings",
+      "pass": true
+    },
+    {
+      "name": "malformed record recovery line numbering",
+      "pass": true
+    },
+    {
+      "name": "unterminated final record exactly once and close",
+      "pass": true
+    },
+    {
+      "name": "callbacks errors propagate without parse misclassification",
+      "pass": true
+    },
+    {
+      "name": "blank chunks and empty close",
+      "pass": true
+    }
+  ]
+}

@@ -8383,3 +8383,82 @@ test "processQueuedPrompt keeps provider uncertainty without tool terminals afte
     try std.testing.expectEqual(@as(usize, 1), settled);
     try expectFailedLifecycleContains(hooks.lifecycle_events.items, "local-read", "before tool call ran");
 }
+
+test "processQueuedPrompt records request composition without exposing diagnostic payloads" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
+    defer alloc.free(root);
+    const path = try std.fs.path.join(alloc, &.{ root, "composition.log" });
+    defer alloc.free(path);
+    debug_trace.resetForTest();
+    defer debug_trace.resetForTest();
+    try debug_trace.configureForTestWithScopes(alloc, path, "agent");
+    const completions = [_]FakeCompletion{.{ .content = "Done" }};
+    var provider = FakeProvider.init(alloc, &completions);
+    defer provider.deinit();
+    var hooks = FakeAgentRuntimeDeps.init(alloc);
+    defer hooks.deinit();
+    var fixture = PromptFixture{};
+    try runFakePrompt(&provider, &hooks, fixture.config(), fixture.job());
+    debug_trace.shutdown();
+    const output = try readTraceFile(alloc, path, 65536);
+    defer alloc.free(output);
+    var lines = std.mem.splitScalar(u8, output, '\n');
+    var composition_found = false;
+    var result_found = false;
+    while (lines.next()) |line| {
+        if (std.mem.find(u8, line, "event=request_composition ") != null) {
+            composition_found = true;
+            try std.testing.expect(std.mem.find(u8, line, "instruction_bytes=") != null);
+            try std.testing.expect(std.mem.find(u8, line, "schema_json_bytes=") != null);
+            try std.testing.expect(std.mem.find(u8, line, "api-key") == null);
+            try std.testing.expect(std.mem.find(u8, line, "user prompt") == null);
+        }
+        if (std.mem.find(u8, line, "event=request_finished ") != null) result_found = true;
+    }
+    try std.testing.expect(composition_found and result_found);
+}
+
+test "request efficiency integration deduplicates provider input but preserves executed reads and durable results" {
+    const alloc = std.testing.allocator;
+    const output = "EXACT_REPEAT_SENTINEL\n" ++ ("r" ** 2000);
+    const first = [_]ToolCall{toolCall("first-read", "read_file", "{\"path\":\"same.txt\"}")};
+    const second = [_]ToolCall{toolCall("second-read", "read_file", "{\"path\":\"same.txt\"}")};
+    var provider = FakeProvider.init(alloc, &.{ .{ .tool_calls = &first }, .{ .tool_calls = &second }, .{ .content = "Done" } });
+    defer provider.deinit();
+    var hooks = FakeAgentRuntimeDeps.init(alloc);
+    defer hooks.deinit();
+    hooks.permission_decisions = &.{ .once, .once };
+    hooks.exec_plans = &.{ .{ .result = .{ .model_output = output } }, .{ .result = .{ .model_output = output } } };
+    var fixture = PromptFixture{};
+    try runFakePrompt(&provider, &hooks, fixture.config(), fixture.job());
+    try std.testing.expectEqual(@as(usize, 2), hooks.executed_names.items.len);
+    try std.testing.expectEqual(@as(usize, 3), provider.request_bodies.items.len);
+    try expectBodyContains(&provider, 2, "call ID first-read");
+    try std.testing.expectEqual(@as(usize, 1), countNeedle(provider.request_bodies.items[2], "EXACT_REPEAT_SENTINEL"));
+    const completed = hooks.history_turns.items[hooks.history_turns.items.len - 1].assistant;
+    try std.testing.expectEqual(@as(usize, 2), completed.execution.tool_steps.len);
+    for (completed.execution.tool_steps) |step| try std.testing.expectEqualStrings(output, step.tool_results[0].output);
+}
+
+test "request efficiency integration hints on repeated failure without adding a provider call" {
+    const alloc = std.testing.allocator;
+    const first = [_]ToolCall{toolCall("read-a", "read_file", "{\"path\":\"same.txt\"}")};
+    const second = [_]ToolCall{toolCall("read-b", "read_file", "{\"path\":\"same.txt\"}")};
+    const third = [_]ToolCall{toolCall("read-c", "read_file", "{\"path\":\"same.txt\"}")};
+    var provider = FakeProvider.init(alloc, &.{ .{ .tool_calls = &first }, .{ .tool_calls = &second }, .{ .tool_calls = &third }, .{ .content = "Blocked by repeated failure" } });
+    defer provider.deinit();
+    var hooks = FakeAgentRuntimeDeps.init(alloc);
+    defer hooks.deinit();
+    hooks.permission_decisions = &.{ .once, .once, .once };
+    hooks.exec_plans = &.{ .{ .result = .{ .model_output = "missing file", .status = .failure } }, .{ .result = .{ .model_output = "missing file", .status = .failure } }, .{ .result = .{ .model_output = "missing file", .status = .failure } } };
+    var fixture = PromptFixture{};
+    try runFakePrompt(&provider, &hooks, fixture.config(), fixture.job());
+    try std.testing.expectEqual(@as(usize, 4), provider.request_bodies.items.len);
+    try expectBodyNotContains(&provider, 2, "last three tool results failed");
+    try expectBodyContains(&provider, 3, "last three tool results failed");
+    try expectBodyContains(&provider, 3, "permission refusal remains binding");
+    try std.testing.expectEqualStrings("Blocked by repeated failure", hooks.finish_assistant_text.?);
+}

@@ -1,0 +1,149 @@
+1789778188128 [agent] event=prompt_start turn_id=1 prompt_bytes=228 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789778188752 [agent] step start step=1 limit=0 messages=8
+1789778188752 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=8
+1789778188752 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=8
+1789778188752 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778188752 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+● Loading skill[0m
+1789778193898 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789778193898 [agent] step completion step=1 content_bytes=133 tool_calls=2 finish_reason=tool-calls
+1789778193898 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=133 tool_call_count=2 finish_reason=tool-calls
+Loading skill unslop
+Running pwd; git status --short; ls -a; find .. -name AGENTS.md -print
+/dev/fd/11:25: command not found: compdef
+/private/tmp/handwork-efficiency-apul1kbx/queue-2-baseline/repo
+.
+..
+.git
+.handwork
+README.md
+package.json
+src
+tests
+1789778194108 [agent] step start step=2 limit=0 messages=11
+1789778194108 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789778194108 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789778194108 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778194108 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Reading[0m
+1789778198029 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789778198029 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789778198029 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789778198029 [agent] event=read_batch_complete file_read_operations=2
+1789778198029 [agent] step start step=3 limit=0 messages=13
+1789778198029 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789778198029 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789778198029 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778198030 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Matching[0m
+1789778200225 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789778200225 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789778200225 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching {src,tests}/**/*
+1789778200235 [agent] step start step=4 limit=0 messages=15
+1789778200236 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1789778200236 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=15
+1789778200236 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778200236 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+1789778204731 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=4 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789778204731 [agent] step completion step=4 content_bytes=103 tool_calls=1 finish_reason=tool-calls
+1789778204731 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=103 tool_call_count=1 finish_reason=tool-calls
+Running find src tests -type f
+src/worker.js
+src/map.js
+tests/basic.test.js
+1789778204746 [agent] step start step=5 limit=0 messages=17
+1789778204746 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=17
+1789778204746 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=17
+1789778204746 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778204747 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+● Reading[0m
+1789778212490 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=4 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789778212490 [agent] step completion step=5 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789778212490 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789778212491 [agent] event=read_batch_complete file_read_operations=3
+1789778212491 [agent] step start step=6 limit=0 messages=19
+1789778212491 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=19
+1789778212491 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=19
+1789778212491 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778212491 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+1789778223226 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=4 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789778223226 [agent] step completion step=6 content_bytes=0 tool_calls=2 finish_reason=tool-calls
+1789778223226 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=0 tool_call_count=2 finish_reason=tool-calls
+Editing src/map.js
+Editing src/worker.js
+1789778223228 [agent] step start step=7 limit=0 messages=22
+1789778223228 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=22
+1789778223228 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=22
+1789778223228 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778223228 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+1789778237357 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=4 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789778237357 [agent] step completion step=7 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789778237357 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm test && node --input-type=module <<'NODE' import assert from 'node:assert/strict'; import {mapLimit} from './src/...
+
+> test
+> node --test tests/*.test.js
+
+✔ empty (0.466667ms)
+✔ single (0.116459ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.942417
+Contract probe passed
+diff --git a/src/map.js b/src/map.js
+index cc70e2f..862db12 100644
+--- a/src/map.js
++++ b/src/map.js
+@@ -1,9 +1,14 @@
+ import { execute } from './worker.js';
+ export async function mapLimit(items, limit, fn) {
+-  if (limit < 1) throw new RangeError('limit');
+-  const results = [];
+-  await Promise.all(items.map(async (item, index) => {
+-    results.push(await execute(fn, item, index));
+-  }));
++  if (!Number.isInteger(limit) || limit < 1) throw new RangeError('limit');
++  const results = new Array(items.length);
++  let nextIndex = 0;
++  async function worker() {
++    while (nextIndex < items.length) {
++      const index = nextIndex++;
++      results[index] = await execute(fn, items[index], index);
++    }
++  }
++  await Promise.all(Array.from({length: Math.min(limit, items.length)}, worker));
+   return results;
+ }
+diff --git a/src/worker.js b/src/worker.js
+index abe627c..2d2c7b7 100644
+--- a/src/worker.js
++++ b/src/worker.js
+@@ -1,3 +1,7 @@
+ export async function execute(fn, item, index) {
+-  return {status:'fulfilled', value:await fn(item,index)};
++  try {
++    return {status:'fulfilled', value:await fn(item,index)};
++  } catch (reason) {
++    return {status:'rejected', reason};
++  }
+ }
+ M src/map.js
+ M src/worker.js
+1789778237714 [agent] step start step=8 limit=0 messages=24
+1789778237714 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=24
+1789778237714 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=24
+1789778237714 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789778237714 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+1789778241679 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789778241679 [agent] step completion step=8 content_bytes=401 tool_calls=0 finish_reason=stop
+1789778241679 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=401 tool_call_count=0 finish_reason=stop
+1789778241679 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

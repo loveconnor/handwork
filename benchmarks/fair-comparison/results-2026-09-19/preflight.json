@@ -1,0 +1,79 @@
+[
+  {
+    "duration_s": 17.467,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22134784,
+      "tests": 0,
+      "tools": 83050496
+    },
+    "samples": 247,
+    "input_tokens": 23159,
+    "output_tokens": 212,
+    "cached_input_tokens": 9728,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "pass": true
+  },
+  {
+    "duration_s": 16.238,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 1161117696,
+      "tests": 0,
+      "tools": 6258688
+    },
+    "samples": 233,
+    "input_tokens": 20310,
+    "output_tokens": 175,
+    "cached_input_tokens": 14720,
+    "tool_calls": 3,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 20310,
+      "output_tokens": 175,
+      "cached_input_tokens": 14720,
+      "tool_calls": 3
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 4,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "pass": true
+  },
+  {
+    "duration_s": 19.137,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 195002368,
+      "tests": 0,
+      "tools": 69009408
+    },
+    "samples": 272,
+    "input_tokens": 28593,
+    "output_tokens": 125,
+    "cached_input_tokens": 24320,
+    "tool_calls": 1,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 27,
+    "rollout_files": 1,
+    "model_requests": 2,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "pass": false
+  }
+]

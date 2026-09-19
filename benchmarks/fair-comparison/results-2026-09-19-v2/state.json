@@ -1,0 +1,91 @@
+{
+  "created": "2026-09-18T21:12:00-0400",
+  "base": "/private/tmp/handwork-fair-2tip6hsn",
+  "binaries": {
+    "handwork": {
+      "path": "/private/tmp/handwork-fair-2tip6hsn/bin/handwork",
+      "original": "/Users/connorlove/Work/Handwork/handwork/zig-out/bin/handwork",
+      "sha256": "90d8b7dddf0c14f2c329577bec1fc175ee44a55fdeb6758e1dc92dfb312ef178"
+    },
+    "opencode": {
+      "path": "/private/tmp/handwork-fair-2tip6hsn/bin/opencode",
+      "original": "/Users/connorlove/.opencode/bin/opencode",
+      "sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+    },
+    "codex": {
+      "path": "/private/tmp/handwork-fair-2tip6hsn/bin/codex",
+      "original": "/Applications/ChatGPT.app/Contents/Resources/codex",
+      "sha256": "805f2102d573c580d8cad2fc774b81837e68f7e9bdd1adb559d67801bbc1f9bd"
+    },
+    "codex-code-mode-host": {
+      "path": "/private/tmp/handwork-fair-2tip6hsn/bin/codex-code-mode-host",
+      "original": "/Applications/ChatGPT.app/Contents/Resources/codex-code-mode-host",
+      "sha256": "685d71198d94d06a886c8edfc0fa02aa72efb32bbc5bfafe1210b96b1abd361a"
+    }
+  },
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "context": 272000,
+  "attempts_per_agent_task": 5,
+  "budget_seconds": 600,
+  "orders": [
+    [
+      "handwork",
+      "opencode",
+      "codex"
+    ],
+    [
+      "opencode",
+      "codex",
+      "handwork"
+    ],
+    [
+      "codex",
+      "handwork",
+      "opencode"
+    ],
+    [
+      "handwork",
+      "codex",
+      "opencode"
+    ],
+    [
+      "opencode",
+      "handwork",
+      "codex"
+    ]
+  ],
+  "tasks": [
+    {
+      "base": "/private/tmp/handwork-fair-2tip6hsn",
+      "private": "/private/tmp/handwork-fair-2tip6hsn/private",
+      "fixture": "/private/tmp/handwork-fair-2tip6hsn/private/pagination/fixture",
+      "commit": "ae3b83a00f476632fb7bf0458b903d0068213d0f",
+      "task": "pagination",
+      "prompt": "Fix the reported bug in this repository. Inspect the relevant code, make the smallest appropriate change, and run the existing tests. Do not modify tests or install dependencies. Summarize your changes and verification.\n\nBug report: Pagination loses the last item at page boundaries. Fix paginate in src/pagination.ts so that each one-based page returns all of its items, including a final partial page, without changing the public API.",
+      "verifier": "/private/tmp/handwork-fair-2tip6hsn/private/pagination/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-fair-2tip6hsn",
+      "private": "/private/tmp/handwork-fair-2tip6hsn/private",
+      "fixture": "/private/tmp/handwork-fair-2tip6hsn/private/search/fixture",
+      "commit": "4ce643182923c087d3886afbccc87b1f2e1ca749",
+      "task": "search",
+      "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+      "verifier": "/private/tmp/handwork-fair-2tip6hsn/private/search/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-fair-2tip6hsn",
+      "private": "/private/tmp/handwork-fair-2tip6hsn/private",
+      "fixture": "/private/tmp/handwork-fair-2tip6hsn/private/tenant-cache/fixture",
+      "commit": "9b0b02d517434cd295fc33d70f8b925cc5172a22",
+      "task": "tenant-cache",
+      "prompt": "Fix the reported organization-isolation bugs in this repository.\n\nBug report:\n- A signed-in user can sometimes read or update a project belonging\n  to an organization they do not belong to.\n- After switching organizations, the project list sometimes shows\n  projects from the previous organization.\n- After updating a project, its organization's list can remain stale.\n\nRequired behavior:\n- Project reads and updates must require membership in the project's\n  owning organization.\n- Organization project lists must require membership in the requested\n  organization.\n- Unauthorized requests must not return project data or modify storage.\n- Project-list caching must isolate organizations and preserve all\n  existing pagination and sorting parameters.\n- A successful update must invalidate every cached list variant for\n  the affected organization.\n- Unrelated organizations' cached lists must remain usable.\n- Authorization must still be checked when serving cached results.\n- Preserve existing API signatures, response shapes, status-code\n  conventions, and ordinary authorized behavior.\n- Keep caching enabled.\n\nInspect the relevant code, implement the fix, and run the existing\ntests. Do not modify existing tests or install dependencies.\nYou may add new tests.\n\nSummarize the changes and the verification you performed.",
+      "verifier": "/private/tmp/handwork-fair-2tip6hsn/private/tenant-cache/verify.mjs"
+    }
+  ],
+  "machine": "macOS-26.5.2-arm64-arm-64bit",
+  "node": "v24.21.0",
+  "profile_note": "Existing Handwork personal context; Codex ignores user rules; OpenCode pure mode. This is not a pristine common prompt profile.",
+  "profile_seed": "/private/tmp/handwork-fair-2tip6hsn/preinstalled"
+}

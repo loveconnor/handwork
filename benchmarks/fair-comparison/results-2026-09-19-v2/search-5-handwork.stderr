@@ -1,0 +1,117 @@
+1789782609537 [agent] event=prompt_start turn_id=1 prompt_bytes=771 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789782609940 [agent] step start step=1 limit=0 messages=9
+1789782609940 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=9
+1789782609940 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=9
+1789782609940 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789782609941 [agent] event=request_composition turn_id=1 step_id=1 instruction_bytes=9217 conversation_bytes=771 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=16106 wire_bytes=26537 messages=1
+1789782609941 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+● Loading skill[0m
+1789782613721 [agent] event=request_finished turn_id=1 step_id=1 elapsed_ms=3781 input_tokens=4609 output_tokens=66 cached_input_tokens=2432 usage_available=true
+1789782613721 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789782613721 [agent] step completion step=1 content_bytes=136 tool_calls=1 finish_reason=tool-calls
+1789782613721 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=136 tool_call_count=1 finish_reason=tool-calls
+Loading skill unslop
+1789782613722 [agent] step start step=2 limit=0 messages=11
+1789782613722 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789782613722 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789782613722 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789782613723 [agent] event=request_composition turn_id=1 step_id=2 instruction_bytes=9217 conversation_bytes=907 tool_result_bytes=6282 tool_argument_bytes=46 replay_bytes=65 schema_json_bytes=16106 wire_bytes=33578 messages=3
+1789782613723 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Reading[0m
+1789782618540 [agent] event=request_finished turn_id=1 step_id=2 elapsed_ms=4817 input_tokens=6211 output_tokens=106 cached_input_tokens=2432 usage_available=true
+1789782618540 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789782618540 [agent] step completion step=2 content_bytes=0 tool_calls=2 finish_reason=tool-calls
+1789782618540 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=2 finish_reason=tool-calls
+Reading file
+1789782618541 [agent] event=read_batch_complete file_read_operations=6
+Running git status --short; find .. -name AGENTS.md -print
+/dev/fd/11:25: command not found: compdef
+1789782618855 [agent] step start step=3 limit=0 messages=14
+1789782618855 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=14
+1789782618856 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=14
+1789782618856 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789782618856 [agent] event=request_composition turn_id=1 step_id=3 instruction_bytes=9217 conversation_bytes=907 tool_result_bytes=13598 tool_argument_bytes=323 replay_bytes=65 schema_json_bytes=16106 wire_bytes=41981 messages=6
+1789782618856 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+1789782627884 [agent] event=request_finished turn_id=1 step_id=3 elapsed_ms=9028 input_tokens=8166 output_tokens=222 cached_input_tokens=0 usage_available=true
+1789782627884 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789782627884 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789782627884 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Editing src/search/controller.ts
+1789782627885 [agent] step start step=4 limit=0 messages=16
+1789782627885 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=16
+1789782627885 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=16
+1789782627885 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789782627886 [agent] event=request_composition turn_id=1 step_id=4 instruction_bytes=9215 conversation_bytes=907 tool_result_bytes=13642 tool_argument_bytes=1228 replay_bytes=65 schema_json_bytes=16106 wire_bytes=43167 messages=8
+1789782627886 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+1789782645912 [agent] event=request_finished turn_id=1 step_id=4 elapsed_ms=18026 input_tokens=8409 output_tokens=467 cached_input_tokens=2432 usage_available=true
+1789782645912 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=4 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789782645912 [agent] step completion step=4 content_bytes=259 tool_calls=1 finish_reason=tool-calls
+1789782645912 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=259 tool_call_count=1 finish_reason=tool-calls
+Running npm test && node --input-type=module <<'NODE' import assert from 'node:assert/strict'; import { createSearchControlle...
+
+> test
+> node --test tests/*.test.ts
+
+✔ initial state and empty input (0.544292ms)
+✔ ordinary API request encodes the query and displays results (0.112375ms)
+✔ ordinary failure becomes state and subscribers can unsubscribe (0.109458ms)
+✔ view handles input, renders state and detaches listeners (0.1125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66.125834
+Race probe passed: stale success/error while pending, finished, and cleared.
+diff --git a/src/search/controller.ts b/src/search/controller.ts
+index d6ab5ca..4201249 100644
+--- a/src/search/controller.ts
++++ b/src/search/controller.ts
+@@ -15,6 +15,7 @@ export interface SearchController {
+ 
+ export function createSearchController(api: SearchApi): SearchController {
+   let state: SearchState = { query: '', results: [], loading: false, error: null };
++  let latestSearch = 0;
+   const listeners = new Set<(state: SearchState) => void>();
+   const getState = (): SearchState => ({ ...state, results: [...state.results] });
+   const update = (patch: Partial<SearchState>): void => {
+@@ -30,6 +31,7 @@ export function createSearchController(api: SearchApi): SearchController {
+       return () => { listeners.delete(listener); };
+     },
+     async search(query) {
++      const searchId = ++latestSearch;
+       const normalized = query.trim();
+       if (!normalized) {
+         update({ query: '', results: [], loading: false, error: null });
+@@ -38,11 +40,13 @@ export function createSearchController(api: SearchApi): SearchController {
+       update({ query: normalized, loading: true, error: null });
+       try {
+         const results = await api.search(normalized);
+-        update({ results });
++        if (searchId === latestSearch) update({ results });
+       } catch (error) {
+-        update({ error: error instanceof Error ? error.message : String(error) });
++        if (searchId === latestSearch) {
++          update({ error: error instanceof Error ? error.message : String(error) });
++        }
+       } finally {
+-        update({ loading: false });
++        if (searchId === latestSearch) update({ loading: false });
+       }
+     },
+   };
+ M src/search/controller.ts
+1789782646336 [agent] step start step=5 limit=0 messages=18
+1789782646336 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=18
+1789782646336 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=18
+1789782646336 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789782646336 [agent] event=request_composition turn_id=1 step_id=5 instruction_bytes=9215 conversation_bytes=1166 tool_result_bytes=16313 tool_argument_bytes=2614 replay_bytes=1656 schema_json_bytes=16106 wire_bytes=49470 messages=10
+1789782646336 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+1789782650116 [agent] event=request_finished turn_id=1 step_id=5 elapsed_ms=3780 input_tokens=9594 output_tokens=72 cached_input_tokens=2432 usage_available=true
+1789782650116 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789782650116 [agent] step completion step=5 content_bytes=337 tool_calls=0 finish_reason=stop
+1789782650116 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=337 tool_call_count=0 finish_reason=stop
+1789782650118 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

@@ -1,0 +1,23 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.718583ms)
+✔ organizations scoped to user (0.1185ms)
+✔ logout revokes session (0.101875ms)
+✔ project authorization uses the stored owner and rejects writes without side effects (7.228958ms)
+✔ lists check membership before cache hits, including after revocation (0.24625ms)
+✔ cache isolates all list options and invalidates only the owning organization (1.744583ms)
+✔ authenticated detail (0.59925ms)
+✔ authenticated list (5.949458ms)
+✔ update then read (0.174875ms)
+✔ anonymous request rejected (0.379125ms)
+✔ invalid update rejected (0.082416ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.158875

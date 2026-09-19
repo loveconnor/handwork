@@ -1,0 +1,160 @@
+{
+  "created": "2026-09-18T20:20:35-0400",
+  "base": "/private/tmp/handwork-efficiency-apul1kbx",
+  "variants": {
+    "baseline": {
+      "path": "/private/tmp/handwork-efficiency-apul1kbx/bin/baseline",
+      "sha256": "6fb8e46d8c428752193cd6554c39e49c21d8a13c9cdf072af3ae3a30703f7ce1"
+    },
+    "optimized": {
+      "path": "/private/tmp/handwork-efficiency-apul1kbx/bin/optimized",
+      "sha256": "90d8b7dddf0c14f2c329577bec1fc175ee44a55fdeb6758e1dc92dfb312ef178"
+    }
+  },
+  "tasks": [
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/pagination/fixture",
+      "commit": "a8a214547860d09cc1bb19fb4ca4edb48231f77f",
+      "task": "pagination",
+      "prompt": "Fix the reported bug in this repository. Inspect the relevant code, make the smallest appropriate change, and run the existing tests. Do not modify tests or install dependencies. Summarize your changes and verification.\n\nBug report: Pagination loses the last item at page boundaries. Fix paginate in src/pagination.ts so that each one-based page returns all of its items, including a final partial page, without changing the public API.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/pagination/verify.mjs",
+      "verifier_sha256": "357c1327d379f103f265fb4647c94a5244c49d69eb3f765b4b09f11ab53e71d0",
+      "fixture_hashes": {
+        "package.json": "6a0630110c0f2b484970fd004f583164f5ced5373ac328e70ab6108ca89d3dd1",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "test/pagination.test.ts": "f5ff753ce13d8b66f1e82dab2e45a1e03d30bd364bd21466742fbd60ed841a47",
+        "src/pagination.ts": "3d8f68917bee0c03d23b08f387588017f73062c0ea2c7162f1b75ede2c5783bb"
+      }
+    },
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/search/fixture",
+      "commit": "38abe177d8015efde6c5a0eb1e6babebcaef491b",
+      "task": "search",
+      "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/search/verify.mjs",
+      "verifier_sha256": "613f722c48df72feee874dd6b05c7aaa7147bd7e48e2564025118eb5c5f7c40b",
+      "fixture_hashes": {
+        "README.md": "62de3ffa991e731ad934d871ee3fe483fae8a0cc4e3d70a2ae23c1ce9d9172f3",
+        "package.json": "72a59f844688bd4a71b9dd07dd8be7df3e8aedfd01f98fbc3514ec351db90911",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "tests/search.test.ts": "e81fb8416db36d147aad10caf8ec4f479ebd9ec11607128969af2afbf0f057d6",
+        "src/ui/search-view.ts": "de2d51f7347046506760bb026af1bb4a5aa80b3bd151b5b89ae112701cc179dd",
+        "src/search/controller.ts": "b928cb00fc78ca1463af77ee39c2cfc706be1459f40ea93fae29c9298d20fd3a",
+        "src/api/search.ts": "b21ec8d9bdc0877a6e140f42c5180bd9c5da33dfa8a76aa1282b214e97242397"
+      }
+    },
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/tenant-cache/fixture",
+      "commit": "7bcc715e07bf4999a453e91b57dc7ccac0b4a396",
+      "task": "tenant-cache",
+      "prompt": "Fix the reported organization-isolation bugs in this repository.\n\nBug report:\n- A signed-in user can sometimes read or update a project belonging\n  to an organization they do not belong to.\n- After switching organizations, the project list sometimes shows\n  projects from the previous organization.\n- After updating a project, its organization's list can remain stale.\n\nRequired behavior:\n- Project reads and updates must require membership in the project's\n  owning organization.\n- Organization project lists must require membership in the requested\n  organization.\n- Unauthorized requests must not return project data or modify storage.\n- Project-list caching must isolate organizations and preserve all\n  existing pagination and sorting parameters.\n- A successful update must invalidate every cached list variant for\n  the affected organization.\n- Unrelated organizations' cached lists must remain usable.\n- Authorization must still be checked when serving cached results.\n- Preserve existing API signatures, response shapes, status-code\n  conventions, and ordinary authorized behavior.\n- Keep caching enabled.\n\nInspect the relevant code, implement the fix, and run the existing\ntests. Do not modify existing tests or install dependencies.\nYou may add new tests.\n\nSummarize the changes and the verification you performed.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/tenant-cache/verify.mjs",
+      "verifier_sha256": "362b06afb24b375522a3463af6afcb3b7445d624a8e1e751cec7ffddca88f424",
+      "fixture_hashes": {
+        "README.md": "4b8b663b8ee17582efa483e9c7b77d4bdd2d6e6e1f7bb83caabcbf69128b7a5d",
+        ".gitignore": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+        "package.json": "076f7460f1f65eea48c5063420ec67ff03871e192aee1af9a99ff96e51746a85",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "tests/projects.test.ts": "5fd2968e6eb7dfb9985fb37620eb770f229ea61094a6a17ced7bafc824322987",
+        "tests/account.test.ts": "7bfdf6ecbb7877c89f0045faa56af96c489cd032f55909aaf4c6a01bfc33b6c3",
+        "src/app.ts": "c4c6a14c1277b0957b07d015675b1f748d00a2ea9d6ed210accc94f13ac2c171",
+        "src/seed.ts": "5fc6f59a2e79d1a0659abffc45f6d5fbb591d606c51f360ea9cc50d46e12d24d",
+        "src/types.ts": "1310c701e7f9b885102c9e963fee17cb8cbe77fabe71d98d2bf8c8ff3b532a13",
+        "src/cache/keys.ts": "fe9e08d37b09da1ad33fb0c3fe2e058e9c9d99028588343bb33a97f26d97aab8",
+        "src/cache/project-cache.ts": "bc1dd4356435b9b6e1cae8e2ab01d7250e58377f912fc6775f80c75d5104dead",
+        "src/auth/membership.ts": "ad97d09262b6648d0347b4e2abfd6808e8147a182337089a21d3cdbf093aa2ed",
+        "src/auth/session.ts": "b28a1c1baa0971417da26fee87781fd3ea918dfe28846fce245b166856f36986",
+        "src/http/router.ts": "a63a1013b4148a943d4760e7b4d983e3b17d8331e98891eb9d6d5d78cb897c2e",
+        "src/http/response.ts": "f980f50fda90ff882b3095c9efca745f57dda4204d7e4e30f9c6c3c36a8dd360",
+        "src/http/list-options.ts": "d57f4143ba642be225c08d56d8a15d285905312dc226713ff6c23a4e25a599ec",
+        "src/db/project-repository.ts": "12df18bf2c840a5276ce6de868c2acc6f044d8719a9cda8d2b129b363b207739",
+        "src/db/database.ts": "32a96dc392d9f737417f68f333d1ace29a0fa059e229908e982421f515a1c50f",
+        "src/db/membership-repository.ts": "e8341872ae5035410029d30e3df9b2ffb6178d1ea65b2ccfbbced3c9a1ec61ec",
+        "src/routes/account.ts": "7dd021831c1be9c618216836e10d3f6a281d7748365543a787c77d316b7b9b88",
+        "src/routes/projects.ts": "8694924a151dc7f11c8fbf2a3e0247567f1afa8a5005069a68474ad0ac870786",
+        "src/routes/organizations.ts": "480f03839cc60618f212f1a567b7b138a9b6ddbc529cdccaaf5f2a60505344a0",
+        "src/services/organization-service.ts": "a3b2c12081550747dd1165f244b0f88100c894fcd4308430e862e9ca845d1fb6",
+        "src/services/project-service.ts": "4a1e7feb150f74d8ab26ad419447d21a2b6a8b0f796ea37a0e569f686ebf8cf9"
+      }
+    },
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/queue/fixture",
+      "commit": "3caae93bf44530efc5eea31a21e83fb14eb0c344",
+      "task": "queue",
+      "prompt": "Fix the bug described in README.md. Inspect the implementation, preserve the documented API, and run the existing tests. Do not modify tests, README.md, package files, or install dependencies. Summarize changes and verification.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/queue/verify.mjs",
+      "verifier_sha256": "5a86e5de848a71c26ae81b7700273f328f901655f71d8d0afe73e1db74261559",
+      "fixture_hashes": {
+        "README.md": "9e1b8ebd3d19d6d6e1019e433b7db156159eec4b68b5585be005ca55de3f5c6b",
+        "package.json": "4bf751e844d5c8aefd0cc7be8f07372cf999ed7ba95b5789be554b79f6efb298",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "tests/basic.test.js": "d91b61aa5314dceb5ce99ecc0a2d668211782c26fedf3c61caae569a7eeb66b9",
+        "src/worker.js": "0fcf10b317e79206ac86f77bd605c4b0d5a1185aee12c9efbe6ca3b162ddc022",
+        "src/map.js": "1d5344f2eb18a1c128f51449ed231d1b55f61f15273346da54214913630ad3d7"
+      }
+    },
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/ledger/fixture",
+      "commit": "9fc8a59ec3f3835ded8688cb27ffb03d23758859",
+      "task": "ledger",
+      "prompt": "Fix the bug described in README.md. Inspect the implementation, preserve the documented API, and run the existing tests. Do not modify tests, README.md, package files, or install dependencies. Summarize changes and verification.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/ledger/verify.mjs",
+      "verifier_sha256": "7b727b31cf7ca9655437ba101de62dcd20cee1f6ec8c733d41eda7e1be47aedc",
+      "fixture_hashes": {
+        "README.md": "f2d31994c9a7e6ee43ad7777e836755972e36a55d78c1d1c71a494541ecec8e0",
+        "package.json": "4bf751e844d5c8aefd0cc7be8f07372cf999ed7ba95b5789be554b79f6efb298",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "tests/basic.test.js": "09b38c7e00d4b79bf2060d615b6c7cb0700d060f94000d436b4306f642ed5c6b",
+        "src/keys.js": "8d7804bebd5f6339b11cf46a37b9e7bd741c5fbbdcda823b88e7794fc9f17a5e",
+        "src/store.js": "0b3714d9334b45fe9e5495c79e2fc123d1d40b73762f6892f0043fde3a8934bc",
+        "src/transfer.js": "87a6d949d2520054db5555041d73ed36a5fc946a097523ff4e897c4c3a10e46d"
+      }
+    },
+    {
+      "base": "/private/tmp/handwork-efficiency-apul1kbx",
+      "private": "/private/tmp/handwork-efficiency-apul1kbx/private",
+      "fixture": "/private/tmp/handwork-efficiency-apul1kbx/private/stream/fixture",
+      "commit": "2aef8a5d23527c5711278f228bd9ffe82e59e717",
+      "task": "stream",
+      "prompt": "Fix the bug described in README.md. Inspect the implementation, preserve the documented API, and run the existing tests. Do not modify tests, README.md, package files, or install dependencies. Summarize changes and verification.",
+      "verifier": "/private/tmp/handwork-efficiency-apul1kbx/private/stream/verify.mjs",
+      "verifier_sha256": "808977f39fe6d1d591bf3ac0b37c292bce860f5c80b42edb963ba680aa29065f",
+      "fixture_hashes": {
+        "README.md": "98edc8830c34e24a7642d1ac3a4643aaa4c8fedacdc61bfe74556c987d6115c2",
+        "package.json": "4bf751e844d5c8aefd0cc7be8f07372cf999ed7ba95b5789be554b79f6efb298",
+        ".handwork/settings.json": "12303563d05a1facb9ac5d4c125d77d33136ef16a399fc3ede813d69b4e87bad",
+        "tests/basic.test.js": "36a630c7f8414a284679540090f702e265498977b5a1e38650cdac643934ea5a",
+        "src/decoder.js": "65984d611c08837420f7d240279a28ff720c931b4dfc797e211c6147cec7f1d5",
+        "src/parse.js": "3ba77a5b008a3921515d3be35c14b0760ca60ea445ad35d75a43fe9ba1c047c7"
+      }
+    }
+  ],
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "attempts": 2,
+  "build": "ReleaseFast",
+  "split": {
+    "development": [
+      "pagination",
+      "search",
+      "tenant-cache"
+    ],
+    "held_out": [
+      "queue",
+      "ledger",
+      "stream"
+    ]
+  },
+  "fixture_source_sha256": "9b301a16216f699faa8bfc15314bc65589c403b3355ac8504df3d6e04723c84d",
+  "git_head": "154d83cfde5561343bdcb4f2d07531d88b6ef2c3"
+}

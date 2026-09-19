@@ -1,0 +1,14 @@
+{
+  "focused_checks": "passed; see focused-tests.log (includes shared test-root checks on each invocation)",
+  "request_trace_integration": "passed",
+  "request_projection_and_recovery_integration": "passed; see runtime-integration-tests.log",
+  "harbor_dependency_contract_tests": "4 passed; no container test",
+  "api_provider_regression": "5 of 6 tests passed, including the loopback provider matrix. OpenCode fixed-port autostart test errors identically against frozen baseline and candidate; see api-baseline-comparison.log.",
+  "benchmark_attempts": 24,
+  "benchmark_successes": 24,
+  "candidate_attempts": 12,
+  "candidate_successes": 12,
+  "scored_candidate_installed": true,
+  "official_public_evaluation": "not run; Docker daemon unavailable and Linux build/container validation required",
+  "whole_repository_test_suite": "not run"
+}

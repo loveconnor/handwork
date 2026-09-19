@@ -1,0 +1,68 @@
+{
+  "broken": [
+    {
+      "name": "tenant isolated idempotency",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n80 !== 70\n"
+    },
+    {
+      "name": "same replay is stable changed payload rejected",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "missing source and target atomic",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "invalid amounts atomic",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "self transfer and overdraft atomic",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "balance overflow atomic",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected exception."
+    },
+    {
+      "name": "independent keys and conservation",
+      "pass": true
+    }
+  ],
+  "known_correct": [
+    {
+      "name": "tenant isolated idempotency",
+      "pass": true
+    },
+    {
+      "name": "same replay is stable changed payload rejected",
+      "pass": true
+    },
+    {
+      "name": "missing source and target atomic",
+      "pass": true
+    },
+    {
+      "name": "invalid amounts atomic",
+      "pass": true
+    },
+    {
+      "name": "self transfer and overdraft atomic",
+      "pass": true
+    },
+    {
+      "name": "balance overflow atomic",
+      "pass": true
+    },
+    {
+      "name": "independent keys and conservation",
+      "pass": true
+    }
+  ]
+}

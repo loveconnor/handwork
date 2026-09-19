@@ -1,0 +1,48 @@
+diff --git a/src/decoder.js b/src/decoder.js
+index 4d131cc..f59a8b6 100644
+--- a/src/decoder.js
++++ b/src/decoder.js
+@@ -1,5 +1,27 @@
+ import {parseLine} from './parse.js';
+-export function createDecoder(onValue,onError){let line=0;return {
+- push(chunk){for(const text of chunk.split('\n')){line++;parseLine(text,line,onValue,onError);}},
+- end(){}
+-};}
++export function createDecoder(onValue,onError){
++ let line=0,buffer='',closed=false;
++ function drain(){
++  let boundary;
++  while((boundary=buffer.indexOf('\n'))!==-1){
++   const text=buffer.slice(0,boundary);
++   buffer=buffer.slice(boundary+1);
++   parseLine(text,++line,onValue,onError);
++  }
++ }
++ return {
++  push(chunk){
++   if(closed)throw new Error('Decoder is closed');
++   buffer+=chunk;
++   drain();
++  },
++  end(){
++   if(closed)return;
++   closed=true;
++   drain();
++   const text=buffer;
++   buffer='';
++   if(text.length)parseLine(text,++line,onValue,onError);
++  }
++ };
++}
+diff --git a/src/parse.js b/src/parse.js
+index b57412e..1c2e49d 100644
+--- a/src/parse.js
++++ b/src/parse.js
+@@ -1 +1,6 @@
+-export function parseLine(text,line,onValue,onError){if(!text.trim())return;try{const value=JSON.parse(text);if(value)onValue(value);}catch(error){onError(error,line);}}
++export function parseLine(text,line,onValue,onError){
++ if(!text.trim())return;
++ let value;
++ try{value=JSON.parse(text);}catch(error){onError(error,line);return;}
++ onValue(value);
++}

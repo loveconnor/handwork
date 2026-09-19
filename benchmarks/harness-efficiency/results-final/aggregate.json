@@ -1,0 +1,62 @@
+{
+  "development": {
+    "baseline": {
+      "attempts": 6,
+      "successes": 6,
+      "input_tokens": 298396,
+      "output_tokens": 7210,
+      "cached_input_tokens": 88448,
+      "model_requests": 39,
+      "tool_calls": 40,
+      "duration_s": 310.902
+    },
+    "optimized": {
+      "attempts": 6,
+      "successes": 6,
+      "input_tokens": 289342,
+      "output_tokens": 7537,
+      "cached_input_tokens": 57344,
+      "model_requests": 34,
+      "tool_calls": 38,
+      "duration_s": 324.404
+    },
+    "changes_percent": {
+      "duration_s": 4.342847585412768,
+      "input_tokens": -3.0342229788603015,
+      "output_tokens": 4.535367545076285,
+      "model_requests": -12.82051282051282,
+      "tool_calls": -5.000000000000004
+    },
+    "target_met": false
+  },
+  "held_out": {
+    "baseline": {
+      "attempts": 6,
+      "successes": 6,
+      "input_tokens": 298084,
+      "output_tokens": 7376,
+      "cached_input_tokens": 109184,
+      "model_requests": 45,
+      "tool_calls": 51,
+      "duration_s": 334.95500000000004
+    },
+    "optimized": {
+      "attempts": 6,
+      "successes": 6,
+      "input_tokens": 190018,
+      "output_tokens": 7317,
+      "cached_input_tokens": 60800,
+      "model_requests": 28,
+      "tool_calls": 38,
+      "duration_s": 286.817
+    },
+    "changes_percent": {
+      "duration_s": -14.371482736486996,
+      "input_tokens": -36.25353927080957,
+      "output_tokens": -0.7998915401301487,
+      "model_requests": -37.77777777777778,
+      "tool_calls": -25.49019607843137
+    },
+    "target_met": false
+  }
+}

@@ -1,0 +1,3167 @@
+[
+  {
+    "duration_s": 24.967,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22069248,
+      "tests": 167706624,
+      "tools": 75497472
+    },
+    "samples": 344,
+    "input_tokens": 25390,
+    "output_tokens": 450,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "pagination",
+    "harness": "handwork",
+    "attempt": 1,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-1-handwork/repo",
+    "log": "pagination-1-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 41.656,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 766509056,
+      "tests": 127811584,
+      "tools": 49201152
+    },
+    "samples": 560,
+    "input_tokens": 39569,
+    "output_tokens": 793,
+    "cached_input_tokens": 32000,
+    "tool_calls": 11,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 39569,
+      "output_tokens": 793,
+      "cached_input_tokens": 32000,
+      "tool_calls": 11
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 7,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "opencode",
+    "attempt": 1,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-1-opencode/repo",
+    "log": "pagination-1-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 32.801,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 246218752,
+      "tests": 121749504,
+      "tools": 73695232
+    },
+    "samples": 437,
+    "input_tokens": 59324,
+    "output_tokens": 613,
+    "cached_input_tokens": 55424,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 4,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "pagination",
+    "harness": "codex",
+    "attempt": 1,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-1-codex/repo",
+    "log": "pagination-1-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 58.512,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 786464768,
+      "tests": 92749824,
+      "tools": 207028224
+    },
+    "samples": 784,
+    "input_tokens": 78352,
+    "output_tokens": 1053,
+    "cached_input_tokens": 67456,
+    "tool_calls": 15,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 78352,
+      "output_tokens": 1053,
+      "cached_input_tokens": 67456,
+      "tool_calls": 15
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 11,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "search",
+    "harness": "opencode",
+    "attempt": 1,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-1-opencode/repo",
+    "log": "search-1-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 32.841,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 248365056,
+      "tests": 128860160,
+      "tools": 74760192
+    },
+    "samples": 438,
+    "input_tokens": 79947,
+    "output_tokens": 714,
+    "cached_input_tokens": 73856,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 12,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "search",
+    "harness": "codex",
+    "attempt": 1,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-1-codex/repo",
+    "log": "search-1-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 49.268,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24805376,
+      "tests": 216530944,
+      "tools": 64978944
+    },
+    "samples": 659,
+    "input_tokens": 37269,
+    "output_tokens": 1073,
+    "cached_input_tokens": 9728,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "search",
+    "harness": "handwork",
+    "attempt": 1,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-1-handwork/repo",
+    "log": "search-1-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 78.948,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 246546432,
+      "tests": 248954880,
+      "tools": 299302912
+    },
+    "samples": 1045,
+    "input_tokens": 125131,
+    "output_tokens": 2142,
+    "cached_input_tokens": 115328,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 57,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "tenant-cache",
+    "harness": "codex",
+    "attempt": 1,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-1-codex/repo",
+    "log": "tenant-cache-1-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 86.128,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30343168,
+      "tests": 335134720,
+      "tools": 83755008
+    },
+    "samples": 1149,
+    "input_tokens": 83438,
+    "output_tokens": 2174,
+    "cached_input_tokens": 17024,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 80,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "tenant-cache",
+    "harness": "handwork",
+    "attempt": 1,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-1-handwork/repo",
+    "log": "tenant-cache-1-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 114.735,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 822050816,
+      "tests": 357335040,
+      "tools": 12500992
+    },
+    "samples": 1545,
+    "input_tokens": 121294,
+    "output_tokens": 2893,
+    "cached_input_tokens": 106112,
+    "tool_calls": 24,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 121294,
+      "output_tokens": 2893,
+      "cached_input_tokens": 106112,
+      "tool_calls": 24
+    },
+    "reasoning_tokens": 16,
+    "accounted_sessions": 1,
+    "model_requests": 13,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "opencode",
+    "attempt": 1,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-1-opencode/repo",
+    "log": "tenant-cache-1-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 40.444,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 792870912,
+      "tests": 102105088,
+      "tools": 204357632
+    },
+    "samples": 542,
+    "input_tokens": 34119,
+    "output_tokens": 716,
+    "cached_input_tokens": 22144,
+    "tool_calls": 11,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 34119,
+      "output_tokens": 716,
+      "cached_input_tokens": 22144,
+      "tool_calls": 11
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 6,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "opencode",
+    "attempt": 2,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-2-opencode/repo",
+    "log": "pagination-2-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 25.93,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 249217024,
+      "tests": 77774848,
+      "tools": 204734464
+    },
+    "samples": 348,
+    "input_tokens": 59095,
+    "output_tokens": 543,
+    "cached_input_tokens": 55296,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 4,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "pagination",
+    "harness": "codex",
+    "attempt": 2,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-2-codex/repo",
+    "log": "pagination-2-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 22.208,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22724608,
+      "tests": 212598784,
+      "tools": 77496320
+    },
+    "samples": 298,
+    "input_tokens": 25391,
+    "output_tokens": 438,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "pagination",
+    "harness": "handwork",
+    "attempt": 2,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-2-handwork/repo",
+    "log": "pagination-2-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 33.94,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 244252672,
+      "tests": 199868416,
+      "tools": 76759040
+    },
+    "samples": 451,
+    "input_tokens": 79042,
+    "output_tokens": 661,
+    "cached_input_tokens": 73216,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "search",
+    "harness": "codex",
+    "attempt": 2,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-2-codex/repo",
+    "log": "search-2-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 38.845,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 23986176,
+      "tests": 208879616,
+      "tools": 64782336
+    },
+    "samples": 539,
+    "input_tokens": 37045,
+    "output_tokens": 973,
+    "cached_input_tokens": 12160,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 10,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "search",
+    "harness": "handwork",
+    "attempt": 2,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-2-handwork/repo",
+    "log": "search-2-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 54.941,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 890404864,
+      "tests": 177913856,
+      "tools": 57589760
+    },
+    "samples": 774,
+    "input_tokens": 65975,
+    "output_tokens": 1002,
+    "cached_input_tokens": 47616,
+    "tool_calls": 14,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 65975,
+      "output_tokens": 1002,
+      "cached_input_tokens": 47616,
+      "tool_calls": 14
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 9,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "search",
+    "harness": "opencode",
+    "attempt": 2,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-2-opencode/repo",
+    "log": "search-2-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 89.769,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30228480,
+      "tests": 360841216,
+      "tools": 76972032
+    },
+    "samples": 1259,
+    "input_tokens": 81077,
+    "output_tokens": 2057,
+    "cached_input_tokens": 26880,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 110,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "tenant-cache",
+    "harness": "handwork",
+    "attempt": 2,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-2-handwork/repo",
+    "log": "tenant-cache-2-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 121.099,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 823459840,
+      "tests": 360595456,
+      "tools": 8159232
+    },
+    "samples": 1713,
+    "input_tokens": 107690,
+    "output_tokens": 3136,
+    "cached_input_tokens": 81280,
+    "tool_calls": 25,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 107690,
+      "output_tokens": 3136,
+      "cached_input_tokens": 81280,
+      "tool_calls": 25
+    },
+    "reasoning_tokens": 30,
+    "accounted_sessions": 1,
+    "model_requests": 11,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "opencode",
+    "attempt": 2,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-2-opencode/repo",
+    "log": "tenant-cache-2-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 83.48,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 244203520,
+      "tests": 302874624,
+      "tools": 130482176
+    },
+    "samples": 1167,
+    "input_tokens": 126473,
+    "output_tokens": 2201,
+    "cached_input_tokens": 115712,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 34,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "tenant-cache",
+    "harness": "codex",
+    "attempt": 2,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-2-codex/repo",
+    "log": "tenant-cache-2-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 27.981,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 270303232,
+      "tests": 158973952,
+      "tools": 72581120
+    },
+    "samples": 391,
+    "input_tokens": 75502,
+    "output_tokens": 594,
+    "cached_input_tokens": 71040,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "pagination",
+    "harness": "codex",
+    "attempt": 3,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-3-codex/repo",
+    "log": "pagination-3-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 28.881,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24559616,
+      "tests": 196575232,
+      "tools": 69926912
+    },
+    "samples": 404,
+    "input_tokens": 31649,
+    "output_tokens": 486,
+    "cached_input_tokens": 12160,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "pagination",
+    "harness": "handwork",
+    "attempt": 3,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-3-handwork/repo",
+    "log": "pagination-3-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 41.726,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 813023232,
+      "tests": 82067456,
+      "tools": 203407360
+    },
+    "samples": 589,
+    "input_tokens": 34246,
+    "output_tokens": 734,
+    "cached_input_tokens": 25728,
+    "tool_calls": 11,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 34246,
+      "output_tokens": 734,
+      "cached_input_tokens": 25728,
+      "tool_calls": 11
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 6,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "opencode",
+    "attempt": 3,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-3-opencode/repo",
+    "log": "pagination-3-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 40.458,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24887296,
+      "tests": 172802048,
+      "tools": 74170368
+    },
+    "samples": 551,
+    "input_tokens": 37034,
+    "output_tokens": 969,
+    "cached_input_tokens": 12160,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "search",
+    "harness": "handwork",
+    "attempt": 3,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-3-handwork/repo",
+    "log": "search-3-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 55.151,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 873578496,
+      "tests": 186564608,
+      "tools": 54247424
+    },
+    "samples": 743,
+    "input_tokens": 84110,
+    "output_tokens": 1057,
+    "cached_input_tokens": 73088,
+    "tool_calls": 16,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 84110,
+      "output_tokens": 1057,
+      "cached_input_tokens": 73088,
+      "tool_calls": 16
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 12,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "search",
+    "harness": "opencode",
+    "attempt": 3,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-3-opencode/repo",
+    "log": "search-3-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 48.361,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 245055488,
+      "tests": 122699776,
+      "tools": 129236992
+    },
+    "samples": 644,
+    "input_tokens": 96780,
+    "output_tokens": 1131,
+    "cached_input_tokens": 90112,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 10,
+    "rollout_files": 1,
+    "model_requests": 6,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "search",
+    "harness": "codex",
+    "attempt": 3,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-3-codex/repo",
+    "log": "search-3-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 121.552,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 942440448,
+      "tests": 344981504,
+      "tools": 12484608
+    },
+    "samples": 1640,
+    "input_tokens": 126719,
+    "output_tokens": 2708,
+    "cached_input_tokens": 103424,
+    "tool_calls": 23,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 126719,
+      "output_tokens": 2708,
+      "cached_input_tokens": 103424,
+      "tool_calls": 23
+    },
+    "reasoning_tokens": 22,
+    "accounted_sessions": 1,
+    "model_requests": 14,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "opencode",
+    "attempt": 3,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-3-opencode/repo",
+    "log": "tenant-cache-3-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 83.547,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 262324224,
+      "tests": 361316352,
+      "tools": 127746048
+    },
+    "samples": 1113,
+    "input_tokens": 126645,
+    "output_tokens": 2325,
+    "cached_input_tokens": 115584,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 75,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "tenant-cache",
+    "harness": "codex",
+    "attempt": 3,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-3-codex/repo",
+    "log": "tenant-cache-3-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 93.115,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28590080,
+      "tests": 370491392,
+      "tools": 73089024
+    },
+    "samples": 1244,
+    "input_tokens": 69073,
+    "output_tokens": 2215,
+    "cached_input_tokens": 14592,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 85,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "tenant-cache",
+    "harness": "handwork",
+    "attempt": 3,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-3-handwork/repo",
+    "log": "tenant-cache-3-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 25.376,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 22970368,
+      "tests": 210616320,
+      "tools": 64733184
+    },
+    "samples": 340,
+    "input_tokens": 25415,
+    "output_tokens": 463,
+    "cached_input_tokens": 9728,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "pagination",
+    "harness": "handwork",
+    "attempt": 4,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-4-handwork/repo",
+    "log": "pagination-4-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 33.133,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 229113856,
+      "tests": 121946112,
+      "tools": 76103680
+    },
+    "samples": 440,
+    "input_tokens": 74851,
+    "output_tokens": 568,
+    "cached_input_tokens": 70528,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 8,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "pagination",
+    "harness": "codex",
+    "attempt": 4,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-4-codex/repo",
+    "log": "pagination-4-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 52.179,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 784531456,
+      "tests": 125026304,
+      "tools": 12369920
+    },
+    "samples": 700,
+    "input_tokens": 68042,
+    "output_tokens": 710,
+    "cached_input_tokens": 60288,
+    "tool_calls": 11,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 68042,
+      "output_tokens": 710,
+      "cached_input_tokens": 60288,
+      "tool_calls": 11
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 12,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "opencode",
+    "attempt": 4,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-4-opencode/repo",
+    "log": "pagination-4-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 30.993,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 249823232,
+      "tests": 130138112,
+      "tools": 76087296
+    },
+    "samples": 414,
+    "input_tokens": 79035,
+    "output_tokens": 679,
+    "cached_input_tokens": 73088,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 8,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "search",
+    "harness": "codex",
+    "attempt": 4,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-4-codex/repo",
+    "log": "search-4-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 53.864,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 828440576,
+      "tests": 119652352,
+      "tools": 12484608
+    },
+    "samples": 723,
+    "input_tokens": 77273,
+    "output_tokens": 1013,
+    "cached_input_tokens": 57856,
+    "tool_calls": 15,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 77273,
+      "output_tokens": 1013,
+      "cached_input_tokens": 57856,
+      "tool_calls": 15
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 11,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "search",
+    "harness": "opencode",
+    "attempt": 4,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-4-opencode/repo",
+    "log": "search-4-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 43.838,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24805376,
+      "tests": 129466368,
+      "tools": 74661888
+    },
+    "samples": 587,
+    "input_tokens": 37096,
+    "output_tokens": 1011,
+    "cached_input_tokens": 9728,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "search",
+    "harness": "handwork",
+    "attempt": 4,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-4-handwork/repo",
+    "log": "search-4-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 131.265,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 834174976,
+      "tests": 281526272,
+      "tools": 54018048
+    },
+    "samples": 1767,
+    "input_tokens": 115034,
+    "output_tokens": 3421,
+    "cached_input_tokens": 92416,
+    "tool_calls": 24,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 115034,
+      "output_tokens": 3421,
+      "cached_input_tokens": 92416,
+      "tool_calls": 24
+    },
+    "reasoning_tokens": 18,
+    "accounted_sessions": 1,
+    "model_requests": 12,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "opencode",
+    "attempt": 4,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-4-opencode/repo",
+    "log": "tenant-cache-4-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 78.198,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 28557312,
+      "tests": 350060544,
+      "tools": 78577664
+    },
+    "samples": 1047,
+    "input_tokens": 67716,
+    "output_tokens": 1970,
+    "cached_input_tokens": 17024,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 60,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "tenant-cache",
+    "harness": "handwork",
+    "attempt": 4,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-4-handwork/repo",
+    "log": "tenant-cache-4-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 84.421,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 246513664,
+      "tests": 224444416,
+      "tools": 309362688
+    },
+    "samples": 1125,
+    "input_tokens": 126362,
+    "output_tokens": 2376,
+    "cached_input_tokens": 113920,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 57,
+    "rollout_files": 1,
+    "model_requests": 7,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "tenant-cache",
+    "harness": "codex",
+    "attempt": 4,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-4-codex/repo",
+    "log": "tenant-cache-4-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 37.805,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 767590400,
+      "tests": 127959040,
+      "tools": 37421056
+    },
+    "samples": 507,
+    "input_tokens": 34103,
+    "output_tokens": 719,
+    "cached_input_tokens": 30720,
+    "tool_calls": 11,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 34103,
+      "output_tokens": 719,
+      "cached_input_tokens": 30720,
+      "tool_calls": 11
+    },
+    "reasoning_tokens": 0,
+    "accounted_sessions": 1,
+    "model_requests": 6,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "opencode",
+    "attempt": 5,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-5-opencode/repo",
+    "log": "pagination-5-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 29.042,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24297472,
+      "tests": 204603392,
+      "tools": 77905920
+    },
+    "samples": 390,
+    "input_tokens": 31556,
+    "output_tokens": 473,
+    "cached_input_tokens": 11648,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "pagination",
+    "harness": "handwork",
+    "attempt": 5,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-5-handwork/repo",
+    "log": "pagination-5-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 25.224,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 268222464,
+      "tests": 181960704,
+      "tools": 76414976
+    },
+    "samples": 335,
+    "input_tokens": 61994,
+    "output_tokens": 514,
+    "cached_input_tokens": 56704,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 4,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "pagination",
+    "harness": "codex",
+    "attempt": 5,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/pagination-5-codex/repo",
+    "log": "pagination-5-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 40.622,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24150016,
+      "tests": 131563520,
+      "tools": 77266944
+    },
+    "samples": 544,
+    "input_tokens": 36989,
+    "output_tokens": 933,
+    "cached_input_tokens": 9728,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "search",
+    "harness": "handwork",
+    "attempt": 5,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-5-handwork/repo",
+    "log": "search-5-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 30.113,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 245383168,
+      "tests": 164970496,
+      "tools": 69910528
+    },
+    "samples": 400,
+    "input_tokens": 78987,
+    "output_tokens": 632,
+    "cached_input_tokens": 73088,
+    "tool_calls": 4,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 5,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "search",
+    "harness": "codex",
+    "attempt": 5,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-5-codex/repo",
+    "log": "search-5-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 75.735,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 811909120,
+      "tests": 182157312,
+      "tools": 50233344
+    },
+    "samples": 1017,
+    "input_tokens": 88196,
+    "output_tokens": 1569,
+    "cached_input_tokens": 71808,
+    "tool_calls": 19,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 88196,
+      "output_tokens": 1569,
+      "cached_input_tokens": 71808,
+      "tool_calls": 19
+    },
+    "reasoning_tokens": 14,
+    "accounted_sessions": 1,
+    "model_requests": 12,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "search",
+    "harness": "opencode",
+    "attempt": 5,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/search-5-opencode/repo",
+    "log": "search-5-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 80.615,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 245645312,
+      "tests": 358318080,
+      "tools": 290799616
+    },
+    "samples": 1074,
+    "input_tokens": 143790,
+    "output_tokens": 2136,
+    "cached_input_tokens": 121216,
+    "tool_calls": 7,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 30,
+    "rollout_files": 1,
+    "model_requests": 8,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "task": "tenant-cache",
+    "harness": "codex",
+    "attempt": 5,
+    "position": 1,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-5-codex/repo",
+    "log": "tenant-cache-5-codex",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 129.774,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 819232768,
+      "tests": 129990656,
+      "tools": 128548864
+    },
+    "samples": 1746,
+    "input_tokens": 108002,
+    "output_tokens": 3126,
+    "cached_input_tokens": 88704,
+    "tool_calls": 25,
+    "completed": true,
+    "parent_only_usage": {
+      "input_tokens": 108002,
+      "output_tokens": 3126,
+      "cached_input_tokens": 88704,
+      "tool_calls": 25
+    },
+    "reasoning_tokens": 37,
+    "accounted_sessions": 1,
+    "model_requests": 12,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "opencode",
+    "attempt": 5,
+    "position": 2,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-5-opencode/repo",
+    "log": "tenant-cache-5-opencode",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 81.827,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26640384,
+      "tests": 279855104,
+      "tools": 78708736
+    },
+    "samples": 1098,
+    "input_tokens": 58170,
+    "output_tokens": 2265,
+    "cached_input_tokens": 14592,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 50,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "task": "tenant-cache",
+    "harness": "handwork",
+    "attempt": 5,
+    "position": 3,
+    "workspace": "/private/tmp/handwork-fair-2tip6hsn/tenant-cache-5-handwork/repo",
+    "log": "tenant-cache-5-handwork",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  }
+]

@@ -1,0 +1,134 @@
+{
+  "ledger": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 9,
+      "mean_input_tokens": 46864.5,
+      "mean_output_tokens": 1383.5,
+      "mean_model_requests": 7,
+      "median_success_seconds": 59.9,
+      "median_peak_mib": 26.671875
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 6,
+      "mean_input_tokens": 27598,
+      "mean_output_tokens": 1379,
+      "mean_model_requests": 4,
+      "median_success_seconds": 51.93300000000001,
+      "median_peak_mib": 22.078125
+    }
+  },
+  "pagination": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 5,
+      "mean_input_tokens": 31345.5,
+      "mean_output_tokens": 522.5,
+      "mean_model_requests": 5,
+      "median_success_seconds": 28.283,
+      "median_peak_mib": 23.2890625
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 5,
+      "mean_input_tokens": 25642,
+      "mean_output_tokens": 538,
+      "mean_model_requests": 4,
+      "median_success_seconds": 27.2105,
+      "median_peak_mib": 21.4453125
+    }
+  },
+  "queue": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 9,
+      "mean_input_tokens": 55438.5,
+      "mean_output_tokens": 1070,
+      "mean_model_requests": 8.5,
+      "median_success_seconds": 52.382000000000005,
+      "median_peak_mib": 28.6640625
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 6.5,
+      "mean_input_tokens": 33201.5,
+      "mean_output_tokens": 1069.5,
+      "mean_model_requests": 5,
+      "median_success_seconds": 43.295,
+      "median_peak_mib": 23.5546875
+    }
+  },
+  "search": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 6,
+      "mean_input_tokens": 46906.5,
+      "mean_output_tokens": 1061,
+      "mean_model_requests": 6.5,
+      "median_success_seconds": 46.7435,
+      "median_peak_mib": 26.203125
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 5,
+      "mean_input_tokens": 36975.5,
+      "mean_output_tokens": 940,
+      "mean_model_requests": 5,
+      "median_success_seconds": 44.2145,
+      "median_peak_mib": 23.640625
+    }
+  },
+  "stream": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 7.5,
+      "mean_input_tokens": 46739,
+      "mean_output_tokens": 1234.5,
+      "mean_model_requests": 7,
+      "median_success_seconds": 55.1955,
+      "median_peak_mib": 26.6015625
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 6.5,
+      "mean_input_tokens": 34209.5,
+      "mean_output_tokens": 1210,
+      "mean_model_requests": 5,
+      "median_success_seconds": 48.1805,
+      "median_peak_mib": 23.53125
+    }
+  },
+  "tenant-cache": {
+    "baseline": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 9,
+      "mean_input_tokens": 70946,
+      "mean_output_tokens": 2021.5,
+      "mean_model_requests": 8,
+      "median_success_seconds": 80.4245,
+      "median_peak_mib": 28.5
+    },
+    "optimized": {
+      "attempts": 2,
+      "successes": 2,
+      "mean_tool_calls": 9,
+      "mean_input_tokens": 82053.5,
+      "mean_output_tokens": 2290.5,
+      "mean_model_requests": 8,
+      "median_success_seconds": 90.77699999999999,
+      "median_peak_mib": 28.7578125
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "broken": [
+    {
+      "name": "bounded overlap and order",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n4 !== 2\n"
+    },
+    {
+      "name": "sync and async failure settle and continue",
+      "pass": false,
+      "error": "Error: sync"
+    },
+    {
+      "name": "invalid limits do not start work",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Missing expected rejection (RangeError)."
+    },
+    {
+      "name": "sequential limit and immutable input",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "name": "empty and excess capacity",
+      "pass": true
+    }
+  ],
+  "known_correct": [
+    {
+      "name": "bounded overlap and order",
+      "pass": true
+    },
+    {
+      "name": "sync and async failure settle and continue",
+      "pass": true
+    },
+    {
+      "name": "invalid limits do not start work",
+      "pass": true
+    },
+    {
+      "name": "sequential limit and immutable input",
+      "pass": true
+    },
+    {
+      "name": "empty and excess capacity",
+      "pass": true
+    }
+  ]
+}

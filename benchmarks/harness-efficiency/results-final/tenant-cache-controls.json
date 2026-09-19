@@ -1,0 +1,76 @@
+{
+  "broken": [
+    {
+      "name": "actual owner read authorization and status conventions",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    body: {\n+     id: 'b1',\n+     name: 'Beta',\n+     organizationId: 'org-b',\n+     updatedAt: 7\n-     error: 'forbidden'\n    },\n+   status: 200\n-   status: 403\n  }\n"
+    },
+    {
+      "name": "unauthorized updates preserve storage and warmed entries",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    body: {\n+     id: 'b1',\n+     name: 'hacked',\n+     organizationId: 'org-b',\n+     updatedAt: 8\n-     error: 'forbidden'\n    },\n+   status: 200\n-   status: 403\n  }\n"
+    },
+    {
+      "name": "list authorization including warm cache and revocation",
+      "pass": true
+    },
+    {
+      "name": "organizations have distinct lists with a dual member",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n+   'a1',\n+   'a2',\n+   'a3'\n-   'b1',\n-   'b2',\n-   'b3'\n  ]\n"
+    },
+    {
+      "name": "all pagination and sorting combinations remain distinct",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    body: {\n      direction: 'asc',\n      items: [\n        {\n+         id: 'a1',\n+         name: 'Alpha',\n+         organizationId: 'org-a',\n+         updatedAt: 3\n-         id: 'b1',\n-         name: 'Beta',\n-         organizationId: 'org-b',\n-         updatedAt: 7\n        }\n      ],\n      page: 1,\n      pageSize: 1,\n      sort: 'name',\n"
+    },
+    {
+      "name": "updates invalidate every own list variant while preserving other caches",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    direction: 'asc',\n    items: [\n      {\n+       id: 'a1',\n+       name: 'Alpha',\n+       organizationId: 'org-a',\n+       updatedAt: 3\n-       id: 'b1',\n-       name: 'Beta',\n-       organizationId: 'org-b',\n-       updatedAt: 7\n      }\n    ],\n    page: 1,\n    pageSize: 1,\n    sort: 'name',\n"
+    },
+    {
+      "name": "caching remains enabled and repeated lists skip repository",
+      "pass": true
+    },
+    {
+      "name": "opaque organization prefixes do not collide during invalidation",
+      "pass": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n+   'org-a',\n+   'org-a',\n+   'org-a'\n-   'org-b',\n-   'org-b',\n-   'org-b'\n  ]\n"
+    }
+  ],
+  "known_correct": [
+    {
+      "name": "actual owner read authorization and status conventions",
+      "pass": true
+    },
+    {
+      "name": "unauthorized updates preserve storage and warmed entries",
+      "pass": true
+    },
+    {
+      "name": "list authorization including warm cache and revocation",
+      "pass": true
+    },
+    {
+      "name": "organizations have distinct lists with a dual member",
+      "pass": true
+    },
+    {
+      "name": "all pagination and sorting combinations remain distinct",
+      "pass": true
+    },
+    {
+      "name": "updates invalidate every own list variant while preserving other caches",
+      "pass": true
+    },
+    {
+      "name": "caching remains enabled and repeated lists skip repository",
+      "pass": true
+    },
+    {
+      "name": "opaque organization prefixes do not collide during invalidation",
+      "pass": true
+    }
+  ]
+}

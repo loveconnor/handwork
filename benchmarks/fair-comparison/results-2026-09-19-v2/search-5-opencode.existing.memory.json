@@ -1,0 +1,115 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5160960,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 71735,
+        "ppid": 29170,
+        "rss": 5160960,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.066,
+    "totals": {
+      "harness": 69632000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 71735,
+        "ppid": 29170,
+        "rss": 69632000,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.141,
+    "totals": {
+      "harness": 74203136,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 71756,
+        "ppid": 71735,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 71735,
+        "ppid": 29170,
+        "rss": 74203136,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.216,
+    "totals": {
+      "harness": 74203136,
+      "tests": 47792128,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 71756,
+        "ppid": 71735,
+        "rss": 47792128,
+        "kind": "tests",
+        "command": "node --test tests/search.test.ts"
+      },
+      {
+        "pid": 71735,
+        "ppid": 29170,
+        "rss": 74203136,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.281,
+    "totals": {
+      "harness": 74203136,
+      "tests": 0,
+      "tools": 52887552
+    },
+    "processes": [
+      {
+        "pid": 71756,
+        "ppid": 71735,
+        "rss": 52887552,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 71759,
+        "ppid": 71756,
+        "rss": 0,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 71735,
+        "ppid": 29170,
+        "rss": 74203136,
+        "kind": "harness",
+        "command": "(node)"
+      }
+    ]
+  }
+]

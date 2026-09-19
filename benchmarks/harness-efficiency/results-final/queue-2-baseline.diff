@@ -1,0 +1,37 @@
+diff --git a/src/map.js b/src/map.js
+index cc70e2f..862db12 100644
+--- a/src/map.js
++++ b/src/map.js
+@@ -1,9 +1,14 @@
+ import { execute } from './worker.js';
+ export async function mapLimit(items, limit, fn) {
+-  if (limit < 1) throw new RangeError('limit');
+-  const results = [];
+-  await Promise.all(items.map(async (item, index) => {
+-    results.push(await execute(fn, item, index));
+-  }));
++  if (!Number.isInteger(limit) || limit < 1) throw new RangeError('limit');
++  const results = new Array(items.length);
++  let nextIndex = 0;
++  async function worker() {
++    while (nextIndex < items.length) {
++      const index = nextIndex++;
++      results[index] = await execute(fn, items[index], index);
++    }
++  }
++  await Promise.all(Array.from({length: Math.min(limit, items.length)}, worker));
+   return results;
+ }
+diff --git a/src/worker.js b/src/worker.js
+index abe627c..2d2c7b7 100644
+--- a/src/worker.js
++++ b/src/worker.js
+@@ -1,3 +1,7 @@
+ export async function execute(fn, item, index) {
+-  return {status:'fulfilled', value:await fn(item,index)};
++  try {
++    return {status:'fulfilled', value:await fn(item,index)};
++  } catch (reason) {
++    return {status:'rejected', reason};
++  }
+ }

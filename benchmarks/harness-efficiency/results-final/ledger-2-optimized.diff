@@ -1,0 +1,43 @@
+diff --git a/src/keys.js b/src/keys.js
+index 28bd467..a6adb34 100644
+--- a/src/keys.js
++++ b/src/keys.js
+@@ -1 +1 @@
+-export function receiptKey(req){return req.key;}
++export function receiptKey(req){return JSON.stringify([req.tenant,req.key]);}
+diff --git a/src/transfer.js b/src/transfer.js
+index 5fce34f..0505078 100644
+--- a/src/transfer.js
++++ b/src/transfer.js
+@@ -1,11 +1,23 @@
+ import {receiptKey} from './keys.js';
+ export function transfer(store,req){
+- const key=receiptKey(req);if(store.receipts.has(key))return store.receipts.get(key);
+- const a=`${req.tenant}:${req.from}`,b=`${req.tenant}:${req.to}`;
+- const before=store.accounts.get(a);
+- if(before<req.amount)throw Error('insufficient funds');
+- store.accounts.set(a,before-req.amount);
+- if(!store.accounts.has(b))throw Error('missing target');
+- store.accounts.set(b,store.accounts.get(b)+req.amount);
+- const receipt={from:req.from,to:req.to,amount:req.amount};store.receipts.set(key,receipt);return receipt;
++ const {tenant,from,to,amount}=req;
++ if(!Number.isSafeInteger(amount)||amount<=0)throw Error('invalid amount');
++ const a=`${tenant}:${from}`,b=`${tenant}:${to}`;
++ if(a===b)throw Error('source and target must differ');
++ const key=receiptKey(req);
++ if(store.receipts.has(key)){
++  const receipt=store.receipts.get(key);
++  if(receipt.from!==from||receipt.to!==to||receipt.amount!==amount)throw Error('idempotency conflict');
++  return receipt;
++ }
++ if(!store.accounts.has(a)||!store.accounts.has(b))throw Error('missing account');
++ const before=store.accounts.get(a),target=store.accounts.get(b);
++ if(!Number.isSafeInteger(before)||!Number.isSafeInteger(target))throw Error('invalid balance');
++ if(before<amount)throw Error('insufficient funds');
++ const sourceBalance=before-amount,targetBalance=target+amount;
++ if(!Number.isSafeInteger(sourceBalance)||!Number.isSafeInteger(targetBalance))throw Error('unsafe balance');
++ const receipt={from,to,amount};
++ store.accounts.set(a,sourceBalance);
++ store.accounts.set(b,targetBalance);
++ store.receipts.set(key,receipt);return receipt;
+ }
