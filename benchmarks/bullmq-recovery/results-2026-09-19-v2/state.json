@@ -1,0 +1,105 @@
+{
+  "base": "/private/tmp/handwork-bullmq-G7VJT5",
+  "fixture": "/private/tmp/handwork-bullmq-G7VJT5/private/fixture",
+  "commit": "85f22f5205a51e0dbb3273f18dce6dfceb8b64ed",
+  "upstream_commit": "0b85d6b94d9eaf0e05a6453ee05f6737cd2cde39",
+  "upstream": "https://github.com/taskforcesh/bullmq",
+  "version": "6.3.8",
+  "mutation_files": [
+    "src/commands/includes/removeLock.lua",
+    "src/commands/extendLock-2.lua",
+    "src/commands/extendLocks-1.lua"
+  ],
+  "verifier_sha256": "703414ffe6f76fbc50e73a07ee6389955d6489731e407caf5204899f086efec1",
+  "actor_sha256": "31b676d8761e78a17841c3243b80a868f44107397deeebff4ff48691b1b86dca",
+  "seed_source_sha256": {
+    "src/commands/includes/removeLock.lua": "c445a35821f30ea8498978d0ff988d2439b8a067bdb319727c7ba396a5a0555a",
+    "src/commands/extendLock-2.lua": "5832cdce642557bf41f5f24e187b306d49700b69f52fedd1f0c922049f73d1de",
+    "src/commands/extendLocks-1.lua": "9ffa51002ade8cc670c3a8577159a0986fa3d88e79ecdf5804aac2a48740a6fd"
+  },
+  "binaries": {
+    "handwork": {
+      "path": "/private/tmp/handwork-bullmq-G7VJT5/bin/handwork",
+      "original": "/Users/connorlove/Work/Handwork/handwork/zig-out/bin/handwork",
+      "sha256": "90d8b7dddf0c14f2c329577bec1fc175ee44a55fdeb6758e1dc92dfb312ef178"
+    },
+    "opencode": {
+      "path": "/private/tmp/handwork-bullmq-G7VJT5/bin/opencode",
+      "original": "/Users/connorlove/.opencode/bin/opencode",
+      "sha256": "16c960ba77421da11b53e785f359b73f328a86118b48feb4af143db5d9afb198"
+    },
+    "codex": {
+      "path": "/private/tmp/handwork-bullmq-G7VJT5/bin/codex",
+      "original": "/Applications/ChatGPT.app/Contents/Resources/codex",
+      "sha256": "805f2102d573c580d8cad2fc774b81837e68f7e9bdd1adb559d67801bbc1f9bd"
+    },
+    "codex-code-mode-host": {
+      "path": "/private/tmp/handwork-bullmq-G7VJT5/bin/codex-code-mode-host",
+      "original": "/Applications/ChatGPT.app/Contents/Resources/codex-code-mode-host",
+      "sha256": "685d71198d94d06a886c8edfc0fa02aa72efb32bbc5bfafe1210b96b1abd361a"
+    }
+  },
+  "handwork": "/private/tmp/handwork-bullmq-G7VJT5/bin/handwork",
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "context": 272000,
+  "budget_seconds": 1800,
+  "attempts_per_agent": 5,
+  "orders": [
+    [
+      "handwork",
+      "opencode",
+      "codex"
+    ],
+    [
+      "opencode",
+      "codex",
+      "handwork"
+    ],
+    [
+      "codex",
+      "handwork",
+      "opencode"
+    ],
+    [
+      "handwork",
+      "codex",
+      "opencode"
+    ],
+    [
+      "opencode",
+      "handwork",
+      "codex"
+    ]
+  ],
+  "provider_ips": [
+    "104.18.32.47",
+    "104.18.41.241",
+    "162.159.140.245",
+    "172.64.146.15",
+    "172.64.155.209",
+    "172.66.0.243",
+    "2606:4700:4400::6812:29f1",
+    "2606:4700:4408::ac40:9bd1",
+    "2606:4700:7::f3",
+    "2a06:98c1:3101::6812:202f",
+    "2a06:98c1:310c::ac40:920f",
+    "2a06:98c1:58::f3"
+  ],
+  "model_proxy_port": 55612,
+  "network_policy": "Only local Redis and model-only egress proxy are reachable. Other outbound connections are denied.",
+  "prompt": "Fix a worker ownership regression in this BullMQ repository.\n\nA worker can lose its job lock, another worker can recover and claim the job, and the original worker can later resume. The original worker must not change the job or its replacement owner's lock. The regression also affects lock renewal.\n\nRequired behavior:\n- A stale worker must not complete or fail a recovered job, immediately retry it, or schedule a delayed retry.\n- A stale worker must not renew or replace the current owner's lock through either single-job or batch lock renewal.\n- Reject stale operations using the existing API behavior. Preserve the job's state, attempt counters, result, current owner, and events when rejecting them.\n- The current owner must still be able to renew and finish its job. Missing locks must remain errors where the existing API requires them.\n- Preserve recovery after worker crashes, retry limits, fixed backoff, and compatibility with existing callers.\n\nFind and fix the underlying source code. Keep the change focused. Do not edit existing tests, package files, build scripts, configuration, or dependencies. You may add tests. Do not bypass ownership validation or disable recovery. Preserve documented administrative APIs that intentionally operate without an ordinary worker lock.\n\nThe full repository and dependencies are present. Use Node 24. Redis is running at 127.0.0.1 on the port in REDIS_PORT, in an isolated instance for this attempt. REDIS_HOST is also set. You can use npm run build to rebuild generated code. Run relevant existing tests and summarize your changes and verification.\n\nThe prevalidated regression command is:\nnode node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.redis.test.ts tests/concurrency.test.ts tests/stalled_jobs.test.ts tests/lock_manager.test.ts tests/job.redis.test.ts\n\nUse only this checkout. Upstream history, internet source lookup, personal skills, and private evaluation files are unavailable. The evaluator rebuilds your source in a fresh checkout and runs independent checks after your attempt ends.\n",
+  "created": "2026-09-18T23:08:24-0400",
+  "node": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node",
+  "suite": [
+    "tests/worker.test.ts",
+    "tests/job.test.ts",
+    "tests/worker.redis.test.ts",
+    "tests/concurrency.test.ts",
+    "tests/stalled_jobs.test.ts",
+    "tests/lock_manager.test.ts",
+    "tests/job.redis.test.ts"
+  ],
+  "profile_note": "Personal instructions, skills, MCP configuration and history are blocked. Codex ignores user configuration and rules. OpenCode pure mode. Handwork global authentication/settings are temporarily staged and restored.",
+  "profile_seed": "/private/tmp/handwork-bullmq-G7VJT5/preinstalled-results-2026-09-19-v2"
+}

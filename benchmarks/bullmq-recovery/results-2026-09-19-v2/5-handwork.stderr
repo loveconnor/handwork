@@ -1,0 +1,522 @@
+1789793310163 [agent] event=prompt_start turn_id=1 prompt_bytes=2114 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.handwork/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.config/opencode/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.claude/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; 1 additional diagnostic omitted; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789793310465 [agent] step start step=1 limit=0 messages=9
+1789793310465 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=9
+1789793310465 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=9
+1789793310465 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793310465 [agent] event=request_composition turn_id=1 step_id=1 instruction_bytes=9875 conversation_bytes=2114 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=16106 wire_bytes=28584 messages=1
+1789793310465 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+1789793319235 [agent] event=request_finished turn_id=1 step_id=1 elapsed_ms=8770 input_tokens=5057 output_tokens=83 cached_input_tokens=2432 usage_available=true
+1789793319235 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789793319235 [agent] step completion step=1 content_bytes=131 tool_calls=1 finish_reason=tool-calls
+1789793319235 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=131 tool_call_count=1 finish_reason=tool-calls
+Running git status --short; node --version; ls; find .. -name AGENTS.md -print
+/dev/fd/11:25: command not found: compdef
+1789793320239 [agent] step start step=2 limit=0 messages=11
+1789793320239 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789793320239 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789793320239 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793320240 [agent] event=request_composition turn_id=1 step_id=2 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=394 tool_argument_bytes=132 replay_bytes=65 schema_json_bytes=16106 wire_bytes=29622 messages=3
+1789793320240 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Matching[0m
+1789793322921 [agent] event=request_finished turn_id=1 step_id=2 elapsed_ms=2682 input_tokens=5251 output_tokens=35 cached_input_tokens=0 usage_available=true
+1789793322921 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793322921 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793322921 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching **/*{extendLock,moveToFinished,moveToDelayed,retryJob}*
+1789793322932 [agent] step start step=3 limit=0 messages=13
+1789793322932 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789793322932 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789793322932 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793322932 [agent] event=request_composition turn_id=1 step_id=3 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=472 tool_argument_bytes=201 replay_bytes=65 schema_json_bytes=16106 wire_bytes=29962 messages=5
+1789793322932 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+v24.21.0
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+LICENSE
+README.md
+commitlint.config.js
+composer.json
+config
+contributing.md
+dist
+docker-compose.yml
+docs
+dotnet
+elixir
+eslint.config.mjs
+mocha.setup.ts
+node_modules
+osv-scanner.toml
+package.json
+php
+python
+rawScripts
+renovate.json
+rust
+scripts
+src
+tests
+tsconfig-cjs.json
+tsconfig.json
+tsconfig.tests-check.json
+tsdoc.json
+vitest.adapter-conformance.config.ts
+vitest.bun.config.ts
+vitest.bun.setup.ts
+vitest.config.ts
+vitest.coverage.config.ts
+vitest.ioredis.config.ts
+vitest.node-redis.config.ts
+vitest.node-redis.setup.ts
+vitest.postgres.config.ts
+vitest.postgres.global-setup.ts
+vitest.postgres.setup.ts
+vitest.postgres.smoke.config.ts
+vitest.setup.ts
+vitest.valkey-glide.config.ts
+vitest.valkey-glide.setup.ts
+yarn.lock
+1789793326260 [agent] event=request_finished turn_id=1 step_id=3 elapsed_ms=3328 input_tokens=5321 output_tokens=34 cached_input_tokens=2432 usage_available=true
+1789793326260 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793326260 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793326260 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for git status --short; node --version; ls; find .. -name AGENTS.md -print
+1789793326261 [agent] step start step=4 limit=0 messages=15
+1789793326261 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1789793326261 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=15
+1789793326261 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793326261 [agent] event=request_composition turn_id=1 step_id=4 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=1692 tool_argument_bytes=278 replay_bytes=65 schema_json_bytes=16106 wire_bytes=31545 messages=7
+1789793326261 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+● Searching[0m
+1789793329908 [agent] event=request_finished turn_id=1 step_id=4 elapsed_ms=3647 input_tokens=5707 output_tokens=43 cached_input_tokens=2432 usage_available=true
+1789793329908 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793329908 [agent] step completion step=4 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793329908 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789793329952 [agent] step start step=5 limit=0 messages=17
+1789793329952 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=17
+1789793329952 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=17
+1789793329952 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793329952 [agent] event=request_composition turn_id=1 step_id=5 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=2185 tool_argument_bytes=390 replay_bytes=65 schema_json_bytes=16106 wire_bytes=32368 messages=9
+1789793329952 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+● Matching[0m
+1789793332965 [agent] event=request_finished turn_id=1 step_id=5 elapsed_ms=3013 input_tokens=5890 output_tokens=26 cached_input_tokens=4864 usage_available=true
+1789793332965 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793332965 [agent] step completion step=5 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793332965 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching **/*.lua
+1789793332967 [agent] step start step=6 limit=0 messages=19
+1789793332967 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=19
+1789793332967 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=19
+1789793332967 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793332967 [agent] event=request_composition turn_id=1 step_id=6 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=6680 tool_argument_bytes=434 replay_bytes=65 schema_json_bytes=16106 wire_bytes=37205 messages=11
+1789793332967 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+● Reading[0m
+1789793338195 [agent] event=request_finished turn_id=1 step_id=6 elapsed_ms=5228 input_tokens=7090 output_tokens=112 cached_input_tokens=0 usage_available=true
+1789793338195 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793338195 [agent] step completion step=6 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793338195 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789793338196 [agent] event=read_batch_complete file_read_operations=8
+1789793338197 [agent] step start step=7 limit=0 messages=21
+1789793338197 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=21
+1789793338197 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=21
+1789793338197 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793338198 [agent] event=request_composition turn_id=1 step_id=7 instruction_bytes=9875 conversation_bytes=2245 tool_result_bytes=32069 tool_argument_bytes=793 replay_bytes=65 schema_json_bytes=16106 wire_bytes=65202 messages=13
+1789793338198 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+● Reading[0m
+● Searching[0m
+1789793356727 [agent] event=request_finished turn_id=1 step_id=7 elapsed_ms=18530 input_tokens=15057 output_tokens=548 cached_input_tokens=2432 usage_available=true
+1789793356727 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789793356727 [agent] step completion step=7 content_bytes=300 tool_calls=6 finish_reason=tool-calls
+1789793356727 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=300 tool_call_count=6 finish_reason=tool-calls
+Editing src/commands/includes/removeLock.lua
+Editing src/commands/extendLock-2.lua
+Editing src/commands/extendLocks-1.lua
+Editing src/commands/retryJob-11.lua
+Reading file
+Searching pattern
+1789793356731 [agent] event=read_batch_complete file_read_operations=2
+1789793356731 [agent] step start step=8 limit=0 messages=28
+1789793356731 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=28
+1789793356731 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=28
+1789793356731 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793356732 [agent] event=request_composition turn_id=1 step_id=8 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=39062 tool_argument_bytes=2114 replay_bytes=1676 schema_json_bytes=16106 wire_bytes=77125 messages=20
+1789793356732 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+● Searching[0m
+1789793361502 [agent] event=request_finished turn_id=1 step_id=8 elapsed_ms=4770 input_tokens=17486 output_tokens=42 cached_input_tokens=2432 usage_available=true
+1789793361502 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793361502 [agent] step completion step=8 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793361502 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789793361503 [agent] step start step=9 limit=0 messages=30
+1789793361503 [agent] event=step_begin turn_id=1 step_id=9 step_index=9 step_limit=0 provider_messages=30
+1789793361503 [agent] event=before_provider_preflight turn_id=1 step_id=9 model=gpt-6-astra messages=30
+1789793361503 [agent] event=vision_policy turn_id=1 step_id=9 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793361504 [agent] event=request_composition turn_id=1 step_id=9 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=40790 tool_argument_bytes=2218 replay_bytes=1676 schema_json_bytes=16106 wire_bytes=79185 messages=22
+1789793361504 [agent] event=provider_admitted turn_id=1 step_id=9 model=gpt-6-astra
+● Reading[0m
+1789793368896 [agent] event=request_finished turn_id=1 step_id=9 elapsed_ms=7393 input_tokens=18011 output_tokens=92 cached_input_tokens=2432 usage_available=true
+1789793368896 [agent] event=tool_presentation_group turn_id=1 step_id=9 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793368896 [agent] step completion step=9 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793368896 [agent] event=assistant_completion turn_id=1 step_id=9 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789793368897 [agent] event=read_batch_complete file_read_operations=3
+1789793368897 [agent] step start step=10 limit=0 messages=32
+1789793368897 [agent] event=step_begin turn_id=1 step_id=10 step_index=10 step_limit=0 provider_messages=32
+1789793368898 [agent] event=before_provider_preflight turn_id=1 step_id=10 model=gpt-6-astra messages=32
+1789793368898 [agent] event=vision_policy turn_id=1 step_id=10 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793368898 [agent] event=request_composition turn_id=1 step_id=10 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=49029 tool_argument_bytes=2417 replay_bytes=3323 schema_json_bytes=16106 wire_bytes=89916 messages=24
+1789793368898 [agent] event=provider_admitted turn_id=1 step_id=10 model=gpt-6-astra
+1789793395968 [agent] event=request_finished turn_id=1 step_id=10 elapsed_ms=27070 input_tokens=20110 output_tokens=811 cached_input_tokens=2432 usage_available=true
+1789793395968 [agent] event=tool_presentation_group turn_id=1 step_id=10 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793395968 [agent] step completion step=10 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793395968 [agent] event=assistant_completion turn_id=1 step_id=10 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/ownership.redis.test.ts
+1789793395970 [agent] step start step=11 limit=0 messages=34
+1789793395970 [agent] event=step_begin turn_id=1 step_id=11 step_index=11 step_limit=0 provider_messages=34
+1789793395970 [agent] event=before_provider_preflight turn_id=1 step_id=11 model=gpt-6-astra messages=34
+1789793395970 [agent] event=vision_policy turn_id=1 step_id=11 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793395971 [agent] event=request_composition turn_id=1 step_id=11 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=49077 tool_argument_bytes=5333 replay_bytes=3323 schema_json_bytes=16106 wire_bytes=93135 messages=26
+1789793395971 [agent] event=provider_admitted turn_id=1 step_id=11 model=gpt-6-astra
+1789793402293 [agent] event=request_finished turn_id=1 step_id=11 elapsed_ms=6323 input_tokens=20945 output_tokens=131 cached_input_tokens=2432 usage_available=true
+1789793402293 [agent] event=tool_presentation_group turn_id=1 step_id=11 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793402293 [agent] step completion step=11 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793402293 [agent] event=assistant_completion turn_id=1 step_id=11 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+/dev/fd/11:25: command not found: compdef
+
+> bullmq@6.3.8 build
+> npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql
+
+
+> bullmq@6.3.8 clean:dist
+> rimraf dist
+
+
+> bullmq@6.3.8 pretest
+> npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references
+
+1789793403297 [agent] step start step=12 limit=0 messages=36
+1789793403297 [agent] event=step_begin turn_id=1 step_id=12 step_index=12 step_limit=0 provider_messages=36
+1789793403297 [agent] event=before_provider_preflight turn_id=1 step_id=12 model=gpt-6-astra messages=36
+1789793403297 [agent] event=vision_policy turn_id=1 step_id=12 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793403298 [agent] event=request_composition turn_id=1 step_id=12 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=49872 tool_argument_bytes=5800 replay_bytes=3323 schema_json_bytes=16106 wire_bytes=94647 messages=28
+1789793403298 [agent] event=provider_admitted turn_id=1 step_id=12 model=gpt-6-astra
+
+> bullmq@6.3.8 clean:scripts
+> rimraf rawScripts src/scripts
+
+
+> bullmq@6.3.8 generate:raw:scripts
+> ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts
+
+
+> bullmq@6.3.8 transform:commands
+> node ./scripts/commandTransform.js ./rawScripts ./src/scripts
+
+
+> bullmq@6.3.8 circular:references
+> madge --circular --extensions ts ./src
+
+- Finding files
+Processed 154 files (398ms) 
+
+✔ No circular dependency found!
+
+
+> bullmq@6.3.8 tsc:all
+> tsc && tsc -p tsconfig-cjs.json
+
+
+> bullmq@6.3.8 copy:main:type
+> cpx "./dist/esm/classes/main.d.ts" ./dist/cjs/classes && cpx "./dist/esm/classes/main-worker.d.ts" ./dist/cjs/classes
+
+
+> bullmq@6.3.8 clean:temp:files
+> rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json
+
+1789793408281 [agent] event=request_finished turn_id=1 step_id=12 elapsed_ms=4984 input_tokens=21315 output_tokens=47 cached_input_tokens=2432 usage_available=true
+1789793408281 [agent] event=tool_presentation_group turn_id=1 step_id=12 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793408281 [agent] step completion step=12 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793408281 [agent] event=assistant_completion turn_id=1 step_id=12 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+
+> bullmq@6.3.8 copy:lua
+> cpx "./src/commands/*.lua" ./dist/cjs/commands && cpx "./src/commands/*.lua" ./dist/esm/commands
+
+
+> bullmq@6.3.8 copy:includes:lua
+> cpx "./src/commands/includes/*.lua" ./dist/cjs/commands/includes && cpx "./src/commands/includes/*.lua" ./dist/esm/commands/includes
+
+
+> bullmq@6.3.8 copy:sql
+> cpx "./src/postgres/migrations/*.sql" ./dist/cjs/postgres/migrations && cpx "./src/postgres/migrations/*.sql" ./dist/esm/postgres/migrations && cpx "./src/postgres/commands/*.sql" ./dist/cjs/postgres/commands && cpx "./src/postgres/commands/*.sql" ./dist/esm/postgres/commands
+
+1789793413282 [agent] step start step=13 limit=0 messages=38
+1789793413282 [agent] event=step_begin turn_id=1 step_id=13 step_index=13 step_limit=0 provider_messages=38
+1789793413282 [agent] event=before_provider_preflight turn_id=1 step_id=13 model=gpt-6-astra messages=38
+1789793413282 [agent] event=vision_policy turn_id=1 step_id=13 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793413283 [agent] event=request_composition turn_id=1 step_id=13 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=51637 tool_argument_bytes=5877 replay_bytes=4791 schema_json_bytes=16106 wire_bytes=98278 messages=30
+1789793413283 [agent] event=provider_admitted turn_id=1 step_id=13 model=gpt-6-astra
+1789793418353 [agent] event=request_finished turn_id=1 step_id=13 elapsed_ms=5070 input_tokens=21929 output_tokens=62 cached_input_tokens=5760 usage_available=true
+1789793418353 [agent] event=tool_presentation_group turn_id=1 step_id=13 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793418353 [agent] step completion step=13 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793418353 [agent] event=assistant_completion turn_id=1 step_id=13 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running git diff; git status --short; tail -8 /tmp/ownership-tests.log
+/dev/fd/11:25: command not found: compdef
+diff --git a/src/commands/extendLock-2.lua b/src/commands/extendLock-2.lua
+index 2d5ffe3..37a3e30 100644
+--- a/src/commands/extendLock-2.lua
++++ b/src/commands/extendLock-2.lua
+@@ -13,7 +13,7 @@
+     "1" if lock extended successfully.
+ ]]
+ local rcall = redis.call
+-if rcall("EXISTS", KEYS[1]) == 1 then
++if rcall("GET", KEYS[1]) == ARGV[1] then
+   --   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2], "XX") then
+   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2]) then
+     rcall("SREM", KEYS[2], ARGV[3])
+diff --git a/src/commands/extendLocks-1.lua b/src/commands/extendLocks-1.lua
+index cce23e6..bbd5548 100644
+--- a/src/commands/extendLocks-1.lua
++++ b/src/commands/extendLocks-1.lua
+@@ -30,7 +30,7 @@ for i = 1, jobCount, 1 do
+ 
+     local currentToken = rcall("GET", lockKey)
+     if currentToken then
+-        if currentToken then
++        if currentToken == token then
+             local setResult = rcall("SET", lockKey, token, "PX", lockDuration)
+             if setResult then
+                 rcall("SREM", stalledKey, jobId)
+diff --git a/src/commands/includes/removeLock.lua b/src/commands/includes/removeLock.lua
+index b8025cc..d7335f6 100644
+--- a/src/commands/includes/removeLock.lua
++++ b/src/commands/includes/removeLock.lua
+@@ -2,7 +2,7 @@ local function removeLock(jobKey, stalledKey, token, jobId)
+   if token ~= "0" then
+     local lockKey = jobKey .. ':lock'
+     local lockToken = rcall("GET", lockKey)
+-    if lockToken then
++    if lockToken == token then
+       rcall("DEL", lockKey)
+       rcall("SREM", stalledKey, jobId)
+     else
+diff --git a/src/commands/retryJob-11.lua b/src/commands/retryJob-11.lua
+index 1beca80..9cb6b39 100644
+--- a/src/commands/retryJob-11.lua
++++ b/src/commands/retryJob-11.lua
+@@ -44,10 +44,6 @@ local rcall = redis.call
+ local isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+ local markerKey = KEYS[10]
+ 
+--- Check if there are delayed jobs that we can move to wait.
+--- test example: when there are delayed jobs between retries
+-promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
+-
+ local jobKey = KEYS[4]
+ 
+ if rcall("EXISTS", jobKey) == 1 then
+@@ -56,6 +52,9 @@ if rcall("EXISTS", jobKey) == 1 then
+     return errorCode
+   end
+ 
++  -- Only promote delayed jobs after validating ownership of the retried job.
++  promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
++
+   updateJobFields(jobKey, ARGV[6])
+ 
+   local numRemovedElements = rcall("LREM", KEYS[1], -1, ARGV[4])
+ M src/commands/extendLock-2.lua
+ M src/commands/extendLocks-1.lua
+ M src/commands/includes/removeLock.lua
+ M src/commands/retryJob-11.lua
+?? tests/ownership.redis.test.ts
+ ✓ tests/worker.test.ts > workers > process a job that returns data with a circular dependency 8ms
+ ✓ tests/worker.test.ts > workers > process a job that returns a rejected promise 8ms
+ ✓ tests/worker.test.ts > workers > sets the worker name on the job upon processing 208ms
+ ✓ tests/worker.test.ts > workers > when job is in failed state > retries a job that fails 6ms
+ ✓ tests/worker.test.ts > workers > when job is in failed state > when passing resetAttemptsMade and resetAttemptsStarted as true > retries a job that fails and resets attemptsMade and attemptsStarted 5ms
+ ✓ tests/worker.test.ts > workers > when job is in completed state > retries a job that completes 5ms
+ ✓ tests/worker.test.ts > workers > when job is in completed state > when passing resetAttemptsMade and resetAttemptsStarted as true > retries a job that completes and resets attemptsMade and attemptsStarted 5ms
+ ✓ tests/worker.test.ts > workers > when closing a worker > process a job that throws an exception after worker close 3009ms
+1789793418580 [agent] step start step=14 limit=0 messages=40
+1789793418580 [agent] event=step_begin turn_id=1 step_id=14 step_index=14 step_limit=0 provider_messages=40
+1789793418581 [agent] event=before_provider_preflight turn_id=1 step_id=14 model=gpt-6-astra messages=40
+1789793418581 [agent] event=vision_policy turn_id=1 step_id=14 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793418581 [agent] event=request_composition turn_id=1 step_id=14 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=55959 tool_argument_bytes=6001 replay_bytes=6368 schema_json_bytes=16106 wire_bytes=104695 messages=32
+1789793418581 [agent] event=provider_admitted turn_id=1 step_id=14 model=gpt-6-astra
+● Searching[0m
+1789793422660 [agent] event=request_finished turn_id=1 step_id=14 elapsed_ms=4079 input_tokens=23316 output_tokens=70 cached_input_tokens=14976 usage_available=true
+1789793422660 [agent] event=tool_presentation_group turn_id=1 step_id=14 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793422660 [agent] step completion step=14 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793422660 [agent] event=assistant_completion turn_id=1 step_id=14 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching Lock mismatch
+1789793422698 [agent] step start step=15 limit=0 messages=42
+1789793422698 [agent] event=step_begin turn_id=1 step_id=15 step_index=15 step_limit=0 provider_messages=42
+1789793422699 [agent] event=before_provider_preflight turn_id=1 step_id=15 model=gpt-6-astra messages=42
+1789793422699 [agent] event=vision_policy turn_id=1 step_id=15 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793422699 [agent] event=request_composition turn_id=1 step_id=15 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=56104 tool_argument_bytes=6041 replay_bytes=8112 schema_json_bytes=16106 wire_bytes=106821 messages=34
+1789793422699 [agent] event=provider_admitted turn_id=1 step_id=15 model=gpt-6-astra
+1789793425775 [agent] event=request_finished turn_id=1 step_id=15 elapsed_ms=3076 input_tokens=23436 output_tokens=34 cached_input_tokens=2432 usage_available=true
+1789793425775 [agent] event=tool_presentation_group turn_id=1 step_id=15 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793425775 [agent] step completion step=15 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793425775 [agent] event=assistant_completion turn_id=1 step_id=15 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+1789793430779 [agent] step start step=16 limit=0 messages=44
+1789793430779 [agent] event=step_begin turn_id=1 step_id=16 step_index=16 step_limit=0 provider_messages=44
+1789793430779 [agent] event=before_provider_preflight turn_id=1 step_id=16 model=gpt-6-astra messages=44
+1789793430779 [agent] event=vision_policy turn_id=1 step_id=16 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793430780 [agent] event=request_composition turn_id=1 step_id=16 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=56455 tool_argument_bytes=6118 replay_bytes=8112 schema_json_bytes=16106 wire_bytes=107486 messages=36
+1789793430780 [agent] event=provider_admitted turn_id=1 step_id=16 model=gpt-6-astra
+1789793435488 [agent] event=request_finished turn_id=1 step_id=16 elapsed_ms=4708 input_tokens=23566 output_tokens=50 cached_input_tokens=2432 usage_available=true
+1789793435488 [agent] event=tool_presentation_group turn_id=1 step_id=16 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793435488 [agent] step completion step=16 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793435488 [agent] event=assistant_completion turn_id=1 step_id=16 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+1789793440490 [agent] step start step=17 limit=0 messages=46
+1789793440490 [agent] event=step_begin turn_id=1 step_id=17 step_index=17 step_limit=0 provider_messages=46
+1789793440490 [agent] event=before_provider_preflight turn_id=1 step_id=17 model=gpt-6-astra messages=46
+1789793440490 [agent] event=vision_policy turn_id=1 step_id=17 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793440491 [agent] event=request_composition turn_id=1 step_id=17 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=56806 tool_argument_bytes=6195 replay_bytes=9678 schema_json_bytes=16106 wire_bytes=109716 messages=38
+1789793440491 [agent] event=provider_admitted turn_id=1 step_id=17 model=gpt-6-astra
+● Searching[0m
+1789793446522 [agent] event=request_finished turn_id=1 step_id=17 elapsed_ms=6031 input_tokens=23712 output_tokens=52 cached_input_tokens=2432 usage_available=true
+1789793446522 [agent] event=tool_presentation_group turn_id=1 step_id=17 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793446522 [agent] step completion step=17 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793446522 [agent] event=assistant_completion turn_id=1 step_id=17 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789793446523 [agent] step start step=18 limit=0 messages=48
+1789793446523 [agent] event=step_begin turn_id=1 step_id=18 step_index=18 step_limit=0 provider_messages=48
+1789793446524 [agent] event=before_provider_preflight turn_id=1 step_id=18 model=gpt-6-astra messages=48
+1789793446524 [agent] event=vision_policy turn_id=1 step_id=18 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793446524 [agent] event=request_composition turn_id=1 step_id=18 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=56870 tool_argument_bytes=6296 replay_bytes=11166 schema_json_bytes=16106 wire_bytes=111571 messages=40
+1789793446524 [agent] event=provider_admitted turn_id=1 step_id=18 model=gpt-6-astra
+● Searching[0m
+1789793449696 [agent] event=request_finished turn_id=1 step_id=18 elapsed_ms=3172 input_tokens=23791 output_tokens=42 cached_input_tokens=0 usage_available=true
+1789793449696 [agent] event=tool_presentation_group turn_id=1 step_id=18 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793449696 [agent] step completion step=18 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793449696 [agent] event=assistant_completion turn_id=1 step_id=18 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789793449725 [agent] step start step=19 limit=0 messages=50
+1789793449725 [agent] event=step_begin turn_id=1 step_id=19 step_index=19 step_limit=0 provider_messages=50
+1789793449725 [agent] event=before_provider_preflight turn_id=1 step_id=19 model=gpt-6-astra messages=50
+1789793449725 [agent] event=vision_policy turn_id=1 step_id=19 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793449726 [agent] event=request_composition turn_id=1 step_id=19 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=57950 tool_argument_bytes=6407 replay_bytes=11166 schema_json_bytes=16106 wire_bytes=112981 messages=42
+1789793449726 [agent] event=provider_admitted turn_id=1 step_id=19 model=gpt-6-astra
+1789793453577 [agent] event=request_finished turn_id=1 step_id=19 elapsed_ms=3852 input_tokens=24125 output_tokens=49 cached_input_tokens=23168 usage_available=true
+1789793453577 [agent] event=tool_presentation_group turn_id=1 step_id=19 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793453577 [agent] step completion step=19 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793453577 [agent] event=assistant_completion turn_id=1 step_id=19 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+1789793458586 [agent] step start step=20 limit=0 messages=52
+1789793458586 [agent] event=step_begin turn_id=1 step_id=20 step_index=20 step_limit=0 provider_messages=52
+1789793458586 [agent] event=before_provider_preflight turn_id=1 step_id=20 model=gpt-6-astra messages=52
+1789793458586 [agent] event=vision_policy turn_id=1 step_id=20 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793458587 [agent] event=request_composition turn_id=1 step_id=20 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=58301 tool_argument_bytes=6484 replay_bytes=12736 schema_json_bytes=16106 wire_bytes=115215 messages=44
+1789793458587 [agent] event=provider_admitted turn_id=1 step_id=20 model=gpt-6-astra
+1789793461777 [agent] event=request_finished turn_id=1 step_id=20 elapsed_ms=3190 input_tokens=24270 output_tokens=43 cached_input_tokens=2432 usage_available=true
+1789793461777 [agent] event=tool_presentation_group turn_id=1 step_id=20 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793461777 [agent] step completion step=20 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793461777 [agent] event=assistant_completion turn_id=1 step_id=20 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+1789793466787 [agent] step start step=21 limit=0 messages=54
+1789793466787 [agent] event=step_begin turn_id=1 step_id=21 step_index=21 step_limit=0 provider_messages=54
+1789793466787 [agent] event=before_provider_preflight turn_id=1 step_id=21 model=gpt-6-astra messages=54
+1789793466787 [agent] event=vision_policy turn_id=1 step_id=21 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793466788 [agent] event=request_composition turn_id=1 step_id=21 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=58652 tool_argument_bytes=6561 replay_bytes=14204 schema_json_bytes=16106 wire_bytes=117347 messages=46
+1789793466788 [agent] event=provider_admitted turn_id=1 step_id=21 model=gpt-6-astra
+1789793470760 [agent] event=request_finished turn_id=1 step_id=21 elapsed_ms=3972 input_tokens=24409 output_tokens=55 cached_input_tokens=23296 usage_available=true
+1789793470760 [agent] event=tool_presentation_group turn_id=1 step_id=21 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789793470760 [agent] step completion step=21 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789793470760 [agent] event=assistant_completion turn_id=1 step_id=21 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/ownership.redis.test.ts tests/wo...
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when failParentOnFailure is provided as true > should move parent to failed when child is moved to failed 1034ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when continueParentOnFailure is provided as true > should start processing parent when child is moved to failed 1030ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when ignoreDependencyOnFailure is provided as true > should move parent to waiting when child is moved to failed and save child failedReason 1025ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeDependencyOnFailure is provided as true > should move parent to waiting when child is moved to failed 1027ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as a number > keeps the specified number of jobs in failed 1026ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as boolean > when removeOnFail is provided as true > removes all job keys 1035ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as boolean > keeps the jobs with removeOnFail as false in failed 1029ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as a object > keeps the specified number of jobs in failed respecting the age 1029ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > jobs not stalled while lock is extended 626ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should cap progress events 102ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > do not call moveToActive more than concurrency factor + 1 1273ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > do not call moveToActive more than number of jobs + 2 273ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when 0.002 is used as blocktimeout > should not block forever 50ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should not leave orphaned job data when limit is less than removable jobs 1818ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when prioritized jobs are added > when priority counter is having a high number > should process jobs by priority 438ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > keeps locks for all the jobs that are processed concurrently 2023ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > emits error if lock is lost 1261ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > emits error if lock is "stolen" 2010ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > deletes token after moving jobs to delayed 373ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should clear job from stalled set when job completed 105ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when creating children at runtime > should wait children as one step of the parent job 413ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when creating children at runtime > when skip attempt option is provided as true > should wait children as one step of the parent job whithout incrementing attemptMade 410ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > Manually process jobs > when move job to waiting-children > allows to move parent job to waiting-children 13ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > Manually process jobs > should get paginated unprocessed dependencies keys 14ms
+
+ ✓ tests/concurrency.test.ts > Concurrency > should run max concurrency for jobs added 1550ms
+
+ ✓ tests/concurrency.test.ts > Concurrency > should run max concurrency for jobs added 1639ms
+ ✓ tests/concurrency.test.ts > Concurrency > emits drained global event only once when worker is idle 4009ms
+ ✓ tests/concurrency.test.ts > Concurrency > when global dynamic limit is used > should run max concurrency for jobs added respecting global dynamic limit 1683ms
+ ✓ tests/concurrency.test.ts > Concurrency > when global dynamic limit is used > when max limiter is greater than 1 > should run max concurrency for jobs added first processed 2537ms
+
+ ✓ tests/concurrency.test.ts > Concurrency > when moving job to waiting-children > should run max concurrency for jobs added first processed 826ms
+ ✓ tests/concurrency.test.ts > Concurrency > should automatically process stalled jobs respecting group order 1050ms
+ ✓ tests/concurrency.test.ts > Concurrency > when jobs use backoff strategy > processes jobs without getting stuck 191ms
+ ✓ tests/concurrency.test.ts > Concurrency > when jobs use backoff strategy > when backoff is 0 > processes jobs without getting stuck 318ms
+ ✓ tests/concurrency.test.ts > Concurrency > when lock is expired and removing a job in active state > does not get stuck in max state 58ms
+ ✓ tests/lock_manager.test.ts > LockManager > constructor > should create a lock manager with worker context 1ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should start and stop the lock manager 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should not start if already closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should not start timer if lockRenewTime is 0 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should handle multiple close calls gracefully 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should track and untrack jobs 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should not track jobs after being closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should clear all tracked jobs when closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should ignore empty job ids 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should extend locks for tracked jobs 601ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should emit error when lock extension fails 303ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should emit error when extendJobLocks throws 302ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should not extend locks if no jobs need renewal 301ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should update timestamps for jobs without initial timestamp 250ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should track jobs during processing 167ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should untrack jobs on failure 60ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should continue renewing locks for long-running jobs 3006ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should handle lock manager closure during worker shutdown 5ms
+ ✓ tests/lock_manager.test.ts > LockManager > telemetry > should call trace when extending locks 301ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .remove > removes processed hash 14ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not fail if queue meta key is missing 4ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not complete a parent job before its children 8ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToFailed > when job is removed > should not save stacktrace 112ms
+ ✓ tests/ownership.redis.test.ts > rejects stale complete and renewal after stalled recovery without mutations 16ms
+ ✓ tests/ownership.redis.test.ts > rejects stale fail and renewal after stalled recovery without mutations 9ms
+ ✓ tests/ownership.redis.test.ts > rejects stale retry and renewal after stalled recovery without mutations 8ms
+ ✓ tests/ownership.redis.test.ts > rejects stale delayed and renewal after stalled recovery without mutations 9ms
+
+ Test Files  8 passed (8)
+      Tests  272 passed (272)
+   Start at  00:50:10
+   Duration  125.60s (transform 259ms, setup 161ms, import 766ms, tests 124.15s, environment 0ms)
+
+ src/commands/extendLock-2.lua        | 2 +-
+ src/commands/extendLocks-1.lua       | 2 +-
+ src/commands/includes/removeLock.lua | 2 +-
+ src/commands/retryJob-11.lua         | 7 +++----
+ 4 files changed, 6 insertions(+), 7 deletions(-)
+1789793535667 [agent] step start step=22 limit=0 messages=56
+1789793535667 [agent] event=step_begin turn_id=1 step_id=22 step_index=22 step_limit=0 provider_messages=56
+1789793535667 [agent] event=before_provider_preflight turn_id=1 step_id=22 model=gpt-6-astra messages=56
+1789793535667 [agent] event=vision_policy turn_id=1 step_id=22 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789793535668 [agent] event=request_composition turn_id=1 step_id=22 instruction_bytes=9875 conversation_bytes=2545 tool_result_bytes=67822 tool_argument_bytes=6640 replay_bytes=15716 schema_json_bytes=16106 wire_bytes=128425 messages=48
+1789793535668 [agent] event=provider_admitted turn_id=1 step_id=22 model=gpt-6-astra
+1789793545019 [agent] event=request_finished turn_id=1 step_id=22 elapsed_ms=9352 input_tokens=26594 output_tokens=152 cached_input_tokens=2432 usage_available=true
+1789793545019 [agent] event=tool_presentation_group turn_id=1 step_id=22 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789793545019 [agent] step completion step=22 content_bytes=572 tool_calls=0 finish_reason=stop
+1789793545019 [agent] event=assistant_completion turn_id=1 step_id=22 content_bytes=572 tool_call_count=0 finish_reason=stop
+1789793545025 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

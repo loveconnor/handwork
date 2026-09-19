@@ -1,0 +1,48 @@
+[
+  {
+    "name": "Expired lock cannot complete",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot complete after recovery",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:38:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:70:2"
+  },
+  {
+    "name": "Stale owner cannot fail after recovery",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:38:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:71:2"
+  },
+  {
+    "name": "Stale owner cannot requeue an immediate retry",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:38:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:72:2"
+  },
+  {
+    "name": "Stale owner cannot schedule a delayed retry",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\ntrue !== false\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:38:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:73:2"
+  },
+  {
+    "name": "Stale owner cannot renew a single lock",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:36:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:74:2"
+  },
+  {
+    "name": "Stale owner cannot renew a batch of locks",
+    "pass": false,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ []\n- [\n-   '1'\n- ]\n\n    at scenario (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:37:39)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async test (/private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:20:38)\n    at async /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs:75:2"
+  },
+  {
+    "name": "Killed worker is recovered by a new process",
+    "pass": true
+  },
+  {
+    "name": "Immediate retry limits survive worker restart",
+    "pass": true
+  },
+  {
+    "name": "Delayed retry limits survive worker restart",
+    "pass": true
+  }
+]

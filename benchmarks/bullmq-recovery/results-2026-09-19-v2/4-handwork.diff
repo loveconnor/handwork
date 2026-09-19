@@ -1,0 +1,65 @@
+diff --git a/src/commands/extendLock-2.lua b/src/commands/extendLock-2.lua
+index 2d5ffe3..b84c686 100644
+--- a/src/commands/extendLock-2.lua
++++ b/src/commands/extendLock-2.lua
+@@ -13,8 +13,7 @@
+     "1" if lock extended successfully.
+ ]]
+ local rcall = redis.call
+-if rcall("EXISTS", KEYS[1]) == 1 then
+-  --   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2], "XX") then
++if rcall("GET", KEYS[1]) == ARGV[1] then
+   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2]) then
+     rcall("SREM", KEYS[2], ARGV[3])
+     return 1
+diff --git a/src/commands/extendLocks-1.lua b/src/commands/extendLocks-1.lua
+index cce23e6..bbd5548 100644
+--- a/src/commands/extendLocks-1.lua
++++ b/src/commands/extendLocks-1.lua
+@@ -30,7 +30,7 @@ for i = 1, jobCount, 1 do
+ 
+     local currentToken = rcall("GET", lockKey)
+     if currentToken then
+-        if currentToken then
++        if currentToken == token then
+             local setResult = rcall("SET", lockKey, token, "PX", lockDuration)
+             if setResult then
+                 rcall("SREM", stalledKey, jobId)
+diff --git a/src/commands/includes/removeLock.lua b/src/commands/includes/removeLock.lua
+index b8025cc..d7335f6 100644
+--- a/src/commands/includes/removeLock.lua
++++ b/src/commands/includes/removeLock.lua
+@@ -2,7 +2,7 @@ local function removeLock(jobKey, stalledKey, token, jobId)
+   if token ~= "0" then
+     local lockKey = jobKey .. ':lock'
+     local lockToken = rcall("GET", lockKey)
+-    if lockToken then
++    if lockToken == token then
+       rcall("DEL", lockKey)
+       rcall("SREM", stalledKey, jobId)
+     else
+diff --git a/src/commands/retryJob-11.lua b/src/commands/retryJob-11.lua
+index 1beca80..3370ada 100644
+--- a/src/commands/retryJob-11.lua
++++ b/src/commands/retryJob-11.lua
+@@ -44,10 +44,6 @@ local rcall = redis.call
+ local isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+ local markerKey = KEYS[10]
+ 
+--- Check if there are delayed jobs that we can move to wait.
+--- test example: when there are delayed jobs between retries
+-promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
+-
+ local jobKey = KEYS[4]
+ 
+ if rcall("EXISTS", jobKey) == 1 then
+@@ -56,6 +52,9 @@ if rcall("EXISTS", jobKey) == 1 then
+     return errorCode
+   end
+ 
++  -- Promote delayed jobs only after validating ownership.
++  promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
++
+   updateJobFields(jobKey, ARGV[6])
+ 
+   local numRemovedElements = rcall("LREM", KEYS[1], -1, ARGV[4])

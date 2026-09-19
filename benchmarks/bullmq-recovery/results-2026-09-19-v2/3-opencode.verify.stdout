@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Expired lock cannot complete",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot complete after recovery",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot fail after recovery",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot requeue an immediate retry",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot schedule a delayed retry",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot renew a single lock",
+    "pass": true
+  },
+  {
+    "name": "Stale owner cannot renew a batch of locks",
+    "pass": true
+  },
+  {
+    "name": "Killed worker is recovered by a new process",
+    "pass": true
+  },
+  {
+    "name": "Immediate retry limits survive worker restart",
+    "pass": true
+  },
+  {
+    "name": "Delayed retry limits survive worker restart",
+    "pass": true
+  }
+]

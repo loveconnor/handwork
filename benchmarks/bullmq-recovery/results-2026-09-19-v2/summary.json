@@ -1,0 +1,32 @@
+{
+  "handwork": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 251.485,
+    "median_peak_mib": 30.640625,
+    "mean_input_tokens": 477491.2,
+    "mean_output_tokens": 2939,
+    "mean_tool_calls": 25.8,
+    "mean_model_requests": 23
+  },
+  "opencode": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 446.917,
+    "median_peak_mib": 778.71875,
+    "mean_input_tokens": 539156,
+    "mean_output_tokens": 4461.8,
+    "mean_tool_calls": 30.8,
+    "mean_model_requests": 27.8
+  },
+  "codex": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 231.599,
+    "median_peak_mib": 205.84375,
+    "mean_input_tokens": 623398.6,
+    "mean_output_tokens": 3643.6,
+    "mean_tool_calls": 20.2,
+    "mean_model_requests": 21.2
+  }
+}

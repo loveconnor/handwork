@@ -1,0 +1,71 @@
+[
+  {
+    "duration_s": 13.413,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 16138240,
+      "tests": 0,
+      "tools": 77545472
+    },
+    "samples": 196,
+    "input_tokens": 17643,
+    "output_tokens": 180,
+    "cached_input_tokens": 4864,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 4,
+    "request_count_basis": "provider admission trace, including subagents",
+    "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+    "accounted_sessions": 1,
+    "harness": "handwork",
+    "pass": true
+  },
+  {
+    "duration_s": 17.308,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 754188288,
+      "tests": 0,
+      "tools": 12435456
+    },
+    "samples": 258,
+    "input_tokens": 20486,
+    "output_tokens": 200,
+    "cached_input_tokens": 17280,
+    "tool_calls": 3,
+    "completed": true,
+    "model_requests": 4,
+    "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+    "harness": "opencode",
+    "pass": true
+  },
+  {
+    "duration_s": 19.685,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 238911488,
+      "tests": 0,
+      "tools": 71270400
+    },
+    "samples": 290,
+    "input_tokens": 57566,
+    "output_tokens": 202,
+    "cached_input_tokens": 54656,
+    "tool_calls": 3,
+    "completed": true,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "rollout_files": 1,
+    "model_requests": 4,
+    "accounted_sessions": 1,
+    "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+    "harness": "codex",
+    "pass": true
+  }
+]

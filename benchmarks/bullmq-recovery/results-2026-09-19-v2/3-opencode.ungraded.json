@@ -1,0 +1,31 @@
+{
+  "duration_s": 454.925,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 816545792,
+    "tests": 0,
+    "tools": 687325184
+  },
+  "samples": 6295,
+  "input_tokens": 455355,
+  "output_tokens": 4328,
+  "cached_input_tokens": 404096,
+  "tool_calls": 27,
+  "completed": true,
+  "parent_only_usage": {
+    "input_tokens": 455355,
+    "output_tokens": 4328,
+    "cached_input_tokens": 404096,
+    "tool_calls": 27
+  },
+  "reasoning_tokens": 106,
+  "accounted_sessions": 1,
+  "model_requests": 28,
+  "request_count_basis": "Persisted model step-start records, including descendants; transport retries not separately exposed",
+  "harness": "opencode",
+  "attempt": 3,
+  "position": 3,
+  "workspace": "/private/tmp/handwork-bullmq-G7VJT5/3-opencode/repo",
+  "log": "3-opencode"
+}

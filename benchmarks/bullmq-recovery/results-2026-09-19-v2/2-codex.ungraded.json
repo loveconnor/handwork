@@ -1,0 +1,27 @@
+{
+  "duration_s": 247.075,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 215842816,
+    "tests": 0,
+    "tools": 686800896
+  },
+  "samples": 3383,
+  "input_tokens": 521318,
+  "output_tokens": 3719,
+  "cached_input_tokens": 496000,
+  "tool_calls": 17,
+  "completed": true,
+  "cache_write_input_tokens": 0,
+  "reasoning_output_tokens": 227,
+  "rollout_files": 1,
+  "model_requests": 18,
+  "accounted_sessions": 1,
+  "request_count_basis": "Unique response IDs in token_usage_record across isolated parent and descendant rollouts; unbilled retries not exposed",
+  "harness": "codex",
+  "attempt": 2,
+  "position": 2,
+  "workspace": "/private/tmp/handwork-bullmq-G7VJT5/2-codex/repo",
+  "log": "2-codex"
+}

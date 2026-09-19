@@ -1,0 +1,55 @@
+
+> bullmq@6.3.8 build
+> npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql
+
+
+> bullmq@6.3.8 clean:dist
+> rimraf dist
+
+
+> bullmq@6.3.8 pretest
+> npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references
+
+
+> bullmq@6.3.8 clean:scripts
+> rimraf rawScripts src/scripts
+
+
+> bullmq@6.3.8 generate:raw:scripts
+> ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts
+
+
+> bullmq@6.3.8 transform:commands
+> node ./scripts/commandTransform.js ./rawScripts ./src/scripts
+
+
+> bullmq@6.3.8 circular:references
+> madge --circular --extensions ts ./src
+
+Processed 154 files (419ms) 
+
+
+
+> bullmq@6.3.8 tsc:all
+> tsc && tsc -p tsconfig-cjs.json
+
+
+> bullmq@6.3.8 copy:main:type
+> cpx "./dist/esm/classes/main.d.ts" ./dist/cjs/classes && cpx "./dist/esm/classes/main-worker.d.ts" ./dist/cjs/classes
+
+
+> bullmq@6.3.8 clean:temp:files
+> rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json
+
+
+> bullmq@6.3.8 copy:lua
+> cpx "./src/commands/*.lua" ./dist/cjs/commands && cpx "./src/commands/*.lua" ./dist/esm/commands
+
+
+> bullmq@6.3.8 copy:includes:lua
+> cpx "./src/commands/includes/*.lua" ./dist/cjs/commands/includes && cpx "./src/commands/includes/*.lua" ./dist/esm/commands/includes
+
+
+> bullmq@6.3.8 copy:sql
+> cpx "./src/postgres/migrations/*.sql" ./dist/cjs/postgres/migrations && cpx "./src/postgres/migrations/*.sql" ./dist/esm/postgres/migrations && cpx "./src/postgres/commands/*.sql" ./dist/cjs/postgres/commands && cpx "./src/postgres/commands/*.sql" ./dist/esm/postgres/commands
+

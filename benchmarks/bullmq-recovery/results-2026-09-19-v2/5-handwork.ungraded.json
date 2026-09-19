@@ -1,0 +1,28 @@
+{
+  "duration_s": 234.902,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 32129024,
+    "tests": 0,
+    "tools": 702513152
+  },
+  "samples": 3296,
+  "input_tokens": 386388,
+  "output_tokens": 2613,
+  "cached_input_tokens": 106112,
+  "tool_calls": 26,
+  "completed": true,
+  "cache_write_tokens": 0,
+  "reasoning_tokens": 188,
+  "reported_model": "gpt-6-astra",
+  "model_requests": 22,
+  "request_count_basis": "provider admission trace, including subagents",
+  "descendant_accounting": "Fresh no-save Handwork session has no persistent subagent host; root usage covers this run",
+  "accounted_sessions": 1,
+  "harness": "handwork",
+  "attempt": 5,
+  "position": 2,
+  "workspace": "/private/tmp/handwork-bullmq-G7VJT5/5-handwork/repo",
+  "log": "5-handwork"
+}

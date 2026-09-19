@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "attempts": 15,
+  "successes": 15,
+  "checks": [
+    "unique complete series",
+    "frozen binary and fixture hashes",
+    "ungraded outcomes preserved",
+    "independent check evidence",
+    "268-test regression evidence",
+    "preset run order",
+    "summary recalculation",
+    "model-only proxy destinations"
+  ],
+  "network_destinations": [
+    {
+      "kind": "GET",
+      "target": "/backend-api/codex/models",
+      "count": 6
+    },
+    {
+      "kind": "POST",
+      "target": "/backend-api/codex/responses",
+      "count": 119
+    },
+    {
+      "kind": "connect",
+      "target": "ab.chatgpt.com",
+      "count": 6
+    },
+    {
+      "kind": "connect",
+      "target": "chatgpt.com",
+      "count": 184
+    },
+    {
+      "kind": "denied",
+      "target": "models.opencode.ai",
+      "count": 6
+    },
+    {
+      "kind": "denied",
+      "target": "nodejs.org",
+      "count": 32
+    },
+    {
+      "kind": "denied",
+      "target": "sdmntprcentralus.oaiusercontent.com",
+      "count": 6
+    },
+    {
+      "kind": "denied",
+      "target": "sdmntprnortheu.oaiusercontent.com",
+      "count": 6
+    },
+    {
+      "kind": "denied",
+      "target": "sdmntprsouthcentralus.oaiusercontent.com",
+      "count": 24
+    }
+  ]
+}

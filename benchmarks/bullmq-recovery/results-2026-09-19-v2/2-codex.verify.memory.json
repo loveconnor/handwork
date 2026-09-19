@@ -1,0 +1,1018 @@
+[
+  {
+    "seconds": 0.003,
+    "totals": {
+      "harness": 360448,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 360448,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      }
+    ]
+  },
+  {
+    "seconds": 0.072,
+    "totals": {
+      "harness": 60506112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 60506112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      }
+    ]
+  },
+  {
+    "seconds": 0.14,
+    "totals": {
+      "harness": 60506112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 60506112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      }
+    ]
+  },
+  {
+    "seconds": 0.209,
+    "totals": {
+      "harness": 61898752,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 61898752,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      }
+    ]
+  },
+  {
+    "seconds": 0.274,
+    "totals": {
+      "harness": 79839232,
+      "tests": 0,
+      "tools": 40075264
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 79839232,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23861,
+        "ppid": 23856,
+        "rss": 40075264,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a932c6a6-c657-44d2-b041-77d5ad08e55b ea5df4d9-ea4e-44fa-b909-c83079439191"
+      }
+    ]
+  },
+  {
+    "seconds": 0.34,
+    "totals": {
+      "harness": 79855616,
+      "tests": 0,
+      "tools": 80543744
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 79855616,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23861,
+        "ppid": 23856,
+        "rss": 80543744,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a932c6a6-c657-44d2-b041-77d5ad08e55b ea5df4d9-ea4e-44fa-b909-c83079439191"
+      }
+    ]
+  },
+  {
+    "seconds": 0.41,
+    "totals": {
+      "harness": 80101376,
+      "tests": 0,
+      "tools": 50331648
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80101376,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23864,
+        "ppid": 23856,
+        "rss": 50331648,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 b475f8e4-3ae5-4427-be8b-40d13e62b08d"
+      }
+    ]
+  },
+  {
+    "seconds": 0.474,
+    "totals": {
+      "harness": 80101376,
+      "tests": 0,
+      "tools": 80216064
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80101376,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23864,
+        "ppid": 23856,
+        "rss": 80216064,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 b475f8e4-3ae5-4427-be8b-40d13e62b08d"
+      }
+    ]
+  },
+  {
+    "seconds": 0.543,
+    "totals": {
+      "harness": 80134144,
+      "tests": 0,
+      "tools": 140148736
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80134144,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23864,
+        "ppid": 23856,
+        "rss": 80216064,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 b475f8e4-3ae5-4427-be8b-40d13e62b08d"
+      },
+      {
+        "pid": 23867,
+        "ppid": 23856,
+        "rss": 59932672,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 8a00a786-3404-4bbc-ab32-002fd91c1bed"
+      }
+    ]
+  },
+  {
+    "seconds": 0.609,
+    "totals": {
+      "harness": 80166912,
+      "tests": 0,
+      "tools": 160448512
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80166912,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23864,
+        "ppid": 23856,
+        "rss": 80216064,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 b475f8e4-3ae5-4427-be8b-40d13e62b08d"
+      },
+      {
+        "pid": 23867,
+        "ppid": 23856,
+        "rss": 80232448,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a5194997-f3fb-4284-a4fb-9fc0d7a39450 8a00a786-3404-4bbc-ab32-002fd91c1bed"
+      }
+    ]
+  },
+  {
+    "seconds": 0.678,
+    "totals": {
+      "harness": 80396288,
+      "tests": 0,
+      "tools": 44154880
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80396288,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23870,
+        "ppid": 23856,
+        "rss": 44154880,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 ae5145e2-4c6f-4e26-8960-a5935b1d90ea"
+      }
+    ]
+  },
+  {
+    "seconds": 0.744,
+    "totals": {
+      "harness": 80396288,
+      "tests": 0,
+      "tools": 80461824
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80396288,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23870,
+        "ppid": 23856,
+        "rss": 80461824,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 ae5145e2-4c6f-4e26-8960-a5935b1d90ea"
+      }
+    ]
+  },
+  {
+    "seconds": 0.814,
+    "totals": {
+      "harness": 80396288,
+      "tests": 0,
+      "tools": 143310848
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80396288,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23873,
+        "ppid": 23856,
+        "rss": 62849024,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 a4c465ee-aeb9-42e4-869f-6900e0f84ced"
+      },
+      {
+        "pid": 23870,
+        "ppid": 23856,
+        "rss": 80461824,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 ae5145e2-4c6f-4e26-8960-a5935b1d90ea"
+      }
+    ]
+  },
+  {
+    "seconds": 0.881,
+    "totals": {
+      "harness": 80412672,
+      "tests": 0,
+      "tools": 160333824
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80412672,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23873,
+        "ppid": 23856,
+        "rss": 79872000,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 a4c465ee-aeb9-42e4-869f-6900e0f84ced"
+      },
+      {
+        "pid": 23870,
+        "ppid": 23856,
+        "rss": 80461824,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-4d4516c3-9b88-4c80-84e6-73dce5835f79 ae5145e2-4c6f-4e26-8960-a5935b1d90ea"
+      }
+    ]
+  },
+  {
+    "seconds": 0.948,
+    "totals": {
+      "harness": 80461824,
+      "tests": 0,
+      "tools": 59523072
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80461824,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23876,
+        "ppid": 23856,
+        "rss": 59523072,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-f25d27f6-72a9-4941-bc1b-ce95d249d881 8dcc54c9-d99c-45a8-8e4b-db526ce4e211"
+      }
+    ]
+  },
+  {
+    "seconds": 1.016,
+    "totals": {
+      "harness": 80461824,
+      "tests": 0,
+      "tools": 80003072
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80461824,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23876,
+        "ppid": 23856,
+        "rss": 80003072,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-f25d27f6-72a9-4941-bc1b-ce95d249d881 8dcc54c9-d99c-45a8-8e4b-db526ce4e211"
+      }
+    ]
+  },
+  {
+    "seconds": 1.084,
+    "totals": {
+      "harness": 80478208,
+      "tests": 0,
+      "tools": 153419776
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80478208,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23881,
+        "ppid": 23856,
+        "rss": 73416704,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-f25d27f6-72a9-4941-bc1b-ce95d249d881 ff8af28a-99ac-4206-a9f4-6a68a07869a8"
+      },
+      {
+        "pid": 23876,
+        "ppid": 23856,
+        "rss": 80003072,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-f25d27f6-72a9-4941-bc1b-ce95d249d881 8dcc54c9-d99c-45a8-8e4b-db526ce4e211"
+      }
+    ]
+  },
+  {
+    "seconds": 1.156,
+    "totals": {
+      "harness": 80510976,
+      "tests": 0,
+      "tools": 160088064
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80510976,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23881,
+        "ppid": 23856,
+        "rss": 80084992,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 23876,
+        "ppid": 23856,
+        "rss": 80003072,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  },
+  {
+    "seconds": 1.221,
+    "totals": {
+      "harness": 80609280,
+      "tests": 0,
+      "tools": 65765376
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80609280,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23887,
+        "ppid": 23856,
+        "rss": 65765376,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-aa837963-3159-4e19-854f-caad4177c178 e8e901c8-a3b1-4fad-b7e4-6a8961c32fef"
+      }
+    ]
+  },
+  {
+    "seconds": 1.289,
+    "totals": {
+      "harness": 80625664,
+      "tests": 0,
+      "tools": 81477632
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80625664,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23890,
+        "ppid": 23856,
+        "rss": 1032192,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-aa837963-3159-4e19-854f-caad4177c178 c007b107-73fd-41bb-b362-9e8d73fd0d65"
+      },
+      {
+        "pid": 23887,
+        "ppid": 23856,
+        "rss": 80445440,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-aa837963-3159-4e19-854f-caad4177c178 e8e901c8-a3b1-4fad-b7e4-6a8961c32fef"
+      }
+    ]
+  },
+  {
+    "seconds": 1.355,
+    "totals": {
+      "harness": 80625664,
+      "tests": 0,
+      "tools": 158334976
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80625664,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23890,
+        "ppid": 23856,
+        "rss": 77889536,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-aa837963-3159-4e19-854f-caad4177c178 c007b107-73fd-41bb-b362-9e8d73fd0d65"
+      },
+      {
+        "pid": 23887,
+        "ppid": 23856,
+        "rss": 80445440,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-aa837963-3159-4e19-854f-caad4177c178 e8e901c8-a3b1-4fad-b7e4-6a8961c32fef"
+      }
+    ]
+  },
+  {
+    "seconds": 1.422,
+    "totals": {
+      "harness": 80658432,
+      "tests": 0,
+      "tools": 161153024
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80658432,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23890,
+        "ppid": 23856,
+        "rss": 80707584,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 23887,
+        "ppid": 23856,
+        "rss": 80445440,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  },
+  {
+    "seconds": 1.488,
+    "totals": {
+      "harness": 80920576,
+      "tests": 0,
+      "tools": 62783488
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80920576,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23948,
+        "ppid": 23856,
+        "rss": 62783488,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-3aec9ce5-2c7f-4f2a-9f09-fbf4f17d6e25 c71e99a5-a611-422f-b1de-5df1d96b8456"
+      }
+    ]
+  },
+  {
+    "seconds": 1.555,
+    "totals": {
+      "harness": 80920576,
+      "tests": 0,
+      "tools": 80510976
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80920576,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23948,
+        "ppid": 23856,
+        "rss": 80510976,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-3aec9ce5-2c7f-4f2a-9f09-fbf4f17d6e25 c71e99a5-a611-422f-b1de-5df1d96b8456"
+      }
+    ]
+  },
+  {
+    "seconds": 1.622,
+    "totals": {
+      "harness": 80920576,
+      "tests": 0,
+      "tools": 154402816
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80920576,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23995,
+        "ppid": 23856,
+        "rss": 73891840,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-3aec9ce5-2c7f-4f2a-9f09-fbf4f17d6e25 8211e6f7-0f73-4f59-8fc3-7afdad249ef1"
+      },
+      {
+        "pid": 23948,
+        "ppid": 23856,
+        "rss": 80510976,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-3aec9ce5-2c7f-4f2a-9f09-fbf4f17d6e25 c71e99a5-a611-422f-b1de-5df1d96b8456"
+      }
+    ]
+  },
+  {
+    "seconds": 1.688,
+    "totals": {
+      "harness": 80936960,
+      "tests": 0,
+      "tools": 160464896
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80936960,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23995,
+        "ppid": 23856,
+        "rss": 79953920,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 23948,
+        "ppid": 23856,
+        "rss": 80510976,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  },
+  {
+    "seconds": 1.751,
+    "totals": {
+      "harness": 80986112,
+      "tests": 0,
+      "tools": 63160320
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80986112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23998,
+        "ppid": 23856,
+        "rss": 63160320,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 37a11a5c-357d-48d8-9bb7-be12b7f0ccc4"
+      }
+    ]
+  },
+  {
+    "seconds": 1.819,
+    "totals": {
+      "harness": 80986112,
+      "tests": 0,
+      "tools": 80658432
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80986112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 23998,
+        "ppid": 23856,
+        "rss": 80658432,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 37a11a5c-357d-48d8-9bb7-be12b7f0ccc4"
+      }
+    ]
+  },
+  {
+    "seconds": 1.883,
+    "totals": {
+      "harness": 80986112,
+      "tests": 0,
+      "tools": 145965056
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80986112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24001,
+        "ppid": 23856,
+        "rss": 65306624,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 4a0dc771-1137-4d86-80b2-7a882f733443"
+      },
+      {
+        "pid": 23998,
+        "ppid": 23856,
+        "rss": 80658432,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 37a11a5c-357d-48d8-9bb7-be12b7f0ccc4"
+      }
+    ]
+  },
+  {
+    "seconds": 1.952,
+    "totals": {
+      "harness": 80986112,
+      "tests": 0,
+      "tools": 161120256
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 80986112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24001,
+        "ppid": 23856,
+        "rss": 80461824,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 4a0dc771-1137-4d86-80b2-7a882f733443"
+      },
+      {
+        "pid": 23998,
+        "ppid": 23856,
+        "rss": 80658432,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-22a909d3-f65f-45b3-9170-209e4fcfd57d 37a11a5c-357d-48d8-9bb7-be12b7f0ccc4"
+      }
+    ]
+  },
+  {
+    "seconds": 2.021,
+    "totals": {
+      "harness": 81117184,
+      "tests": 0,
+      "tools": 60211200
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81117184,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24004,
+        "ppid": 23856,
+        "rss": 60211200,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a567bd4c-9a85-44e8-82cc-f8feb5b5236f 3e26a1de-90cd-4b29-b1ac-919d2e08db1c"
+      }
+    ]
+  },
+  {
+    "seconds": 2.086,
+    "totals": {
+      "harness": 81117184,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81117184,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      }
+    ]
+  },
+  {
+    "seconds": 2.154,
+    "totals": {
+      "harness": 81117184,
+      "tests": 0,
+      "tools": 67911680
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81117184,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24007,
+        "ppid": 23856,
+        "rss": 67911680,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 recovery audit-a567bd4c-9a85-44e8-82cc-f8feb5b5236f 345359b7-b3b4-43d1-8c4a-d568f3ce5d7c"
+      }
+    ]
+  },
+  {
+    "seconds": 2.222,
+    "totals": {
+      "harness": 81117184,
+      "tests": 0,
+      "tools": 80281600
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81117184,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24007,
+        "ppid": 23856,
+        "rss": 80281600,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  },
+  {
+    "seconds": 2.287,
+    "totals": {
+      "harness": 81199104,
+      "tests": 0,
+      "tools": 65011712
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81199104,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24010,
+        "ppid": 23856,
+        "rss": 65011712,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 retries audit-2659c018-87db-4909-9717-953da447b2fd eb7028aa-0030-4e5a-bf4f-8e573c8d4726"
+      }
+    ]
+  },
+  {
+    "seconds": 2.356,
+    "totals": {
+      "harness": 81199104,
+      "tests": 0,
+      "tools": 60588032
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81199104,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24012,
+        "ppid": 23856,
+        "rss": 60588032,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 retries audit-2659c018-87db-4909-9717-953da447b2fd fee1c617-e867-4473-b31c-7c77c93a8e8c"
+      }
+    ]
+  },
+  {
+    "seconds": 2.423,
+    "totals": {
+      "harness": 81231872,
+      "tests": 0,
+      "tools": 37142528
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81231872,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24014,
+        "ppid": 23856,
+        "rss": 37142528,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 retries audit-96fd1863-3cc9-4846-9388-4d8afe7d1b91 eced5b05-abb8-411e-b4f2-b932236a6efa"
+      }
+    ]
+  },
+  {
+    "seconds": 2.489,
+    "totals": {
+      "harness": 81248256,
+      "tests": 0,
+      "tools": 589824
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81248256,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24016,
+        "ppid": 23856,
+        "rss": 589824,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 retries audit-96fd1863-3cc9-4846-9388-4d8afe7d1b91 df5e1c1b-0c9c-4d41-b4c1-8b51e0cb943b"
+      }
+    ]
+  },
+  {
+    "seconds": 2.552,
+    "totals": {
+      "harness": 81264640,
+      "tests": 0,
+      "tools": 79855616
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81264640,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/verify.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735"
+      },
+      {
+        "pid": 24016,
+        "ppid": 23856,
+        "rss": 79855616,
+        "kind": "tools",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-bullmq-G7VJT5/private/actor.cjs /private/tmp/handwork-bullmq-G7VJT5/grade-2-codex/repo 63735 retries audit-96fd1863-3cc9-4846-9388-4d8afe7d1b91 df5e1c1b-0c9c-4d41-b4c1-8b51e0cb943b"
+      }
+    ]
+  },
+  {
+    "seconds": 2.621,
+    "totals": {
+      "harness": 81297408,
+      "tests": 0,
+      "tools": 80314368
+    },
+    "processes": [
+      {
+        "pid": 23856,
+        "ppid": 80304,
+        "rss": 81297408,
+        "kind": "harness",
+        "command": "(node)"
+      },
+      {
+        "pid": 24016,
+        "ppid": 23856,
+        "rss": 80314368,
+        "kind": "tools",
+        "command": "(node)"
+      }
+    ]
+  }
+]

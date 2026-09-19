@@ -1,0 +1,19 @@
+Fix a worker ownership regression in this BullMQ repository.
+
+A worker can lose its job lock, another worker can recover and claim the job, and the original worker can later resume. The original worker must not change the job or its replacement owner's lock. The regression also affects lock renewal.
+
+Required behavior:
+- A stale worker must not complete or fail a recovered job, immediately retry it, or schedule a delayed retry.
+- A stale worker must not renew or replace the current owner's lock through either single-job or batch lock renewal.
+- Reject stale operations using the existing API behavior. Preserve the job's state, attempt counters, result, current owner, and events when rejecting them.
+- The current owner must still be able to renew and finish its job. Missing locks must remain errors where the existing API requires them.
+- Preserve recovery after worker crashes, retry limits, fixed backoff, and compatibility with existing callers.
+
+Find and fix the underlying source code. Keep the change focused. Do not edit existing tests, package files, build scripts, configuration, or dependencies. You may add tests. Do not bypass ownership validation or disable recovery. Preserve documented administrative APIs that intentionally operate without an ordinary worker lock.
+
+The full repository and dependencies are present. Use Node 24. Redis is running at 127.0.0.1 on the port in REDIS_PORT, in an isolated instance for this attempt. REDIS_HOST is also set. You can use npm run build to rebuild generated code. Run relevant existing tests and summarize your changes and verification.
+
+The prevalidated regression command is:
+node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.redis.test.ts tests/concurrency.test.ts tests/stalled_jobs.test.ts tests/lock_manager.test.ts tests/job.redis.test.ts
+
+Use only this checkout. Upstream history, internet source lookup, personal skills, and private evaluation files are unavailable. The evaluator rebuilds your source in a fresh checkout and runs independent checks after your attempt ends.

@@ -1,0 +1,834 @@
+1789789786073 [agent] event=prompt_start turn_id=1 prompt_bytes=2114 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.handwork/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.config/opencode/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.claude/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; 1 additional diagnostic omitted; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789789786798 [agent] step start step=1 limit=0 messages=9
+1789789786798 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=9
+1789789786799 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=9
+1789789786799 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789786799 [agent] event=request_composition turn_id=1 step_id=1 instruction_bytes=9875 conversation_bytes=2114 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=16106 wire_bytes=28584 messages=1
+1789789786799 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+1789789791954 [agent] event=request_finished turn_id=1 step_id=1 elapsed_ms=5155 input_tokens=5057 output_tokens=108 cached_input_tokens=0 usage_available=true
+1789789791954 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789789791954 [agent] step completion step=1 content_bytes=151 tool_calls=1 finish_reason=tool-calls
+1789789791954 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=151 tool_call_count=1 finish_reason=tool-calls
+Running git status --short; node -v; printenv REDIS_PORT; ls -a | head -35; find . -name AGENTS.md -not -path './node_modules...
+/dev/fd/11:25: command not found: compdef
+v24.21.0
+64462
+.
+..
+.git
+.github
+.gitignore
+.husky
+.madgerc
+.mocharc.js
+.npmignore
+.nvmrc
+.prettierignore
+.prettierrc.js
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+LICENSE
+README.md
+commitlint.config.js
+composer.json
+config
+contributing.md
+dist
+docker-compose.yml
+docs
+dotnet
+elixir
+eslint.config.mjs
+mocha.setup.ts
+node_modules
+osv-scanner.toml
+package.json
+php
+python
+rawScripts
+renovate.json
+rust
+1789789792641 [agent] step start step=2 limit=0 messages=11
+1789789792641 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789789792641 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789789792641 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789792641 [agent] event=request_composition turn_id=1 step_id=2 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=871 tool_argument_bytes=183 replay_bytes=65 schema_json_bytes=16106 wire_bytes=30205 messages=3
+1789789792641 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Searching[0m
+1789789796865 [agent] event=request_finished turn_id=1 step_id=2 elapsed_ms=4224 input_tokens=5435 output_tokens=47 cached_input_tokens=2432 usage_available=true
+1789789796865 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789796865 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789796865 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789789796904 [agent] step start step=3 limit=0 messages=13
+1789789796904 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789789796904 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789789796904 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789796905 [agent] event=request_composition turn_id=1 step_id=3 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=1475 tool_argument_bytes=311 replay_bytes=65 schema_json_bytes=16106 wire_bytes=31160 messages=5
+1789789796905 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Reading[0m
+1789789805745 [agent] event=request_finished turn_id=1 step_id=3 elapsed_ms=8841 input_tokens=5651 output_tokens=68 cached_input_tokens=0 usage_available=true
+1789789805745 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789805745 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789805745 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789789805746 [agent] event=read_batch_complete file_read_operations=3
+1789789805747 [agent] step start step=4 limit=0 messages=15
+1789789805747 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1789789805747 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=15
+1789789805747 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789805748 [agent] event=request_composition turn_id=1 step_id=4 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=20017 tool_argument_bytes=506 replay_bytes=65 schema_json_bytes=16106 wire_bytes=51835 messages=7
+1789789805748 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+● Matching[0m
+1789789808481 [agent] event=request_finished turn_id=1 step_id=4 elapsed_ms=2734 input_tokens=11257 output_tokens=34 cached_input_tokens=0 usage_available=true
+1789789808481 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789808481 [agent] step completion step=4 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789808481 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching src/commands/**/*{Lock*,Finished*,retryJob*,Delayed*}*.lua
+1789789808482 [agent] step start step=5 limit=0 messages=17
+1789789808482 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=17
+1789789808482 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=17
+1789789808482 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789808482 [agent] event=request_composition turn_id=1 step_id=5 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=20098 tool_argument_bytes=578 replay_bytes=65 schema_json_bytes=16106 wire_bytes=52181 messages=9
+1789789808482 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+● Searching[0m
+1789789813153 [agent] event=request_finished turn_id=1 step_id=5 elapsed_ms=4671 input_tokens=11326 output_tokens=37 cached_input_tokens=2432 usage_available=true
+1789789813154 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789813154 [agent] step completion step=5 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789813154 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789789813189 [agent] step start step=6 limit=0 messages=19
+1789789813189 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=19
+1789789813189 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=19
+1789789813189 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789813190 [agent] event=request_composition turn_id=1 step_id=6 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=24547 tool_argument_bytes=661 replay_bytes=65 schema_json_bytes=16106 wire_bytes=56991 messages=11
+1789789813190 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+● Reading[0m
+1789789818469 [agent] event=request_finished turn_id=1 step_id=6 elapsed_ms=5280 input_tokens=12656 output_tokens=121 cached_input_tokens=0 usage_available=true
+1789789818469 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789818469 [agent] step completion step=6 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789818469 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789789818470 [agent] event=read_batch_complete file_read_operations=8
+1789789818471 [agent] step start step=7 limit=0 messages=21
+1789789818471 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=21
+1789789818471 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=21
+1789789818471 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789818471 [agent] event=request_composition turn_id=1 step_id=7 instruction_bytes=9875 conversation_bytes=2265 tool_result_bytes=41940 tool_argument_bytes=1048 replay_bytes=65 schema_json_bytes=16106 wire_bytes=76254 messages=13
+1789789818471 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+● Searching[0m
+● Reading[0m
+1789789837823 [agent] event=request_finished turn_id=1 step_id=7 elapsed_ms=19352 input_tokens=17982 output_tokens=569 cached_input_tokens=2432 usage_available=true
+1789789837823 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789789837823 [agent] step completion step=7 content_bytes=281 tool_calls=6 finish_reason=tool-calls
+1789789837823 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=281 tool_call_count=6 finish_reason=tool-calls
+Editing src/commands/includes/removeLock.lua
+Editing src/commands/extendLock-2.lua
+Editing src/commands/extendLocks-1.lua
+Editing src/commands/retryJob-11.lua
+Searching pattern
+Reading file
+1789789837828 [agent] event=read_batch_complete file_read_operations=2
+1789789837828 [agent] step start step=8 limit=0 messages=28
+1789789837828 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=28
+1789789837829 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=28
+1789789837829 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789837829 [agent] event=request_composition turn_id=1 step_id=8 instruction_bytes=9875 conversation_bytes=2546 tool_result_bytes=47311 tool_argument_bytes=2410 replay_bytes=1685 schema_json_bytes=16106 wire_bytes=86507 messages=20
+1789789837829 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+● Searching[0m
+1789789840898 [agent] event=request_finished turn_id=1 step_id=8 elapsed_ms=3069 input_tokens=20025 output_tokens=45 cached_input_tokens=0 usage_available=true
+1789789840898 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789840898 [agent] step completion step=8 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789840898 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Searching pattern
+1789789840927 [agent] step start step=9 limit=0 messages=30
+1789789840927 [agent] event=step_begin turn_id=1 step_id=9 step_index=9 step_limit=0 provider_messages=30
+1789789840927 [agent] event=before_provider_preflight turn_id=1 step_id=9 model=gpt-6-astra messages=30
+1789789840927 [agent] event=vision_policy turn_id=1 step_id=9 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789840927 [agent] event=request_composition turn_id=1 step_id=9 instruction_bytes=9875 conversation_bytes=2546 tool_result_bytes=47691 tool_argument_bytes=2534 replay_bytes=1685 schema_json_bytes=16106 wire_bytes=87218 messages=22
+1789789840927 [agent] event=provider_admitted turn_id=1 step_id=9 model=gpt-6-astra
+● Reading[0m
+1789789845556 [agent] event=request_finished turn_id=1 step_id=9 elapsed_ms=4629 input_tokens=20188 output_tokens=90 cached_input_tokens=0 usage_available=true
+1789789845556 [agent] event=tool_presentation_group turn_id=1 step_id=9 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789845556 [agent] step completion step=9 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789845556 [agent] event=assistant_completion turn_id=1 step_id=9 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789789845557 [agent] step start step=10 limit=0 messages=32
+1789789845557 [agent] event=step_begin turn_id=1 step_id=10 step_index=10 step_limit=0 provider_messages=32
+1789789845557 [agent] event=before_provider_preflight turn_id=1 step_id=10 model=gpt-6-astra messages=32
+1789789845557 [agent] event=vision_policy turn_id=1 step_id=10 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789845558 [agent] event=request_composition turn_id=1 step_id=10 instruction_bytes=9875 conversation_bytes=2546 tool_result_bytes=47754 tool_argument_bytes=2803 replay_bytes=1685 schema_json_bytes=16106 wire_bytes=87765 messages=24
+1789789845558 [agent] event=provider_admitted turn_id=1 step_id=10 model=gpt-6-astra
+● Matching[0m
+1789789848184 [agent] event=request_finished turn_id=1 step_id=10 elapsed_ms=2626 input_tokens=20300 output_tokens=24 cached_input_tokens=2432 usage_available=true
+1789789848184 [agent] event=tool_presentation_group turn_id=1 step_id=10 anchor_step_id=7 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789848184 [agent] step completion step=10 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789848184 [agent] event=assistant_completion turn_id=1 step_id=10 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching src/commands/*Stalled*
+1789789848185 [agent] step start step=11 limit=0 messages=34
+1789789848185 [agent] event=step_begin turn_id=1 step_id=11 step_index=11 step_limit=0 provider_messages=34
+1789789848185 [agent] event=before_provider_preflight turn_id=1 step_id=11 model=gpt-6-astra messages=34
+1789789848185 [agent] event=vision_policy turn_id=1 step_id=11 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789848186 [agent] event=request_composition turn_id=1 step_id=11 instruction_bytes=9875 conversation_bytes=2546 tool_result_bytes=47842 tool_argument_bytes=2839 replay_bytes=1685 schema_json_bytes=16106 wire_bytes=88083 messages=26
+1789789848186 [agent] event=provider_admitted turn_id=1 step_id=11 model=gpt-6-astra
+● Reading[0m
+1789789854873 [agent] event=request_finished turn_id=1 step_id=11 elapsed_ms=6688 input_tokens=20364 output_tokens=157 cached_input_tokens=2432 usage_available=true
+1789789854873 [agent] event=tool_presentation_group turn_id=1 step_id=11 anchor_step_id=11 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789789854873 [agent] step completion step=11 content_bytes=274 tool_calls=1 finish_reason=tool-calls
+1789789854873 [agent] event=assistant_completion turn_id=1 step_id=11 content_bytes=274 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789789854874 [agent] event=read_batch_complete file_read_operations=4
+1789789854875 [agent] step start step=12 limit=0 messages=36
+1789789854875 [agent] event=step_begin turn_id=1 step_id=12 step_index=12 step_limit=0 provider_messages=36
+1789789854875 [agent] event=before_provider_preflight turn_id=1 step_id=12 model=gpt-6-astra messages=36
+1789789854875 [agent] event=vision_policy turn_id=1 step_id=12 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789854876 [agent] event=request_composition turn_id=1 step_id=12 instruction_bytes=9875 conversation_bytes=2820 tool_result_bytes=58272 tool_argument_bytes=3108 replay_bytes=3217 schema_json_bytes=16106 wire_bytes=101454 messages=28
+1789789854876 [agent] event=provider_admitted turn_id=1 step_id=12 model=gpt-6-astra
+1789789884119 [agent] event=request_finished turn_id=1 step_id=12 elapsed_ms=29243 input_tokens=23272 output_tokens=895 cached_input_tokens=2432 usage_available=true
+1789789884119 [agent] event=tool_presentation_group turn_id=1 step_id=12 anchor_step_id=11 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789884119 [agent] step completion step=12 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789884119 [agent] event=assistant_completion turn_id=1 step_id=12 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/worker_ownership.redis.test.ts
+1789789884121 [agent] step start step=13 limit=0 messages=38
+1789789884121 [agent] event=step_begin turn_id=1 step_id=13 step_index=13 step_limit=0 provider_messages=38
+1789789884121 [agent] event=before_provider_preflight turn_id=1 step_id=13 model=gpt-6-astra messages=38
+1789789884121 [agent] event=vision_policy turn_id=1 step_id=13 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789884122 [agent] event=request_composition turn_id=1 step_id=13 instruction_bytes=9875 conversation_bytes=2820 tool_result_bytes=58327 tool_argument_bytes=6378 replay_bytes=3217 schema_json_bytes=16106 wire_bytes=105045 messages=30
+1789789884122 [agent] event=provider_admitted turn_id=1 step_id=13 model=gpt-6-astra
+1789789891201 [agent] event=request_finished turn_id=1 step_id=13 elapsed_ms=7079 input_tokens=24193 output_tokens=166 cached_input_tokens=0 usage_available=true
+1789789891201 [agent] event=tool_presentation_group turn_id=1 step_id=13 anchor_step_id=11 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789891201 [agent] step completion step=13 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789891201 [agent] event=assistant_completion turn_id=1 step_id=13 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm run build > /tmp/handwork-ownership-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-paralleli...
+/dev/fd/11:25: command not found: compdef
+1789789892208 [agent] step start step=14 limit=0 messages=40
+1789789892208 [agent] event=step_begin turn_id=1 step_id=14 step_index=14 step_limit=0 provider_messages=40
+1789789892208 [agent] event=before_provider_preflight turn_id=1 step_id=14 model=gpt-6-astra messages=40
+1789789892208 [agent] event=vision_policy turn_id=1 step_id=14 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789892208 [agent] event=request_composition turn_id=1 step_id=14 instruction_bytes=9875 conversation_bytes=2820 tool_result_bytes=58721 tool_argument_bytes=6955 replay_bytes=3217 schema_json_bytes=16106 wire_bytes=106254 messages=32
+1789789892208 [agent] event=provider_admitted turn_id=1 step_id=14 model=gpt-6-astra
+1789789896717 [agent] event=request_finished turn_id=1 step_id=14 elapsed_ms=4509 input_tokens=24470 output_tokens=53 cached_input_tokens=2432 usage_available=true
+1789789896717 [agent] event=tool_presentation_group turn_id=1 step_id=14 anchor_step_id=11 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789896717 [agent] step completion step=14 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789896717 [agent] event=assistant_completion turn_id=1 step_id=14 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build > /tmp/handwork-ownership-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-paralleli...
+zsh:1: operation not permitted: /tmp/handwork-ownership-tests.log
+
+
+> bullmq@6.3.8 tsc:all
+> tsc && tsc -p tsconfig-cjs.json
+
+
+> bullmq@6.3.8 copy:main:type
+> cpx "./dist/esm/classes/main.d.ts" ./dist/cjs/classes && cpx "./dist/esm/classes/main-worker.d.ts" ./dist/cjs/classes
+
+
+> bullmq@6.3.8 clean:temp:files
+> rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json
+
+
+> bullmq@6.3.8 copy:lua
+> cpx "./src/commands/*.lua" ./dist/cjs/commands && cpx "./src/commands/*.lua" ./dist/esm/commands
+
+
+> bullmq@6.3.8 copy:includes:lua
+> cpx "./src/commands/includes/*.lua" ./dist/cjs/commands/includes && cpx "./src/commands/includes/*.lua" ./dist/esm/commands/includes
+
+
+> bullmq@6.3.8 copy:sql
+> cpx "./src/postgres/migrations/*.sql" ./dist/cjs/postgres/migrations && cpx "./src/postgres/migrations/*.sql" ./dist/esm/postgres/migrations && cpx "./src/postgres/commands/*.sql" ./dist/cjs/postgres/commands && cpx "./src/postgres/commands/*.sql" ./dist/esm/postgres/commands
+
+tail: /tmp/handwork-ownership-tests.log: Operation not permitted
+ src/commands/extendLock-2.lua        | 3 +--
+ src/commands/extendLocks-1.lua       | 2 +-
+ src/commands/includes/removeLock.lua | 2 +-
+ src/commands/retryJob-11.lua         | 7 +++----
+ 4 files changed, 6 insertions(+), 8 deletions(-)
+1789789897974 [agent] step start step=15 limit=0 messages=42
+1789789897974 [agent] event=step_begin turn_id=1 step_id=15 step_index=15 step_limit=0 provider_messages=42
+1789789897974 [agent] event=before_provider_preflight turn_id=1 step_id=15 model=gpt-6-astra messages=42
+1789789897974 [agent] event=vision_policy turn_id=1 step_id=15 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789897975 [agent] event=request_composition turn_id=1 step_id=15 instruction_bytes=9875 conversation_bytes=2820 tool_result_bytes=60470 tool_argument_bytes=7032 replay_bytes=4815 schema_json_bytes=16106 wire_bytes=109988 messages=34
+1789789897975 [agent] event=provider_admitted turn_id=1 step_id=15 model=gpt-6-astra
+1789789904180 [agent] event=request_finished turn_id=1 step_id=15 elapsed_ms=6206 input_tokens=25097 output_tokens=137 cached_input_tokens=0 usage_available=true
+1789789904180 [agent] event=tool_presentation_group turn_id=1 step_id=15 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789789904180 [agent] step completion step=15 content_bytes=139 tool_calls=1 finish_reason=tool-calls
+1789789904180 [agent] event=assistant_completion turn_id=1 step_id=15 content_bytes=139 tool_call_count=1 finish_reason=tool-calls
+Running node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+/dev/fd/11:25: command not found: compdef
+1789789905185 [agent] step start step=16 limit=0 messages=44
+1789789905185 [agent] event=step_begin turn_id=1 step_id=16 step_index=16 step_limit=0 provider_messages=44
+1789789905186 [agent] event=before_provider_preflight turn_id=1 step_id=16 model=gpt-6-astra messages=44
+1789789905186 [agent] event=vision_policy turn_id=1 step_id=16 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789905186 [agent] event=request_composition turn_id=1 step_id=16 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=60864 tool_argument_bytes=7362 replay_bytes=6347 schema_json_bytes=16106 wire_bytes=112699 messages=36
+1789789905186 [agent] event=provider_admitted turn_id=1 step_id=16 model=gpt-6-astra
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo
+
+ ✓ tests/worker.test.ts > workers > process a lifo queue 15ms
+ ✓ tests/worker.test.ts > workers > process several jobs serially 13ms
+ ✓ tests/worker.test.ts > workers > process a job that updates progress as number 5ms
+ ✓ tests/worker.test.ts > workers > process a job that updates progress as object 4ms
+ ✓ tests/worker.test.ts > workers > process a job that updates progress as string 4ms
+ ✓ tests/worker.test.ts > workers > process a job that updates progress as boolean 5ms
+ ✓ tests/worker.test.ts > workers > process a job that updates progress with a typed progress generic 4ms
+ ✓ tests/worker.test.ts > workers > processes jobs that were added before the worker started 5ms
+ ✓ tests/worker.test.ts > workers > process a job that returns data in the process handler 5ms
+ ✓ tests/worker.test.ts > workers > process a job that returns a string in the process handler 108ms
+ ✓ tests/worker.test.ts > workers > process a job that returning data returnvalue gets stored in the database 6ms
+ ✓ tests/worker.test.ts > workers > process a job that does some asynchronous operation 257ms
+ ✓ tests/worker.test.ts > workers > process a synchronous job 7ms
+ ✓ tests/worker.test.ts > workers > process a slow job without waiting previous job to finish 1008ms
+stderr | tests/worker.test.ts > workers > process a job that returns data with a circular dependency
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Object'
+    --- property 'x' closes the circle
+    at JSON.stringify (<anonymous>)
+    at tryCatch (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/utils/index.ts:36:15)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/job.ts:658:40
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at Worker.handleCompleted (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1117:25)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1042:18
+
+ ✓ tests/worker.test.ts > workers > does not process a job that is being processed when a new queue starts 508ms
+ ✓ tests/worker.test.ts > workers > process a job that throws an exception 9ms
+ ✓ tests/worker.test.ts > workers > process a job that returns data with a circular dependency 9ms
+ ✓ tests/worker.test.ts > workers > process a job that returns a rejected promise 5ms
+ ✓ tests/worker.test.ts > workers > sets the worker name on the job upon processing 208ms
+ ✓ tests/worker.test.ts > workers > when job is in failed state > retries a job that fails 7ms
+ ✓ tests/worker.test.ts > workers > when job is in failed state > when passing resetAttemptsMade and resetAttemptsStarted as true > retries a job that fails and resets attemptsMade and attemptsStarted 6ms
+ ✓ tests/worker.test.ts > workers > when job is in completed state > retries a job that completes 6ms
+ ✓ tests/worker.test.ts > workers > when job is in completed state > when passing resetAttemptsMade and resetAttemptsStarted as true > retries a job that completes and resets attemptsMade and attemptsStarted 5ms
+ ✓ tests/worker.test.ts > workers > when closing a worker > process a job that throws an exception after worker close 3007ms
+1789789911693 [agent] event=request_finished turn_id=1 step_id=16 elapsed_ms=6507 input_tokens=25345 output_tokens=94 cached_input_tokens=2432 usage_available=true
+1789789911693 [agent] event=tool_presentation_group turn_id=1 step_id=16 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789911693 [agent] step completion step=16 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789911693 [agent] event=assistant_completion turn_id=1 step_id=16 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running node node_modules/prettier/bin/prettier.cjs --write tests/worker_ownership.redis.test.ts; git diff --check; git diff;...
+/dev/fd/11:25: command not found: compdef
+tests/worker_ownership.redis.test.ts 41ms
+diff --git a/src/commands/extendLock-2.lua b/src/commands/extendLock-2.lua
+index 2d5ffe3..b84c686 100644
+--- a/src/commands/extendLock-2.lua
++++ b/src/commands/extendLock-2.lua
+@@ -13,8 +13,7 @@
+     "1" if lock extended successfully.
+ ]]
+ local rcall = redis.call
+-if rcall("EXISTS", KEYS[1]) == 1 then
+-  --   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2], "XX") then
++if rcall("GET", KEYS[1]) == ARGV[1] then
+   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2]) then
+     rcall("SREM", KEYS[2], ARGV[3])
+     return 1
+diff --git a/src/commands/extendLocks-1.lua b/src/commands/extendLocks-1.lua
+index cce23e6..bbd5548 100644
+--- a/src/commands/extendLocks-1.lua
++++ b/src/commands/extendLocks-1.lua
+@@ -30,7 +30,7 @@ for i = 1, jobCount, 1 do
+ 
+     local currentToken = rcall("GET", lockKey)
+     if currentToken then
+-        if currentToken then
++        if currentToken == token then
+             local setResult = rcall("SET", lockKey, token, "PX", lockDuration)
+             if setResult then
+                 rcall("SREM", stalledKey, jobId)
+diff --git a/src/commands/includes/removeLock.lua b/src/commands/includes/removeLock.lua
+index b8025cc..d7335f6 100644
+--- a/src/commands/includes/removeLock.lua
++++ b/src/commands/includes/removeLock.lua
+@@ -2,7 +2,7 @@ local function removeLock(jobKey, stalledKey, token, jobId)
+   if token ~= "0" then
+     local lockKey = jobKey .. ':lock'
+     local lockToken = rcall("GET", lockKey)
+-    if lockToken then
++    if lockToken == token then
+       rcall("DEL", lockKey)
+       rcall("SREM", stalledKey, jobId)
+     else
+diff --git a/src/commands/retryJob-11.lua b/src/commands/retryJob-11.lua
+index 1beca80..3370ada 100644
+--- a/src/commands/retryJob-11.lua
++++ b/src/commands/retryJob-11.lua
+@@ -44,10 +44,6 @@ local rcall = redis.call
+ local isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+ local markerKey = KEYS[10]
+ 
+--- Check if there are delayed jobs that we can move to wait.
+--- test example: when there are delayed jobs between retries
+-promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
+-
+ local jobKey = KEYS[4]
+ 
+ if rcall("EXISTS", jobKey) == 1 then
+@@ -56,6 +52,9 @@ if rcall("EXISTS", jobKey) == 1 then
+     return errorCode
+   end
+ 
++  -- Promote delayed jobs only after validating ownership.
++  promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
++
+   updateJobFields(jobKey, ARGV[6])
+ 
+   local numRemovedElements = rcall("LREM", KEYS[1], -1, ARGV[4])
+ M src/commands/extendLock-2.lua
+ M src/commands/extendLocks-1.lua
+ M src/commands/includes/removeLock.lua
+ M src/commands/retryJob-11.lua
+?? tests/worker_ownership.redis.test.ts
+1789789912027 [agent] step start step=17 limit=0 messages=46
+1789789912027 [agent] event=step_begin turn_id=1 step_id=17 step_index=17 step_limit=0 provider_messages=46
+1789789912027 [agent] event=before_provider_preflight turn_id=1 step_id=17 model=gpt-6-astra messages=46
+1789789912027 [agent] event=vision_policy turn_id=1 step_id=17 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789912027 [agent] event=request_composition turn_id=1 step_id=17 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=64194 tool_argument_bytes=7560 replay_bytes=8024 schema_json_bytes=16106 wire_bytes=118292 messages=38
+1789789912028 [agent] event=provider_admitted turn_id=1 step_id=17 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > when closing a worker > process a job that complete after worker close 3008ms
+ ✓ tests/worker.test.ts > workers > when closing a worker > resolves close() when an active job throws DelayedError during shutdown 211ms
+ ✓ tests/worker.test.ts > workers > when closing a worker > resolves close() when a paused worker has an active job that throws DelayedError 210ms
+ ✓ tests/worker.test.ts > workers > when waiting for a job > reconnects blocking transport after a connection error (#4378) 6ms
+ ✓ tests/worker.test.ts > workers > when waiting for a job > retries after reconnecting blocking transport fails 4ms
+1789789914831 [agent] event=request_finished turn_id=1 step_id=17 elapsed_ms=2804 input_tokens=26546 output_tokens=34 cached_input_tokens=20096 usage_available=true
+1789789914831 [agent] event=tool_presentation_group turn_id=1 step_id=17 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789914831 [agent] step completion step=17 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789914831 [agent] event=assistant_completion turn_id=1 step_id=17 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > when waiting for a job > recovers when the blocking command never settles (#4479) 1007ms
+ ✓ tests/worker.test.ts > workers > when waiting for a job > does not disconnect a reconnecting blocking client (#4585) 1009ms
+stderr | tests/worker.test.ts > workers > when waiting for a job > drops the abandoned blocking command once the client is live again (#4585)
+TypeError: 'set' on proxy: trap returned falsish for property 'status'
+    at RedisConnection.close (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-connection.ts:779:24)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:314:11
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1321:15
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1295:7
+    at Worker.close (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1335:12)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/tests/worker.test.ts:1312:9
+    at file:///private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/worker.test.ts > workers > when waiting for a job > drops the abandoned blocking command once the client is live again (#4585) 1013ms
+ ✓ tests/worker.test.ts > workers > when waiting for a job > reconnects a healthy connection torn down by the watchdog (#4585 ready-path race) 1036ms
+ ✓ tests/worker.test.ts > workers > when calling getBlockTimeout > when blockUntil is 0 > when drainDelay is greater than minimumBlockTimeout > returns drainDelay 4ms
+ ✓ tests/worker.test.ts > workers > when calling getBlockTimeout > when blockUntil is 0 > when drainDelay is lower than minimumBlockTimeout > returns drainDelay 5ms
+ ✓ tests/worker.test.ts > workers > when calling getBlockTimeout > when blockUntil is greater than 0 > when blockUntil is lower than date now value > returns blockDelay value lower or equal 0 4ms
+ ✓ tests/worker.test.ts > workers > when calling getBlockTimeout > when blockUntil is greater than 0 > when blockUntil is greater than date now value > returns delay value greater than minimumBlockTimeout 4ms
+ ✓ tests/worker.test.ts > workers > when calling getBlockTimeout > when blockUntil is greater than 0 > when blockDelay exceeds the backend maximumBlockTimeout > caps the block timeout at the backend's maximumBlockTimeout 4ms
+ ✓ tests/worker.test.ts > workers > when reading maximumBlockTimeout > delegates to the backend value 4ms
+ ✓ tests/worker.test.ts > workers > when reading maximumBlockTimeout > falls back to the default (10s) when the backend does not specify one 4ms
+ ✓ tests/worker.test.ts > workers > when sharing connection > should not fail 16ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should remove job after completed if removeOnComplete 5ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should remove a job after completed if the default job options specify removeOnComplete 5ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep specified number of jobs after completed with removeOnComplete 14ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep of jobs newer than specified after completed with removeOnComplete 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep of jobs newer than specified and up to a count completed with removeOnComplete 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep of jobs newer than specified and up to a count fail with removeOnFail 12ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep specified number of jobs after completed with default job options removeOnComplete 8ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should remove job after failed if removeOnFail 12ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should remove a job after fail if the default job options specify removeOnFail 6ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep specified number of jobs after completed with removeOnFail 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > should keep specified number of jobs after completed with global removeOnFail 8ms
+ ✓ tests/worker.test.ts > workers > auto job removal > when worker has removeOnFinish options > should keep of jobs newer than specified after completed with removeOnComplete 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > when worker has removeOnFinish options > should keep of jobs newer than specified and up to a count completed with removeOnComplete 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > when worker has removeOnFinish options > should keep jobs with age 10 and limit 2 with removeOnComplete 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > when worker has removeOnFinish options > should keep of jobs newer than specified and up to a count fail with removeOnFail 11ms
+ ✓ tests/worker.test.ts > workers > auto job removal > when worker has removeOnFinish options > should remove all jobs when count is 0 with removeOnFail 12ms
+1789789919838 [agent] step start step=18 limit=0 messages=48
+1789789919838 [agent] event=step_begin turn_id=1 step_id=18 step_index=18 step_limit=0 provider_messages=48
+1789789919838 [agent] event=before_provider_preflight turn_id=1 step_id=18 model=gpt-6-astra messages=48
+1789789919838 [agent] event=vision_policy turn_id=1 step_id=18 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789919839 [agent] event=request_composition turn_id=1 step_id=18 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=74360 tool_argument_bytes=7637 replay_bytes=8024 schema_json_bytes=16106 wire_bytes=128866 messages=40
+1789789919839 [agent] event=provider_admitted turn_id=1 step_id=18 model=gpt-6-astra
+1789789923606 [agent] event=request_finished turn_id=1 step_id=18 elapsed_ms=3768 input_tokens=29083 output_tokens=44 cached_input_tokens=2432 usage_available=true
+1789789923606 [agent] event=tool_presentation_group turn_id=1 step_id=18 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789923606 [agent] step completion step=18 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789923606 [agent] event=assistant_completion turn_id=1 step_id=18 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > when adding delayed job after standard one when worker is drained > pick standard job without delay 5087ms
+ ✓ tests/worker.test.ts > workers > when prioritized jobs are added > should process jobs by priority 10ms
+ ✓ tests/worker.test.ts > workers > when prioritized jobs are added > when jobs are added with the maximum allowed priority value > should process jobs with the same priority in FIFO order 6ms
+ ✓ tests/worker.test.ts > workers > when prioritized jobs are added > when jobs are added with the maximum allowed priority value > should reject jobs above the maximum allowed priority value 3ms
+ ✓ tests/worker.test.ts > workers > when prioritized jobs are added > while processing last active job > should process prioritized job whithout delay 4ms
+ ✓ tests/worker.test.ts > workers > when prioritized jobs are added > when using custom jobId > should process prioritized jobs 59ms
+ ✓ tests/worker.test.ts > workers > when sharing a redis connection between workers > should not close the connection 6ms
+ ✓ tests/worker.test.ts > workers > when sharing a redis connection between workers > when connection is passed into a queue > should not close the connection 6ms
+ ✓ tests/worker.test.ts > workers > when autorun option is provided as false > processes several jobs serially using process option as false 220ms
+ ✓ tests/worker.test.ts > workers > when autorun option is provided as false > when process function is not defined > throws error 4ms
+ ✓ tests/worker.test.ts > workers > when autorun option is provided as false > when run method is called when worker is running > throws error 7ms
+ ✓ tests/worker.test.ts > workers > when queue is paused and retry a job > moves job to wait 109ms
+ ✓ tests/worker.test.ts > workers > retry a job that fails using job retry method 9ms
+ ✓ tests/worker.test.ts > workers > emits error and continues running when _getNextJob fails 6ms
+stderr | tests/worker.test.ts > workers > continues processing after a worker has stalled
+Error: Missing lock for job 1. moveToFinished
+    at finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/finished-errors.ts:30:15)
+    at RedisQueueBackend.finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:2301:12)
+    at RedisQueueBackend.moveToFinished (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:1207:18)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at RedisQueueBackend.moveToCompleted (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:2441:20)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/job.ts:665:40
+    at Worker.handleCompleted (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1117:25)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1042:18 {
+  code: -2
+}
+
+stderr | tests/worker.test.ts > workers > continues processing after a worker has stalled
+Error: Missing lock for job 1. moveToFinished
+    at finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/finished-errors.ts:30:15)
+    at RedisQueueBackend.finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:2301:12)
+    at RedisQueueBackend.moveToFinished (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:1207:18)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at RedisQueueBackend.moveToFailed (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/redis-queue-backend.ts:2464:20)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/job.ts:783:25
+    at Worker.handleFailed (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1172:22)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/2-handwork/repo/src/classes/worker.ts:1061:26 {
+  code: -2
+}
+
+ ✓ tests/worker.test.ts > workers > continues processing after a worker has stalled 2009ms
+ ✓ tests/worker.test.ts > workers > max stalled count cannot be less than zero 4ms
+ ✓ tests/worker.test.ts > workers > max started attempts cannot be less than zero 4ms
+ ✓ tests/worker.test.ts > workers > stalled interval cannot be zero 3ms
+ ✓ tests/worker.test.ts > workers > drain delay cannot be zero 3ms
+ ✓ tests/worker.test.ts > workers > lock extender continues to run until all active jobs are completed when closing a worker 2005ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > should thrown an exception if I specify a concurrency of 0 4ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > should thrown an exception if I specify a NaN concurrency 3ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > should run job in sequence if I specify a concurrency of 1 107ms
+1789789928612 [agent] step start step=19 limit=0 messages=50
+1789789928612 [agent] event=step_begin turn_id=1 step_id=19 step_index=19 step_limit=0 provider_messages=50
+1789789928612 [agent] event=before_provider_preflight turn_id=1 step_id=19 model=gpt-6-astra messages=50
+1789789928612 [agent] event=vision_policy turn_id=1 step_id=19 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789928613 [agent] event=request_composition turn_id=1 step_id=19 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=79924 tool_argument_bytes=7714 replay_bytes=9492 schema_json_bytes=16106 wire_bytes=136262 messages=42
+1789789928613 [agent] event=provider_admitted turn_id=1 step_id=19 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > Concurrency process > should process job respecting the concurrency set 1228ms
+1789789931830 [agent] event=request_finished turn_id=1 step_id=19 elapsed_ms=3217 input_tokens=30598 output_tokens=42 cached_input_tokens=19840 usage_available=true
+1789789931830 [agent] event=tool_presentation_group turn_id=1 step_id=19 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789931830 [agent] step completion step=19 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789931830 [agent] event=assistant_completion turn_id=1 step_id=19 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > Concurrency process > when changing concurrency > when increasing value > should process job respecting the current concurrency set 2842ms
+1789789936831 [agent] step start step=20 limit=0 messages=52
+1789789936831 [agent] event=step_begin turn_id=1 step_id=20 step_index=20 step_limit=0 provider_messages=52
+1789789936831 [agent] event=before_provider_preflight turn_id=1 step_id=20 model=gpt-6-astra messages=52
+1789789936831 [agent] event=vision_policy turn_id=1 step_id=20 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789936832 [agent] event=request_composition turn_id=1 step_id=20 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=80571 tool_argument_bytes=7791 replay_bytes=10940 schema_json_bytes=16106 wire_bytes=138672 messages=44
+1789789936832 [agent] event=provider_admitted turn_id=1 step_id=20 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > Concurrency process > when changing concurrency > when decreasing value > should process job respecting the current concurrency set 5320ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > when pausing > should wait for all concurrent processing 91ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > when pausing > should not keep active jobs 210ms
+ ✓ tests/worker.test.ts > workers > Concurrency process > when pausing > should resume processing after pause with doNotWaitActive 109ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > updates job's delay property if it fails and backoff is set 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is exponential > updates job's delay property if it fails and backoff is set 654ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is exponential > when jitter option is provided > updates job's delay property between 0 and max exponential backoff value 404ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is exponential > when jitter option is provided > when jitter is provided with lower value than 1 > updates job's delay property only applying jitter in a fixed percentage 505ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is fixed > updates job's delay property and respects fixed delay value 2426ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is fixed > when jitter option is provided > updates job's delay property between 0 and max fixed backoff value 1211ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when backoff type is fixed > when jitter option is provided > when jitter is provided with lower value than 1 > updates job's delay property only applying jitter in a fixed percentage 1313ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when attempts is 1 and job fails > should execute job only once and emits retries-exhausted event 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when jobs do not fail and get the maximum attempts limit > does not emit retries-exhausted event 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when job has been failed and moved to wait > saves failedReason 5ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should automatically retry a failed job if attempts is bigger than 1 29ms
+1789789944847 [agent] event=request_finished turn_id=1 step_id=20 elapsed_ms=8015 input_tokens=30794 output_tokens=48 cached_input_tokens=23168 usage_available=true
+1789789944847 [agent] event=tool_presentation_group turn_id=1 step_id=20 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789944847 [agent] step completion step=20 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789944847 [agent] event=assistant_completion turn_id=1 step_id=20 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when there are delayed jobs between retries > when using retryJob > promotes delayed jobs first 1013ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when there are delayed jobs between retries > when job has more priority than delayed jobs > executes retried job first 1017ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a failed job more than the number of given attempts times 8ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a fixed backoff is given 2074ms
+1789789949852 [agent] step start step=21 limit=0 messages=54
+1789789949852 [agent] event=step_begin turn_id=1 step_id=21 step_index=21 step_limit=0 provider_messages=54
+1789789949852 [agent] event=before_provider_preflight turn_id=1 step_id=21 model=gpt-6-astra messages=54
+1789789949852 [agent] event=vision_policy turn_id=1 step_id=21 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789949853 [agent] event=request_composition turn_id=1 step_id=21 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=84056 tool_argument_bytes=7868 replay_bytes=12428 schema_json_bytes=16106 wire_bytes=143977 messages=46
+1789789949853 [agent] event=provider_admitted turn_id=1 step_id=21 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when UnrecoverableError is throw > moves job to failed 1017ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > should retry a job after a delay if a fixed backoff is given, keeping the current step 2031ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when timeout is provided > should check if timeout is reached in each step 3547ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > should retry job after a delay time, keeping the current step 215ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > when passing maxStartedAttempts > should fail job when consuming the max started attempts 304ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > when passing maxStartedAttempts > should allow only retry a job once after it has reached the max attemptsStarted 9ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to waiting in one step > should retry job right away, keeping the current step 7ms
+1789789957130 [agent] event=request_finished turn_id=1 step_id=21 elapsed_ms=7278 input_tokens=31656 output_tokens=48 cached_input_tokens=2432 usage_available=true
+1789789957130 [agent] event=tool_presentation_group turn_id=1 step_id=21 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789957130 [agent] step completion step=21 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789957130 [agent] event=assistant_completion turn_id=1 step_id=21 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if an exponential backoff is given 3132ms
+1789789962137 [agent] step start step=22 limit=0 messages=56
+1789789962137 [agent] event=step_begin turn_id=1 step_id=22 step_index=22 step_limit=0 provider_messages=56
+1789789962138 [agent] event=before_provider_preflight turn_id=1 step_id=22 model=gpt-6-astra messages=56
+1789789962138 [agent] event=vision_policy turn_id=1 step_id=22 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789962139 [agent] event=request_composition turn_id=1 step_id=22 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=85984 tool_argument_bytes=7945 replay_bytes=13896 schema_json_bytes=16106 wire_bytes=147694 messages=48
+1789789962139 [agent] event=provider_admitted turn_id=1 step_id=22 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a custom backoff is given 3053ms
+1789789966401 [agent] event=request_finished turn_id=1 step_id=22 elapsed_ms=4263 input_tokens=32162 output_tokens=43 cached_input_tokens=30592 usage_available=true
+1789789966401 [agent] event=tool_presentation_group turn_id=1 step_id=22 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789966401 [agent] step completion step=22 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789966401 [agent] event=assistant_completion turn_id=1 step_id=22 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+1789789971411 [agent] step start step=23 limit=0 messages=58
+1789789971411 [agent] event=step_begin turn_id=1 step_id=23 step_index=23 step_limit=0 provider_messages=58
+1789789971411 [agent] event=before_provider_preflight turn_id=1 step_id=23 model=gpt-6-astra messages=58
+1789789971411 [agent] event=vision_policy turn_id=1 step_id=23 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when applying custom backoff by type > should retry a job after a delay for custom type 9144ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a job if the custom backoff returns -1 5ms
+1789789971413 [agent] event=request_composition turn_id=1 step_id=23 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=86466 tool_argument_bytes=8022 replay_bytes=15364 schema_json_bytes=16106 wire_bytes=149958 messages=50
+1789789971413 [agent] event=provider_admitted turn_id=1 step_id=23 model=gpt-6-astra
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a custom backoff is given based on the error thrown 3044ms
+1789789975895 [agent] event=request_finished turn_id=1 step_id=23 elapsed_ms=4483 input_tokens=32334 output_tokens=50 cached_input_tokens=0 usage_available=true
+1789789975895 [agent] event=tool_presentation_group turn_id=1 step_id=23 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789975895 [agent] step completion step=23 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789975895 [agent] event=assistant_completion turn_id=1 step_id=23 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a custom backoff is given based on the job data 2541ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should be able to handle a custom backoff if it returns a promise 1215ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a job that has been removed 19ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a job that has been retried already 7ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should only retry a job once after it has reached the max attempts 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a job that is active 508ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > should allow to complete jobs manually 5ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > when move job to waiting-children > when job is not in active state > throws an error 11ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > should allow to fail jobs manually 5ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > when there is a job in waiting > should emit active event when calling getNextJob 4ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > when a stalled job has exhausted its max stalled attempts > should move the job to failed automatically on the next getNextJob call and return undefined when no other jobs are waiting 5ms
+ ✓ tests/worker.test.ts > workers > Manually process jobs > when a stalled job has exhausted its max stalled attempts > should fail the deferred-failure job and return the next waiting job 5ms
+ ✓ tests/worker.test.ts > workers > non-blocking > should block by default 107ms
+ ✓ tests/worker.test.ts > workers > non-blocking > shouldn't block when disabled 106ms
+ ✓ tests/worker.test.ts > workers > non-blocking > shouldn't block when disabled and paused 5ms
+ ✓ tests/worker.test.ts > workers > should retrieve concurrency from getter 3ms
+ ✓ tests/job.test.ts > Job > .create > saves the job in redis 9ms
+ ✓ tests/job.test.ts > Job > .create > should use the custom jobId if one is provided 3ms
+ ✓ tests/job.test.ts > Job > .create > when custom jobId is provided as empty string > should ignore the empty custom id and generates a numeric id 2ms
+ ✓ tests/job.test.ts > Job > .create > should set default size limit and succeed in creating job 2ms
+ ✓ tests/job.test.ts > Job > .create > should set default size limit and fail due to size limit exception 3ms
+ ✓ tests/job.test.ts > Job > .create > should set default size limit with non-ascii data and fail due to size limit exception 2ms
+ ✓ tests/job.test.ts > Job > .create > should set custom job id and default size limit and fail due to size limit exception 2ms
+ ✓ tests/job.test.ts > Job > .create > when parent key is missing > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when removeDependencyOnFailure and failParentOnFailure options are provided > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when removeDependencyOnFailure and ignoreDependencyOnFailure options are provided > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when failParentOnFailure and ignoreDependencyOnFailure options are provided > throws an error 3ms
+ ✓ tests/job.test.ts > Job > .create > when priority option is provided as float > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when priority option is provided with a value greater than 2097151 > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when deduplication id option is provided as empty string > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when removed debounce option is provided > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when deduplication and parent options are provided > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when jitter backoff option is provided with a value lesser than 0 > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .create > when jitter backoff option is provided with a value greater than 1 > throws an error 2ms
+ ✓ tests/job.test.ts > Job > JSON.stringify > retains property types 2ms
+ ✓ tests/job.test.ts > Job > JSON.stringify > omits the queue property to avoid a circular json error on node 8 2ms
+ ✓ tests/job.test.ts > Job > JSON.stringify > should correctly handle zero passed as data 5ms
+ ✓ tests/job.test.ts > Job > .update > should allow updating job data 2ms
+ ✓ tests/job.test.ts > Job > .update > when job is removed > throws error 2ms
+ ✓ tests/job.test.ts > Job > .remove > removes the job from redis 2ms
+ ✓ tests/job.test.ts > Job > .remove > removes 4000 jobs in time range of 4000ms 144ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set and get progress as number 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set and get progress as object 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set and get progress as string 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set and get progress as boolean 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set progress as number using the Queue instance 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > can set progress as object using the Queue instance 2ms
+ ✓ tests/job.test.ts > Job > .progressProgress > when job is removed > throws error 3ms
+ ✓ tests/job.test.ts > Job > .log > can log two rows with text in asc order 3ms
+ ✓ tests/job.test.ts > Job > .log > can log two rows with text in desc order 3ms
+ ✓ tests/job.test.ts > Job > .log > should preserve up to keepLogs latest entries 3ms
+ ✓ tests/job.test.ts > Job > .log > should allow to add job logs from Queue instance 2ms
+ ✓ tests/job.test.ts > Job > .log > can log using a queue-like object without shared scripts 2ms
+ ✓ tests/job.test.ts > Job > .log > when job is removed > throws error 2ms
+ ✓ tests/job.test.ts > Job > .clearLogs > can clear the log 2ms
+ ✓ tests/job.test.ts > Job > .clearLogs > can preserve up to keepLogs latest entries 3ms
+ ✓ tests/job.test.ts > Job > .moveToCompleted > marks the job as completed and returns new job 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > marks the job as failed 6ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when using a custom error > marks the job as failed 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > moves the job to wait for retry if attempts are given 4ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when job is not in active state > throws an error 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when attempts made equal to attempts given > marks the job as failed 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when attempts are given and backoff is non zero > moves the job to delayed for retry 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when attempts are given and backoff is non zero > when fetchNext is true and > when another job is waiting > returns the next job data after moving the failed job to delayed 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when attempts are given and backoff is non zero > when fetchNext is true and > when no job is waiting > does not return any job data after moving the failed job to delayed 2ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when attempts are given and backoff is non zero > when fetchNext is false and another job is waiting > does not return next job data 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > applies stacktrace limit on failure 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > when stackTraceLimit is provided as 0 > keep stacktrace empty 3ms
+ ✓ tests/job.test.ts > Job > .moveToFailed > saves error stacktrace 3ms
+ ✓ tests/job.test.ts > Job > .moveToWait > moves job to wait from active 3ms
+1789789980896 [agent] step start step=24 limit=0 messages=60
+1789789980896 [agent] event=step_begin turn_id=1 step_id=24 step_index=24 step_limit=0 provider_messages=60
+1789789980896 [agent] event=before_provider_preflight turn_id=1 step_id=24 model=gpt-6-astra messages=60
+1789789980896 [agent] event=vision_policy turn_id=1 step_id=24 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789980898 [agent] event=request_composition turn_id=1 step_id=24 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=95189 tool_argument_bytes=8099 replay_bytes=16919 schema_json_bytes=16106 wire_bytes=160622 messages=52
+1789789980898 [agent] event=provider_admitted turn_id=1 step_id=24 model=gpt-6-astra
+ ✓ tests/job.test.ts > Job > .changeDelay > can change delay of a delayed job 2026ms
+ ✓ tests/job.test.ts > Job > .changeDelay > should not change delay if a job is not delayed 2ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job is in wait state > when lifo option is provided as true > moves job to the head of wait list 50ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job is in wait state > when lifo option is provided as false > moves job to the tail of wait list and has more priority 51ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job is in prioritized state > can change priority of a job 48ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job is in prioritized state > when lifo option is provided as true > moves job to the head of prioritized jobs with same priority 47ms
+ ✓ tests/job.test.ts > Job > .changePriority > when queue is paused > respects new priority 48ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job is not in wait or prioritized state > does not add a record in priority zset 3ms
+ ✓ tests/job.test.ts > Job > .changePriority > when job does not exist > throws an error 2ms
+ ✓ tests/job.test.ts > Job > .promote > can promote a delayed job to be executed immediately 3ms
+ ✓ tests/job.test.ts > Job > .promote > should process a promoted job according to its priority 814ms
+ ✓ tests/job.test.ts > Job > .promote > should not promote a job that is not delayed 3ms
+ ✓ tests/job.test.ts > Job > .promote > when queue is paused > should promote delayed job to the right queue 3ms
+ ✓ tests/job.test.ts > Job > .promote > when queue is empty > should promote delayed job to the right queue 3ms
+ ✓ tests/job.test.ts > Job > .getState > should get job actual state 5ms
+ ✓ tests/job.test.ts > Job > .finished > should resolve when the job has been completed 4ms
+ ✓ tests/job.test.ts > Job > .finished > when job was added with removeOnComplete > rejects with missing key for job message 109ms
+ ✓ tests/job.test.ts > Job > .finished > should resolve when the job has been completed and return object 4ms
+ ✓ tests/job.test.ts > Job > .finished > should resolve when the job has been delayed and completed and return object 606ms
+ ✓ tests/job.test.ts > Job > .finished > should resolve when the job has been completed and return string 6ms
+ ✓ tests/job.test.ts > Job > .finished > should reject when the job has been failed 507ms
+ ✓ tests/job.test.ts > Job > .finished > should resolve directly if already processed 506ms
+1789789984370 [agent] event=request_finished turn_id=1 step_id=24 elapsed_ms=3473 input_tokens=34557 output_tokens=34 cached_input_tokens=2432 usage_available=true
+1789789984370 [agent] event=tool_presentation_group turn_id=1 step_id=24 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789984370 [agent] step completion step=24 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789984370 [agent] event=assistant_completion turn_id=1 step_id=24 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/job.test.ts > Job > .finished > should reject directly if already processed 506ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > process stalled jobs when starting a queue 1038ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > don't process stalled jobs when starting a queue with skipStalledCheck 1006ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > moves jobs to failed 1036ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when retrying jobs > keeps stalledCounter 1032ms
+1789789989381 [agent] step start step=25 limit=0 messages=62
+1789789989381 [agent] event=step_begin turn_id=1 step_id=25 step_index=25 step_limit=0 provider_messages=62
+1789789989382 [agent] event=before_provider_preflight turn_id=1 step_id=25 model=gpt-6-astra messages=62
+1789789989382 [agent] event=vision_policy turn_id=1 step_id=25 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789989383 [agent] event=request_composition turn_id=1 step_id=25 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=98702 tool_argument_bytes=8176 replay_bytes=16919 schema_json_bytes=16106 wire_bytes=164476 messages=54
+1789789989383 [agent] event=provider_admitted turn_id=1 step_id=25 model=gpt-6-astra
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > moves jobs to failed with maxStalledCount > 1 3073ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when failParentOnFailure is provided as true > should move parent to failed when child is moved to failed 1032ms
+1789789993663 [agent] event=request_finished turn_id=1 step_id=25 elapsed_ms=4281 input_tokens=35445 output_tokens=44 cached_input_tokens=2432 usage_available=true
+1789789993663 [agent] event=tool_presentation_group turn_id=1 step_id=25 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789789993663 [agent] step completion step=25 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789789993663 [agent] event=assistant_completion turn_id=1 step_id=25 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when continueParentOnFailure is provided as true > should start processing parent when child is moved to failed 1030ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when ignoreDependencyOnFailure is provided as true > should move parent to waiting when child is moved to failed and save child failedReason 1029ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeDependencyOnFailure is provided as true > should move parent to waiting when child is moved to failed 1030ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as a number > keeps the specified number of jobs in failed 1129ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as boolean > when removeOnFail is provided as true > removes all job keys 1029ms
+1789789998673 [agent] step start step=26 limit=0 messages=64
+1789789998673 [agent] event=step_begin turn_id=1 step_id=26 step_index=26 step_limit=0 provider_messages=64
+1789789998673 [agent] event=before_provider_preflight turn_id=1 step_id=26 model=gpt-6-astra messages=64
+1789789998673 [agent] event=vision_policy turn_id=1 step_id=26 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789789998674 [agent] event=request_composition turn_id=1 step_id=26 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=100583 tool_argument_bytes=8253 replay_bytes=18387 schema_json_bytes=16106 wire_bytes=168145 messages=56
+1789789998675 [agent] event=provider_admitted turn_id=1 step_id=26 model=gpt-6-astra
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as boolean > keeps the jobs with removeOnFail as false in failed 1026ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > when stalled jobs stall more than allowable stalled limit > when removeOnFail is provided as a object > keeps the specified number of jobs in failed respecting the age 1031ms
+ ✓ tests/stalled_jobs.test.ts > stalled jobs > jobs not stalled while lock is extended 627ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should cap progress events 101ms
+1789790002183 [agent] event=request_finished turn_id=1 step_id=26 elapsed_ms=3509 input_tokens=35906 output_tokens=48 cached_input_tokens=24064 usage_available=true
+1789790002183 [agent] event=tool_presentation_group turn_id=1 step_id=26 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789790002183 [agent] step completion step=26 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789790002183 [agent] event=assistant_completion turn_id=1 step_id=26 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > do not call moveToActive more than concurrency factor + 1 1274ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > do not call moveToActive more than number of jobs + 2 274ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when 0.002 is used as blocktimeout > should not block forever 23ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should not leave orphaned job data when limit is less than removable jobs 1817ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when prioritized jobs are added > when priority counter is having a high number > should process jobs by priority 444ms
+1789790007186 [agent] step start step=27 limit=0 messages=66
+1789790007186 [agent] event=step_begin turn_id=1 step_id=27 step_index=27 step_limit=0 provider_messages=66
+1789790007186 [agent] event=before_provider_preflight turn_id=1 step_id=27 model=gpt-6-astra messages=66
+1789790007186 [agent] event=vision_policy turn_id=1 step_id=27 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789790007188 [agent] event=request_composition turn_id=1 step_id=27 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=102241 tool_argument_bytes=8330 replay_bytes=19875 schema_json_bytes=16106 wire_bytes=171613 messages=58
+1789790007188 [agent] event=provider_admitted turn_id=1 step_id=27 model=gpt-6-astra
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > keeps locks for all the jobs that are processed concurrently 2027ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > emits error if lock is lost 1262ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > emits error if lock is "stolen" 2011ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > deletes token after moving jobs to delayed 469ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > should clear job from stalled set when job completed 106ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when creating children at runtime > should wait children as one step of the parent job 412ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > when creating children at runtime > when skip attempt option is provided as true > should wait children as one step of the parent job whithout incrementing attemptMade 415ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > Manually process jobs > when move job to waiting-children > allows to move parent job to waiting-children 12ms
+ ✓ tests/worker.redis.test.ts > workers (redis-only) > Manually process jobs > should get paginated unprocessed dependencies keys 14ms
+
+ ✓ tests/concurrency.test.ts > Concurrency > should run max concurrency for jobs added 1556ms
+1789790014179 [agent] event=request_finished turn_id=1 step_id=27 elapsed_ms=6992 input_tokens=36354 output_tokens=57 cached_input_tokens=24960 usage_available=true
+1789790014179 [agent] event=tool_presentation_group turn_id=1 step_id=27 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789790014179 [agent] step completion step=27 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789790014179 [agent] event=assistant_completion turn_id=1 step_id=27 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+
+ ✓ tests/concurrency.test.ts > Concurrency > should run max concurrency for jobs added 1635ms
+1789790019182 [agent] step start step=28 limit=0 messages=68
+1789790019182 [agent] event=step_begin turn_id=1 step_id=28 step_index=28 step_limit=0 provider_messages=68
+1789790019182 [agent] event=before_provider_preflight turn_id=1 step_id=28 model=gpt-6-astra messages=68
+1789790019182 [agent] event=vision_policy turn_id=1 step_id=28 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789790019183 [agent] event=request_composition turn_id=1 step_id=28 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=104022 tool_argument_bytes=8407 replay_bytes=21511 schema_json_bytes=16106 wire_bytes=175360 messages=60
+1789790019183 [agent] event=provider_admitted turn_id=1 step_id=28 model=gpt-6-astra
+ ✓ tests/concurrency.test.ts > Concurrency > emits drained global event only once when worker is idle 4011ms
+ ✓ tests/concurrency.test.ts > Concurrency > when global dynamic limit is used > should run max concurrency for jobs added respecting global dynamic limit 1684ms
+ ✓ tests/concurrency.test.ts > Concurrency > when global dynamic limit is used > when max limiter is greater than 1 > should run max concurrency for jobs added first processed 2540ms
+1789790024176 [agent] event=request_finished turn_id=1 step_id=28 elapsed_ms=4993 input_tokens=36841 output_tokens=47 cached_input_tokens=12544 usage_available=true
+1789790024176 [agent] event=tool_presentation_group turn_id=1 step_id=28 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789790024176 [agent] step completion step=28 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789790024176 [agent] event=assistant_completion turn_id=1 step_id=28 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+
+ ✓ tests/concurrency.test.ts > Concurrency > when moving job to waiting-children > should run max concurrency for jobs added first processed 826ms
+ ✓ tests/concurrency.test.ts > Concurrency > should automatically process stalled jobs respecting group order 1053ms
+ ✓ tests/concurrency.test.ts > Concurrency > when jobs use backoff strategy > processes jobs without getting stuck 287ms
+ ✓ tests/concurrency.test.ts > Concurrency > when jobs use backoff strategy > when backoff is 0 > processes jobs without getting stuck 319ms
+ ✓ tests/concurrency.test.ts > Concurrency > when lock is expired and removing a job in active state > does not get stuck in max state 57ms
+ ✓ tests/lock_manager.test.ts > LockManager > constructor > should create a lock manager with worker context 1ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should start and stop the lock manager 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should not start if already closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should not start timer if lockRenewTime is 0 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > start and stop > should handle multiple close calls gracefully 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should track and untrack jobs 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should not track jobs after being closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should clear all tracked jobs when closed 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > job tracking > should ignore empty job ids 0ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should extend locks for tracked jobs 601ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should emit error when lock extension fails 301ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should emit error when extendJobLocks throws 301ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should not extend locks if no jobs need renewal 302ms
+ ✓ tests/lock_manager.test.ts > LockManager > lock renewal > should update timestamps for jobs without initial timestamp 252ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should track jobs during processing 164ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should untrack jobs on failure 60ms
+1789790029178 [agent] step start step=29 limit=0 messages=70
+1789790029178 [agent] event=step_begin turn_id=1 step_id=29 step_index=29 step_limit=0 provider_messages=70
+1789790029179 [agent] event=before_provider_preflight turn_id=1 step_id=29 model=gpt-6-astra messages=70
+1789790029179 [agent] event=vision_policy turn_id=1 step_id=29 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789790029180 [agent] event=request_composition turn_id=1 step_id=29 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=107305 tool_argument_bytes=8484 replay_bytes=22979 schema_json_bytes=16106 wire_bytes=180449 messages=62
+1789790029180 [agent] event=provider_admitted turn_id=1 step_id=29 model=gpt-6-astra
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should continue renewing locks for long-running jobs 3006ms
+ ✓ tests/lock_manager.test.ts > LockManager > integration with Worker > should handle lock manager closure during worker shutdown 5ms
+ ✓ tests/lock_manager.test.ts > LockManager > telemetry > should call trace when extending locks 301ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .remove > removes processed hash 16ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not fail if queue meta key is missing 4ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not complete a parent job before its children 8ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToFailed > when job is removed > should not save stacktrace 112ms
+ ✓ tests/worker_ownership.redis.test.ts > rejects stale complete and renewal after recovery without mutations 18ms
+ ✓ tests/worker_ownership.redis.test.ts > rejects stale fail and renewal after recovery without mutations 12ms
+ ✓ tests/worker_ownership.redis.test.ts > rejects stale retry and renewal after recovery without mutations 11ms
+ ✓ tests/worker_ownership.redis.test.ts > rejects stale delay and renewal after recovery without mutations 10ms
+
+ Test Files  8 passed (8)
+      Tests  272 passed (272)
+   Start at  23:51:45
+   Duration  126.52s (transform 258ms, setup 159ms, import 770ms, tests 125.07s, environment 0ms)
+
+1789790032588 [agent] event=request_finished turn_id=1 step_id=29 elapsed_ms=3409 input_tokens=37633 output_tokens=34 cached_input_tokens=28928 usage_available=true
+1789790032588 [agent] event=tool_presentation_group turn_id=1 step_id=29 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789790032588 [agent] step completion step=29 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789790032588 [agent] event=assistant_completion turn_id=1 step_id=29 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/worker.test.ts tests/job.test.ts tests/worker.red...
+1789790032589 [agent] step start step=30 limit=0 messages=72
+1789790032589 [agent] event=step_begin turn_id=1 step_id=30 step_index=30 step_limit=0 provider_messages=72
+1789790032589 [agent] event=before_provider_preflight turn_id=1 step_id=30 model=gpt-6-astra messages=72
+1789790032589 [agent] event=vision_policy turn_id=1 step_id=30 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789790032591 [agent] event=request_composition turn_id=1 step_id=30 instruction_bytes=9875 conversation_bytes=2959 tool_result_bytes=109196 tool_argument_bytes=8561 replay_bytes=22979 schema_json_bytes=16106 wire_bytes=182673 messages=64
+1789790032591 [agent] event=provider_admitted turn_id=1 step_id=30 model=gpt-6-astra
+1789790037651 [agent] event=request_finished turn_id=1 step_id=30 elapsed_ms=5061 input_tokens=38146 output_tokens=77 cached_input_tokens=0 usage_available=true
+1789790037651 [agent] event=tool_presentation_group turn_id=1 step_id=30 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789790037651 [agent] step completion step=30 content_bytes=364 tool_calls=0 finish_reason=stop
+1789790037651 [agent] event=assistant_completion turn_id=1 step_id=30 content_bytes=364 tool_call_count=0 finish_reason=stop
+1789790037657 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

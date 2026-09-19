@@ -1,0 +1,1325 @@
+1789791590957 [agent] event=prompt_start turn_id=1 prompt_bytes=2114 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.handwork/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.config/opencode/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.claude/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; 1 additional diagnostic omitted; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789791591269 [agent] step start step=1 limit=0 messages=9
+1789791591269 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=9
+1789791591269 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=9
+1789791591269 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791591269 [agent] event=request_composition turn_id=1 step_id=1 instruction_bytes=9875 conversation_bytes=2114 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=16106 wire_bytes=28584 messages=1
+1789791591269 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+1789791596734 [agent] event=request_finished turn_id=1 step_id=1 elapsed_ms=5465 input_tokens=5057 output_tokens=107 cached_input_tokens=2432 usage_available=true
+1789791596734 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789791596734 [agent] step completion step=1 content_bytes=128 tool_calls=1 finish_reason=tool-calls
+1789791596734 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=128 tool_call_count=1 finish_reason=tool-calls
+Running git status --short; node --version; cat package.json; rg --files -g AGENTS.md -g '*lock*' -g '*moveTo*' -g '*worker*'...
+/dev/fd/11:25: command not found: compdef
+v24.21.0
+{
+  "name": "bullmq",
+  "version": "6.3.8",
+  "description": "Queue for messages and jobs based on Redis",
+  "homepage": "https://bullmq.io/",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "source": "./src/index.ts",
+  "author": "Taskforce.sh Inc.",
+  "license": "MIT",
+  "keywords": [
+    "bull",
+    "bullmq",
+    "queues",
+    "jobs",
+    "redis"
+  ],
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "scripts": {
+    "build": "npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql",
+    "circular:references": "madge --circular --extensions ts ./src",
+    "clean:dist": "rimraf dist",
+    "clean:scripts": "rimraf rawScripts src/scripts",
+    "clean:temp:files": "rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json",
+    "copy:includes:lua": "cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes",
+    "copy:lua": "cpx \"./src/commands/*.lua\" ./dist/cjs/commands && cpx \"./src/commands/*.lua\" ./dist/esm/commands",
+    "copy:sql": "cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands",
+    "copy:lua:python": "rm -f ./python/bullmq/commands/*.lua && cpx \"./rawScripts/*.lua\" ./python/bullmq/commands",
+    "copy:sql:python": "rm -f ./python/bullmq/postgres/migrations/*.sql ./python/bullmq/postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./python/bullmq/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./python/bullmq/postgres/commands",
+    "copy:lua:elixir": "rm -f ./elixir/priv/scripts/*.lua && cpx \"./rawScripts/*.lua\" ./elixir/priv/scripts",
+    "copy:sql:elixir": "rm -f ./elixir/priv/postgres/migrations/*.sql ./elixir/priv/postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./elixir/priv/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./elixir/priv/postgres/commands",
+    "copy:lua:php": "rm -f ./php/src/commands/*.lua && cpx \"./rawScripts/*.lua\" ./php/src/commands",
+    "copy:lua:rust": "rm -f ./rust/src/commands/*.lua && cpx \"./rawScripts/*.lua\" ./rust/src/commands",
+    "copy:lua:dotnet": "rm -f ./dotnet/src/BullMQ/Commands/*.lua && cpx \"./rawScripts/*.lua\" ./dotnet/src/BullMQ/Commands",
+    "copy:sql:dotnet": "rm -f ./dotnet/src/BullMQ/Postgres/migrations/*.sql ./dotnet/src/BullMQ/Postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./dotnet/src/BullMQ/Postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dotnet/src/BullMQ/Postgres/commands",
+    "copy:main:type": "cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes",
+    "coverage": "vitest run --no-file-parallelism --coverage --config vitest.coverage.config.ts",
+    "docs": "typedoc --excludeExternals --excludeProtected --excludePrivate --readme none src/index.ts",
+    "docs:api": "yarn docs:json && typedoc --includeVersion --excludeExternals --excludeProtected --excludePrivate --readme ./README.md --entryPointStrategy merge --out ./docs/gitbook/public/api $(find ./apiVersions -maxdepth 1 -name 'v*.json' | sort -r)",
+    "docs:json": "mkdir -p ./apiVersions && yarn pretest && typedoc --excludeExternals --excludeProtected --excludePrivate --readme none src/index.ts --json ./apiVersions/v6.json --name v6",
+    "docs:dev": "yarn docs:api && vitepress dev docs",
+    "docs:build": "yarn docs:api && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "dc:up": "docker-compose -f docker-compose.yml up -d",
+    "dc:down": "docker-compose -f docker-compose.yml down",
+    "dry-run": "npm publish --dry-run",
+    "eslint:fix": "./node_modules/.bin/eslint . --fix",
+    "generate:raw:scripts": "ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts",
+    "lint": "./node_modules/.bin/eslint .",
+    "lint:staged": "lint-staged",
+    "prepublishOnly": "npm run build",
+    "prepare": "husky",
+    "pretest": "npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references",
+    "prettier": "prettier **/*.ts --write",
+    "pretty:quick": "pretty-quick --staged",
+    "semantic-release": "semantic-release",
+    "semantic-release:debug": "semantic-release --no-ci --dry-run --debug",
+    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
+    "test": "vitest run --no-file-parallelism",
+    "test:smoke": "vitest run --no-file-parallelism --bail=1 tests/async_fifo_queue.test.ts tests/script_loader.test.ts tests/scripts.test.ts tests/child-pool.test.ts tests/bulk.test.ts tests/queue.test.ts",
+    "test:vitest": "vitest run --no-file-parallelism",
+    "test:vitest:watch": "vitest",
+    "test:vitest:ui": "vitest --ui",
+    "test:ioredis": "vitest run --no-file-parallelism --config vitest.ioredis.config.ts",
+    "test:node-redis": "vitest run --no-file-parallelism --config vitest.node-redis.config.ts",
+    "test:postgres": "vitest run --config vitest.postgres.config.ts",
+    "test:postgres:smoke": "vitest run --no-file-parallelism --config vitest.postgres.smoke.config.ts",
+    "test:valkey-glide": "vitest run --no-file-parallelism --config vitest.valkey-glide.config.ts",
+    "test:adapter-conformance": "vitest run --no-file-parallelism --config vitest.adapter-conformance.config.ts",
+    "test:bun": "bun node_modules/vitest/dist/cli.js run --no-file-parallelism --config vitest.bun.config.ts",
+    "test:bun:smoke": "bun test --timeout 20000 tests/bun-redis.test.ts tests/bun-adapter-suite.test.ts",
+    "test:watch": "vitest --watch",
+    "transform:commands": "node ./scripts/commandTransform.js ./rawScripts ./src/scripts",
+    "tsc": "tsc",
+    "tsc:all": "tsc && tsc -p tsconfig-cjs.json"
+  },
+  "dependencies": {
+    "cron-parser": "5.10.1",
+    "msgpackr": "2.1.0",
+    "node-abort-controller": "3.1.1",
+    "semver": "7.8.5",
+    "tslib": "2.8.1"
+  },
+  "peerDependencies": {
+    "bullmq-otel": ">=2.0.0",
+    "ioredis": ">=5.0.0",
+    "pg": ">=8.0.0",
+    "redis": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "bullmq-otel": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2",
+    "@eslint/eslintrc": "3.3.7",
+    "@eslint/js": "10.0.1",
+    "@semantic-release/changelog": "7.0.0",
+    "@semantic-release/commit-analyzer": "13.0.1",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "11.0.1",
+    "@semantic-release/github": "12.0.9",
+    "@semantic-release/npm": "13.1.5",
+    "@semantic-release/release-notes-generator": "14.1.1",
+    "@types/lodash.defaults": "4.2.9",
+    "@types/lodash.isarguments": "3.1.9",
+    "@types/msgpack": "0.0.34",
+    "@types/node": "24.13.5",
+    "@types/pg": "8.23.1",
+    "@types/semver": "7.8.0",
+    "@types/sinon": "22.0.0",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "coveralls-next": "6.0.2",
+    "cpx2": "9.0.3",
+    "eslint": "10.10.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.6",
+    "eslint-plugin-promise": "7.3.0",
+    "eslint-plugin-tsdoc": "0.5.3",
+    "fast-glob": "3.3.3",
+    "globals": "17.12.0",
+    "husky": "9.1.7",
+    "ioredis": "5.11.1",
+    "lint-staged": "17.5.1",
+    "madge": "8.0.0",
+    "minimatch": "10.2.6",
+    "moment": "2.31.0",
+    "pg": "8.23.0",
+    "prettier": "3.9.8",
+    "pretty-quick": "4.2.2",
+    "progress": "2.0.3",
+    "redis": "6.2.1",
+    "rimraf": "6.1.3",
+    "rrule": "2.8.1",
+    "semantic-release": "25.0.9",
+    "sinon": "22.1.0",
+    "test-console": "2.0.0",
+    "ts-node": "10.9.2",
+    "typedoc": "0.28.20",
+    "typescript": "5.9.3",
+    "vitepress": "2.0.0-alpha.20",
+    "vitest": "4.1.11"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "lint-staged": {
+    "*.{js,ts}": "npm run eslint:fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taskforcesh/bullmq.git"
+  },
+  "release": {
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "releaseRules": [
+            {
+              "header": "**/*\\[python\\]*",
+              "release": false
+            },
+            {
+              "header": "**/*\\[elixir\\]*",
+              "release": false
+            },
+            {
+              "header": "**/*\\[php\\]*",
+              "release": false
+            },
+            {
+              "header": "**/*\\[rust\\]*",
+              "release": false
+            },
+            {
+              "header": "**/*\\[dotnet\\]*",
+              "release": false
+            },
+            {
+              "header": "**/*\\[dotnet\\]*",
+              "release": false
+            }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/release-notes-generator",
+        {
+          "preset": "angular",
+          "presetConfig": {
+            "ignoreCommits": "(\\[python\\]|\\[elixir\\]|\\[php\\]|\\[rust\\]|\\[dotnet\\])"
+          }
+        }
+      ],
+      [
+        "@semantic-release/changelog",
+        {
+          "changelogFile": "docs/gitbook/changelog.md"
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "node scripts/updateVersion.js ${nextRelease.version} && yarn build"
+        }
+      ],
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": true,
+          "provenance": true
+        }
+      ],
+      "@semantic-release/github"
+    ]
+  },
+  "packageManager": "yarn@1.22.22",
+  "resolutions": {
+    "brace-expansion": "5.0.9",
+    "js-yaml": "5.4.2",
+    "picomatch": "4.0.7",
+    "tar": "7.5.22",
+    "yaml": "2.9.1"
+  }
+}
+tests/job_scheduler_stress.test.ts
+tests/integration_dedicated_lock_thread.ts
+tests/worker.ioredis.test.ts
+tests/job_scheduler.redis.test.ts
+src/interfaces/minimal-job.ts
+src/interfaces/base-job-options.ts
+src/interfaces/job-json.ts
+src/interfaces/worker-options.ts
+src/interfaces/job-scheduler-json.ts
+src/interfaces/sandboxed-job.ts
+src/interfaces/flow-job.ts
+src/interfaces/sandboxed-job-processor.ts
+src/interfaces/lock-manager-worker-context.ts
+src/commands/moveToFinished-14.lua
+src/commands/moveToActive-11.lua
+src/commands/moveToWaitingChildren-7.lua
+src/commands/moveToDelayed-11.lua
+tests/worker.test.ts
+tests/job.test.ts
+tests/job_cancellation_advanced.test.ts
+tests/postgres/worker.test.ts
+tests/job.redis.test.ts
+tests/lock_manager.test.ts
+tests/stalled_jobs.test.ts
+tests/job_scheduler.test.ts
+tests/worker.redis.test.ts
+tests/job_cancellation.test.ts
+src/postgres/commands/get_job_logs_asc.sql
+src/postgres/commands/extend_locks.sql
+src/postgres/commands/update_job_scheduler.sql
+src/postgres/commands/get_deduplication_job_id.sql
+src/postgres/commands/is_job_scheduler.sql
+src/postgres/commands/remove_job_scheduler.sql
+src/postgres/commands/get_job_logs_desc.sql
+src/postgres/commands/add_job_scheduler.sql
+src/postgres/commands/get_job_scheduler.sql
+src/postgres/commands/extend_lock.sql
+src/postgres/commands/get_job_logs_count.sql
+src/postgres/commands/retry_jobs.sql
+src/postgres/commands/is_job_in_state.sql
+src/postgres/commands/listen_jobs.sql
+src/postgres/commands/reprocess_job.sql
+src/postgres/commands/has_waiting_job.sql
+src/postgres/commands/get_job_schedulers_range.sql
+src/postgres/commands/add_jobs_bulk.sql
+src/postgres/commands/get_job_schedulers_count.sql
+src/postgres/commands/move_stalled_jobs_to_wait.sql
+src/postgres/commands/retry_job.sql
+src/postgres/commands/promote_jobs.sql
+src/postgres/commands/is_job_prioritized.sql
+src/postgres/commands/get_job_data.sql
+src/postgres/commands/add_job.sql
+src/postgres/commands/is_job_in_wait.sql
+src/classes/worker.ts
+src/classes/main-worker.ts
+src/classes/lock-manager.ts
+src/classes/job-scheduler.ts
+src/classes/job.ts
+src/types/keep-jobs.ts
+src/types/job-json-sandbox.ts
+src/types/job-scheduler-template-options.ts
+src/types/job-progress.ts
+src/types/job-options.ts
+src/types/job-type.ts
+1789791602395 [agent] step start step=2 limit=0 messages=11
+1789791602395 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=11
+1789791602395 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=11
+1789791602395 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791602395 [agent] event=request_composition turn_id=1 step_id=2 instruction_bytes=9875 conversation_bytes=2242 tool_result_bytes=14065 tool_argument_bytes=190 replay_bytes=65 schema_json_bytes=16106 wire_bytes=45266 messages=3
+1789791602395 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+1789791607903 [agent] event=request_finished turn_id=1 step_id=2 elapsed_ms=5508 input_tokens=9468 output_tokens=109 cached_input_tokens=2432 usage_available=true
+1789791607903 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791607903 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791607903 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running find .. -name AGENTS.md -print; cat src/commands/includes/removeLock.lua src/commands/extendLock-2.lua src/commands/e...
+local function removeLock(jobKey, stalledKey, token, jobId)
+  if token ~= "0" then
+    local lockKey = jobKey .. ':lock'
+    local lockToken = rcall("GET", lockKey)
+    if lockToken then
+      rcall("DEL", lockKey)
+      rcall("SREM", stalledKey, jobId)
+    else
+      if lockToken then
+        -- Lock exists but token does not match
+        return -6
+      else
+        -- Lock is missing completely
+        return -2
+      end
+    end
+  end
+  return 0
+end
+--[[
+  Extend lock and removes the job from the stalled set.
+
+  Input:
+    KEYS[1] 'lock',
+    KEYS[2] 'stalled'
+
+    ARGV[1]  token
+    ARGV[2]  lock duration in milliseconds
+    ARGV[3]  jobid
+
+  Output:
+    "1" if lock extended successfully.
+]]
+local rcall = redis.call
+if rcall("EXISTS", KEYS[1]) == 1 then
+  --   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2], "XX") then
+  if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2]) then
+    rcall("SREM", KEYS[2], ARGV[3])
+    return 1
+  end
+end
+return 0
+--[[
+  Extend locks for multiple jobs and remove them from the stalled set if successful.
+  Return the list of job IDs for which the operation failed.
+
+  KEYS[1] = stalled key
+  
+  ARGV[1] = baseKey
+  ARGV[2] = tokens
+  ARGV[3] = jobIds
+  ARGV[4] = lockDuration (ms)
+
+  Output:
+    An array of failed job IDs. If empty, all succeeded.
+]]
+local rcall = redis.call
+
+local stalledKey = KEYS[1]
+local baseKey = ARGV[1]
+local tokens = cmsgpack.unpack(ARGV[2])
+local jobIds = cmsgpack.unpack(ARGV[3])
+local lockDuration = ARGV[4]
+
+local jobCount = #jobIds
+local failedJobs = {}
+
+for i = 1, jobCount, 1 do
+    local lockKey = baseKey .. jobIds[i] .. ':lock'
+    local jobId = jobIds[i]
+    local token = tokens[i]
+
+    local currentToken = rcall("GET", lockKey)
+    if currentToken then
+        if currentToken then
+            local setResult = rcall("SET", lockKey, token, "PX", lockDuration)
+            if setResult then
+                rcall("SREM", stalledKey, jobId)
+            else
+                table.insert(failedJobs, jobId)
+            end
+        else
+            table.insert(failedJobs, jobId)
+        end
+    else
+        table.insert(failedJobs, jobId)
+    end
+end
+
+return failedJobs
+--[[
+  Retries a failed job by moving it back to the wait queue.
+
+    Input:
+      KEYS[1]  'active',
+      KEYS[2]  'wait'
+      KEYS[3]  'paused'
+      KEYS[4]  job key
+      KEYS[5]  'meta'
+      KEYS[6]  events stream
+      KEYS[7]  delayed key
+      KEYS[8]  prioritized key
+      KEYS[9]  'pc' priority counter
+      KEYS[10] 'marker'
+      KEYS[11] 'stalled'
+
+      ARGV[1]  key prefix
+      ARGV[2]  timestamp
+      ARGV[3]  pushCmd
+      ARGV[4]  jobId
+      ARGV[5]  token
+      ARGV[6]  optional job fields to update
+
+    Events:
+      'waiting'
+
+    Output:
+     0  - OK
+     -1 - Missing key
+     -2 - Missing lock
+     -3 - Job not in active set
+]]
+local rcall = redis.call
+
+-- Includes
+--- @include "includes/addJobInTargetList"
+--- @include "includes/addJobWithPriority"
+--- @include "includes/getOrSetMaxEvents"
+--- @include "includes/isQueuePausedOrMaxed"
+--- @include "includes/promoteDelayedJobs"
+--- @include "includes/removeLock"
+--- @include "includes/updateJobFields"
+
+local isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+local markerKey = KEYS[10]
+
+-- Check if there are delayed jobs that we can move to wait.
+-- test example: when there are delayed jobs between retries
+promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
+
+local jobKey = KEYS[4]
+
+if rcall("EXISTS", jobKey) == 1 then
+  local errorCode = removeLock(jobKey, KEYS[11], ARGV[5], ARGV[4]) 
+  if errorCode < 0 then
+    return errorCode
+  end
+
+  updateJobFields(jobKey, ARGV[6])
+
+  local numRemovedElements = rcall("LREM", KEYS[1], -1, ARGV[4])
+  if (numRemovedElements < 1) then return -3 end
+
+  local priority = tonumber(rcall("HGET", jobKey, "priority")) or 0
+
+  --need to re-evaluate after removing job from active
+  isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+
+  -- Standard or priority add
+  if priority == 0 then
+    addJobInTargetList(KEYS[2], markerKey, ARGV[3], isPausedOrMaxed, ARGV[4])
+  else
+    addJobWithPriority(markerKey, KEYS[8], priority, ARGV[4], KEYS[9], isPausedOrMaxed)
+  end
+
+  rcall("HINCRBY", jobKey, "atm", 1)
+
+  local maxEvents = getOrSetMaxEvents(KEYS[5])
+
+  -- Emit waiting event
+  rcall("XADD", KEYS[6], "MAXLEN", "~", maxEvents, "*", "event", "waiting",
+    "jobId", ARGV[4], "prev", "active")
+
+  return 0
+else
+  return -1
+end
+--[[
+  Moves job from active to delayed set.
+
+  Input:
+    KEYS[1] marker key
+    KEYS[2] active key
+    KEYS[3] prioritized key
+    KEYS[4] delayed key
+    KEYS[5] job key
+    KEYS[6] events stream
+    KEYS[7] meta key
+    KEYS[8] stalled key
+    KEYS[9] wait key
+    KEYS[10] rate limiter key
+    KEYS[11] pc priority counter
+
+    ARGV[1] key prefix
+    ARGV[2] timestamp
+    ARGV[3] the id of the job
+    ARGV[4] queue token
+    ARGV[5] delay value
+    ARGV[6] skip attempt
+    ARGV[7] optional job fields to update
+    ARGV[8] fetch next?
+    ARGV[9] opts
+
+  Output:
+    0 - OK
+   -1 - Missing job.
+   -3 - Job not in active set.
+
+  Events:
+    - delayed key.
+]]
+local rcall = redis.call
+
+-- Includes
+--- @include "includes/addDelayMarkerIfNeeded"
+--- @include "includes/fetchNextJob"
+--- @include "includes/getDelayedScore"
+--- @include "includes/getOrSetMaxEvents"
+--- @include "includes/removeLock"
+--- @include "includes/updateJobFields"
+
+local jobKey = KEYS[5]
+local markerKey = KEYS[1]
+local metaKey = KEYS[7]
+local token = ARGV[4] 
+if rcall("EXISTS", jobKey) == 1 then
+    local errorCode = removeLock(jobKey, KEYS[8], token, ARGV[3])
+    if errorCode < 0 then
+        return errorCode
+    end
+
+    updateJobFields(jobKey, ARGV[7])
+    
+    local delayedKey = KEYS[4]
+    local jobId = ARGV[3]
+    local delay = tonumber(ARGV[5])
+
+    local numRemovedElements = rcall("LREM", KEYS[2], -1, jobId)
+    if numRemovedElements < 1 then return -3 end
+
+    local score, delayedTimestamp = getDelayedScore(delayedKey, ARGV[2], delay)
+
+    if ARGV[6] == "0" then
+        rcall("HINCRBY", jobKey, "atm", 1)
+    end
+
+    rcall("HSET", jobKey, "delay", ARGV[5])
+
+    local maxEvents = getOrSetMaxEvents(metaKey)
+
+    rcall("ZADD", delayedKey, score, jobId)
+    rcall("XADD", KEYS[6], "MAXLEN", "~", maxEvents, "*", "event", "delayed",
+          "jobId", jobId, "delay", delayedTimestamp)
+
+    -- Try to get next job to avoid an extra roundtrip if the queue is not closing,
+    -- and not rate limited.
+    if (ARGV[8] == "1") then
+        local opts = cmsgpack.unpack(ARGV[9])
+        local result = fetchNextJob(KEYS[9], KEYS[2], KEYS[3], KEYS[6],
+            KEYS[10], KEYS[4], metaKey, KEYS[11], markerKey,
+            ARGV[1], ARGV[2], opts)
+        if result and type(result[1]) == "table" then
+            return result
+        end
+    end
+
+    -- Check if we need to push a marker job to wake up sleeping workers.
+    addDelayMarkerIfNeeded(markerKey, delayedKey)
+
+    return 0
+else
+    return -1
+end
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    // Test files follow the pattern *.test.ts (new Vitest tests)
+    include: ['tests/**/*.test.ts'],
+
+    // Exclude adapter-specific smoke tests, ioredis-specific tests, and legacy files.
+    // The adapter-agnostic suite must be identical for ioredis, node-redis, and bun.
+    // ioredis-specific tests (cluster, connection, sandboxed_process) run separately
+    // via test:ioredis.
+    exclude: [
+      // ioredis-specific tests (direct ioredis imports / cluster / connection internals)
+      'tests/cluster.test.ts',
+      'tests/connection.test.ts',
+      'tests/sandboxed_process.test.ts',
+      'tests/worker.ioredis.test.ts',
+
+      // Adapter-specific smoke tests (self-contained, not factory-based)
+      'tests/node-redis.test.ts',
+      'tests/adapter-conformance.test.ts',
+      'tests/bun-redis.test.ts',
+      'tests/bun-adapter-suite.test.ts',
+
+      // PostgreSQL backend tests run in the dedicated PostgreSQL CI job.
+      'tests/postgres/**',
+
+      // Old mocha-era files
+      'tests/test_*.ts',
+
+      // Debug/scratch files
+      'tests/debug-*.test.ts',
+
+      'node_modules/**',
+    ],
+
+    // Global test timeout
+    testTimeout: 10000,
+
+    // Hook timeout
+    hookTimeout: 10000,
+
+    // Setup files (equivalent to mocha.setup.ts)
+    setupFiles: ['./vitest.setup.ts'],
+
+    // Run tests sequentially by default (can be overridden with --parallel)
+    // This is important for Redis-based tests to avoid conflicts
+    sequence: {
+      concurrent: false,
+    },
+
+    // Reporter
+    reporters: ['verbose'],
+
+    // Coverage configuration.
+    //
+    // NOTE: `yarn coverage` uses `vitest.coverage.config.ts`, which runs the
+    // union of the default and ioredis-only suites so adapter-agnostic and
+    // ioredis-specific code paths (sandboxed_process, cluster, connection)
+    // are both included. The settings here only apply to ad-hoc invocations
+    // of `vitest --coverage` against this default config and intentionally
+    // exclude modules that have no coverage in this suite.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/enums/*.ts', 'src/interfaces/*.ts'],
+      reporter: ['text', 'lcov'],
+      // Coverage thresholds (migrated from c8 config)
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80,
+      },
+    },
+
+    // Globals (describe, it, expect, etc.) - we'll use explicit imports instead
+    globals: false,
+  },
+});
+--[[
+  Move job from active to a finished status (completed or failed)
+  A job can only be moved to completed if it was active.
+  The job must be locked before it can be moved to a finished status,
+  and the lock must be released in this script.
+
+    Input:
+      KEYS[1] wait key
+      KEYS[2] active key
+      KEYS[3] prioritized key
+      KEYS[4] event stream key
+      KEYS[5] stalled key
+
+      -- Rate limiting
+      KEYS[6] rate limiter key
+      KEYS[7] delayed key
+
+      KEYS[8] paused key
+      KEYS[9] meta key
+      KEYS[10] pc priority counter
+
+      KEYS[11] completed/failed key
+      KEYS[12] jobId key
+      KEYS[13] metrics key
+      KEYS[14] marker key
+
+      ARGV[1]  jobId
+      ARGV[2]  timestamp
+      ARGV[3]  msg property returnvalue / failedReason
+      ARGV[4]  return value / failed reason
+      ARGV[5]  target (completed/failed)
+      ARGV[6]  fetch next?
+      ARGV[7]  keys prefix
+      ARGV[8]  opts
+      ARGV[9]  job fields to update
+
+      opts - token - lock token
+      opts - keepJobs
+      opts - lockDuration - lock duration in milliseconds
+      opts - attempts max attempts
+      opts - maxMetricsSize
+      opts - fpof - fail parent on fail
+      opts - cpof - continue parent on fail
+      opts - idof - ignore dependency on fail
+      opts - rdof - remove dependency on fail
+      opts - name - worker name
+
+    Output:
+      0 OK
+      -1 Missing key.
+      -2 Missing lock.
+      -3 Job not in active set
+      -4 Job has pending children
+      -6 Lock is not owned by this client
+      -9 Job has failed children
+
+    Events:
+      'completed/failed'
+]]
+local rcall = redis.call
+
+--- Includes
+--- @include "includes/collectMetrics"
+--- @include "includes/fetchNextJob"
+--- @include "includes/moveChildFromDependenciesIfNeeded"
+--- @include "includes/removeDeduplicationKeyIfNeededOnFinalization"
+--- @include "includes/removeJobKeys"
+--- @include "includes/removeJobsByMaxAge"
+--- @include "includes/removeJobsByMaxCount"
+--- @include "includes/removeLock"
+--- @include "includes/removeParentDependencyKey"
+--- @include "includes/requeueDeduplicatedJob"
+--- @include "includes/trimEvents"
+--- @include "includes/updateParentDepsIfNeeded"
+--- @include "includes/updateJobFields"
+
+local jobIdKey = KEYS[12]
+if rcall("EXISTS", jobIdKey) == 1 then -- Make sure job exists
+    -- Make sure it does not have pending dependencies
+    -- It must happen before removing lock
+    if ARGV[5] == "completed" then
+        if rcall("SCARD", jobIdKey .. ":dependencies") ~= 0 then
+            return -4
+        end
+
+        if rcall("ZCARD", jobIdKey .. ":unsuccessful") ~= 0 then
+            return -9
+        end
+    end
+
+    local opts = cmsgpack.unpack(ARGV[8])
+
+    local token = opts['token']
+
+    local errorCode = removeLock(jobIdKey, KEYS[5], token, ARGV[1])
+    if errorCode < 0 then
+        return errorCode
+    end
+
+    updateJobFields(jobIdKey, ARGV[9]);
+
+    local attempts = opts['attempts']
+    local maxMetricsSize = opts['maxMetricsSize']
+    local maxCount = opts['keepJobs']['count']
+    local maxAge = opts['keepJobs']['age']
+    local maxLimit = opts['keepJobs']['limit'] or 1000
+
+    local jobAttributes = rcall("HMGET", jobIdKey, "parentKey", "parent", "deid")
+    local parentKey = jobAttributes[1] or ""
+    local parentId = ""
+    local parentQueueKey = ""
+    if jobAttributes[2] then -- TODO: need to revisit this logic if it's still needed
+        local jsonDecodedParent = cjson.decode(jobAttributes[2])
+        parentId = jsonDecodedParent['id']
+        parentQueueKey = jsonDecodedParent['queueKey']
+    end
+
+    local jobId = ARGV[1]
+    local timestamp = ARGV[2]
+
+    -- Remove from active list (if not active we shall return error)
+    local numRemovedElements = rcall("LREM", KEYS[2], -1, jobId)
+
+    if (numRemovedElements < 1) then
+        return -3
+    end
+
+    local eventStreamKey = KEYS[4]
+    local metaKey = KEYS[9]
+    -- Trim events before emitting them to avoid trimming events emitted in this script
+    trimEvents(metaKey, eventStreamKey)
+
+    local prefix = ARGV[7]
+
+    removeDeduplicationKeyIfNeededOnFinalization(prefix, jobAttributes[3], jobId)
+
+    -- Check if there is requeue data for this dedup ID (keepLastIfActive mode)
+    if jobAttributes[3] then
+      requeueDeduplicatedJob(prefix, jobAttributes[3], eventStreamKey,
+          metaKey, KEYS[2], KEYS[1], KEYS[8], KEYS[14], KEYS[3], KEYS[10],
+          KEYS[7], timestamp)
+    end
+
+    -- If job has a parent we need to
+    -- 1) remove this job id from parents dependencies
+    -- 2) move the job Id to parent "processed" set
+    -- 3) push the results into parent "results" list
+    -- 4) if parent's dependencies is empty, then move parent to "wait/paused". Note it may be a different queue!.
+    if parentId == "" and parentKey ~= "" then
+        parentId = getJobIdFromKey(parentKey)
+        parentQueueKey = getJobKeyPrefix(parentKey, ":" .. parentId)
+    end
+
+    if parentId ~= "" then
+        if ARGV[5] == "completed" then
+            local dependenciesSet = parentKey .. ":dependencies"
+            if rcall("SREM", dependenciesSet, jobIdKey) == 1 then
+                updateParentDepsIfNeeded(parentKey, parentQueueKey, dependenciesSet, parentId, jobIdKey, ARGV[4],
+                    timestamp)
+            end
+        else
+            moveChildFromDependenciesIfNeeded(jobAttributes[2], jobIdKey, ARGV[4], timestamp)
+        end
+    end
+
+    local attemptsMade = rcall("HINCRBY", jobIdKey, "atm", 1)
+
+    -- Remove job?
+    if maxCount ~= 0 then
+        local targetSet = KEYS[11]
+        -- Add to complete/failed set
+        rcall("ZADD", targetSet, timestamp, jobId)
+        rcall("HSET", jobIdKey, ARGV[3], ARGV[4], "finishedOn", timestamp)
+        -- "returnvalue" / "failedReason" and "finishedOn"
+
+        if ARGV[5] == "failed" then
+            rcall("HDEL", jobIdKey, "defa")
+        end
+
+        -- Remove old jobs?
+        if maxAge ~= nil then
+            removeJobsByMaxAge(timestamp, maxAge, targetSet, prefix, maxLimit)
+        end
+
+        if maxCount ~= nil and maxCount > 0 then
+            removeJobsByMaxCount(maxCount, targetSet, prefix)
+        end
+    else
+        removeJobKeys(jobIdKey)
+        if parentKey ~= "" then
+            -- TODO: when a child is removed when finished, result or failure in parent
+            -- must not be deleted, those value references should be deleted when the parent
+            -- is deleted
+            removeParentDependencyKey(jobIdKey, false, parentKey, jobAttributes[3])
+        end
+    end
+
+    rcall("XADD", eventStreamKey, "*", "event", ARGV[5], "jobId", jobId, ARGV[3], ARGV[4], "prev", "active")
+
+    if ARGV[5] == "failed" then
+        if tonumber(attemptsMade) >= tonumber(attempts) then
+            rcall("XADD", eventStreamKey, "*", "event", "retries-exhausted", "jobId", jobId, "attemptsMade",
+                attemptsMade)
+        end
+    end
+
+    -- Collect metrics
+    if maxMetricsSize ~= "" then
+        collectMetrics(KEYS[13], KEYS[13] .. ':data', maxMetricsSize, timestamp)
+    end
+1789791608110 [agent] step start step=3 limit=0 messages=13
+1789791608110 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789791608110 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789791608110 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791608110 [agent] event=request_composition turn_id=1 step_id=3 instruction_bytes=9875 conversation_bytes=2242 tool_result_bytes=30449 tool_argument_bytes=524 replay_bytes=65 schema_json_bytes=16106 wire_bytes=63241 messages=5
+1789791608110 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Reading[0m
+1789791613090 [agent] event=request_finished turn_id=1 step_id=3 elapsed_ms=4980 input_tokens=14525 output_tokens=113 cached_input_tokens=2432 usage_available=true
+1789791613090 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791613090 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791613090 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789791613091 [agent] event=read_batch_complete file_read_operations=7
+1789791613092 [agent] step start step=4 limit=0 messages=15
+1789791613092 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1789791613092 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=15
+1789791613092 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791613093 [agent] event=request_composition turn_id=1 step_id=4 instruction_bytes=9875 conversation_bytes=2242 tool_result_bytes=45390 tool_argument_bytes=858 replay_bytes=1533 schema_json_bytes=16106 wire_bytes=81239 messages=7
+1789791613093 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+1789791627595 [agent] event=request_finished turn_id=1 step_id=4 elapsed_ms=14503 input_tokens=18984 output_tokens=413 cached_input_tokens=4864 usage_available=true
+1789791627595 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791627595 [agent] step completion step=4 content_bytes=0 tool_calls=4 finish_reason=tool-calls
+1789791627595 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=4 finish_reason=tool-calls
+Editing src/commands/includes/removeLock.lua
+Editing src/commands/extendLock-2.lua
+Editing src/commands/extendLocks-1.lua
+Editing src/commands/retryJob-11.lua
+1789791627599 [agent] step start step=5 limit=0 messages=20
+1789791627599 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=20
+1789791627599 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=20
+1789791627599 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791627600 [agent] event=request_composition turn_id=1 step_id=5 instruction_bytes=9875 conversation_bytes=2242 tool_result_bytes=45591 tool_argument_bytes=1976 replay_bytes=1533 schema_json_bytes=16106 wire_bytes=83394 messages=12
+1789791627600 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+1789791633043 [agent] event=request_finished turn_id=1 step_id=5 elapsed_ms=5443 input_tokens=19491 output_tokens=115 cached_input_tokens=0 usage_available=true
+1789791633043 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791633043 [agent] step completion step=5 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791633043 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm run build > /tmp/bullmq-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/wor...
+1789791634046 [agent] step start step=6 limit=0 messages=22
+1789791634046 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=22
+1789791634046 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=22
+1789791634046 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791634047 [agent] event=request_composition turn_id=1 step_id=6 instruction_bytes=9875 conversation_bytes=2242 tool_result_bytes=45942 tool_argument_bytes=2367 replay_bytes=1533 schema_json_bytes=16106 wire_bytes=84377 messages=14
+1789791634047 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+1789791642300 [agent] event=request_finished turn_id=1 step_id=6 elapsed_ms=8254 input_tokens=19702 output_tokens=190 cached_input_tokens=2432 usage_available=true
+1789791642300 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789791642300 [agent] step completion step=6 content_bytes=311 tool_calls=1 finish_reason=tool-calls
+1789791642300 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=311 tool_call_count=1 finish_reason=tool-calls
+Running rg -n 'extendLocks\(|moveStalledJobsToWait\(' src/classes/scripts.ts src/classes/worker.ts; cat tests/utils/get-redis...
+rg: src/classes/scripts.ts: No such file or directory (os error 2)
+src/classes/worker.ts:419:    return this.backend.extendLocks(jobIds, tokens, duration);
+src/classes/worker.ts:1379:      await this.checkConnectionError(() => this.moveStalledJobsToWait());
+src/classes/worker.ts:1454:  private async moveStalledJobsToWait() {
+src/classes/worker.ts:1460:        const stalled = await this.backend.moveStalledJobsToWait();
+import { RedisQueueBackend } from '../../src/classes/redis-queue-backend';
+import { RedisConnection } from '../../src/classes/redis-connection';
+import { RedisClient } from '../../src/interfaces';
+
+/**
+ * A queue-like object backed by the Redis adapter. The built-in classes
+ * (`Queue`, `Worker`, `FlowProducer`) are parameterized on
+ * {@link RedisQueueBackend} by default, so `getBackend()` returns the concrete
+ * adapter and these helpers need no casting.
+ */
+interface RedisBackedTarget {
+  getBackend(): RedisQueueBackend;
+}
+
+/**
+ * Test-only helper to reach the raw Redis client behind a queue-like object.
+ *
+ * The high-level classes (`Queue`, `Worker`, `FlowProducer`, …) no longer
+ * expose a `client` getter: they are datastore-agnostic and only know about
+ * their backend. The raw Redis client is a Redis-specific escape hatch that
+ * lives on the concrete {@link RedisQueueBackend} implementation.
+ *
+ * This helper is a drop-in replacement for the old `await queue.client`: the
+ * backend's `client` getter resolves once the underlying connection is ready.
+ */
+export function getRedisClient(
+  target: RedisBackedTarget,
+): Promise<RedisClient> {
+  return target.getBackend().client;
+}
+
+/**
+ * Test-only helper to reach the raw blocking Redis client behind a worker-like
+ * object (Redis-specific escape hatch on {@link RedisQueueBackend}). This is
+ * the connection that registers as a worker (`:w:` suffix).
+ *
+ * Throws if the target's backend has no blocking client so call sites can
+ * safely treat the result as a non-optional `Promise<RedisClient>`.
+ */
+export function getBlockingRedisClient(
+  target: RedisBackedTarget,
+): Promise<RedisClient> {
+  const blockingClient = target.getBackend().blockingClient;
+  if (!blockingClient) {
+    throw new Error(
+      'Target backend has no blocking Redis client (it was not created with a blocking connection)',
+    );
+  }
+  return blockingClient;
+}
+
+/**
+ * Test-only helper to reach the underlying {@link RedisConnection} of a
+ * queue-like object (Redis-specific escape hatch on {@link RedisQueueBackend}).
+ */
+export function getRedisConnection(target: RedisBackedTarget): RedisConnection {
+  return target.getBackend().connection;
+}
+
+/**
+ * Test-only helper to reach the dedicated blocking {@link RedisConnection} of a
+ * worker-like object (Redis-specific escape hatch on {@link RedisQueueBackend}).
+ *
+ * Throws if the target's backend has no blocking connection so call sites can
+ * safely treat the result as a non-optional `RedisConnection`.
+ */
+export function getBlockingRedisConnection(
+  target: RedisBackedTarget,
+): RedisConnection {
+  const blockingConnection = target.getBackend().blockingConnection;
+  if (!blockingConnection) {
+    throw new Error(
+      'Target backend has no blocking connection (it was not created with a blocking connection)',
+    );
+  }
+  return blockingConnection;
+}
+
+/**
+ * Test-only helper to read the detected Redis server version behind a
+ * queue-like object (Redis-specific escape hatch on {@link RedisQueueBackend}).
+ */
+export function getRedisVersion(target: RedisBackedTarget): string {
+  return target.getBackend().redisVersion;
+}
+
+/**
+ * Test-only helper to read the detected datastore flavour behind a queue-like
+ * object (Redis-specific escape hatch on {@link RedisQueueBackend}).
+ */
+export function getDatabaseType(target: RedisBackedTarget): string {
+  return target.getBackend().databaseType;
+}
+import type { IRedisClient } from '../../src/interfaces/redis-client';
+
+export interface ConnectionFactoryOpts {
+  host?: string;
+  port?: number;
+  connectionName?: string;
+}
+629:  extendLock(token: string, duration: number): Promise<number> {
+630:    return this.backend.extendLock(this.id, token, duration);
+642:  async moveToCompleted(
+665:        const { result, finishedOn } = await this.backend.moveToCompleted(
+725:  async moveToFailed<E extends Error>(
+783:          const moved = await this.backend.moveToFailed(
+--[[
+  Function to check if queue is paused or maxed
+  (since an empty list and !EXISTS are not really the same).
+]]
+
+local function isQueuePausedOrMaxed(queueMetaKey, activeKey)
+  local queueAttributes = rcall("HMGET", queueMetaKey, "paused", "concurrency")
+
+  if queueAttributes[1] then
+    return true
+  else
+    if queueAttributes[2] then
+      local activeCount = rcall("LLEN", activeKey)
+      return activeCount >= tonumber(queueAttributes[2])
+    end
+  end
+  return false
+end
+ src/commands/extendLock-2.lua        | 3 +--
+ src/commands/extendLocks-1.lua       | 2 +-
+ src/commands/includes/removeLock.lua | 2 +-
+ src/commands/retryJob-11.lua         | 7 +++----
+ 4 files changed, 6 insertions(+), 8 deletions(-)
+1789791642352 [agent] step start step=7 limit=0 messages=24
+1789791642352 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=24
+1789791642352 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=24
+1789791642352 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791642353 [agent] event=request_composition turn_id=1 step_id=7 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=51578 tool_argument_bytes=2749 replay_bytes=3167 schema_json_bytes=16106 wire_bytes=92811 messages=16
+1789791642353 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+● Reading[0m
+1789791647225 [agent] event=request_finished turn_id=1 step_id=7 elapsed_ms=4872 input_tokens=21323 output_tokens=94 cached_input_tokens=2432 usage_available=true
+1789791647225 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791647225 [agent] step completion step=7 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791647225 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789791647226 [agent] step start step=8 limit=0 messages=26
+1789791647226 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=26
+1789791647226 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=26
+1789791647226 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791647227 [agent] event=request_composition turn_id=1 step_id=8 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=51641 tool_argument_bytes=2959 replay_bytes=4699 schema_json_bytes=16106 wire_bytes=94826 messages=18
+1789791647227 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+● Matching[0m
+1789791650937 [agent] event=request_finished turn_id=1 step_id=8 elapsed_ms=3710 input_tokens=21439 output_tokens=24 cached_input_tokens=2432 usage_available=true
+1789791650937 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791650937 [agent] step completion step=8 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791650937 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Matching src/commands/*Stalled*
+1789791650938 [agent] step start step=9 limit=0 messages=28
+1789791650938 [agent] event=step_begin turn_id=1 step_id=9 step_index=9 step_limit=0 provider_messages=28
+1789791650938 [agent] event=before_provider_preflight turn_id=1 step_id=9 model=gpt-6-astra messages=28
+1789791650938 [agent] event=vision_policy turn_id=1 step_id=9 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791650938 [agent] event=request_composition turn_id=1 step_id=9 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=51729 tool_argument_bytes=2995 replay_bytes=4699 schema_json_bytes=16106 wire_bytes=95144 messages=20
+1789791650938 [agent] event=provider_admitted turn_id=1 step_id=9 model=gpt-6-astra
+● Reading[0m
+1789791655626 [agent] event=request_finished turn_id=1 step_id=9 elapsed_ms=4688 input_tokens=21503 output_tokens=74 cached_input_tokens=2432 usage_available=true
+1789791655626 [agent] event=tool_presentation_group turn_id=1 step_id=9 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791655626 [agent] step completion step=9 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791655626 [agent] event=assistant_completion turn_id=1 step_id=9 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Reading file
+1789791655627 [agent] event=read_batch_complete file_read_operations=3
+1789791655628 [agent] step start step=10 limit=0 messages=30
+1789791655628 [agent] event=step_begin turn_id=1 step_id=10 step_index=10 step_limit=0 provider_messages=30
+1789791655628 [agent] event=before_provider_preflight turn_id=1 step_id=10 model=gpt-6-astra messages=30
+1789791655628 [agent] event=vision_policy turn_id=1 step_id=10 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791655629 [agent] event=request_composition turn_id=1 step_id=10 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=60749 tool_argument_bytes=3205 replay_bytes=4699 schema_json_bytes=16106 wire_bytes=105164 messages=22
+1789791655629 [agent] event=provider_admitted turn_id=1 step_id=10 model=gpt-6-astra
+1789791689002 [agent] event=request_finished turn_id=1 step_id=10 elapsed_ms=33374 input_tokens=23888 output_tokens=1045 cached_input_tokens=2432 usage_available=true
+1789791689002 [agent] event=tool_presentation_group turn_id=1 step_id=10 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791689002 [agent] step completion step=10 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791689002 [agent] event=assistant_completion turn_id=1 step_id=10 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/ownership.redis.test.ts
+1789791689004 [agent] step start step=11 limit=0 messages=32
+1789791689004 [agent] event=step_begin turn_id=1 step_id=11 step_index=11 step_limit=0 provider_messages=32
+1789791689004 [agent] event=before_provider_preflight turn_id=1 step_id=11 model=gpt-6-astra messages=32
+1789791689004 [agent] event=vision_policy turn_id=1 step_id=11 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791689005 [agent] event=request_composition turn_id=1 step_id=11 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=60797 tool_argument_bytes=7105 replay_bytes=4699 schema_json_bytes=16106 wire_bytes=109384 messages=24
+1789791689005 [agent] event=provider_admitted turn_id=1 step_id=11 model=gpt-6-astra
+1789791695076 [agent] event=request_finished turn_id=1 step_id=11 elapsed_ms=6071 input_tokens=24957 output_tokens=104 cached_input_tokens=2432 usage_available=true
+1789791695076 [agent] event=tool_presentation_group turn_id=1 step_id=11 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791695076 [agent] step completion step=11 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791695076 [agent] event=assistant_completion turn_id=1 step_id=11 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running node node_modules/prettier/bin/prettier.cjs --write tests/ownership.redis.test.ts; node node_modules/vitest/vitest.mj...
+tests/ownership.redis.test.ts 41ms
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /private/tmp/handwork-bullmq-G7VJT5/4-handwork/repo
+
+ ✓ tests/ownership.redis.test.ts > recovered job ownership > rejects stale complete and renewals without changing stored state 18ms
+ ✓ tests/ownership.redis.test.ts > recovered job ownership > rejects stale fail and renewals without changing stored state 11ms
+ ✓ tests/ownership.redis.test.ts > recovered job ownership > rejects stale retry and renewals without changing stored state 10ms
+ ✓ tests/ownership.redis.test.ts > recovered job ownership > rejects stale backoff and renewals without changing stored state 9ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  00:21:35
+   Duration  345ms (transform 169ms, setup 35ms, import 199ms, tests 49ms, environment 0ms)
+
+> cpx "./src/commands/includes/*.lua" ./dist/cjs/commands/includes && cpx "./src/commands/includes/*.lua" ./dist/esm/commands/includes
+
+
+> bullmq@6.3.8 copy:sql
+> cpx "./src/postgres/migrations/*.sql" ./dist/cjs/postgres/migrations && cpx "./src/postgres/migrations/*.sql" ./dist/esm/postgres/migrations && cpx "./src/postgres/commands/*.sql" ./dist/cjs/postgres/commands && cpx "./src/postgres/commands/*.sql" ./dist/esm/postgres/commands
+
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a failed job more than the number of given attempts times 9ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a fixed backoff is given 2085ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when UnrecoverableError is throw > moves job to failed 1017ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > should retry a job after a delay if a fixed backoff is given, keeping the current step 2036ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when timeout is provided > should check if timeout is reached in each step 3538ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > should retry job after a delay time, keeping the current step 217ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > when passing maxStartedAttempts > should fail job when consuming the max started attempts 303ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to delayed in one step > when passing maxStartedAttempts > should allow only retry a job once after it has reached the max attemptsStarted 8ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to waiting in one step > should retry job right away, keeping the current step 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if an exponential backoff is given 3135ms
+1789791695694 [agent] step start step=12 limit=0 messages=34
+1789791695694 [agent] event=step_begin turn_id=1 step_id=12 step_index=12 step_limit=0 provider_messages=34
+1789791695694 [agent] event=before_provider_preflight turn_id=1 step_id=12 model=gpt-6-astra messages=34
+1789791695694 [agent] event=vision_policy turn_id=1 step_id=12 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791695695 [agent] event=request_composition turn_id=1 step_id=12 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=64700 tool_argument_bytes=7445 replay_bytes=4699 schema_json_bytes=16106 wire_bytes=113933 messages=26
+1789791695695 [agent] event=provider_admitted turn_id=1 step_id=12 model=gpt-6-astra
+1789791700259 [agent] event=request_finished turn_id=1 step_id=12 elapsed_ms=4564 input_tokens=26056 output_tokens=79 cached_input_tokens=0 usage_available=true
+1789791700259 [agent] event=tool_presentation_group turn_id=1 step_id=12 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791700259 [agent] step completion step=12 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791700259 [agent] event=assistant_completion turn_id=1 step_id=12 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build > /tmp/bullmq-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/wor...
+1789791705264 [agent] step start step=13 limit=0 messages=36
+1789791705264 [agent] event=step_begin turn_id=1 step_id=13 step_index=13 step_limit=0 provider_messages=36
+1789791705265 [agent] event=before_provider_preflight turn_id=1 step_id=13 model=gpt-6-astra messages=36
+1789791705265 [agent] event=vision_policy turn_id=1 step_id=13 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791705266 [agent] event=request_composition turn_id=1 step_id=13 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=65051 tool_argument_bytes=7522 replay_bytes=6505 schema_json_bytes=16106 wire_bytes=116403 messages=28
+1789791705266 [agent] event=provider_admitted turn_id=1 step_id=13 model=gpt-6-astra
+1789791709111 [agent] event=request_finished turn_id=1 step_id=13 elapsed_ms=3846 input_tokens=26231 output_tokens=59 cached_input_tokens=2432 usage_available=true
+1789791709111 [agent] event=tool_presentation_group turn_id=1 step_id=13 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791709111 [agent] step completion step=13 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791709111 [agent] event=assistant_completion turn_id=1 step_id=13 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running git diff -- src/commands; git status --short; tail -5 /tmp/bullmq-regression.log
+diff --git a/src/commands/extendLock-2.lua b/src/commands/extendLock-2.lua
+index 2d5ffe3..b84c686 100644
+--- a/src/commands/extendLock-2.lua
++++ b/src/commands/extendLock-2.lua
+@@ -13,8 +13,7 @@
+     "1" if lock extended successfully.
+ ]]
+ local rcall = redis.call
+-if rcall("EXISTS", KEYS[1]) == 1 then
+-  --   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2], "XX") then
++if rcall("GET", KEYS[1]) == ARGV[1] then
+   if rcall("SET", KEYS[1], ARGV[1], "PX", ARGV[2]) then
+     rcall("SREM", KEYS[2], ARGV[3])
+     return 1
+diff --git a/src/commands/extendLocks-1.lua b/src/commands/extendLocks-1.lua
+index cce23e6..bbd5548 100644
+--- a/src/commands/extendLocks-1.lua
++++ b/src/commands/extendLocks-1.lua
+@@ -30,7 +30,7 @@ for i = 1, jobCount, 1 do
+ 
+     local currentToken = rcall("GET", lockKey)
+     if currentToken then
+-        if currentToken then
++        if currentToken == token then
+             local setResult = rcall("SET", lockKey, token, "PX", lockDuration)
+             if setResult then
+                 rcall("SREM", stalledKey, jobId)
+diff --git a/src/commands/includes/removeLock.lua b/src/commands/includes/removeLock.lua
+index b8025cc..d7335f6 100644
+--- a/src/commands/includes/removeLock.lua
++++ b/src/commands/includes/removeLock.lua
+@@ -2,7 +2,7 @@ local function removeLock(jobKey, stalledKey, token, jobId)
+   if token ~= "0" then
+     local lockKey = jobKey .. ':lock'
+     local lockToken = rcall("GET", lockKey)
+-    if lockToken then
++    if lockToken == token then
+       rcall("DEL", lockKey)
+       rcall("SREM", stalledKey, jobId)
+     else
+diff --git a/src/commands/retryJob-11.lua b/src/commands/retryJob-11.lua
+index 1beca80..3370ada 100644
+--- a/src/commands/retryJob-11.lua
++++ b/src/commands/retryJob-11.lua
+@@ -44,10 +44,6 @@ local rcall = redis.call
+ local isPausedOrMaxed = isQueuePausedOrMaxed(KEYS[5], KEYS[1])
+ local markerKey = KEYS[10]
+ 
+--- Check if there are delayed jobs that we can move to wait.
+--- test example: when there are delayed jobs between retries
+-promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
+-
+ local jobKey = KEYS[4]
+ 
+ if rcall("EXISTS", jobKey) == 1 then
+@@ -56,6 +52,9 @@ if rcall("EXISTS", jobKey) == 1 then
+     return errorCode
+   end
+ 
++  -- Promote delayed jobs only after validating ownership.
++  promoteDelayedJobs(KEYS[7], markerKey, KEYS[2], KEYS[8], KEYS[6], ARGV[1], ARGV[2], KEYS[9], isPausedOrMaxed)
++
+   updateJobFields(jobKey, ARGV[6])
+ 
+   local numRemovedElements = rcall("LREM", KEYS[1], -1, ARGV[4])
+ M src/commands/extendLock-2.lua
+ M src/commands/extendLocks-1.lua
+ M src/commands/includes/removeLock.lua
+ M src/commands/retryJob-11.lua
+?? tests/ownership.redis.test.ts
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when providing a way to execute step jobs > when moving job to waiting in one step > should retry job right away, keeping the current step 6ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if an exponential backoff is given 3135ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should retry a job after a delay if a custom backoff is given 3048ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > when applying custom backoff by type > should retry a job after a delay for custom type 9150ms
+ ✓ tests/worker.test.ts > workers > Retries and backoffs > should not retry a job if the custom backoff returns -1 5ms
+1789791709152 [agent] step start step=14 limit=0 messages=38
+1789791709152 [agent] event=step_begin turn_id=1 step_id=14 step_index=14 step_limit=0 provider_messages=38
+1789791709152 [agent] event=before_provider_preflight turn_id=1 step_id=14 model=gpt-6-astra messages=38
+1789791709152 [agent] event=vision_policy turn_id=1 step_id=14 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791709153 [agent] event=request_composition turn_id=1 step_id=14 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=69039 tool_argument_bytes=7661 replay_bytes=7973 schema_json_bytes=16106 wire_bytes=122391 messages=30
+1789791709153 [agent] event=provider_admitted turn_id=1 step_id=14 model=gpt-6-astra
+1789791712311 [agent] event=request_finished turn_id=1 step_id=14 elapsed_ms=3158 input_tokens=27549 output_tokens=45 cached_input_tokens=21248 usage_available=true
+1789791712311 [agent] event=tool_presentation_group turn_id=1 step_id=14 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791712311 [agent] step completion step=14 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791712311 [agent] event=assistant_completion turn_id=1 step_id=14 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build > /tmp/bullmq-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/wor...
+1789791717316 [agent] step start step=15 limit=0 messages=40
+1789791717316 [agent] event=step_begin turn_id=1 step_id=15 step_index=15 step_limit=0 provider_messages=40
+1789791717317 [agent] event=before_provider_preflight turn_id=1 step_id=15 model=gpt-6-astra messages=40
+1789791717317 [agent] event=vision_policy turn_id=1 step_id=15 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791717318 [agent] event=request_composition turn_id=1 step_id=15 instruction_bytes=9875 conversation_bytes=2553 tool_result_bytes=69390 tool_argument_bytes=7738 replay_bytes=9441 schema_json_bytes=16106 wire_bytes=124523 messages=32
+1789791717318 [agent] event=provider_admitted turn_id=1 step_id=15 model=gpt-6-astra
+1789791722409 [agent] event=request_finished turn_id=1 step_id=15 elapsed_ms=5092 input_tokens=27690 output_tokens=109 cached_input_tokens=2432 usage_available=true
+1789791722409 [agent] event=tool_presentation_group turn_id=1 step_id=15 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789791722409 [agent] step completion step=15 content_bytes=260 tool_calls=1 finish_reason=tool-calls
+1789791722409 [agent] event=assistant_completion turn_id=1 step_id=15 content_bytes=260 tool_call_count=1 finish_reason=tool-calls
+Waiting for npm run build > /tmp/bullmq-build.log 2>&1 && node node_modules/vitest/vitest.mjs run --no-file-parallelism tests/wor...
+1789791766402 [agent] step start step=16 limit=0 messages=42
+1789791766402 [agent] event=step_begin turn_id=1 step_id=16 step_index=16 step_limit=0 provider_messages=42
+1789791766402 [agent] event=before_provider_preflight turn_id=1 step_id=16 model=gpt-6-astra messages=42
+1789791766402 [agent] event=vision_policy turn_id=1 step_id=16 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791766403 [agent] event=request_composition turn_id=1 step_id=16 instruction_bytes=9875 conversation_bytes=2813 tool_result_bytes=69742 tool_argument_bytes=7817 replay_bytes=11052 schema_json_bytes=16106 wire_bytes=127140 messages=34
+1789791766403 [agent] event=provider_admitted turn_id=1 step_id=16 model=gpt-6-astra
+1789791769685 [agent] event=request_finished turn_id=1 step_id=16 elapsed_ms=3283 input_tokens=27896 output_tokens=42 cached_input_tokens=26112 usage_available=true
+1789791769685 [agent] event=tool_presentation_group turn_id=1 step_id=16 anchor_step_id=15 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789791769685 [agent] step completion step=16 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789791769685 [agent] event=assistant_completion turn_id=1 step_id=16 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running tail -9 /tmp/bullmq-regression.log; git diff --check
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not fail if queue meta key is missing 4ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToCompleted > should not complete a parent job before its children 9ms
+ ✓ tests/job.redis.test.ts > Job (redis-only) > .moveToFailed > when job is removed > should not save stacktrace 112ms
+
+ Test Files  7 passed (7)
+      Tests  268 passed (268)
+   Start at  00:20:40
+   Duration  126.05s (transform 255ms, setup 137ms, import 719ms, tests 124.76s, environment 0ms)
+
+1789791769716 [agent] step start step=17 limit=0 messages=44
+1789791769716 [agent] event=step_begin turn_id=1 step_id=17 step_index=17 step_limit=0 provider_messages=44
+1789791769716 [agent] event=before_provider_preflight turn_id=1 step_id=17 model=gpt-6-astra messages=44
+1789791769716 [agent] event=vision_policy turn_id=1 step_id=17 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789791769717 [agent] event=request_composition turn_id=1 step_id=17 instruction_bytes=9875 conversation_bytes=2813 tool_result_bytes=70695 tool_argument_bytes=7928 replay_bytes=11052 schema_json_bytes=16106 wire_bytes=128452 messages=36
+1789791769717 [agent] event=provider_admitted turn_id=1 step_id=17 model=gpt-6-astra
+1789791774059 [agent] event=request_finished turn_id=1 step_id=17 elapsed_ms=4342 input_tokens=28220 output_tokens=81 cached_input_tokens=9344 usage_available=true
+1789791774059 [agent] event=tool_presentation_group turn_id=1 step_id=17 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789791774059 [agent] step completion step=17 content_bytes=373 tool_calls=0 finish_reason=stop
+1789791774059 [agent] event=assistant_completion turn_id=1 step_id=17 content_bytes=373 tool_call_count=0 finish_reason=stop
+1789791774065 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

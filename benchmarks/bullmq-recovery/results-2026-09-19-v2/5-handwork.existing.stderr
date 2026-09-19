@@ -1,0 +1,57 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+stderr | tests/worker.test.ts > workers > process a job that returns data with a circular dependency
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Object'
+    --- property 'x' closes the circle
+    at JSON.stringify (<anonymous>)
+    at tryCatch (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/utils/index.ts:36:15)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/job.ts:658:40
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at Worker.handleCompleted (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1117:25)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1042:18
+
+stderr | tests/worker.test.ts > workers > when waiting for a job > drops the abandoned blocking command once the client is live again (#4585)
+TypeError: 'set' on proxy: trap returned falsish for property 'status'
+    at RedisConnection.close (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-connection.ts:779:24)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:314:11
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1321:15
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1295:7
+    at Worker.close (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1335:12)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/tests/worker.test.ts:1312:9
+    at file:///private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/worker.test.ts > workers > continues processing after a worker has stalled
+Error: Missing lock for job 1. moveToFinished
+    at finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/finished-errors.ts:30:15)
+    at RedisQueueBackend.finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:2301:12)
+    at RedisQueueBackend.moveToFinished (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:1207:18)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at RedisQueueBackend.moveToCompleted (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:2441:20)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/job.ts:665:40
+    at Worker.handleCompleted (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1117:25)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1042:18 {
+  code: -2
+}
+
+stderr | tests/worker.test.ts > workers > continues processing after a worker has stalled
+Error: Missing lock for job 1. moveToFinished
+    at finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/finished-errors.ts:30:15)
+    at RedisQueueBackend.finishedErrors (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:2301:12)
+    at RedisQueueBackend.moveToFinished (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:1207:18)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at RedisQueueBackend.moveToFailed (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/redis-queue-backend.ts:2464:20)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/job.ts:783:25
+    at Worker.handleFailed (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1172:22)
+    at Worker.retryIfFailed (/private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1425:16)
+    at /private/tmp/handwork-bullmq-G7VJT5/grade-5-handwork/repo/src/classes/worker.ts:1061:26 {
+  code: -2
+}
+
+
+
+

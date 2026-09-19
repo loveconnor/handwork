@@ -1,0 +1,4877 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 32768,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 32768,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.068,
+    "totals": {
+      "harness": 66879488,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 66879488,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.141,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 32768
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.204,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 2097152
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.266,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 2097152
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.34,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 2097152
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.414,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 2097152
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.486,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 69206016
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 67141632,
+        "kind": "tools",
+        "command": "npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.559,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75726848
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94213,
+        "ppid": 94182,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c rimraf dist"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 73629696,
+        "kind": "tools",
+        "command": "npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.627,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75726848
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94213,
+        "ppid": 94182,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/rimraf dist"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 73629696,
+        "kind": "tools",
+        "command": "npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.701,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75726848
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94213,
+        "ppid": 94182,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/rimraf dist"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 73629696,
+        "kind": "tools",
+        "command": "npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.761,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 122683392
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2064384,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94213,
+        "ppid": 94182,
+        "rss": 46989312,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94182,
+        "ppid": 94180,
+        "rss": 73629696,
+        "kind": "tools",
+        "command": "npm run clean:dist"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.828,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 58572800
+    },
+    "processes": [
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 56475648,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.894,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75677696
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 0.964,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 78069760
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94248,
+        "ppid": 94245,
+        "rss": 344064,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run clean:scripts"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 1.038,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 149798912
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94248,
+        "ppid": 94245,
+        "rss": 72073216,
+        "kind": "tools",
+        "command": "npm run clean:scripts"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 1.108,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151453696
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94248,
+        "ppid": 94245,
+        "rss": 73695232,
+        "kind": "tools",
+        "command": "npm run clean:scripts"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94284,
+        "ppid": 94248,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c rimraf rawScripts src/scripts"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 1.178,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 182091776
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94248,
+        "ppid": 94245,
+        "rss": 73695232,
+        "kind": "tools",
+        "command": "npm run clean:scripts"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94284,
+        "ppid": 94248,
+        "rss": 30670848,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/rimraf rawScripts src/scripts"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 1.249,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 142639104
+    },
+    "processes": [
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 64913408,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 1.32,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151470080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.391,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151470080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.453,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151470080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.52,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151470080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.584,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 247005184
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 95567872,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.657,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 286294016
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 134856704,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.726,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 298975232
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 147537920,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.802,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 337575936
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 186138624,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.868,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 392118272
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 240680960,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 1.938,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 455049216
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 303611904,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 2.016,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 500531200
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 349093888,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 2.086,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 506314752
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 73711616,
+        "kind": "tools",
+        "command": "npm run generate:raw:scripts"
+      },
+      {
+        "pid": 94325,
+        "ppid": 94291,
+        "rss": 354877440,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts"
+      }
+    ]
+  },
+  {
+    "seconds": 2.155,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 77725696
+    },
+    "processes": [
+      {
+        "pid": 94291,
+        "ppid": 94245,
+        "rss": 0,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 2.225,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 148471808
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94554,
+        "ppid": 94245,
+        "rss": 70680576,
+        "kind": "tools",
+        "command": "npm run transform:commands"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 2.296,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151568384
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94554,
+        "ppid": 94245,
+        "rss": 73744384,
+        "kind": "tools",
+        "command": "npm run transform:commands"
+      },
+      {
+        "pid": 94588,
+        "ppid": 94554,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c node ./scripts/commandTransform.js ./rawScripts ./src/scripts"
+      }
+    ]
+  },
+  {
+    "seconds": 2.36,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151568384
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94554,
+        "ppid": 94245,
+        "rss": 73744384,
+        "kind": "tools",
+        "command": "npm run transform:commands"
+      },
+      {
+        "pid": 94588,
+        "ppid": 94554,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c node ./scripts/commandTransform.js ./rawScripts ./src/scripts"
+      }
+    ]
+  },
+  {
+    "seconds": 2.428,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 79036416
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 1245184,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 2.495,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151601152
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.561,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151601152
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.632,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151601152
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.706,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 151601152
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.778,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 211795968
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 60227584,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.844,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 252067840
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 100499456,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.915,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 289914880
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 138346496,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 2.984,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 313393152
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 161824768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 3.056,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 380649472
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 229081088,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 3.127,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 437993472
+    },
+    "processes": [
+      {
+        "pid": 94625,
+        "ppid": 94591,
+        "rss": 286425088,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/madge --circular --extensions ts ./src"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94245,
+        "ppid": 94218,
+        "rss": 2146304,
+        "kind": "tools",
+        "command": "sh -c npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references"
+      },
+      {
+        "pid": 94218,
+        "ppid": 94180,
+        "rss": 73547776,
+        "kind": "tools",
+        "command": "npm run pretest"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      },
+      {
+        "pid": 94591,
+        "ppid": 94245,
+        "rss": 73777152,
+        "kind": "tools",
+        "command": "npm run circular:references"
+      }
+    ]
+  },
+  {
+    "seconds": 3.194,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 26214400
+    },
+    "processes": [
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 24100864,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.261,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75988992
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.328,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 75988992
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.401,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 78069760
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.469,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 78069760
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.54,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 142147584
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 64110592,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.603,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 178667520
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 100630528,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.667,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 214220800
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 136183808,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.73,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 294125568
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 216088576,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.794,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 343621632
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 265584640,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.866,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 413728768
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 335691776,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 3.936,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 420724736
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 342687744,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.003,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 446611456
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 368574464,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.075,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 464633856
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 386596864,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.145,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 476577792
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 398540800,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.211,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 499843072
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 421806080,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.28,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 504168448
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 426131456,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.35,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 528351232
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 450314240,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.419,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 548667392
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 470630400,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.486,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 557891584
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 479854592,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.553,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 585646080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 507609088,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.62,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 592543744
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 514506752,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.687,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 595886080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 517849088,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.753,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 612188160
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94666,
+        "ppid": 94663,
+        "rss": 534151168,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.815,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 83165184
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 5128192,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.885,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 178307072
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 100270080,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 4.956,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 222576640
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 144539648,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.02,
+    "totals": {
+      "harness": 73629696,
+      "tests": 0,
+      "tools": 294567936
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 216530944,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73629696,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.092,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 358203392
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 280166400,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.165,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 408289280
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 330252288,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.236,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 434503680
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 356466688,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.303,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 455491584
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 377454592,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.369,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 466894848
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 388857856,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.44,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 480313344
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 402276352,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.511,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 483065856
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 405028864,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.582,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 536117248
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 458080256,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.654,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 541736960
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 463699968,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.719,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 551731200
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 473694208,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.792,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 586629120
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 508592128,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.864,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 591708160
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 513671168,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 5.935,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 598638592
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 520601600,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.005,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 615120896
+    },
+    "processes": [
+      {
+        "pid": 94689,
+        "ppid": 94663,
+        "rss": 537083904,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94663,
+        "ppid": 94636,
+        "rss": 2080768,
+        "kind": "tools",
+        "command": "sh -c tsc && tsc -p tsconfig-cjs.json"
+      },
+      {
+        "pid": 94636,
+        "ppid": 94180,
+        "rss": 73842688,
+        "kind": "tools",
+        "command": "npm run tsc:all"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.069,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 58916864
+    },
+    "processes": [
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 56803328,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.136,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75907072
+    },
+    "processes": [
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.208,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75907072
+    },
+    "processes": [
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.274,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 78004224
+    },
+    "processes": [
+      {
+        "pid": 94738,
+        "ppid": 94735,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./dist/esm/classes/main.d.ts ./dist/cjs/classes"
+      },
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.344,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 78004224
+    },
+    "processes": [
+      {
+        "pid": 94738,
+        "ppid": 94735,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./dist/esm/classes/main.d.ts ./dist/cjs/classes"
+      },
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.419,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 78004224
+    },
+    "processes": [
+      {
+        "pid": 94738,
+        "ppid": 94735,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "/usr/bin/env node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./dist/esm/classes/main.d.ts ./dist/cjs/classes"
+      },
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.486,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 78004224
+    },
+    "processes": [
+      {
+        "pid": 94708,
+        "ppid": 94180,
+        "rss": 73760768,
+        "kind": "tools",
+        "command": "npm run copy:main:type"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2113536,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94743,
+        "ppid": 94735,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./dist/esm/classes/main-worker.d.ts ./dist/cjs/classes"
+      },
+      {
+        "pid": 94735,
+        "ppid": 94708,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.553,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 33800192
+    },
+    "processes": [
+      {
+        "pid": 94744,
+        "ppid": 94180,
+        "rss": 31670272,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.623,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 76054528
+    },
+    "processes": [
+      {
+        "pid": 94771,
+        "ppid": 94744,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94744,
+        "ppid": 94180,
+        "rss": 73891840,
+        "kind": "tools",
+        "command": "npm run clean:temp:files"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.694,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 76054528
+    },
+    "processes": [
+      {
+        "pid": 94771,
+        "ppid": 94744,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94744,
+        "ppid": 94180,
+        "rss": 73891840,
+        "kind": "tools",
+        "command": "npm run clean:temp:files"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.764,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 3276800
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94774,
+        "ppid": 94180,
+        "rss": 1146880,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/npm run copy:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.827,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75694080
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94774,
+        "ppid": 94180,
+        "rss": 73564160,
+        "kind": "tools",
+        "command": "npm run copy:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.898,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75726848
+    },
+    "processes": [
+      {
+        "pid": 94802,
+        "ppid": 94774,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/commands/*.lua\" ./dist/cjs/commands && cpx \"./src/commands/*.lua\" ./dist/esm/commands"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94774,
+        "ppid": 94180,
+        "rss": 73564160,
+        "kind": "tools",
+        "command": "npm run copy:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 6.969,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 137166848
+    },
+    "processes": [
+      {
+        "pid": 94802,
+        "ppid": 94774,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/commands/*.lua\" ./dist/cjs/commands && cpx \"./src/commands/*.lua\" ./dist/esm/commands"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94804,
+        "ppid": 94802,
+        "rss": 59375616,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94774,
+        "ppid": 94180,
+        "rss": 73564160,
+        "kind": "tools",
+        "command": "npm run copy:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.036,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 6225920
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94807,
+        "ppid": 94180,
+        "rss": 4096000,
+        "kind": "tools",
+        "command": "npm"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.103,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75972608
+    },
+    "processes": [
+      {
+        "pid": 94834,
+        "ppid": 94807,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94807,
+        "ppid": 94180,
+        "rss": 73809920,
+        "kind": "tools",
+        "command": "npm run copy:includes:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.17,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75972608
+    },
+    "processes": [
+      {
+        "pid": 94834,
+        "ppid": 94807,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94807,
+        "ppid": 94180,
+        "rss": 73809920,
+        "kind": "tools",
+        "command": "npm run copy:includes:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.241,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 125894656
+    },
+    "processes": [
+      {
+        "pid": 94834,
+        "ppid": 94807,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94837,
+        "ppid": 94834,
+        "rss": 47857664,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./src/commands/includes/*.lua ./dist/cjs/commands/includes"
+      },
+      {
+        "pid": 94807,
+        "ppid": 94180,
+        "rss": 73809920,
+        "kind": "tools",
+        "command": "npm run copy:includes:lua"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.313,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 137936896
+    },
+    "processes": [
+      {
+        "pid": 94839,
+        "ppid": 94834,
+        "rss": 59899904,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94834,
+        "ppid": 94807,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "(bash)"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94807,
+        "ppid": 94180,
+        "rss": 73809920,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.378,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 71237632
+    },
+    "processes": [
+      {
+        "pid": 94841,
+        "ppid": 94180,
+        "rss": 69107712,
+        "kind": "tools",
+        "command": "npm run copy:sql"
+      },
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.444,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 75808768
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94868,
+        "ppid": 94841,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands"
+      },
+      {
+        "pid": 94841,
+        "ppid": 94180,
+        "rss": 73646080,
+        "kind": "tools",
+        "command": "npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.515,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 77905920
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94868,
+        "ppid": 94841,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands"
+      },
+      {
+        "pid": 94870,
+        "ppid": 94868,
+        "rss": 32768,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./src/postgres/migrations/*.sql ./dist/cjs/postgres/migrations"
+      },
+      {
+        "pid": 94841,
+        "ppid": 94180,
+        "rss": 73646080,
+        "kind": "tools",
+        "command": "npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.588,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 126795776
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94868,
+        "ppid": 94841,
+        "rss": 2097152,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands"
+      },
+      {
+        "pid": 94872,
+        "ppid": 94868,
+        "rss": 48922624,
+        "kind": "tools",
+        "command": "node /private/tmp/handwork-bullmq-G7VJT5/grade-5-opencode/repo/node_modules/.bin/cpx ./src/postgres/migrations/*.sql ./dist/esm/postgres/migrations"
+      },
+      {
+        "pid": 94841,
+        "ppid": 94180,
+        "rss": 73646080,
+        "kind": "tools",
+        "command": "npm run copy:sql"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.653,
+    "totals": {
+      "harness": 73613312,
+      "tests": 0,
+      "tools": 137560064
+    },
+    "processes": [
+      {
+        "pid": 94180,
+        "ppid": 94159,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql"
+      },
+      {
+        "pid": 94868,
+        "ppid": 94841,
+        "rss": 2129920,
+        "kind": "tools",
+        "command": "sh -c cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands"
+      },
+      {
+        "pid": 94841,
+        "ppid": 94180,
+        "rss": 73646080,
+        "kind": "tools",
+        "command": "npm run copy:sql"
+      },
+      {
+        "pid": 94874,
+        "ppid": 94868,
+        "rss": 59654144,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 73613312,
+        "kind": "harness",
+        "command": "npm run build"
+      }
+    ]
+  },
+  {
+    "seconds": 7.718,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 94159,
+        "ppid": 80304,
+        "rss": 0,
+        "kind": "harness",
+        "command": "<defunct>"
+      }
+    ]
+  }
+]
