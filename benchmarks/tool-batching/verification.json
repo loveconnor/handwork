@@ -1,0 +1,49 @@
+[
+  {
+    "check": "read-file",
+    "command": [
+      "zig",
+      "build",
+      "test",
+      "-Dtest-filter=read_file",
+      "--summary",
+      "all"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "prompt",
+    "command": [
+      "zig",
+      "build",
+      "test",
+      "-Dtest-filter=provider_system_prompt",
+      "--summary",
+      "all"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "release",
+    "command": [
+      "zig",
+      "build",
+      "-Doptimize=ReleaseFast",
+      "--prefix",
+      "/tmp/handwork-batching-final"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "grep",
+    "command": [
+      "zig",
+      "build",
+      "test",
+      "-Dtest-filter=grep",
+      "--summary",
+      "all"
+    ],
+    "exit_code": 0
+  }
+]

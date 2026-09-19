@@ -1,0 +1,180 @@
+1789775675295 [agent] event=prompt_start turn_id=1 prompt_bytes=1324 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789775675820 [agent] step start step=1 limit=0 messages=8
+1789775675820 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=8
+1789775675820 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=8
+1789775675820 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775675820 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+● Loading skill[0m
+1789775679599 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789775679599 [agent] step completion step=1 content_bytes=150 tool_calls=1 finish_reason=tool-calls
+1789775679599 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=150 tool_call_count=1 finish_reason=tool-calls
+Loading skill unslop
+1789775679600 [agent] step start step=2 limit=0 messages=10
+1789775679600 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=10
+1789775679600 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=10
+1789775679600 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775679600 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Matching[0m
+1789775684828 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789775684828 [agent] step completion step=2 content_bytes=0 tool_calls=2 finish_reason=tool-calls
+1789775684828 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=2 finish_reason=tool-calls
+Matching **/*
+Running git status --short
+/dev/fd/11:25: command not found: compdef
+1789775685043 [agent] step start step=3 limit=0 messages=13
+1789775685043 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789775685043 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789775685043 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775685043 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+1789775695991 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789775695991 [agent] step completion step=3 content_bytes=0 tool_calls=9 finish_reason=tool-calls
+1789775695991 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=9 finish_reason=tool-calls
+Reading package.json
+Reading src/services/project-service.ts
+Reading src/services/organization-service.ts
+Reading src/auth/membership.ts
+Reading src/cache/keys.ts
+Reading src/cache/project-cache.ts
+Reading src/routes/projects.ts
+Reading src/routes/organizations.ts
+Reading tests/projects.test.ts
+1789775695993 [agent] step start step=4 limit=0 messages=23
+1789775695993 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=23
+1789775695994 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=23
+1789775695994 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775695994 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+1789775702870 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789775702870 [agent] step completion step=4 content_bytes=0 tool_calls=8 finish_reason=tool-calls
+1789775702870 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=8 finish_reason=tool-calls
+Reading src/app.ts
+Reading src/seed.ts
+Reading src/db/project-repository.ts
+Reading src/db/database.ts
+Reading src/types.ts
+Reading src/http/list-options.ts
+Reading src/db/membership-repository.ts
+Reading src/http/router.ts
+1789775702872 [agent] step start step=5 limit=0 messages=32
+1789775702872 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=32
+1789775702872 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=32
+1789775702872 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775702872 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+1789775715012 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789775715012 [agent] step completion step=5 content_bytes=291 tool_calls=2 finish_reason=tool-calls
+1789775715012 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=291 tool_call_count=2 finish_reason=tool-calls
+Editing src/cache/keys.ts
+Editing src/services/project-service.ts
+1789775715014 [agent] step start step=6 limit=0 messages=35
+1789775715014 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=35
+1789775715014 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=35
+1789775715014 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775715015 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+1789775747637 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789775747637 [agent] step completion step=6 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789775747637 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/project-isolation.test.ts
+1789775747639 [agent] step start step=7 limit=0 messages=37
+1789775747639 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=37
+1789775747639 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=37
+1789775747639 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775747639 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+1789775751575 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=5 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789775751575 [agent] step completion step=7 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789775751575 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm test && git diff --check && git diff --stat && git diff -- src/cache/keys.ts src/services/project-service.ts && g...
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.840625ms)
+✔ organizations scoped to user (0.145ms)
+✔ logout revokes session (0.112208ms)
+✔ nonmembers cannot read, update, or list projects, including cached lists (6.578917ms)
+✔ organization switching isolates all list variants and updates invalidate only the owning organization (1.058375ms)
+✔ authenticated detail (0.606416ms)
+✔ authenticated list (5.249083ms)
+✔ update then read (0.152084ms)
+✔ anonymous request rejected (0.346916ms)
+✔ invalid update rejected (0.07375ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.858459
+ src/cache/keys.ts               | 3 ++-
+ src/services/project-service.ts | 5 ++++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+diff --git a/src/cache/keys.ts b/src/cache/keys.ts
+index 08f7c8d..493af4b 100644
+--- a/src/cache/keys.ts
++++ b/src/cache/keys.ts
+@@ -1,5 +1,6 @@
+ import type { ListOptions } from '../types.ts';
++export function projectListPrefix(organizationId:string):string { return `projects:list:${encodeURIComponent(organizationId)}:`; }
+ export function projectListKey(organizationId:string,options:ListOptions):string {
+-  return `projects:list:${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
++  return `${projectListPrefix(organizationId)}${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
+ }
+ export function projectDetailKey(projectId:string):string { return `projects:detail:${projectId}`; }
+diff --git a/src/services/project-service.ts b/src/services/project-service.ts
+index e7699bc..c03b656 100644
+--- a/src/services/project-service.ts
++++ b/src/services/project-service.ts
+@@ -3,13 +3,14 @@ import type { Cache } from '../cache/project-cache.ts';
+ import type { ListOptions } from '../types.ts';
+ import { projectRepository } from '../db/project-repository.ts';
+ import { requireMembership } from '../auth/membership.ts';
+-import { projectListKey, projectDetailKey } from '../cache/keys.ts';
++import { projectListKey, projectListPrefix, projectDetailKey } from '../cache/keys.ts';
+ import { HttpError } from '../http/response.ts';
+ export function projectService(db:Database,cache:Cache) {
+   const projects=projectRepository(db);
+   function detail(userId:string,projectId:string) {
+     const project=projects.find(projectId);
+     if(!project)throw new HttpError(404,'not_found');
++    requireMembership(db,userId,project.organizationId);
+     return project;
+   }
+   return {
+@@ -26,6 +27,8 @@ export function projectService(db:Database,cache:Cache) {
+       if(!body||typeof body!=='object'||typeof (body as any).name!=='string'||!(body as any).name.trim())throw new HttpError(400,'invalid_body');
+       const updated=projects.update(projectId,(body as any).name.trim())!;
+       cache.delete(projectDetailKey(projectId));
++      const prefix=projectListPrefix(updated.organizationId);
++      for(const key of cache.keys())if(key.startsWith(prefix))cache.delete(key);
+       return updated;
+     },
+   };
+ M src/cache/keys.ts
+ M src/services/project-service.ts
+?? tests/project-isolation.test.ts
+1789775751933 [agent] step start step=8 limit=0 messages=39
+1789775751933 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=39
+1789775751933 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=39
+1789775751933 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789775751933 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+1789775758058 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789775758058 [agent] step completion step=8 content_bytes=426 tool_calls=0 finish_reason=stop
+1789775758058 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=426 tool_call_count=0 finish_reason=stop
+1789775758059 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

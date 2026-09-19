@@ -1,0 +1,42 @@
+{
+  "src/builtins/system_prompt.md": {
+    "baseline": "034834a41f7c50a30237664ee011fe474cc5ff89032418c7313e6a54cbcf0727",
+    "optimized": "3f94fca8691bdcdb332c3fda62bff74917e566ac6e61c495ea9a7f01ad3a1a7f"
+  },
+  "src/builtins/tools.zig": {
+    "baseline": "5d0aa5cab2d91b4a3046dd5a9845a4a9db2ce342f2af479e0d34808eff85790d",
+    "optimized": "09ccc25125b8a0d562c0d55d5528e15aa7c239cda83e8555a3a03d4c8507f6db"
+  },
+  "src/builtins/context.zig": {
+    "baseline": "d080913ca7000696ff9f88f8dd8519d3870b89f0dfa0741711c9fb41922e7d05",
+    "optimized": "4984e6ad9e1079740ac936c132c6dfb09a0014681a9ebb6dec8fb531e42b9b30"
+  },
+  "src/core/permissions/permissions.zig": {
+    "baseline": "64eee6b4e92dc062cac5601b984cfb64396c95222d6753449efa05e673d8c9b4",
+    "optimized": "78b8c2aeda7292ff94d9354ba7e4ad3d11bad7ce65082b8fdfab3d1b5a004655"
+  },
+  "src/core/tooling/tool_admission.zig": {
+    "baseline": "11449da6099cb680385bfb52fe745e8e2029bd3e18e21fe73ed9f0c3b97e39c5",
+    "optimized": "05de7608d6aeafd35a89e25fd6b199508ff50acc977a1948d5100dafb7b3731c"
+  },
+  "src/core/tooling/tool_presentation.zig": {
+    "baseline": "26d954250f78afdd84f1f77e0137fbac2111c8d5059215b7a2e0f54f0271b253",
+    "optimized": "15bdb1018da21a268f3cfde5c6a4bc9b7e27d0f68329c26192eb4d97579a1833"
+  },
+  "src/core/workspace/grep_search.zig": {
+    "baseline": "f465f1fc1bd23a88789c1842cb1a8f224e2402fa286569ca4bd36a96342c800b",
+    "optimized": "5a720feb0562e19bb583de7196062c141be0b305c4758808c5b30fe5615bbaf2"
+  },
+  "src/tools/filesystem/grep_files.zig": {
+    "baseline": "0379fff5aea122d7956f20437ed1c5af635e095017865075bcbf6f6df6538b22",
+    "optimized": "c5cb24fa7e74890aab40273fc46a6e0824400880762dd8ba908809a6b768cf87"
+  },
+  "src/tools/filesystem/read_file.zig": {
+    "baseline": "8d45f899b3f9eea16c65c4fd55b46135338341f739391422a68276e94fd982d6",
+    "optimized": "621e9f2edc11464b902a9ad7e6ab73f45480362909b69eb320133032c667707e"
+  },
+  "src/core/agent/runtime/orchestrator.zig": {
+    "baseline": "40c2fa2c2ff2c34c78486eaabf0e09dcaed8e9646bfb734986839e594b2a9218",
+    "optimized": "4c6f75a5273a1848e2cb5fe877e3c6f4a55b648346304ff44622444e45dc2a0d"
+  }
+}

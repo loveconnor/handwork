@@ -1,0 +1,48 @@
+{
+  "created": "2026-09-18T19:22:00-0400",
+  "base": "/private/tmp/handwork-batching-025sltl2",
+  "variants": {
+    "baseline": {
+      "path": "/private/tmp/handwork-batching-025sltl2/bin/baseline",
+      "sha256": "27ae6c73cfbb47bf0d3ebab8e09a804341068c99e3386d1c32f23fcd16751b35"
+    },
+    "optimized": {
+      "path": "/private/tmp/handwork-batching-025sltl2/bin/optimized",
+      "sha256": "ed7f1cb757f0890a06f840554d41787561d1d4aa5b02b3a02c6c021de3dcab19"
+    }
+  },
+  "tasks": [
+    {
+      "base": "/private/tmp/handwork-batching-025sltl2",
+      "private": "/private/tmp/handwork-batching-025sltl2/private",
+      "fixture": "/private/tmp/handwork-batching-025sltl2/private/pagination/fixture",
+      "commit": "aeaee55e36040433b9b6191fce71bb46e2ac3a8f",
+      "task": "pagination",
+      "prompt": "Fix the reported bug in this repository. Inspect the relevant code, make the smallest appropriate change, and run the existing tests. Do not modify tests or install dependencies. Summarize your changes and verification.\n\nBug report: Pagination loses the last item at page boundaries. Fix paginate in src/pagination.ts so that each one-based page returns all of its items, including a final partial page, without changing the public API.",
+      "verifier": "/private/tmp/handwork-batching-025sltl2/private/pagination/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-batching-025sltl2",
+      "private": "/private/tmp/handwork-batching-025sltl2/private",
+      "fixture": "/private/tmp/handwork-batching-025sltl2/private/search/fixture",
+      "commit": "6eaafc39e996e3c72e137914302517115a559b89",
+      "task": "search",
+      "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+      "verifier": "/private/tmp/handwork-batching-025sltl2/private/search/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-batching-025sltl2",
+      "private": "/private/tmp/handwork-batching-025sltl2/private",
+      "fixture": "/private/tmp/handwork-batching-025sltl2/private/tenant-cache/fixture",
+      "commit": "50134b5a291c06cd7587d06923a9f29648d87d89",
+      "task": "tenant-cache",
+      "prompt": "Fix the reported organization-isolation bugs in this repository.\n\nBug report:\n- A signed-in user can sometimes read or update a project belonging\n  to an organization they do not belong to.\n- After switching organizations, the project list sometimes shows\n  projects from the previous organization.\n- After updating a project, its organization's list can remain stale.\n\nRequired behavior:\n- Project reads and updates must require membership in the project's\n  owning organization.\n- Organization project lists must require membership in the requested\n  organization.\n- Unauthorized requests must not return project data or modify storage.\n- Project-list caching must isolate organizations and preserve all\n  existing pagination and sorting parameters.\n- A successful update must invalidate every cached list variant for\n  the affected organization.\n- Unrelated organizations' cached lists must remain usable.\n- Authorization must still be checked when serving cached results.\n- Preserve existing API signatures, response shapes, status-code\n  conventions, and ordinary authorized behavior.\n- Keep caching enabled.\n\nInspect the relevant code, implement the fix, and run the existing\ntests. Do not modify existing tests or install dependencies.\nYou may add new tests.\n\nSummarize the changes and the verification you performed.",
+      "verifier": "/private/tmp/handwork-batching-025sltl2/private/tenant-cache/verify.mjs"
+    }
+  ],
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "attempts": 3,
+  "build": "ReleaseFast",
+  "git_head": "5bdba26182364cf6cabcb86173fbca2e45ac6616"
+}

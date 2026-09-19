@@ -1,0 +1,1220 @@
+[
+  {
+    "duration_s": 28.779,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26378240,
+      "tests": 134561792,
+      "tools": 80560128
+    },
+    "samples": 408,
+    "input_tokens": 38240,
+    "output_tokens": 489,
+    "cached_input_tokens": 0,
+    "tool_calls": 9,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 9,
+    "task": "pagination",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-1-baseline/repo",
+    "log": "pagination-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 25.171,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25280512,
+      "tests": 135593984,
+      "tools": 77938688
+    },
+    "samples": 355,
+    "input_tokens": 37161,
+    "output_tokens": 452,
+    "cached_input_tokens": 0,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-1-optimized/repo",
+    "log": "pagination-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 42.544,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26329088,
+      "tests": 191512576,
+      "tools": 83361792
+    },
+    "samples": 598,
+    "input_tokens": 42667,
+    "output_tokens": 994,
+    "cached_input_tokens": 0,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 10,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "search",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-1-optimized/repo",
+    "log": "search-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 43.445,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 27361280,
+      "tests": 216432640,
+      "tools": 81068032
+    },
+    "samples": 612,
+    "input_tokens": 43102,
+    "output_tokens": 1044,
+    "cached_input_tokens": 2432,
+    "tool_calls": 11,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 9,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "search",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-1-baseline/repo",
+    "log": "search-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 91.599,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30539776,
+      "tests": 399687680,
+      "tools": 72286208
+    },
+    "samples": 1278,
+    "input_tokens": 74856,
+    "output_tokens": 2327,
+    "cached_input_tokens": 9728,
+    "tool_calls": 24,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 19,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 24,
+    "task": "tenant-cache",
+    "variant": "baseline",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-1-baseline/repo",
+    "log": "tenant-cache-1-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 81.406,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 33259520,
+      "tests": 356122624,
+      "tools": 76791808
+    },
+    "samples": 1149,
+    "input_tokens": 85341,
+    "output_tokens": 2056,
+    "cached_input_tokens": 26624,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 25,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 24,
+    "task": "tenant-cache",
+    "variant": "optimized",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-1-optimized/repo",
+    "log": "tenant-cache-1-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 28.629,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26755072,
+      "tests": 135462912,
+      "tools": 75120640
+    },
+    "samples": 404,
+    "input_tokens": 37247,
+    "output_tokens": 537,
+    "cached_input_tokens": 9088,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 17,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-2-optimized/repo",
+    "log": "pagination-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 25.728,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 23920640,
+      "tests": 210042880,
+      "tools": 70451200
+    },
+    "samples": 364,
+    "input_tokens": 31569,
+    "output_tokens": 548,
+    "cached_input_tokens": 7296,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 8,
+    "task": "pagination",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-2-baseline/repo",
+    "log": "pagination-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 42.839,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25935872,
+      "tests": 212729856,
+      "tools": 81395712
+    },
+    "samples": 606,
+    "input_tokens": 43169,
+    "output_tokens": 1064,
+    "cached_input_tokens": 4864,
+    "tool_calls": 11,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 11,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "search",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-2-baseline/repo",
+    "log": "search-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 43.762,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 24641536,
+      "tests": 166002688,
+      "tools": 81461248
+    },
+    "samples": 613,
+    "input_tokens": 42789,
+    "output_tokens": 1074,
+    "cached_input_tokens": 7296,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 11,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "search",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-2-optimized/repo",
+    "log": "search-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 82.264,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 31899648,
+      "tests": 344211456,
+      "tools": 83230720
+    },
+    "samples": 1159,
+    "input_tokens": 85107,
+    "output_tokens": 1971,
+    "cached_input_tokens": 4864,
+    "tool_calls": 8,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 16,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 24,
+    "task": "tenant-cache",
+    "variant": "optimized",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-2-optimized/repo",
+    "log": "tenant-cache-2-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 92.725,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 33832960,
+      "tests": 387334144,
+      "tools": 77414400
+    },
+    "samples": 1295,
+    "input_tokens": 85540,
+    "output_tokens": 2366,
+    "cached_input_tokens": 14592,
+    "tool_calls": 28,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 10,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 9,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 28,
+    "task": "tenant-cache",
+    "variant": "baseline",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-2-baseline/repo",
+    "log": "tenant-cache-2-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 29.243,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25001984,
+      "tests": 135380992,
+      "tools": 83771392
+    },
+    "samples": 407,
+    "input_tokens": 32015,
+    "output_tokens": 521,
+    "cached_input_tokens": 14080,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 5,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 10,
+    "task": "pagination",
+    "variant": "baseline",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-3-baseline/repo",
+    "log": "pagination-3-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 27.201,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 25575424,
+      "tests": 207699968,
+      "tools": 74973184
+    },
+    "samples": 379,
+    "input_tokens": 37196,
+    "output_tokens": 459,
+    "cached_input_tokens": 15744,
+    "tool_calls": 5,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 7,
+    "task": "pagination",
+    "variant": "optimized",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/pagination-3-optimized/repo",
+    "log": "pagination-3-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 46.3,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 27656192,
+      "tests": 144490496,
+      "tools": 79020032
+    },
+    "samples": 646,
+    "input_tokens": 49214,
+    "output_tokens": 1000,
+    "cached_input_tokens": 11648,
+    "tool_calls": 6,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 11,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 7,
+    "read_batches": 1,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "search",
+    "variant": "optimized",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-3-optimized/repo",
+    "log": "search-3-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 46.176,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 26394624,
+      "tests": 134021120,
+      "tools": 76988416
+    },
+    "samples": 648,
+    "input_tokens": 43269,
+    "output_tokens": 1100,
+    "cached_input_tokens": 7296,
+    "tool_calls": 11,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 10,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 6,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 11,
+    "task": "search",
+    "variant": "baseline",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/search-3-baseline/repo",
+    "log": "search-3-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 83.471,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 30326784,
+      "tests": 355188736,
+      "tools": 83247104
+    },
+    "samples": 1169,
+    "input_tokens": 73584,
+    "output_tokens": 2185,
+    "cached_input_tokens": 23040,
+    "tool_calls": 23,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 30,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 8,
+    "read_batches": 0,
+    "native_operations_excluding_shell_contents": 23,
+    "task": "tenant-cache",
+    "variant": "baseline",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-3-baseline/repo",
+    "log": "tenant-cache-3-baseline",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 90.316,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 35225600,
+      "tests": 222068736,
+      "tools": 76693504
+    },
+    "samples": 1265,
+    "input_tokens": 100318,
+    "output_tokens": 2055,
+    "cached_input_tokens": 21888,
+    "tool_calls": 10,
+    "completed": true,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 15,
+    "reported_model": "gpt-6-astra",
+    "model_requests": 11,
+    "read_batches": 2,
+    "native_operations_excluding_shell_contents": 27,
+    "task": "tenant-cache",
+    "variant": "optimized",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-batching-025sltl2/tenant-cache-3-optimized/repo",
+    "log": "tenant-cache-3-optimized",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "success": true
+  }
+]

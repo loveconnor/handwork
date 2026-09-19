@@ -1,0 +1,129 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5472256,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 99620,
+        "ppid": 85257,
+        "rss": 5472256,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.07,
+    "totals": {
+      "harness": 70549504,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 99620,
+        "ppid": 85257,
+        "rss": 70549504,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.138,
+    "totals": {
+      "harness": 73793536,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 99641,
+        "ppid": 99620,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 99620,
+        "ppid": 85257,
+        "rss": 73793536,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.208,
+    "totals": {
+      "harness": 73793536,
+      "tests": 45498368,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 99641,
+        "ppid": 99620,
+        "rss": 45498368,
+        "kind": "tests",
+        "command": "node --test tests/account.test.ts tests/project-isolation.test.ts tests/projects.test.ts"
+      },
+      {
+        "pid": 99620,
+        "ppid": 85257,
+        "rss": 73793536,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.276,
+    "totals": {
+      "harness": 73793536,
+      "tests": 285147136,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 99620,
+        "ppid": 85257,
+        "rss": 73793536,
+        "kind": "harness",
+        "command": "npm test"
+      },
+      {
+        "pid": 99641,
+        "ppid": 99620,
+        "rss": 53166080,
+        "kind": "tests",
+        "command": "node --test tests/account.test.ts tests/project-isolation.test.ts tests/projects.test.ts"
+      },
+      {
+        "pid": 99644,
+        "ppid": 99641,
+        "rss": 76972032,
+        "kind": "tests",
+        "command": "(node)"
+      },
+      {
+        "pid": 99645,
+        "ppid": 99641,
+        "rss": 77545472,
+        "kind": "tests",
+        "command": "(node)"
+      },
+      {
+        "pid": 99646,
+        "ppid": 99641,
+        "rss": 77463552,
+        "kind": "tests",
+        "command": "(node)"
+      }
+    ]
+  }
+]

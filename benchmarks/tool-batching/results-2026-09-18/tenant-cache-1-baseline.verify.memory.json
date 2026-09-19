@@ -1,0 +1,36 @@
+[
+  {
+    "seconds": 0.001,
+    "totals": {
+      "harness": 6094848,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 72359,
+        "ppid": 68222,
+        "rss": 6094848,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/node /private/tmp/handwork-batching-025sltl2/private/tenant-cache/verify.mjs /private/tmp/handwork-batching-025sltl2/tenant-cache-1-baseline/repo"
+      }
+    ]
+  },
+  {
+    "seconds": 0.065,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 72359,
+        "ppid": 68222,
+        "rss": 0,
+        "kind": "harness",
+        "command": "<defunct>"
+      }
+    ]
+  }
+]

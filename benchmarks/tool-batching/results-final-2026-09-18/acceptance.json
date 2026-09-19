@@ -1,0 +1,20 @@
+{
+  "pagination": {
+    "correctness_pass": true,
+    "calls_lower": true,
+    "input_no_increase": true,
+    "output_no_increase": true
+  },
+  "search": {
+    "correctness_pass": true,
+    "calls_lower": true,
+    "input_no_increase": false,
+    "output_no_increase": false
+  },
+  "tenant-cache": {
+    "correctness_pass": true,
+    "calls_lower": true,
+    "input_no_increase": true,
+    "output_no_increase": true
+  }
+}

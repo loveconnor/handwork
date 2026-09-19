@@ -1,0 +1,68 @@
+{
+  "pagination": {
+    "baseline": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 9.333333333333334,
+      "mean_input_tokens": 38204,
+      "mean_output_tokens": 509,
+      "mean_model_requests": 6,
+      "median_success_seconds": 29.343,
+      "median_peak_mib": 24.625
+    },
+    "optimized": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 5.666666666666667,
+      "mean_input_tokens": 33596.666666666664,
+      "mean_output_tokens": 496.3333333333333,
+      "mean_model_requests": 5.333333333333333,
+      "median_success_seconds": 28.089,
+      "median_peak_mib": 23.109375
+    }
+  },
+  "search": {
+    "baseline": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 11,
+      "mean_input_tokens": 43163.666666666664,
+      "mean_output_tokens": 1072,
+      "mean_model_requests": 6,
+      "median_success_seconds": 45.81,
+      "median_peak_mib": 25.484375
+    },
+    "optimized": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 7.666666666666667,
+      "mean_input_tokens": 45515.333333333336,
+      "mean_output_tokens": 1077.6666666666667,
+      "mean_model_requests": 6.333333333333333,
+      "median_success_seconds": 47.177,
+      "median_peak_mib": 25.09375
+    }
+  },
+  "tenant-cache": {
+    "baseline": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 25.333333333333332,
+      "mean_input_tokens": 77705.33333333333,
+      "mean_output_tokens": 2143,
+      "mean_model_requests": 8.333333333333334,
+      "median_success_seconds": 82.851,
+      "median_peak_mib": 30.328125
+    },
+    "optimized": {
+      "attempts": 3,
+      "successes": 3,
+      "mean_tool_calls": 9.333333333333334,
+      "mean_input_tokens": 67587.33333333333,
+      "mean_output_tokens": 2036,
+      "mean_model_requests": 7.333333333333333,
+      "median_success_seconds": 79.564,
+      "median_peak_mib": 27.546875
+    }
+  }
+}

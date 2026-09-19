@@ -1,0 +1,129 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5013504,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 73727,
+        "ppid": 68222,
+        "rss": 5013504,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.071,
+    "totals": {
+      "harness": 70729728,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 73727,
+        "ppid": 68222,
+        "rss": 70729728,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.138,
+    "totals": {
+      "harness": 73826304,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 73748,
+        "ppid": 73727,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 73727,
+        "ppid": 68222,
+        "rss": 73826304,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.208,
+    "totals": {
+      "harness": 73826304,
+      "tests": 50970624,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 73748,
+        "ppid": 73727,
+        "rss": 50970624,
+        "kind": "tests",
+        "command": "node --test tests/account.test.ts tests/project-isolation.test.ts tests/projects.test.ts"
+      },
+      {
+        "pid": 73727,
+        "ppid": 68222,
+        "rss": 73826304,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.277,
+    "totals": {
+      "harness": 73826304,
+      "tests": 0,
+      "tools": 302071808
+    },
+    "processes": [
+      {
+        "pid": 73748,
+        "ppid": 73727,
+        "rss": 53133312,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 73751,
+        "ppid": 73748,
+        "rss": 81936384,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 73752,
+        "ppid": 73748,
+        "rss": 82313216,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 73753,
+        "ppid": 73748,
+        "rss": 84688896,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 73727,
+        "ppid": 68222,
+        "rss": 73826304,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  }
+]

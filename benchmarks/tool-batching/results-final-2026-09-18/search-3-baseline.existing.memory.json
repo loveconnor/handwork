@@ -1,0 +1,101 @@
+[
+  {
+    "seconds": 0.002,
+    "totals": {
+      "harness": 5636096,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 98325,
+        "ppid": 85257,
+        "rss": 5636096,
+        "kind": "harness",
+        "command": "node /Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin/npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.073,
+    "totals": {
+      "harness": 72679424,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 98325,
+        "ppid": 85257,
+        "rss": 72679424,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.141,
+    "totals": {
+      "harness": 73547776,
+      "tests": 32768,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 98346,
+        "ppid": 98325,
+        "rss": 32768,
+        "kind": "tests",
+        "command": "sh -c node --test tests/*.test.ts"
+      },
+      {
+        "pid": 98325,
+        "ppid": 85257,
+        "rss": 73547776,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.208,
+    "totals": {
+      "harness": 73547776,
+      "tests": 51052544,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 98346,
+        "ppid": 98325,
+        "rss": 51052544,
+        "kind": "tests",
+        "command": "node --test tests/search.test.ts"
+      },
+      {
+        "pid": 98325,
+        "ppid": 85257,
+        "rss": 73547776,
+        "kind": "harness",
+        "command": "npm test"
+      }
+    ]
+  },
+  {
+    "seconds": 0.273,
+    "totals": {
+      "harness": 0,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 98325,
+        "ppid": 85257,
+        "rss": 0,
+        "kind": "harness",
+        "command": "(node)"
+      }
+    ]
+  }
+]

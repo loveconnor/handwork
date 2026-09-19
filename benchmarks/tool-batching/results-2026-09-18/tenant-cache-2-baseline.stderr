@@ -1,0 +1,228 @@
+1789774262298 [agent] event=prompt_start turn_id=1 prompt_bytes=1324 model=gpt-6-astra
+[notice] skill discovery warning: inventory incomplete because root "/Users/connorlove/.codex/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; inventory incomplete because root "/Users/connorlove/.agents/skills" could not be read, so an unknown number of skills may be missing; fix access to the root and reload skills; relaunch with HANDWORK_TRACE=1 to write a trace log
+1789774262894 [agent] step start step=1 limit=0 messages=8
+1789774262894 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=8
+1789774262894 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6-astra messages=8
+1789774262894 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774262895 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6-astra
+● Loading skill[0m
+1789774266844 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789774266844 [agent] step completion step=1 content_bytes=158 tool_calls=1 finish_reason=tool-calls
+1789774266844 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=158 tool_call_count=1 finish_reason=tool-calls
+Loading skill unslop
+1789774266848 [agent] step start step=2 limit=0 messages=10
+1789774266848 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=10
+1789774266848 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6-astra messages=10
+1789774266848 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774266848 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6-astra
+● Matching[0m
+1789774270390 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774270390 [agent] step completion step=2 content_bytes=0 tool_calls=2 finish_reason=tool-calls
+1789774270390 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=2 finish_reason=tool-calls
+Running pwd; git status --short; ls -a
+/dev/fd/11:25: command not found: compdef
+/private/tmp/handwork-batching-025sltl2/tenant-cache-2-baseline/repo
+.
+..
+.git
+.gitignore
+.handwork
+README.md
+package.json
+src
+tests
+Matching **/AGENTS.md
+1789774270782 [agent] step start step=3 limit=0 messages=13
+1789774270782 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1789774270782 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6-astra messages=13
+1789774270782 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774270782 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6-astra
+● Reading[0m
+● Reading[0m
+● Matching[0m
+● Matching[0m
+1789774275359 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774275359 [agent] step completion step=3 content_bytes=0 tool_calls=4 finish_reason=tool-calls
+1789774275359 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=4 finish_reason=tool-calls
+Reading package.json
+Reading README.md
+Matching **/*
+Matching **/*
+1789774275361 [agent] step start step=4 limit=0 messages=18
+1789774275361 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=18
+1789774275361 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6-astra messages=18
+1789774275361 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774275361 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6-astra
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+1789774284034 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774284034 [agent] step completion step=4 content_bytes=0 tool_calls=10 finish_reason=tool-calls
+1789774284034 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=10 finish_reason=tool-calls
+Reading src/services/project-service.ts
+Reading src/routes/projects.ts
+Reading src/cache/keys.ts
+Reading src/cache/project-cache.ts
+Reading src/auth/membership.ts
+Reading src/db/project-repository.ts
+Reading tests/projects.test.ts
+Reading src/app.ts
+Reading src/types.ts
+Reading src/services/organization-service.ts
+1789774284036 [agent] step start step=5 limit=0 messages=29
+1789774284036 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=29
+1789774284036 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6-astra messages=29
+1789774284036 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774284037 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6-astra
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Reading[0m
+● Searching[0m
+1789774290898 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=1 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774290898 [agent] step completion step=5 content_bytes=0 tool_calls=7 finish_reason=tool-calls
+1789774290898 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=0 tool_call_count=7 finish_reason=tool-calls
+Reading src/seed.ts
+Reading src/db/database.ts
+Reading src/db/membership-repository.ts
+Reading src/http/router.ts
+Reading tests/account.test.ts
+Searching projectListKey
+Running npm test
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.712875ms)
+✔ organizations scoped to user (0.117208ms)
+✔ logout revokes session (0.098625ms)
+✔ authenticated detail (0.607584ms)
+✔ authenticated list (5.132041ms)
+✔ update then read (0.122334ms)
+✔ anonymous request rejected (0.352667ms)
+✔ invalid update rejected (0.066667ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.372291
+1789774291226 [agent] step start step=6 limit=0 messages=37
+1789774291226 [agent] event=step_begin turn_id=1 step_id=6 step_index=6 step_limit=0 provider_messages=37
+1789774291226 [agent] event=before_provider_preflight turn_id=1 step_id=6 model=gpt-6-astra messages=37
+1789774291226 [agent] event=vision_policy turn_id=1 step_id=6 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774291226 [agent] event=provider_admitted turn_id=1 step_id=6 model=gpt-6-astra
+1789774305979 [agent] event=tool_presentation_group turn_id=1 step_id=6 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=false
+1789774305979 [agent] step completion step=6 content_bytes=336 tool_calls=2 finish_reason=tool-calls
+1789774305979 [agent] event=assistant_completion turn_id=1 step_id=6 content_bytes=336 tool_call_count=2 finish_reason=tool-calls
+Editing src/cache/keys.ts
+Editing src/services/project-service.ts
+1789774305983 [agent] step start step=7 limit=0 messages=40
+1789774305983 [agent] event=step_begin turn_id=1 step_id=7 step_index=7 step_limit=0 provider_messages=40
+1789774305983 [agent] event=before_provider_preflight turn_id=1 step_id=7 model=gpt-6-astra messages=40
+1789774305983 [agent] event=vision_policy turn_id=1 step_id=7 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774305984 [agent] event=provider_admitted turn_id=1 step_id=7 model=gpt-6-astra
+1789774344427 [agent] event=tool_presentation_group turn_id=1 step_id=7 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774344427 [agent] step completion step=7 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789774344427 [agent] event=assistant_completion turn_id=1 step_id=7 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Writing tests/project-isolation.test.ts
+1789774344429 [agent] step start step=8 limit=0 messages=42
+1789774344429 [agent] event=step_begin turn_id=1 step_id=8 step_index=8 step_limit=0 provider_messages=42
+1789774344429 [agent] event=before_provider_preflight turn_id=1 step_id=8 model=gpt-6-astra messages=42
+1789774344429 [agent] event=vision_policy turn_id=1 step_id=8 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774344429 [agent] event=provider_admitted turn_id=1 step_id=8 model=gpt-6-astra
+1789774347954 [agent] event=tool_presentation_group turn_id=1 step_id=8 anchor_step_id=6 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1789774347954 [agent] step completion step=8 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1789774347954 [agent] event=assistant_completion turn_id=1 step_id=8 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+Running npm test; git diff --check; git diff --stat; git diff -- src/cache/keys.ts src/services/project-service.ts; git statu...
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.736625ms)
+✔ organizations scoped to user (0.135667ms)
+✔ logout revokes session (0.110167ms)
+✔ nonmembers cannot read, update, or list projects, even with spoofed ownership (6.419959ms)
+✔ cached lists still require current membership (0.164625ms)
+✔ organization and option variants stay isolated; updates invalidate only the owner (1.91175ms)
+✔ authenticated detail (0.563417ms)
+✔ authenticated list (5.011541ms)
+✔ update then read (0.124667ms)
+✔ anonymous request rejected (0.321542ms)
+✔ invalid update rejected (0.068791ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.512041
+ src/cache/keys.ts               | 5 ++++-
+ src/services/project-service.ts | 5 ++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+diff --git a/src/cache/keys.ts b/src/cache/keys.ts
+index 08f7c8d..ba76dc7 100644
+--- a/src/cache/keys.ts
++++ b/src/cache/keys.ts
+@@ -1,5 +1,8 @@
+ import type { ListOptions } from '../types.ts';
++export function projectListPrefix(organizationId:string):string {
++  return `projects:list:${JSON.stringify(organizationId)}:`;
++}
+ export function projectListKey(organizationId:string,options:ListOptions):string {
+-  return `projects:list:${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
++  return `${projectListPrefix(organizationId)}${options.page}:${options.pageSize}:${options.sort}:${options.direction}`;
+ }
+ export function projectDetailKey(projectId:string):string { return `projects:detail:${projectId}`; }
+diff --git a/src/services/project-service.ts b/src/services/project-service.ts
+index e7699bc..c03b656 100644
+--- a/src/services/project-service.ts
++++ b/src/services/project-service.ts
+@@ -3,13 +3,14 @@ import type { Cache } from '../cache/project-cache.ts';
+ import type { ListOptions } from '../types.ts';
+ import { projectRepository } from '../db/project-repository.ts';
+ import { requireMembership } from '../auth/membership.ts';
+-import { projectListKey, projectDetailKey } from '../cache/keys.ts';
++import { projectListKey, projectListPrefix, projectDetailKey } from '../cache/keys.ts';
+ import { HttpError } from '../http/response.ts';
+ export function projectService(db:Database,cache:Cache) {
+   const projects=projectRepository(db);
+   function detail(userId:string,projectId:string) {
+     const project=projects.find(projectId);
+     if(!project)throw new HttpError(404,'not_found');
++    requireMembership(db,userId,project.organizationId);
+     return project;
+   }
+   return {
+@@ -26,6 +27,8 @@ export function projectService(db:Database,cache:Cache) {
+       if(!body||typeof body!=='object'||typeof (body as any).name!=='string'||!(body as any).name.trim())throw new HttpError(400,'invalid_body');
+       const updated=projects.update(projectId,(body as any).name.trim())!;
+       cache.delete(projectDetailKey(projectId));
++      const prefix=projectListPrefix(updated.organizationId);
++      for(const key of cache.keys())if(key.startsWith(prefix))cache.delete(key);
+       return updated;
+     },
+   };
+ M src/cache/keys.ts
+ M src/services/project-service.ts
+?? tests/project-isolation.test.ts
+1789774348303 [agent] step start step=9 limit=0 messages=44
+1789774348303 [agent] event=step_begin turn_id=1 step_id=9 step_index=9 step_limit=0 provider_messages=44
+1789774348303 [agent] event=before_provider_preflight turn_id=1 step_id=9 model=gpt-6-astra messages=44
+1789774348303 [agent] event=vision_policy turn_id=1 step_id=9 model=gpt-6-astra image_support=native route=native mode=unavailable pending_images=0
+1789774348303 [agent] event=provider_admitted turn_id=1 step_id=9 model=gpt-6-astra
+1789774354935 [agent] event=tool_presentation_group turn_id=1 step_id=9 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1789774354935 [agent] step completion step=9 content_bytes=447 tool_calls=0 finish_reason=stop
+1789774354935 [agent] event=assistant_completion turn_id=1 step_id=9 content_bytes=447 tool_call_count=0 finish_reason=stop
+1789774354937 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

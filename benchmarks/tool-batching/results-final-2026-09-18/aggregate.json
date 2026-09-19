@@ -1,0 +1,22 @@
+{
+  "tool_calls": {
+    "baseline": 15.222222222222221,
+    "optimized": 7.555555555555555,
+    "change_percent": -50.364963503649626
+  },
+  "input_tokens": {
+    "baseline": 53024.333333333336,
+    "optimized": 48899.77777777778,
+    "change_percent": -7.77860898245879
+  },
+  "output_tokens": {
+    "baseline": 1241.3333333333333,
+    "optimized": 1203.3333333333333,
+    "change_percent": -3.0612244897959218
+  },
+  "model_requests": {
+    "baseline": 6.777777777777778,
+    "optimized": 6.333333333333333,
+    "change_percent": -6.557377049180335
+  }
+}
