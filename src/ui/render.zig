@@ -28,6 +28,7 @@ pub const welcome_message_reserved_rows: u16 = 11;
 pub var is_light: bool = false;
 pub var divider_style: []const u8 = "\x1b[38;5;240m";
 pub var hint_style: []const u8 = "\x1b[38;5;255m";
+var welcome_logo_fill_style: []const u8 = "\x1b[48;5;255m";
 pub var statusline_style: []const u8 = "\x1b[38;5;245m";
 pub var tag_style: []const u8 = "\x1b[1;38;5;255m";
 pub var subtitle_style: []const u8 = "\x1b[1;38;5;255m";
@@ -69,6 +70,7 @@ pub fn initTheme(light: bool, terminal_bg: ?TerminalRgb) void {
     if (light) {
         divider_style = "\x1b[38;5;250m";
         hint_style = "\x1b[38;5;235m";
+        welcome_logo_fill_style = "\x1b[48;5;235m";
         statusline_style = "\x1b[38;5;241m";
         tag_style = "\x1b[1;38;5;235m";
         subtitle_style = "\x1b[1;38;5;235m";
@@ -87,6 +89,7 @@ pub fn initTheme(light: bool, terminal_bg: ?TerminalRgb) void {
     } else {
         divider_style = "\x1b[38;5;240m";
         hint_style = "\x1b[38;5;255m";
+        welcome_logo_fill_style = "\x1b[48;5;255m";
         statusline_style = "\x1b[38;5;245m";
         tag_style = "\x1b[1;38;5;255m";
         subtitle_style = "\x1b[1;38;5;255m";
@@ -189,11 +192,11 @@ fn writeBuildLabel(
     });
 }
 
-/// Full-block wordmark (figlet "ANSI Regular") drawn above the version line
-/// on the startup screen. Solid blocks tile without gaps in every terminal
-/// font, unlike half-block glyphs. Every row is the same cell width so the
-/// logo stays a solid block when the transcript pins it as the welcome
-/// header.
+/// Wordmark mask (figlet "ANSI Regular") drawn above the version line on the
+/// startup screen. Rendering turns each full block into a background-colored
+/// space because terminals paint cell backgrounds edge-to-edge. This avoids
+/// the seams Apple Terminal leaves around block glyphs. Every row has the same
+/// cell width so the transcript can pin the logo as the welcome header.
 pub const welcome_logo_rows = [_][]const u8{
     "██   ██  █████  ███    ██ ██████  ██     ██  ██████  ██████  ██   ██ ",
     "██   ██ ██   ██ ████   ██ ██   ██ ██     ██ ██    ██ ██   ██ ██  ██  ",
@@ -202,6 +205,25 @@ pub const welcome_logo_rows = [_][]const u8{
     "██   ██ ██   ██ ██   ████ ██████   ███ ███   ██████  ██   ██ ██   ██ ",
 };
 pub const welcome_logo_width: u16 = 69;
+const full_block = "█";
+
+fn appendWelcomeLogoRow(out: *std.ArrayList(u8), alloc: std.mem.Allocator, row: []const u8) !void {
+    var index: usize = 0;
+    while (index < row.len) {
+        if (std.mem.startsWith(u8, row[index..], full_block)) {
+            try out.appendSlice(alloc, welcome_logo_fill_style);
+            while (index < row.len and std.mem.startsWith(u8, row[index..], full_block)) {
+                try out.append(alloc, ' ');
+                index += full_block.len;
+            }
+            try out.appendSlice(alloc, reset_style);
+            continue;
+        }
+        try out.append(alloc, row[index]);
+        index += 1;
+    }
+}
+
 /// Author credit in the version line. The name is an OSC 8 hyperlink so
 /// terminals that support it open the site on click; the link is closed
 /// before the line's trailing reset so no hyperlink leaks past the banner.
@@ -265,9 +287,7 @@ pub fn welcomeMessageForLayout(alloc: std.mem.Allocator, cols: u16, lead_rows: u
     const logo_indent = welcomeLogoIndent(cols);
     for (welcome_logo_rows) |row| {
         try out.appendNTimes(alloc, ' ', logo_indent);
-        try out.appendSlice(alloc, hint_style);
-        try out.appendSlice(alloc, row);
-        try out.appendSlice(alloc, reset_style);
+        try appendWelcomeLogoRow(&out, alloc, row);
         try out.append(alloc, '\n');
     }
     try out.append(alloc, '\n');
@@ -981,17 +1001,9 @@ test "welcomeMessage stacks the logo above the version line" {
     const message = try welcomeMessage(std.testing.allocator);
     defer std.testing.allocator.free(message);
 
-    var expected_prefix: std.ArrayList(u8) = .empty;
-    defer expected_prefix.deinit(std.testing.allocator);
-    for (welcome_logo_rows) |row| {
-        try expected_prefix.appendNTimes(std.testing.allocator, ' ', welcomeLogoIndent(welcome_logo_min_cols));
-        try expected_prefix.appendSlice(std.testing.allocator, hint_style);
-        try expected_prefix.appendSlice(std.testing.allocator, row);
-        try expected_prefix.appendSlice(std.testing.allocator, reset_style);
-        try expected_prefix.append(std.testing.allocator, '\n');
-    }
-    try expected_prefix.append(std.testing.allocator, '\n');
-    try std.testing.expect(std.mem.startsWith(u8, message, expected_prefix.items));
+    try std.testing.expectEqual(welcomeLogoIndent(welcome_logo_min_cols), std.mem.indexOf(u8, message, welcome_logo_fill_style).?);
+    try std.testing.expect(std.mem.find(u8, message, full_block) == null);
+    try std.testing.expectEqual(welcome_logo_rows.len, std.mem.count(u8, message, "\n") - 3);
 
     // logo rows + blank + version line + trailing blank must stay inside the
     // rows reserved for the startup body.
@@ -1021,10 +1033,10 @@ test "welcomeMessageForWidth centers the logo and the version line on the same a
     const indent = welcomeLogoIndent(cols);
     try std.testing.expectEqual(@as(usize, (120 - welcome_logo_width) / 2), indent);
     var lines = std.mem.splitScalar(u8, message, '\n');
-    for (welcome_logo_rows) |row| {
+    for (welcome_logo_rows) |_| {
         const line = lines.next() orelse return error.TestMissingLogoRow;
-        try std.testing.expectEqual(indent, std.mem.indexOf(u8, line, hint_style).?);
-        try std.testing.expect(std.mem.find(u8, line, row) != null);
+        try std.testing.expectEqual(indent, std.mem.indexOf(u8, line, welcome_logo_fill_style).?);
+        try std.testing.expect(std.mem.find(u8, line, full_block) == null);
         // Centered within one cell on either side.
         const visible = display_width.visibleWidthIgnoringAnsi(line);
         try std.testing.expect(@as(usize, cols) - visible >= indent);

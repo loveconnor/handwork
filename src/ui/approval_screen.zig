@@ -2173,11 +2173,22 @@ test "file approval top-aligns a fitting welcome document and clears below" {
 
     var row: std.ArrayList(u8) = .empty;
     defer row.deinit(alloc);
-    // The welcome document opens with the five logo rows, a blank row, and
-    // then the version line.
-    try grid.rowTextTrimmed(1, &row);
-    try std.testing.expect(std.mem.indexOf(u8, row.items, "█") != null);
-    row.clearRetainingCapacity();
+    // The welcome document opens with five background-painted logo rows, a
+    // blank row, and then the version line.
+    var has_logo_fill = false;
+    var logo_col: u16 = 1;
+    while (logo_col <= 80) : (logo_col += 1) {
+        const logo_cell = grid.cellAt(1, logo_col) orelse continue;
+        switch (logo_cell.style.bg) {
+            .default => {},
+            else => {
+                try std.testing.expectEqual(@as(u21, ' '), logo_cell.codepoint);
+                has_logo_fill = true;
+                break;
+            },
+        }
+    }
+    try std.testing.expect(has_logo_fill);
     try grid.rowTextTrimmed(7, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "Run /help for commands") != null);
 
