@@ -12,7 +12,7 @@ const HelpMenuProjection = render_input.HelpMenuProjection;
 
 const roomy_header_rows: u16 = 2;
 pub const max_visible_items: u16 = 20;
-pub const max_inline_rows: u16 = roomy_header_rows + max_visible_items;
+pub const max_inline_rows: u16 = roomy_header_rows + 1 + max_visible_items;
 
 const BodyRow = union(enum) {
     none,
@@ -56,14 +56,21 @@ pub fn composeHelpMenuRow(
     const layout = buildLayout(projection, width, row_count);
     if (row_index < layout.body_start_row) {
         if (row_index == 0) return composeHeaderRow(alloc, projection, width);
+        if (usesDetailArea(projection, width) and layout.match_count > 0) {
+            return composeDetailRow(alloc, projection, layout.selected, row_index - 1, layout.body_start_row - 1, width);
+        }
         return empty;
     }
     if (layout.match_count == 0) return composeEmptyRow(alloc, width);
 
     const description_col = descriptionColumn(projection, width);
+    const compact = usesDetailArea(projection, width) and layout.body_start_row > 0;
     return switch (bodyRowAt(projection, layout, row_index - layout.body_start_row)) {
         .none => empty,
-        .item => |item| composeCommandRow(alloc, item.spec.*, item.selected, width, description_col),
+        .item => |item| if (compact)
+            composeCompactCommandRow(alloc, item.spec.*, item.selected, width)
+        else
+            composeCommandRow(alloc, item.spec.*, item.selected, width, description_col),
     };
 }
 
@@ -72,7 +79,11 @@ fn buildLayout(projection: HelpMenuProjection, width: u16, max_rows: u16) Layout
     const match_count = projection.filteredItemCount();
     const selected = if (match_count == 0) 0 else projection.selected_index % match_count;
     const show_header = max_rows > 2;
-    const body_start_row: u16 = if (show_header) roomy_header_rows else 0;
+    const detail_rows: u16 = if (show_header and match_count > 0 and usesDetailArea(projection, width))
+        @min(@as(u16, 2), max_rows - 2)
+    else
+        0;
+    const body_start_row: u16 = if (detail_rows > 0) 1 + detail_rows else if (show_header) roomy_header_rows else 0;
     if (match_count == 0) {
         return .{
             .body_start_row = body_start_row,
@@ -100,6 +111,55 @@ fn buildLayout(projection: HelpMenuProjection, width: u16, max_rows: u16) Layout
         .body_start_row = body_start_row,
         .row_count = body_start_row + body.rows,
     };
+}
+
+fn usesDetailArea(projection: HelpMenuProjection, width: u16) bool {
+    return @as(usize, width) -| descriptionColumn(projection, width) < 20;
+}
+
+fn composeDetailRow(
+    alloc: Allocator,
+    projection: HelpMenuProjection,
+    selected: usize,
+    detail_index: u16,
+    detail_rows: u16,
+    width: u16,
+) !std.ArrayList(u8) {
+    var row: std.ArrayList(u8) = .empty;
+    errdefer row.deinit(alloc);
+    const spec = projection.itemAt(selected) orelse return row;
+    const indent: usize = if (width <= 2) 0 else 2;
+    const available = @as(usize, width) - indent;
+    var remaining = spec.completion_description.?;
+    if (detail_rows > 1 and detail_index > 0) {
+        const first = display_width.wrapCutIgnoringAnsi(remaining, available);
+        remaining = display_width.trimBreakWhitespace(remaining[first.len..]);
+    }
+    if (indent > 0) try row.appendSlice(alloc, "  ");
+    try row.appendSlice(alloc, ui_render.dim_style);
+    if (detail_index + 1 == detail_rows) {
+        try row_text.appendSingleLineEllipsized(alloc, &row, remaining, available);
+    } else {
+        try row.appendSlice(alloc, display_width.wrapCutIgnoringAnsi(remaining, available));
+    }
+    try row.appendSlice(alloc, ui_render.reset_style);
+    return row;
+}
+
+fn composeCompactCommandRow(
+    alloc: Allocator,
+    spec: command_specs.SlashSpec,
+    selected: bool,
+    width: u16,
+) !std.ArrayList(u8) {
+    var row: std.ArrayList(u8) = .empty;
+    errdefer row.deinit(alloc);
+    const indent: usize = if (width <= 2) 0 else 2;
+    if (indent > 0) try row.appendSlice(alloc, "  ");
+    try row.appendSlice(alloc, if (selected) ui_render.selected_completion_style else ui_render.dim_style);
+    try row_text.appendSingleLineEllipsized(alloc, &row, spec.command, @as(usize, width) - indent);
+    try row.appendSlice(alloc, ui_render.reset_style);
+    return row;
 }
 
 const BodyMeasurement = struct {
@@ -320,13 +380,59 @@ test "help menu places descriptions after the widest matching command" {
     );
 
     const narrow_rows = menuRowCount(projection, 22, 20);
-    try std.testing.expectEqual(rows, narrow_rows);
+    try std.testing.expectEqual(rows + 1, narrow_rows);
     try std.testing.expectEqual(@as(usize, 13), descriptionColumn(projection, 22));
-    var narrow = try composeHelpMenuRow(alloc, projection, 2, 22, narrow_rows);
+    var narrow = try composeHelpMenuRow(alloc, projection, 3, 22, narrow_rows);
     defer narrow.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, narrow.items, "/help") != null);
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(narrow.items) <= 22);
     try std.testing.expect(std.mem.findScalar(u8, narrow.items, '\n') == null);
+}
+
+test "help menu keeps selected descriptions readable at narrow widths" {
+    const alloc = std.testing.allocator;
+    const specs = [_]command_specs.SlashSpec{
+        .{ .kind = .permissions, .command = "/permissions", .help_entry = "/permissions", .completion_description = "choose permission behavior", .presentation_category = .security },
+        .{ .kind = .paste, .command = "/paste", .help_entry = "/paste", .completion_description = "attach an image from the clipboard", .presentation_category = .media },
+    };
+    var projection: render_input.HelpMenuProjection = .{
+        .active = true,
+        .registry = .{ .commands = &specs },
+    };
+    const width: u16 = 22;
+    const rows = menuRowCount(projection, width, 8);
+    try std.testing.expectEqual(@as(u16, 5), rows);
+    try std.testing.expectEqual(@as(u16, 2), visibleNavigationItemsForBudget(projection, width, 8));
+    var grid = try vt_emulator.Grid.init(alloc, width, rows);
+    defer grid.deinit();
+    for (0..rows) |index| {
+        var row = try composeHelpMenuRow(alloc, projection, @intCast(index), width, rows);
+        defer row.deinit(alloc);
+        var cursor: [32]u8 = undefined;
+        try grid.feed(try std.fmt.bufPrint(&cursor, "\x1b[{d};1H", .{index + 1}));
+        try grid.feed(row.items);
+    }
+    var text: std.ArrayList(u8) = .empty;
+    defer text.deinit(alloc);
+    try grid.rowTextTrimmed(2, &text);
+    try std.testing.expect(std.mem.find(u8, text.items, "choose permission") != null);
+    text.clearRetainingCapacity();
+    try grid.rowTextTrimmed(3, &text);
+    try std.testing.expect(std.mem.find(u8, text.items, "behavior") != null);
+    text.clearRetainingCapacity();
+    try grid.rowTextTrimmed(4, &text);
+    try std.testing.expect(std.mem.find(u8, text.items, "/permissions") != null);
+    text.clearRetainingCapacity();
+    try grid.rowTextTrimmed(5, &text);
+    try std.testing.expect(std.mem.find(u8, text.items, "/paste") != null);
+
+    projection.selected_index = 1;
+    var first_detail = try composeHelpMenuRow(alloc, projection, 1, width, rows);
+    defer first_detail.deinit(alloc);
+    var second_detail = try composeHelpMenuRow(alloc, projection, 2, width, rows);
+    defer second_detail.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, first_detail.items, "attach an image") != null);
+    try std.testing.expect(std.mem.find(u8, second_detail.items, "clipboard") != null);
 }
 
 test "help menu keeps a four column gutter after command names" {
@@ -405,6 +511,39 @@ test "help menu renders category tabs and flat commands through the VT" {
     try grid.rowTextTrimmed(3, &text);
     try std.testing.expect(std.mem.find(u8, text.items, "/help") != null);
     try std.testing.expect(std.mem.find(u8, text.items, "General") == null);
+}
+
+test "light help menu renders selected and secondary text with readable colors" {
+    const alloc = std.testing.allocator;
+    ui_render.initTheme(true, null);
+    defer ui_render.initTheme(false, null);
+
+    const width: u16 = 120;
+    const projection: render_input.HelpMenuProjection = .{
+        .active = true,
+        .registry = help_menu_test_registry,
+    };
+    const rows = menuRowCount(projection, width, 8);
+    var grid = try vt_emulator.Grid.init(alloc, width, rows);
+    defer grid.deinit();
+
+    var row_index: u16 = 0;
+    while (row_index < rows) : (row_index += 1) {
+        var row = try composeHelpMenuRow(alloc, projection, row_index, width, rows);
+        defer row.deinit(alloc);
+        var cursor_buf: [32]u8 = undefined;
+        try grid.feed(try std.fmt.bufPrint(&cursor_buf, "\x1b[{d};1H", .{row_index + 1}));
+        try grid.feed(row.items);
+    }
+
+    // The active command is bold and near-black; unselected commands, their
+    // descriptions, and inactive category tabs use the darker secondary role.
+    try std.testing.expectEqual(vt_emulator.Color{ .indexed = 235 }, grid.cellAt(3, 3).?.style.fg);
+    try std.testing.expect(grid.cellAt(3, 3).?.style.flags.bold);
+    try std.testing.expectEqual(vt_emulator.Color{ .indexed = 235 }, grid.cellAt(3, 14).?.style.fg);
+    try std.testing.expectEqual(vt_emulator.Color{ .indexed = 239 }, grid.cellAt(4, 3).?.style.fg);
+    try std.testing.expectEqual(vt_emulator.Color{ .indexed = 239 }, grid.cellAt(4, 14).?.style.fg);
+    try std.testing.expectEqual(vt_emulator.Color{ .indexed = 239 }, grid.cellAt(1, 20).?.style.fg);
 }
 
 test "help menu packs more filters while preserving a far active filter in the VT" {

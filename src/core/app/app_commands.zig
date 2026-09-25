@@ -1276,6 +1276,19 @@ pub fn Handlers(comptime App: type) type {
                         .{display_path.bytes},
                     );
                 },
+                .conflict => |path| blk: {
+                    var display_path = try text_utils.encodeTerminalSafe(
+                        app.alloc,
+                        path,
+                        std.Io.Dir.max_path_bytes,
+                    );
+                    defer display_path.deinit(app.alloc);
+                    break :blk try std.fmt.allocPrint(
+                        app.alloc,
+                        "Could not undo {s}: the file changed since Handwork wrote it. Review it manually; no changes were made.",
+                        .{display_path.bytes},
+                    );
+                },
                 .empty => try app.alloc.dupe(u8, "Nothing to undo."),
             };
             defer app.alloc.free(msg);
@@ -1283,11 +1296,15 @@ pub fn Handlers(comptime App: type) type {
                 .restored => |path| std.heap.c_allocator.free(path),
                 .deleted => |path| std.heap.c_allocator.free(path),
                 .unavailable => |path| std.heap.c_allocator.free(path),
+                .conflict => {},
                 .empty => {},
             }
             try app.writeDomainNotice(.{
                 .topic = "undo",
-                .tone = .neutral,
+                .tone = switch (result) {
+                    .conflict, .unavailable => .warning,
+                    else => .neutral,
+                },
                 .body = msg,
             }, true);
         }
@@ -3660,6 +3677,9 @@ pub fn settingsCatalogSnapshot(app: anytype) settings_catalog.Snapshot {
     if (comptime @hasField(App, "shell") and @hasField(@TypeOf(app.shell), "collapse_tool_calls")) {
         snapshot.collapse_tool_calls = app.shell.collapse_tool_calls;
     }
+    if (comptime @hasField(App, "shell") and @hasField(@TypeOf(app.shell), "animate_activity")) {
+        snapshot.animate_activity = app.shell.animate_activity;
+    }
     if (comptime @hasField(App, "statusline_context")) snapshot.statusline_context = app.statusline_context;
     if (comptime @hasField(App, "statusline_session")) snapshot.statusline_session = app.statusline_session;
     if (comptime @hasField(App, "session_title_generation")) snapshot.session_titles = app.session_title_generation;
@@ -3734,6 +3754,20 @@ pub fn applySettingsCatalogChange(app: anytype, change: settings_catalog.Change)
                 app,
                 "collapse tool calls",
                 .{ .collapse_tool_calls = enabled },
+                runtime_changed,
+            );
+        },
+        .animate_activity => {
+            const enabled = parseOnOff(change.value) orelse return error.InvalidSettingsCatalogValue;
+            const runtime_changed = enabled != app.shell.animate_activity;
+            if (runtime_changed) {
+                app.shell.animate_activity = enabled;
+                app.shell.render_requests.request(.footer);
+            }
+            try persistUserPreferences(
+                app,
+                "activity animation",
+                .{ .animate_activity = enabled },
                 runtime_changed,
             );
         },

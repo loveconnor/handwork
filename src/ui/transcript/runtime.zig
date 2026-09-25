@@ -4237,6 +4237,7 @@ test "render diagnostic commit skips unchanged same-row paints" {
 }
 
 pub const TranscriptRuntime = struct {
+    welcome_cue: ui_render.WelcomeCue = .choose_provider,
     stdout_file: std.Io.File = std.Io.File.stdout(),
     sync_updates_enabled: bool = true,
     history_reset_uses_ris: bool = false,
@@ -4327,6 +4328,7 @@ pub const TranscriptRuntime = struct {
     /// When enabled, compact transcript tool groups render only their summary
     /// header while the full transcript retains every individual tool call.
     collapse_tool_calls: bool = false,
+    animate_activity: bool = true,
     /// Structured-entry store used to regenerate transcript bytes at the
     /// current width while retaining the raw byte buffer for append paths
     /// that still write pre-rendered transcript content.
@@ -6287,7 +6289,7 @@ pub const TranscriptRuntime = struct {
         }
         const index = welcome_index orelse return false;
         const lead_rows: u16 = if (splash) self.welcomeSplashLeadRows() else 0;
-        const fresh = try ui_render.welcomeMessageForLayout(alloc, self.layout.cols, lead_rows);
+        const fresh = try ui_render.welcomeMessageForLayoutWithCue(alloc, self.layout.cols, lead_rows, self.welcome_cue);
         defer alloc.free(fresh);
         const current = self.entries.items[index].raw_bytes;
         if (std.mem.eql(u8, fresh, current.bytes)) return false;

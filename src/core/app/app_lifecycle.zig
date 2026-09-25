@@ -136,6 +136,7 @@ pub const StartupState = struct {
     fast_mode_source: config_runtime.ConfigSource = .compiled_default,
     slash_menu_categories: bool = true,
     collapse_tool_calls: bool = false,
+    animate_activity: bool = true,
     auto_upgrade: bool = true,
     update_channel: update_target.Channel = .stable,
     startup_scrollback: bool = true,
@@ -508,6 +509,7 @@ fn loadStartupStateFromOwnedWorkspace(
     state.fast_mode_source = detailed.sources.fast_mode;
     state.slash_menu_categories = settings.slash_menu_categories orelse true;
     state.collapse_tool_calls = settings.collapse_tool_calls orelse false;
+    state.animate_activity = settings.animate_activity orelse true;
     state.auto_upgrade = settings.auto_upgrade orelse true;
     state.update_channel = settings.update_channel orelse .stable;
     state.startup_scrollback = settings.startup_scrollback orelse true;

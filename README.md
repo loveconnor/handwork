@@ -37,6 +37,8 @@ handwork
 
 Use `/provider` to choose a provider and enter its API key. The key-entry box masks typed and pasted text. Enter saves the key and connects; Esc cancels. Then use `/model` to choose a model and describe your task.
 
+With a cloud provider, your prompt and possibly repository excerpts, tool results, and conversation context leave your machine for the selected endpoint; read [Permissions and data](#permissions-and-data) before sending private code.
+
 For example:
 
 ```text
@@ -457,7 +459,7 @@ These commands belong to the native terminal interface, not the official runtime
 | `/reset` | Reset the current session context. |
 | `/continue` | Continue a paused model response. |
 | `/compact` | Summarize the conversation into a fresh context window. |
-| `/undo` | Registered for tracked-file undo; file restoration is not verified in this revision. |
+| `/undo` | Undo the latest tracked file write or edit if that file has not changed since Handwork wrote it. |
 | `/copy` | Copy the last assistant response. |
 | `/permissions [ask\|auto\|full-access\|reset]` | Inspect or change the permission mode. |
 | `/allowlist` | Manage trusted commands, tools, and URLs at local or user scope. |
@@ -478,7 +480,9 @@ These commands belong to the native terminal interface, not the official runtime
 
 `/alias` currently reports alias availability; do not assume custom aliases are implemented. Model reasoning, fast mode, clipboard access, and images depend on the active model and host.
 
-Clipboard photos: in the composer, Ctrl+V attaches an image from the local macOS clipboard. Cmd+V works when the terminal forwards it as a Super+V keyboard report; terminals commonly intercept Cmd+V for their own text paste instead. A terminal text paste does not transmit image bytes, and Handwork does not inspect the image clipboard during bracketed text paste. The macOS clipboard must offer PNG data. Clipboard access is on the machine running Handwork, not your local desktop when using SSH. If the terminal consumes the shortcut, or the host/clipboard format is unsupported, save the photo and use `/image <path>`.
+Clipboard photos: use Control-V or `/paste` in the composer to attach an image from the Mac clipboard. Apple Terminal owns Command-V, so Handwork needs an opt-in keyboard monitor to recognize that shortcut. Start Handwork with `HANDWORK_MACOS_CMD_V_MONITOR=1 handwork`, grant macOS Input Monitoring access if prompted, and restart. On first use, macOS may also ask for Automation access to Terminal so Handwork can confirm that its tab is active. Terminal still performs its normal text paste, so a clipboard item with both image and text may add both to the draft. Without these permissions, use Control-V or `/paste`.
+
+Other terminals can attach an image with Command-V when they forward a Super+V keyboard report. A terminal text paste does not transmit image bytes, and Handwork does not inspect the image clipboard during bracketed text paste. The macOS clipboard must offer PNG or TIFF image data. Clipboard access is on the machine running Handwork, not your local desktop when using SSH. If clipboard access or the image format is unsupported, save the photo and use `/image <path>`.
 
 Click and drag in the composer to highlight text; releasing the mouse copies the selected text without deleting it. A plain click only moves the caret. Drag selection supports either direction and multiple visible input lines.
 
@@ -506,7 +510,7 @@ Resuming a session restores conversation state, not a snapshot of your files or 
 
 Cloud requests can contain your prompt, repository excerpts, tool results, and conversation context. That data leaves your machine for the selected endpoint. Review provider retention and training terms before sending private code. Session files, SDK checkpoints, and diagnostic traces can also contain sensitive material.
 
-Do not rely on `/undo` to restore your work. The command is registered and a tracked-file undo implementation exists, but this source review did not verify a production connection between them. Neither is a rollback for arbitrary shell commands or remote changes. Use Git checkpoints and backups for work you need to restore.
+`/undo` restores or removes the latest tracked file write or edit only when the file still matches what Handwork wrote. If it changed afterward, Handwork leaves it untouched and asks you to review the conflict manually. `/undo` does not roll back arbitrary shell commands, remote changes, or earlier operations after their tracking window ends. Use Git checkpoints and backups for work you need to restore.
 
 ## Project context and extensions
 

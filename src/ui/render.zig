@@ -34,6 +34,7 @@ pub var tag_style: []const u8 = "\x1b[1;38;5;255m";
 pub var subtitle_style: []const u8 = "\x1b[1;38;5;255m";
 pub var system_notice_label_style: []const u8 = "\x1b[1;38;5;252m";
 pub var system_notice_text_style: []const u8 = "\x1b[38;5;250m";
+// Secondary copy must stay readable; divider_style owns faint decoration.
 pub var dim_style: []const u8 = "\x1b[38;5;245m";
 pub var warning_style: []const u8 = "\x1b[38;5;252m";
 pub var green_style: []const u8 = "\x1b[38;5;252m";
@@ -71,12 +72,12 @@ pub fn initTheme(light: bool, terminal_bg: ?TerminalRgb) void {
         divider_style = "\x1b[38;5;250m";
         hint_style = "\x1b[38;5;235m";
         welcome_logo_fill_style = "\x1b[48;5;235m";
-        statusline_style = "\x1b[38;5;241m";
+        statusline_style = "\x1b[38;5;239m";
         tag_style = "\x1b[1;38;5;235m";
         subtitle_style = "\x1b[1;38;5;235m";
         system_notice_label_style = "\x1b[1;38;5;238m";
-        system_notice_text_style = "\x1b[38;5;241m";
-        dim_style = "\x1b[38;5;247m";
+        system_notice_text_style = "\x1b[38;5;239m";
+        dim_style = "\x1b[38;5;239m";
         warning_style = "\x1b[38;5;238m";
         green_style = "\x1b[38;5;238m";
         red_style = "\x1b[38;5;238m";
@@ -192,19 +193,14 @@ fn writeBuildLabel(
     });
 }
 
-/// Wordmark mask (figlet "ANSI Regular") drawn above the version line on the
-/// startup screen. Rendering turns each full block into a background-colored
-/// space because terminals paint cell backgrounds edge-to-edge. This avoids
-/// the seams Apple Terminal leaves around block glyphs. Every row has the same
-/// cell width so the transcript can pin the logo as the welcome header.
+/// Compact HW mark. Background-colored cells avoid seams around block glyphs
+/// in terminals that leave gaps between glyph shapes.
 pub const welcome_logo_rows = [_][]const u8{
-    "██   ██  █████  ███    ██ ██████  ██     ██  ██████  ██████  ██   ██ ",
-    "██   ██ ██   ██ ████   ██ ██   ██ ██     ██ ██    ██ ██   ██ ██  ██  ",
-    "███████ ███████ ██ ██  ██ ██   ██ ██  █  ██ ██    ██ ██████  █████   ",
-    "██   ██ ██   ██ ██  ██ ██ ██   ██ ██ ███ ██ ██    ██ ██   ██ ██  ██  ",
-    "██   ██ ██   ██ ██   ████ ██████   ███ ███   ██████  ██   ██ ██   ██ ",
+    "██  ██  ██     ██",
+    "██████  ██  █  ██",
+    "██  ██   ███ ███ ",
 };
-pub const welcome_logo_width: u16 = 69;
+pub const welcome_logo_width: u16 = 17;
 const full_block = "█";
 
 fn appendWelcomeLogoRow(out: *std.ArrayList(u8), alloc: std.mem.Allocator, row: []const u8) !void {
@@ -230,21 +226,30 @@ fn appendWelcomeLogoRow(out: *std.ArrayList(u8), alloc: std.mem.Allocator, row: 
 pub const author_name = "Connor Love";
 pub const author_url = "https://connorlove.com";
 const author_link = "\x1b]8;;" ++ author_url ++ "\x1b\\" ++ author_name ++ "\x1b]8;;\x1b\\";
-/// Narrower terminals fall back to the single-line banner so the logo never
-/// soft-wraps into noise.
-pub const welcome_logo_min_cols: u16 = welcome_logo_width + 2;
+/// Below this width the mark and copy stack into two short text lines.
+pub const welcome_logo_min_cols: u16 = 71;
 
-/// Leading cells that center the logo block for a terminal `cols` wide.
-pub fn welcomeLogoIndent(cols: u16) usize {
-    if (cols <= welcome_logo_width) return 0;
-    return (@as(usize, cols) - welcome_logo_width) / 2;
-}
+pub const WelcomeCue = enum {
+    choose_provider,
+    connect_provider,
+    enter_task,
 
-/// Rows the welcome block occupies before its trailing blank line: the logo,
-/// a blank row, and the version line, or just the version line when the
-/// terminal is too narrow for the logo.
+    fn text(self: WelcomeCue, compact: bool) []const u8 {
+        return if (compact) switch (self) {
+            .choose_provider => "Choose a provider below · /help for commands",
+            .connect_provider => "Run /provider to connect · /help for commands",
+            .enter_task => "Describe a task to begin · /help for commands",
+        } else switch (self) {
+            .choose_provider => "Choose a provider below",
+            .connect_provider => "Run /provider to connect",
+            .enter_task => "Describe a task to begin",
+        };
+    }
+};
+
+/// Content rows before the trailing blank row.
 pub fn welcomeVisualRows(cols: u16) u16 {
-    return if (cols < welcome_logo_min_cols) 1 else @as(u16, welcome_logo_rows.len) + 2;
+    return if (cols >= welcome_logo_min_cols) welcome_logo_rows.len else 2;
 }
 
 /// Startup banner for a terminal wide enough to show the logo. Callers that
@@ -254,13 +259,26 @@ pub fn welcomeMessage(alloc: std.mem.Allocator) ![]u8 {
 }
 
 pub fn welcomeMessageForWidth(alloc: std.mem.Allocator, cols: u16) ![]u8 {
-    return welcomeMessageForLayout(alloc, cols, 0);
+    return welcomeMessageForWidthWithCue(alloc, cols, .choose_provider);
+}
+
+pub fn welcomeMessageForWidthWithCue(alloc: std.mem.Allocator, cols: u16, cue: WelcomeCue) ![]u8 {
+    return welcomeMessageForLayoutWithCue(alloc, cols, 0, cue);
 }
 
 /// Startup banner with `lead_rows` blank rows above it. The interactive shell
 /// uses the lead to center the splash vertically while nothing else is on
 /// screen; the logo and the version line are centered on the same axis.
 pub fn welcomeMessageForLayout(alloc: std.mem.Allocator, cols: u16, lead_rows: u16) ![]u8 {
+    return welcomeMessageForLayoutWithCue(alloc, cols, lead_rows, .choose_provider);
+}
+
+pub fn welcomeMessageForLayoutWithCue(
+    alloc: std.mem.Allocator,
+    cols: u16,
+    lead_rows: u16,
+    cue: WelcomeCue,
+) ![]u8 {
     var label_buf: [welcome_build_label_bytes]u8 = undefined;
     const build_label = try writeBuildLabel(
         &label_buf,
@@ -268,41 +286,76 @@ pub fn welcomeMessageForLayout(alloc: std.mem.Allocator, cols: u16, lead_rows: u
         main.version,
         build_options.git_commit,
     );
-    const version_line = try std.fmt.allocPrint(
+    const title = try std.fmt.allocPrint(alloc, "{s}handwork{s}", .{ subtitle_style, reset_style });
+    defer alloc.free(title);
+    const meta = try std.fmt.allocPrint(
         alloc,
-        "{s}handwork{s}{s} {s} · Run /help for commands · made by " ++ author_link ++ reset_style,
-        .{ subtitle_style, reset_style, dim_style, build_label },
+        "{s}{s} · made by " ++ author_link ++ reset_style,
+        .{ dim_style, build_label },
     );
-    defer alloc.free(version_line);
-
+    defer alloc.free(meta);
+    const action = cue.text(true);
     var out: std.ArrayList(u8) = .empty;
     errdefer out.deinit(alloc);
     try out.appendNTimes(alloc, '\n', lead_rows);
-    if (cols < welcome_logo_min_cols) {
-        try out.appendSlice(alloc, version_line);
-        try out.appendSlice(alloc, "\n\n");
+    if (cols >= welcome_logo_min_cols) {
+        const content_width = @max(
+            display_width.visibleWidthIgnoringAnsi(title),
+            @max(display_width.visibleWidthIgnoringAnsi(meta), display_width.visibleWidth(action)),
+        );
+        const indent = (@as(usize, cols) -| (welcome_logo_width + 3 + content_width)) / 2;
+        const lines = [_][]const u8{ title, meta, action };
+        for (welcome_logo_rows, lines, 0..) |logo_row, line, index| {
+            try out.appendNTimes(alloc, ' ', indent);
+            try appendWelcomeLogoRow(&out, alloc, logo_row);
+            try out.appendSlice(alloc, "   ");
+            if (index == 2) try out.appendSlice(alloc, permission_auto_style);
+            try out.appendSlice(alloc, line);
+            if (index == 2) try out.appendSlice(alloc, reset_style);
+            try out.append(alloc, '\n');
+        }
+        try out.append(alloc, '\n');
         return out.toOwnedSlice(alloc);
     }
-
-    const logo_indent = welcomeLogoIndent(cols);
-    for (welcome_logo_rows) |row| {
-        try out.appendNTimes(alloc, ' ', logo_indent);
-        try appendWelcomeLogoRow(&out, alloc, row);
+    if (cols >= 50) {
+        const title_and_meta = try std.fmt.allocPrint(alloc, "{s} {s}", .{ title, meta });
+        defer alloc.free(title_and_meta);
+        if (display_width.visibleWidthIgnoringAnsi(title_and_meta) <= cols) {
+            try appendCenteredWelcomeLine(&out, alloc, title_and_meta, cols);
+        } else {
+            const shorter = try std.fmt.allocPrint(
+                alloc,
+                "{s} {s}{s}{s}",
+                .{ title, dim_style, build_label, reset_style },
+            );
+            defer alloc.free(shorter);
+            try appendCenteredWelcomeLine(&out, alloc, shorter, cols);
+        }
         try out.append(alloc, '\n');
+        try out.appendSlice(alloc, permission_auto_style);
+        try appendCenteredWelcomeLine(&out, alloc, action, cols);
+        try out.appendSlice(alloc, reset_style);
+    } else {
+        const title_and_version = try std.fmt.allocPrint(
+            alloc,
+            "{s} {s}{s}{s}",
+            .{ title, dim_style, build_label, reset_style },
+        );
+        defer alloc.free(title_and_version);
+        try appendCenteredWelcomeLine(&out, alloc, title_and_version, cols);
+        try out.append(alloc, '\n');
+        try out.appendSlice(alloc, permission_auto_style);
+        try appendCenteredWelcomeLine(&out, alloc, cue.text(false), cols);
+        try out.appendSlice(alloc, reset_style);
     }
-    try out.append(alloc, '\n');
-    try out.appendNTimes(alloc, ' ', welcomeVersionIndent(cols, version_line));
-    try out.appendSlice(alloc, version_line);
     try out.appendSlice(alloc, "\n\n");
     return out.toOwnedSlice(alloc);
 }
 
-/// Leading cells that center the version line under the centered logo.
-fn welcomeVersionIndent(cols: u16, version_line: []const u8) usize {
-    const logo_indent = welcomeLogoIndent(cols);
-    const version_width = display_width.visibleWidthIgnoringAnsi(version_line);
-    if (version_width >= welcome_logo_width) return logo_indent;
-    return logo_indent + (welcome_logo_width - version_width) / 2;
+fn appendCenteredWelcomeLine(out: *std.ArrayList(u8), alloc: std.mem.Allocator, line: []const u8, cols: u16) !void {
+    const width = display_width.visibleWidthIgnoringAnsi(line);
+    try out.appendNTimes(alloc, ' ', (@as(usize, cols) -| width) / 2);
+    try out.appendSlice(alloc, if (width <= cols) line else display_width.prefixByWidthIgnoringAnsi(line, cols));
 }
 
 pub const StatuslineItems = struct {
@@ -343,7 +396,15 @@ fn compactModelLabel(model: []const u8, out: []u8) []const u8 {
     return claude_name;
 }
 
-fn permissionModeStatusLabel(mode: types.PermissionMode, out: []u8) []const u8 {
+pub fn permissionModeText(mode: types.PermissionMode) []const u8 {
+    return switch (mode) {
+        .ask => "ask",
+        .auto => "auto",
+        .yolo => "full access",
+    };
+}
+
+pub fn permissionModeStatusLabel(mode: types.PermissionMode, out: []u8) []const u8 {
     return switch (mode) {
         .ask => "ask",
         .auto => std.fmt.bufPrint(out, "{s}auto{s}", .{ permission_auto_style, statusline_style }) catch "auto",
@@ -366,17 +427,6 @@ fn appendStatusSegment(out: []u8, end: *usize, segment: []const u8) void {
 }
 
 const statusline_separator = " · ";
-
-fn leadingPermissionModeFits(
-    limit: usize,
-    permission_label: []const u8,
-    model_label: []const u8,
-) bool {
-    if (limit == 0) return false;
-    return display_width.visibleWidthIgnoringAnsi(permission_label) +
-        display_width.visibleWidth(statusline_separator) +
-        display_width.visibleWidth(model_label) <= limit;
-}
 
 const ClippedSegment = struct {
     bytes: []const u8,
@@ -506,15 +556,22 @@ pub fn buildHintLine(
     var permission_buf: [64]u8 = undefined;
     const permission_label = permissionModeStatusLabel(permission_mode, &permission_buf);
 
+    const status_limit = @min(@as(usize, width), out.len);
+    if (status_limit == 0) return "";
+    const plain_permission = permissionModeText(permission_mode);
+    if (plain_permission.len > out.len) {
+        const clipped = display_width.prefixByWidth(plain_permission, status_limit);
+        @memcpy(out[0..clipped.len], clipped);
+        return out[0..clipped.len];
+    }
     var end: usize = 0;
+    // Permission mode owns the first cells even when the model or setup hint
+    // is longer than the remaining line or the output buffer is tiny.
+    appendStatusSegment(out, &end, if (permission_label.len <= out.len) permission_label else plain_permission);
     if (!awaiting_permission and !has_api_key) {
         appendStatusSegment(out, &end, "run /login");
     }
-    const status_limit = @min(@as(usize, width), out.len);
     const show_effort = model_supports_effort and !effort.isDefault();
-    if (leadingPermissionModeFits(status_limit, permission_label, model_label)) {
-        appendStatusSegment(out, &end, permission_label);
-    }
     appendStatusSegment(out, &end, model_label);
     if (show_effort) {
         appendStatusSegment(out, &end, effort.displayLabel());
@@ -542,9 +599,7 @@ pub fn buildHintLine(
     }
     appendWorkspaceIdentity(out, &end, status_limit, statusline);
 
-    const width_usize: usize = width;
-    if (width_usize == 0) return "";
-    return display_width.prefixByWidthIgnoringAnsi(out[0..end], width_usize);
+    return display_width.prefixByWidthIgnoringAnsi(out[0..end], status_limit);
 }
 
 pub fn buildInputLine(input: []const u8, cursor: usize, width: u16, out: []u8) InputLineView {
@@ -927,7 +982,7 @@ test "resume handoff follows the active muted theme shade" {
     var buffer: [128]u8 = undefined;
     const message = try formatResumeHandoff(&buffer, "session-123", 80);
     try std.testing.expectEqualStrings(
-        "\x1b[38;5;247mContinue session with: handwork --resume session-123\x1b[0m\n",
+        "\x1b[38;5;239mContinue session with: handwork --resume session-123\x1b[0m\n",
         message,
     );
 }
@@ -965,49 +1020,35 @@ test "welcomeMessage shows version and help hint" {
     try std.testing.expect(std.mem.find(u8, message, "handwork") != null);
     try std.testing.expect(std.mem.find(u8, message, main.version) != null);
     try std.testing.expect(std.mem.find(u8, message, "/help") != null);
+    try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
 }
 
-test "welcomeMessage keeps only the app name bright" {
+test "welcomeMessage gives the first action its own readable line" {
+    initTheme(false, null);
+    const message = try welcomeMessage(std.testing.allocator);
+    defer std.testing.allocator.free(message);
+    const name_style = std.mem.find(u8, message, subtitle_style).?;
+    try std.testing.expect(std.mem.startsWith(u8, message[name_style + subtitle_style.len ..], "handwork"));
+    const cue_style = std.mem.find(u8, message, permission_auto_style).?;
+    try std.testing.expect(std.mem.startsWith(u8, message[cue_style + permission_auto_style.len ..], "Choose a provider below"));
+
+    const ready = try welcomeMessageForWidthWithCue(std.testing.allocator, 80, .enter_task);
+    defer std.testing.allocator.free(ready);
+    try std.testing.expect(std.mem.find(u8, ready, "Describe a task to begin") != null);
+    try std.testing.expect(std.mem.find(u8, ready, "Choose a provider") == null);
+    const disconnected = try welcomeMessageForWidthWithCue(std.testing.allocator, 80, .connect_provider);
+    defer std.testing.allocator.free(disconnected);
+    try std.testing.expect(std.mem.find(u8, disconnected, "Run /provider to connect") != null);
+}
+
+test "welcomeMessage uses a three row mark beside the version and action" {
     initTheme(false, null);
     const message = try welcomeMessage(std.testing.allocator);
     defer std.testing.allocator.free(message);
 
-    var label_buf: [welcome_build_label_bytes]u8 = undefined;
-    const build_label = try writeBuildLabel(
-        &label_buf,
-        build_channel,
-        main.version,
-        build_options.git_commit,
-    );
-    const expected = try std.fmt.allocPrint(
-        std.testing.allocator,
-        "{s}handwork{s}{s} {s} · Run /help for commands · made by " ++ author_link ++ reset_style ++ "\n\n",
-        .{ subtitle_style, reset_style, dim_style, build_label },
-    );
-    defer std.testing.allocator.free(expected);
-
-    try std.testing.expect(std.mem.endsWith(u8, message, expected));
-    // The logo itself never carries the bold subtitle style.
-    const logo_end = message.len - expected.len;
-    _ = logo_end;
-    const version_start = std.mem.indexOf(u8, message, subtitle_style).?;
-    const logo_bytes = message[0..version_start];
-    try std.testing.expect(std.mem.find(u8, logo_bytes, bold_style) == null);
-    try std.testing.expect(std.mem.find(u8, logo_bytes, subtitle_style) == null);
-}
-
-test "welcomeMessage stacks the logo above the version line" {
-    initTheme(false, null);
-    const message = try welcomeMessage(std.testing.allocator);
-    defer std.testing.allocator.free(message);
-
-    try std.testing.expectEqual(welcomeLogoIndent(welcome_logo_min_cols), std.mem.indexOf(u8, message, welcome_logo_fill_style).?);
     try std.testing.expect(std.mem.find(u8, message, full_block) == null);
-    try std.testing.expectEqual(welcome_logo_rows.len, std.mem.count(u8, message, "\n") - 3);
-
-    // logo rows + blank + version line + trailing blank must stay inside the
-    // rows reserved for the startup body.
     const line_count = std.mem.count(u8, message, "\n");
+    try std.testing.expectEqual(@as(usize, 4), line_count);
     try std.testing.expect(line_count <= welcome_message_reserved_rows);
 }
 
@@ -1021,33 +1062,28 @@ test "welcomeMessageForLayout prepends the requested lead rows" {
     try std.testing.expect(std.mem.startsWith(u8, padded, "\n\n\n\n"));
     try std.testing.expectEqualStrings(flat, padded[4..]);
     try std.testing.expectEqual(@as(usize, welcomeVisualRows(100) + 1), std.mem.count(u8, flat, "\n"));
-    try std.testing.expectEqual(@as(u16, 1), welcomeVisualRows(welcome_logo_min_cols - 1));
+    try std.testing.expectEqual(@as(u16, 2), welcomeVisualRows(welcome_logo_min_cols - 1));
 }
 
-test "welcomeMessageForWidth centers the logo and the version line on the same axis" {
+test "welcomeMessageForWidth keeps the mark and text within wide rows" {
     initTheme(false, null);
     const cols: u16 = 120;
     const message = try welcomeMessageForWidth(std.testing.allocator, cols);
     defer std.testing.allocator.free(message);
 
-    const indent = welcomeLogoIndent(cols);
-    try std.testing.expectEqual(@as(usize, (120 - welcome_logo_width) / 2), indent);
     var lines = std.mem.splitScalar(u8, message, '\n');
+    var indent: ?usize = null;
     for (welcome_logo_rows) |_| {
         const line = lines.next() orelse return error.TestMissingLogoRow;
-        try std.testing.expectEqual(indent, std.mem.indexOf(u8, line, welcome_logo_fill_style).?);
+        const mark_start = std.mem.indexOf(u8, line, welcome_logo_fill_style).?;
+        if (indent) |value| try std.testing.expectEqual(value, mark_start);
+        indent = mark_start;
         try std.testing.expect(std.mem.find(u8, line, full_block) == null);
-        // Centered within one cell on either side.
         const visible = display_width.visibleWidthIgnoringAnsi(line);
-        try std.testing.expect(@as(usize, cols) - visible >= indent);
-        try std.testing.expect(@as(usize, cols) - visible <= indent + 1);
+        try std.testing.expect(visible <= cols);
     }
     try std.testing.expectEqualStrings("", lines.next().?);
-    const version_line = lines.next().?;
-    const version_start = std.mem.indexOf(u8, version_line, subtitle_style).?;
-    try std.testing.expect(version_start > indent);
-    const version_width = display_width.visibleWidthIgnoringAnsi(version_line[version_start..]);
-    try std.testing.expectEqual(indent + (welcome_logo_width - version_width) / 2, version_start);
+    try std.testing.expect(indent.? > 0);
 }
 
 test "welcomeMessage credits the author with a hyperlink" {
@@ -1060,8 +1096,8 @@ test "welcomeMessage credits the author with a hyperlink" {
     try std.testing.expect(std.mem.startsWith(u8, linked, "\x1b]8;;https://connorlove.com\x1b\\Connor Love\x1b]8;;\x1b\\"));
     // The hyperlink escapes never count toward the centered width.
     try std.testing.expectEqual(
-        display_width.visibleWidth("handwork v · Run /help for commands · made by Connor Love"),
-        display_width.visibleWidthIgnoringAnsi("\x1b[1mhandwork\x1b[0m v · Run /help for commands · made by " ++ author_link ++ "\x1b[0m"),
+        display_width.visibleWidth("v · made by Connor Love"),
+        display_width.visibleWidthIgnoringAnsi("v · made by " ++ author_link),
     );
 }
 
@@ -1071,16 +1107,17 @@ test "welcome logo rows share one cell width" {
     }
 }
 
-test "welcomeMessageForWidth falls back to the single-line banner on narrow terminals" {
+test "welcomeMessageForWidth stacks two readable lines on narrow terminals" {
     initTheme(false, null);
     const message = try welcomeMessageForWidth(std.testing.allocator, welcome_logo_min_cols - 1);
     defer std.testing.allocator.free(message);
 
     try std.testing.expect(std.mem.find(u8, message, welcome_logo_rows[0]) == null);
-    try std.testing.expect(std.mem.startsWith(u8, message, subtitle_style));
-    try std.testing.expect(std.mem.startsWith(u8, message[subtitle_style.len..], "handwork"));
-    try std.testing.expect(std.mem.find(u8, message, "Run /help for commands") != null);
-    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, message, "\n"));
+    try std.testing.expect(std.mem.find(u8, message, "handwork") != null);
+    try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, message, "\n"));
+    var lines = std.mem.splitScalar(u8, message, '\n');
+    for (0..2) |_| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(lines.next().?) <= welcome_logo_min_cols - 1);
 }
 
 test "build label stays bare on the stable channel" {
@@ -1272,7 +1309,7 @@ test "buildHintLine keeps system labels and dot separators" {
     }, 256, &buf);
     const expected = try std.fmt.allocPrint(
         std.testing.allocator,
-        "run /login · {s}auto{s} · opus 4.8 · low · ⚡︎ · 43k/1000k 4%",
+        "{s}auto{s} · run /login · opus 4.8 · low · ⚡︎ · 43k/1000k 4%",
         .{ permission_auto_style, statusline_style },
     );
     defer std.testing.allocator.free(expected);
@@ -1334,4 +1371,30 @@ test "buildHintLine clips styled auto mode by visible width" {
     try std.testing.expectEqualStrings(expected, line);
     try std.testing.expectEqual(@as(usize, 13), display_width.visibleWidthIgnoringAnsi(line));
     try std.testing.expect(std.mem.endsWith(u8, line, "gpt-4o"));
+}
+
+test "buildHintLine reserves permission mode before long model names" {
+    initTheme(false, null);
+    defer initTheme(false, null);
+
+    const cases = [_]struct { mode: types.PermissionMode, label: []const u8 }{
+        .{ .mode = .ask, .label = "ask" },
+        .{ .mode = .auto, .label = "auto" },
+        .{ .mode = .yolo, .label = "full access" },
+    };
+    for (cases) |case| {
+        var buf: [128]u8 = undefined;
+        const line = buildHintLine(false, true, "provider/a-very-long-model-name", case.mode, false, .auto, false, .{}, 18, &buf);
+        try std.testing.expect(std.mem.find(u8, line, case.label) != null);
+        try std.testing.expect(display_width.visibleWidthIgnoringAnsi(line) <= 18);
+    }
+
+    var small_buf: [16]u8 = undefined;
+    const small = buildHintLine(false, true, "provider/a-very-long-model-name", .auto, false, .auto, false, .{}, 18, &small_buf);
+    try std.testing.expectEqualStrings("auto", small);
+
+    var setup_buf: [64]u8 = undefined;
+    const setup = buildHintLine(false, false, "provider/a-very-long-model-name", .yolo, false, .auto, false, .{}, 18, &setup_buf);
+    try std.testing.expect(std.mem.startsWith(u8, setup, permission_auto_style));
+    try std.testing.expect(std.mem.find(u8, setup, "full access") != null);
 }

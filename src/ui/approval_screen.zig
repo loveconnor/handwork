@@ -2173,8 +2173,7 @@ test "file approval top-aligns a fitting welcome document and clears below" {
 
     var row: std.ArrayList(u8) = .empty;
     defer row.deinit(alloc);
-    // The welcome document opens with five background-painted logo rows, a
-    // blank row, and then the version line.
+    // The compact welcome mark remains visible above the review.
     var has_logo_fill = false;
     var logo_col: u16 = 1;
     while (logo_col <= 80) : (logo_col += 1) {
@@ -2189,31 +2188,38 @@ test "file approval top-aligns a fitting welcome document and clears below" {
         }
     }
     try std.testing.expect(has_logo_fill);
-    try grid.rowTextTrimmed(7, &row);
-    try std.testing.expect(std.mem.indexOf(u8, row.items, "Run /help for commands") != null);
+    try grid.rowTextTrimmed(3, &row);
+    try std.testing.expect(std.mem.indexOf(u8, row.items, "Choose a provider below") != null);
 
-    const transcript_divider = grid.cellAt(10, 1) orelse return error.TestMissingTranscriptDivider;
+    const transcript_divider = grid.cellAt(6, 1) orelse return error.TestMissingTranscriptDivider;
     try std.testing.expectEqual(@as(u21, 0x2500), transcript_divider.codepoint);
 
     row.clearRetainingCapacity();
-    try grid.rowTextTrimmed(11, &row);
+    try grid.rowTextTrimmed(7, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "+ short review") != null);
 
-    const approval_divider = grid.cellAt(12, 1) orelse return error.TestMissingApprovalDivider;
-    try std.testing.expectEqual(@as(u21, 0x2504), approval_divider.codepoint);
+    var approval_divider_row: ?u16 = null;
+    for (8..21) |row_number| {
+        const cell = grid.cellAt(@intCast(row_number), 1) orelse continue;
+        if (cell.codepoint == 0x2504) approval_divider_row = @intCast(row_number);
+    }
+    try std.testing.expect(approval_divider_row != null);
 
-    const bottom_divider = grid.cellAt(21, 1) orelse return error.TestMissingBottomDivider;
-    try std.testing.expectEqual(@as(u21, 0x2500), bottom_divider.codepoint);
+    var bottom_divider_row: ?u16 = null;
+    for (approval_divider_row.? + 1..25) |row_number| {
+        const cell = grid.cellAt(@intCast(row_number), 1) orelse continue;
+        if (cell.codepoint == 0x2500) bottom_divider_row = @intCast(row_number);
+    }
+    const bottom = bottom_divider_row orelse return error.TestMissingBottomDivider;
 
     row.clearRetainingCapacity();
-    try grid.rowTextTrimmed(22, &row);
+    try grid.rowTextTrimmed(bottom + 1, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "1–3 choose") != null);
-    row.clearRetainingCapacity();
-    try grid.rowTextTrimmed(23, &row);
-    try std.testing.expectEqualStrings("", row.items);
-    row.clearRetainingCapacity();
-    try grid.rowTextTrimmed(24, &row);
-    try std.testing.expectEqualStrings("", row.items);
+    for (bottom + 2..25) |row_number| {
+        row.clearRetainingCapacity();
+        try grid.rowTextTrimmed(@intCast(row_number), &row);
+        try std.testing.expectEqualStrings("", row.items);
+    }
 }
 
 test "file approval transcript viewport resumes styled links without leaking into review chrome" {

@@ -21,6 +21,7 @@ pub const ActivityPaintInput = struct {
     /// Wall-clock blink state synced to the elapsed counter; null falls back
     /// to the frame-phase blink.
     thinking_blink: ?bool = null,
+    static_activity: bool = false,
 };
 
 pub const ActivityPaintStyle = enum {
@@ -161,6 +162,7 @@ pub fn paintActivityIntoSurface(
                     .label = tool_label,
                     .shimmer_pos = input.shimmer_pos,
                     .style = .tool_marker,
+                    .static_activity = input.static_activity,
                 }, tool_row, false);
             }
             const primary = if (activity.tool_row == null) if (input.tool_label) |tool_label|
@@ -168,6 +170,7 @@ pub fn paintActivityIntoSurface(
                     .label = tool_label,
                     .shimmer_pos = input.shimmer_pos,
                     .style = .tool_marker,
+                    .static_activity = input.static_activity,
                 }
             else
                 input else input;
@@ -219,9 +222,9 @@ fn paintPlannedActivityRow(
         .thinking => writeThinkingBlinkText(
             &buf,
             preview.bytes,
-            input.thinking_blink orelse markerBlinkVisible(input.shimmer_pos),
+            input.static_activity or (input.thinking_blink orelse markerBlinkVisible(input.shimmer_pos)),
         ),
-        .tool_marker => writeToolMarkerBlinkText(&buf, preview.bytes, input.shimmer_pos),
+        .tool_marker => writeToolMarkerBlinkText(&buf, preview.bytes, if (input.static_activity) -render_request.animation_padding else input.shimmer_pos),
         .neutral => writeStaticStyledText(&buf, preview.bytes, ui_render.dim_style),
         .warning => writeStaticStyledText(&buf, preview.bytes, ui_render.warning_style),
         .success => writeStaticStyledText(&buf, preview.bytes, ui_render.green_style),
@@ -794,6 +797,37 @@ test "activity surface painter honors the thinking blink override" {
 
     try std.testing.expectEqual(@as(u21, ' '), hidden.surface.cellAt(4, 1).?.codepoint);
     try std.testing.expectEqual(@as(u21, '•'), visible.surface.cellAt(4, 1).?.codepoint);
+}
+
+test "static activity markers remain visible at different animation phases" {
+    const plan = testPlan(
+        .{ .transient_row = .{ .row = 4, .gap_above_rows = 0 } },
+        .{ .top = 4, .bottom = 4, .owner = .activity },
+    );
+    for ([_]i16{ -8, 4, 19, 31 }) |phase| {
+        var fixture = try testSurface(plan);
+        defer fixture.surface.deinit();
+        defer fixture.shadow.deinit();
+        _ = try paintActivityIntoSurface(&fixture.surface, .{
+            .label = "• Working…",
+            .shimmer_pos = phase,
+            .static_activity = true,
+            .thinking_blink = false,
+        });
+        try std.testing.expectEqual(@as(u21, '•'), fixture.surface.cellAt(4, 1).?.codepoint);
+        try std.testing.expectEqual(@as(u21, 'W'), fixture.surface.cellAt(4, 3).?.codepoint);
+    }
+
+    var tool = try testSurface(plan);
+    defer tool.surface.deinit();
+    defer tool.shadow.deinit();
+    _ = try paintActivityIntoSurface(&tool.surface, .{
+        .label = "● Running command",
+        .shimmer_pos = 4,
+        .style = .tool_marker,
+        .static_activity = true,
+    });
+    try std.testing.expectEqual(@as(u21, '●'), tool.surface.cellAt(4, 1).?.codepoint);
 }
 
 test "activity surface painter rejects activity over footer" {

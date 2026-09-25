@@ -825,7 +825,7 @@ pub fn Runtime(comptime App: type) type {
             var label_buf: [256]u8 = undefined;
             _ = activityShimmerLabel(app, presenter, compaction, now_ms, &label_buf) orelse return status_changed;
             const previous_deadline = app.shell.render_requests.animation_next_deadline_ms;
-            if (!app.shell.render_requests.requestAnimationDue(now_ms)) return status_changed;
+            if (!app.shell.animate_activity or !app.shell.render_requests.requestAnimationDue(now_ms)) return status_changed;
             debug_trace.logf(
                 "frame_schedule",
                 "animation_due previous_ms={d} now_ms={d} interval_ms={d}",
@@ -1642,6 +1642,7 @@ const FakeCommandOutputDisplay = struct {
 const FakeShell = struct {
     command_output_display: FakeCommandOutputDisplay = .{},
     shimmer_active: bool = false,
+    animate_activity: bool = true,
     native_history_active: bool = false,
     render_requests: render_request.RenderRequestState = .{},
     lifecycle: transcript_runtime.TranscriptRuntime = .{
@@ -2486,6 +2487,36 @@ test "core.app_worker_runtime advances visible animation exactly at its deadline
 
     try std.testing.expect(!Runtime(FakeApp).advanceVisibleAnimation(&app, NoopBridge.lifecyclePresenter(&app), 1_050, test_awake_timestamp(1_050)));
     try std.testing.expectEqual(before, app.shell.render_requests.visibleAnimationPhase());
+}
+
+test "static activity avoids animation redraw requests during a long task" {
+    var app = FakeApp.init(std.testing.allocator);
+    defer app.deinit();
+    app.stream = .{ .active = true, .last_activity_kind = .ask };
+    app.shell.shimmer_active = true;
+    app.shell.animate_activity = false;
+    app.shell.render_requests.animation_visible = true;
+    app.shell.render_requests.animation_next_deadline_ms = 50;
+
+    var now_ms: i64 = 1_000;
+    while (now_ms <= 600_000) : (now_ms += 1_000) {
+        try std.testing.expect(!Runtime(FakeApp).advanceVisibleAnimation(
+            &app,
+            NoopBridge.lifecyclePresenter(&app),
+            now_ms,
+            test_awake_timestamp(now_ms),
+        ));
+    }
+    try std.testing.expect(!app.shell.render_requests.hasReason(.animation));
+
+    app.shell.animate_activity = true;
+    try std.testing.expect(Runtime(FakeApp).advanceVisibleAnimation(
+        &app,
+        NoopBridge.lifecyclePresenter(&app),
+        600_050,
+        test_awake_timestamp(600_050),
+    ));
+    try std.testing.expect(app.shell.render_requests.hasReason(.animation));
 }
 
 test "core.app_worker_runtime keeps visible animation alive after native history starts" {

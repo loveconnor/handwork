@@ -545,6 +545,7 @@ const App = struct {
     input_runtime: InputRuntime = .{},
     terminal_input_runtime: TerminalInputRuntime = .{},
     macos_paste_shortcut: macos_paste_shortcut.Monitor = .{},
+    macos_cmd_v_scope_warned: bool = false,
     submission: input_submit_runtime.State = .{},
     pending_images: std.ArrayList(types.ImageAttachment) = .empty,
     next_image_id: usize = 1,
@@ -829,6 +830,7 @@ const App = struct {
     }
 
     fn deinitImpl(self: *App, capture_resume_handoff: bool) app_session_runtime.ShutdownOutcome {
+        self.macos_paste_shortcut.deinit();
         self.auth.stopProviderPreparation();
         // Client.deinit releases the herdr pane (clear agent + label) when enabled.
         self.herdr.deinit();
@@ -2836,8 +2838,32 @@ const App = struct {
         const self: *App = @ptrCast(@alignCast(ctx));
         if (!try WorkerAppRuntime.authorizeInteractiveAdmission(self)) return;
 
+        switch (self.macos_paste_shortcut.start()) {
+            .permission_needed => try self.writeDomainNotice(.{
+                .topic = "images",
+                .tone = .neutral,
+                .body = "Command-V image paste needs macOS Input Monitoring permission. Grant access and restart Handwork; Control-V or /paste works without it.",
+            }, true),
+            .unavailable => try self.writeDomainNotice(.{
+                .topic = "images",
+                .tone = .neutral,
+                .body = "Command-V monitor could not start. Check macOS Input Monitoring access and restart Handwork; use Control-V or /paste meanwhile.",
+            }, true),
+            .disabled, .ready => {},
+        }
         if (self.macos_paste_shortcut.poll()) {
-            try InputAppRuntime.handleHostOwnedClipboardShortcut(self);
+            switch (macos_paste_shortcut.Monitor.matchesFocusedTerminalTab(self.alloc)) {
+                .yes => try InputAppRuntime.handleHostOwnedClipboardShortcut(self),
+                .no => {},
+                .failed => if (!self.macos_cmd_v_scope_warned) {
+                    self.macos_cmd_v_scope_warned = true;
+                    try self.writeDomainNotice(.{
+                        .topic = "images",
+                        .tone = .neutral,
+                        .body = "Command-V image paste could not check this Terminal tab. Allow Terminal automation when macOS asks, or use Control-V or /paste.",
+                    }, true);
+                },
+            }
         }
         if (self.terminal.session_alternate_screen and
             self.terminal.alternate_screen_owner == .none and

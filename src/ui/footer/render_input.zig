@@ -425,6 +425,7 @@ pub const RenderContext = struct {
     model_supports_effort: bool = false,
     ctrl_c_pending: bool = false,
     shimmer_pos: i16 = -render_request.animation_padding,
+    static_activity: bool = false,
     now_ms: i64 = 0,
     model_query_active: bool = false,
     model_picker_stage: picker_state.ModelPickerStage = .model,
@@ -705,7 +706,7 @@ pub fn frameOwnedActivityProjection(
     if (approval != null or ctx.question != null) return .none;
     const compaction = activity_status.compactionProjection(buf, ctx.compaction, ctx.stream, ctx.now_ms);
     if (compaction == .none and !ctx.stream.active and ctx.pending_prompt_activity) {
-        return .{ .turn_thinking = .{ .label = "• Thinking" } };
+        return .{ .turn_thinking = .{ .label = if (ctx.static_activity) "• Working…" else "• Thinking" } };
     }
     switch (ctx.activity) {
         .tool_slot => {},
@@ -714,7 +715,10 @@ pub fn frameOwnedActivityProjection(
         },
         .none => {},
     }
-    if (compaction != .none) return compaction;
+    if (compaction != .none) {
+        if (ctx.static_activity) return .{ .turn_thinking = .{ .label = "• Compacting" } };
+        return compaction;
+    }
     return turnActivityProjection(buf, shell, ctx);
 }
 
@@ -725,6 +729,27 @@ pub fn frameActivityBlink(ctx: RenderContext) ?bool {
         }
     }
     return activity_status.activityBlinkVisible(ctx.stream, ctx.now_ms);
+}
+
+test "static activity keeps a steady working label across elapsed time" {
+    var input = InputRuntime{};
+    defer input.deinit(std.testing.allocator);
+    var shell: TranscriptRuntime = .{};
+    defer shell.deinit(std.testing.allocator);
+    var ctx: RenderContext = .{
+        .stream = .{ .active = true },
+        .has_api_key = true,
+        .model = "test-model",
+        .static_activity = true,
+        .input = &input,
+    };
+    var buf: [256]u8 = undefined;
+    ctx.now_ms = 1_000;
+    const early = frameOwnedActivityProjection(&buf, &shell, ctx, null);
+    try std.testing.expectEqualStrings("• Working…", early.turn_thinking.label);
+    ctx.now_ms = 600_000;
+    const late = frameOwnedActivityProjection(&buf, &shell, ctx, null);
+    try std.testing.expectEqualStrings("• Working…", late.turn_thinking.label);
 }
 
 fn turnActivityProjection(
@@ -740,6 +765,8 @@ fn turnActivityProjection(
             .tone = .neutral,
         } };
     }
+
+    if (ctx.static_activity) return .{ .turn_thinking = .{ .label = "• Working…" } };
 
     var visible_stream = ctx.stream;
     visible_stream.last_activity_kind = null;

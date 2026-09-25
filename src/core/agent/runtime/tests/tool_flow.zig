@@ -4266,6 +4266,7 @@ test "committed file result is appended before degraded secondary publication" {
             .kind = .write,
             .raw_path = "/tmp/workspace/safe.txt",
             .previous_content = null,
+            .expected_content = @import("../../../workspace/change_tracker.zig").ContentStamp.fromContent("safe"),
             .committed_at_ms = 42,
         },
     );

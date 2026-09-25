@@ -162,6 +162,7 @@ test "prepared diff payload keeps compact elision and retains the complete appro
             .kind = .write,
             .raw_path = "/tmp/full-review.txt",
             .previous_content = null,
+            .expected_content = change_tracker_mod.ContentStamp.fromContent("after"),
             .committed_at_ms = 0,
         },
     );
@@ -245,6 +246,7 @@ test "full diff formatter renders unchanged review elisions" {
             .kind = .edit,
             .raw_path = "/tmp/elision.txt",
             .previous_content = before,
+            .expected_content = change_tracker_mod.ContentStamp.fromContent("after"),
             .committed_at_ms = 0,
         },
     );
@@ -976,6 +978,7 @@ pub fn Bindings(comptime App: type) type {
                 },
                 .path = path,
                 .previous_content = previous_content,
+                .expected_content = handoff.tracker.expected_content,
                 .timestamp_ms = handoff.tracker.committed_at_ms,
             }) catch |err| {
                 app.alloc.free(path);
@@ -2442,6 +2445,7 @@ fn testCommittedFileHandoff() file_mutation.CommittedFileHandoff {
             .kind = .edit,
             .raw_path = "/tmp/workspace/tracked.txt",
             .previous_content = "before\n",
+            .expected_content = change_tracker_mod.ContentStamp.fromContent("after\n"),
             .committed_at_ms = 42,
         },
     );
@@ -2483,6 +2487,7 @@ test "committed file handoff publishes prepared diff and cloned tracker state" {
     try std.testing.expect(
         tracked.previous_content.?.ptr != handoff.tracker.previous_content.?.ptr,
     );
+    try std.testing.expectEqualDeep(handoff.tracker.expected_content, tracked.expected_content);
 }
 
 test "command output callback drops cancelled late chunks without mutating queued output" {

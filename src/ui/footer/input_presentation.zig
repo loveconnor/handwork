@@ -9,6 +9,7 @@ const display_width = @import("../../core/shared/display_width.zig");
 const list_window = @import("../../core/shared/list_window.zig");
 const skill_runtime = @import("../../core/skills/skill_runtime.zig");
 const types = @import("../../core/shared/types.zig");
+const vt_emulator = @import("../../core/terminal/engine.zig");
 const text_utils = @import("../../core/shared/text_utils.zig");
 const paste_blocks = @import("../../core/input/pasted_blocks.zig");
 const core_input_runtime = @import("../../core/input/runtime.zig");
@@ -181,13 +182,21 @@ const freeform_question_hints = [_][]const u8{
     "shift+↑↓ options · tab questions · enter answer · esc cancel",
     "tab questions · enter answer · esc cancel",
     "enter answer · esc cancel",
+    "enter/esc",
 };
 
 const predefined_question_hints = [_][]const u8{
     "↑↓ options · tab questions · enter answer · esc cancel",
     "tab questions · enter answer · esc cancel",
     "enter answer · esc cancel",
+    "enter/esc",
 };
+
+fn transientHintBudget(width: u16, mode: types.PermissionMode) u16 {
+    const reserved = display_width.visibleWidth(ui_render.permissionModeText(mode)) +
+        display_width.visibleWidth(" · ");
+    return @intCast(@as(usize, width) -| reserved);
+}
 
 fn questionInteractionHint(
     projection: question_prompt.Projection,
@@ -454,13 +463,14 @@ pub fn composeHintRow(
     ctx: RenderContext,
     width: u16,
 ) !std.ArrayList(u8) {
+    const transient_budget = transientHintBudget(width, ctx.permission_mode);
     var question_hint_buf: [512]u8 = undefined;
     const question_hint = if (ctx.question) |projection|
-        questionInteractionHint(projection, width, &question_hint_buf)
+        questionInteractionHint(projection, transient_budget, &question_hint_buf)
     else
         null;
     const auth_hint = if (!approval_active and question_hint == null and !ctx.ctrl_c_pending)
-        authPickerInteractionHint(ctx.auth_picker, width)
+        authPickerInteractionHint(ctx.auth_picker, transient_budget)
     else
         null;
     var hint_buf: [max_status_line_len]u8 = undefined;
@@ -479,7 +489,7 @@ pub fn composeHintRow(
     var hint_line = if (question_hint) |hint|
         hint
     else if (ctx.ctrl_c_pending)
-        "press ctrl+c again to exit"
+        display_width.widestFitting(&.{ "press ctrl+c again to exit", "ctrl+c again to exit", "ctrl+c exit", "ctrl+c" }, transient_budget)
     else if (auth_hint) |hint|
         hint
     else
@@ -489,22 +499,44 @@ pub fn composeHintRow(
     const danger_text = dangerStatusText(approval_active, ctx, width);
     // The armed interrupt hint shrinks through compact variants so narrow
     // terminals still show the confirming-press cue; when no variant fits
-    // beside the left hint, the cue owns the whole row like ctrl+c does.
+    // beside the left hint, it replaces the model status after permission mode.
     const esc_interrupt_variants = [_][]const u8{
         "esc again to interrupt",
         "esc esc interrupt",
         "esc esc",
     };
     var esc_interrupt_hint: []const u8 = "";
+    var interrupt_replaces_status = false;
     if (ctx.esc_interrupt_armed) {
-        const left_width = display_width.visibleWidthIgnoringAnsi(hint_line);
+        const left_width = display_width.visibleWidthIgnoringAnsi(hint_line) +
+            (if (question_hint != null or ctx.ctrl_c_pending or auth_hint != null)
+                @as(usize, width) - transient_budget
+            else
+                0);
         for (esc_interrupt_variants) |candidate| {
             if (width_usize > left_width + display_width.visibleWidth(candidate)) {
                 esc_interrupt_hint = candidate;
                 break;
             }
         }
-        if (esc_interrupt_hint.len == 0) hint_line = "esc esc to interrupt";
+        if (esc_interrupt_hint.len == 0) {
+            hint_line = display_width.widestFitting(&.{ "esc esc to interrupt", "esc esc", "esc" }, transient_budget);
+            interrupt_replaces_status = true;
+        }
+    }
+    const transient = question_hint != null or ctx.ctrl_c_pending or auth_hint != null or interrupt_replaces_status;
+    var permission_buf: [64]u8 = undefined;
+    var transient_buf: [max_status_line_len + 128]u8 = undefined;
+    if (transient) {
+        const permission_label = ui_render.permissionModeStatusLabel(ctx.permission_mode, &permission_buf);
+        hint_line = if (hint_line.len == 0 or transient_budget == 0)
+            permission_label
+        else
+            std.fmt.bufPrint(
+                &transient_buf,
+                "{s} · {s}{s}",
+                .{ permission_label, if (question_hint != null and !interrupt_replaces_status) ui_render.dim_style else "", hint_line },
+            ) catch permission_label;
     }
     // The armed clear indicator outranks the question suppression: a
     // freeform draft mid-question uses the same double-Esc contract as the
@@ -522,8 +554,9 @@ pub fn composeHintRow(
         ctx.upgrade_status;
     const right_width = display_width.visibleWidth(right_text);
     const danger_visible = danger_text.len > 0 and right_text.ptr == danger_text.ptr;
+    const permission_width = display_width.visibleWidth(ui_render.permissionModeText(ctx.permission_mode));
     const left_width: u16 = if (!danger_visible and right_width > 0 and width_usize > right_width)
-        @intCast(width_usize - right_width - 1)
+        @intCast(@min(width_usize, @max(permission_width, width_usize - right_width - 1)))
     else
         width;
 
@@ -555,16 +588,19 @@ pub fn dangerStatusText(
     ctx: RenderContext,
     width: u16,
 ) []const u8 {
-    // Transient interaction hints own the whole row: the warning is placed at
-    // an absolute column and would overwrite them on narrow terminals.
+    // Transient interaction hints take priority. A right-aligned warning must
+    // leave the persistent permission mode readable.
     if (approval_active or ctx.question != null or ctx.esc_clear_armed or ctx.esc_interrupt_armed or ctx.ctrl_c_pending) return "";
+    const reserved = display_width.visibleWidth(ui_render.permissionModeText(ctx.permission_mode)) + 1;
     if (ctx.danger_status.len > 0 and
-        display_width.visibleWidth(ctx.danger_status) <= width)
+        reserved + display_width.visibleWidth(ctx.danger_status) <= width)
     {
         return ctx.danger_status;
     }
+    // The fixed full-access label already carries the compact warning.
+    if (ctx.permission_mode == .yolo) return "";
     if (ctx.danger_status_compact.len > 0 and
-        display_width.visibleWidth(ctx.danger_status_compact) <= width)
+        reserved + display_width.visibleWidth(ctx.danger_status_compact) <= width)
     {
         return ctx.danger_status_compact;
     }
@@ -1588,12 +1624,69 @@ test "compose hint row prioritizes the armed interrupt hint and shrinks it on na
 
     var narrowest = try composeHintRow(alloc, false, ctx, 18);
     defer narrowest.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, narrowest.items, "esc esc to") != null);
+    try std.testing.expect(std.mem.find(u8, narrowest.items, "ask · esc esc") != null);
 
     ctx.esc_interrupt_armed = false;
     var clear_only = try composeHintRow(alloc, false, ctx, 96);
     defer clear_only.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, clear_only.items, "esc again to clear") != null);
+}
+
+test "compose hint row keeps permission mode with long models and transient prompts" {
+    const alloc = std.testing.allocator;
+    var input = InputRuntime{};
+    defer input.deinit(alloc);
+    var ctx = testRenderContext(&input);
+    ctx.permission_mode = .yolo;
+    ctx.model = "provider/a-very-long-model-name";
+    ctx.danger_status = "Full access enabled: handwork permission checks disabled";
+    ctx.danger_status_compact = "Full access";
+
+    var normal = try composeHintRow(alloc, false, ctx, 24);
+    defer normal.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, normal.items, "full access") != null);
+    try std.testing.expect(display_width.visibleWidthIgnoringAnsi(normal.items) <= 24);
+
+    ctx.upgrade_status = "update ready: ctrl+g";
+    var upgrading = try composeHintRow(alloc, false, ctx, 24);
+    defer upgrading.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, upgrading.items, "full access") != null);
+    try std.testing.expect(std.mem.find(u8, upgrading.items, "update ready") == null);
+    ctx.upgrade_status = "";
+
+    var prompt = question_prompt.QuestionPrompt{};
+    defer prompt.deinit(alloc);
+    try syncHintTestQuestion(&prompt);
+    ctx.question = prompt.projection();
+    var question = try composeHintRow(alloc, false, ctx, 24);
+    defer question.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, question.items, "full access") != null);
+    try std.testing.expect(std.mem.find(u8, question.items, "enter/esc") != null);
+    try std.testing.expect(display_width.visibleWidthIgnoringAnsi(question.items) <= 24);
+    var prompt_grid = try vt_emulator.Grid.init(alloc, 24, 1);
+    defer prompt_grid.deinit();
+    try prompt_grid.feed(question.items);
+    var prompt_text: std.ArrayList(u8) = .empty;
+    defer prompt_text.deinit(alloc);
+    try prompt_grid.rowTextTrimmed(1, &prompt_text);
+    try std.testing.expect(std.mem.startsWith(u8, prompt_text.items, "full access"));
+    try std.testing.expect(std.mem.find(u8, prompt_text.items, "enter/esc") != null);
+
+    ctx.question = null;
+    ctx.esc_interrupt_armed = true;
+    var interrupted = try composeHintRow(alloc, false, ctx, 24);
+    defer interrupted.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, interrupted.items, "full access") != null);
+    try std.testing.expect(std.mem.find(u8, interrupted.items, "esc esc") != null);
+    try std.testing.expect(display_width.visibleWidthIgnoringAnsi(interrupted.items) <= 24);
+
+    ctx.esc_interrupt_armed = false;
+    ctx.ctrl_c_pending = true;
+    var quitting = try composeHintRow(alloc, false, ctx, 24);
+    defer quitting.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, quitting.items, "full access") != null);
+    try std.testing.expect(std.mem.find(u8, quitting.items, "ctrl+c") != null);
+    try std.testing.expect(display_width.visibleWidthIgnoringAnsi(quitting.items) <= 24);
 }
 
 test "compose hint row keeps model in left hint text" {
@@ -1767,10 +1860,11 @@ test "compose hint row right-aligns upgrade status after styled auto mode" {
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(row.items) <= 56);
 }
 
-test "compose hint row prioritizes red yolo warning with compact fallback" {
+test "compose hint row keeps full access visible beside or without the expanded warning" {
     var input = InputRuntime{};
     defer input.deinit(std.testing.allocator);
     var ctx = testRenderContext(&input);
+    ctx.permission_mode = .yolo;
     ctx.danger_status = "Full access enabled: handwork permission checks disabled";
     ctx.danger_status_compact = "Full access";
 
@@ -1778,16 +1872,26 @@ test "compose hint row prioritizes red yolo warning with compact fallback" {
     defer full.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.find(u8, full.items, ctx.danger_status) != null);
     try std.testing.expect(std.mem.find(u8, full.items, ui_render.red_style) != null);
+    var grid = try vt_emulator.Grid.init(std.testing.allocator, 80, 1);
+    defer grid.deinit();
+    try grid.feed(full.items);
+    var rendered: std.ArrayList(u8) = .empty;
+    defer rendered.deinit(std.testing.allocator);
+    try grid.rowTextTrimmed(1, &rendered);
+    try std.testing.expect(std.mem.startsWith(u8, rendered.items, "full access"));
+    try std.testing.expect(std.mem.find(u8, rendered.items, ctx.danger_status) != null);
 
     var compact = try composeHintRow(std.testing.allocator, false, ctx, 24);
     defer compact.deinit(std.testing.allocator);
-    try std.testing.expect(std.mem.find(u8, compact.items, ctx.danger_status_compact) != null);
+    try std.testing.expect(std.mem.find(u8, compact.items, "full access") != null);
+    try std.testing.expect(std.mem.find(u8, compact.items, ctx.danger_status_compact) == null);
     try std.testing.expect(std.mem.find(u8, compact.items, ctx.danger_status) == null);
 
     ctx.esc_clear_armed = true;
     var suppressed = try composeHintRow(std.testing.allocator, false, ctx, 80);
     defer suppressed.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.find(u8, suppressed.items, "esc again to clear") != null);
+    try std.testing.expect(std.mem.find(u8, suppressed.items, "full access") != null);
     try std.testing.expect(std.mem.find(u8, suppressed.items, "Full access") == null);
 }
 
@@ -1795,6 +1899,7 @@ test "compose hint row yields the yolo warning to a pending ctrl+c quit hint" {
     var input = InputRuntime{};
     defer input.deinit(std.testing.allocator);
     var ctx = testRenderContext(&input);
+    ctx.permission_mode = .yolo;
     ctx.danger_status = "Full access enabled: handwork permission checks disabled";
     ctx.danger_status_compact = "Full access";
     ctx.ctrl_c_pending = true;
@@ -1805,12 +1910,13 @@ test "compose hint row yields the yolo warning to a pending ctrl+c quit hint" {
     var pending = try composeHintRow(std.testing.allocator, false, ctx, 60);
     defer pending.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.find(u8, pending.items, "press ctrl+c again to exit") != null);
+    try std.testing.expect(std.mem.find(u8, pending.items, "full access") != null);
     try std.testing.expect(std.mem.find(u8, pending.items, "Full access") == null);
 
     ctx.ctrl_c_pending = false;
-    try std.testing.expectEqualStrings(ctx.danger_status, dangerStatusText(false, ctx, 60));
+    try std.testing.expectEqualStrings(ctx.danger_status, dangerStatusText(false, ctx, 80));
 
-    var resumed = try composeHintRow(std.testing.allocator, false, ctx, 60);
+    var resumed = try composeHintRow(std.testing.allocator, false, ctx, 80);
     defer resumed.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.find(u8, resumed.items, ctx.danger_status) != null);
     try std.testing.expect(std.mem.find(u8, resumed.items, "press ctrl+c again to exit") == null);
@@ -1842,7 +1948,7 @@ test "question hint row excludes model and upgrade status at supported widths" {
         .{ .width = 88, .freeform = false, .hint = "1–4 choose now    ↑↓ options    tab questions    enter answer    esc cancel" },
         .{ .width = 40, .freeform = false, .hint = predefined_question_hints[2] },
         .{ .width = 120, .freeform = true, .hint = "type answer    ↑↓←→ cursor    shift+↑↓ options    tab questions    enter answer    esc cancel" },
-        .{ .width = 72, .freeform = true, .hint = freeform_question_hints[0] },
+        .{ .width = 72, .freeform = true, .hint = freeform_question_hints[1] },
         .{ .width = 32, .freeform = true, .hint = freeform_question_hints[3] },
     };
 

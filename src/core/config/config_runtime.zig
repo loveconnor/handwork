@@ -51,6 +51,7 @@ pub const Settings = struct {
     fast_mode_model_bound: ?bool = null,
     slash_menu_categories: ?bool = null,
     collapse_tool_calls: ?bool = null,
+    animate_activity: ?bool = null,
     auto_upgrade: ?bool = null,
     update_channel: ?update_target.Channel = null,
     startup_scrollback: ?bool = null,
@@ -120,6 +121,7 @@ pub const ConfigSources = struct {
     fast_mode_model_bound: ConfigSource = .compiled_default,
     slash_menu_categories: ConfigSource = .compiled_default,
     collapse_tool_calls: ConfigSource = .compiled_default,
+    animate_activity: ConfigSource = .compiled_default,
     startup_scrollback: ConfigSource = .compiled_default,
     prompt_history_enabled: ConfigSource = .compiled_default,
     statusline_context: ConfigSource = .compiled_default,
@@ -612,6 +614,7 @@ fn isProfileOnlySettingKey(key: []const u8) bool {
         "fast_mode_model_bound",
         "slash_menu_categories",
         "collapse_tool_calls",
+        "animate_activity",
         "session_titles",
         "startup_scrollback",
         "prompt_history",
@@ -661,6 +664,7 @@ fn updateConfigSources(sources: *ConfigSources, settings: Settings, source: Conf
     if (settings.fast_mode_model_bound != null) sources.fast_mode_model_bound = source;
     if (settings.slash_menu_categories != null) sources.slash_menu_categories = source;
     if (settings.collapse_tool_calls != null) sources.collapse_tool_calls = source;
+    if (settings.animate_activity != null) sources.animate_activity = source;
     if (settings.session_titles != null) sources.session_titles = source;
     if (settings.startup_scrollback != null) sources.startup_scrollback = source;
     if (settings.prompt_history_enabled != null) sources.prompt_history_enabled = source;
@@ -1478,6 +1482,11 @@ fn parseProfileOnlyFields(
         settings.collapse_tool_calls = value.bool;
     }
 
+    if (root.object.get("animate_activity")) |value| {
+        if (value != .bool) return error.InvalidAnimateActivityType;
+        settings.animate_activity = value.bool;
+    }
+
     if (root.object.get("session_titles")) |session_titles_value| {
         const value = session_titles_value;
         if (value != .bool) return error.InvalidSessionTitlesType;
@@ -1603,6 +1612,7 @@ fn mergeSettings(target: *Settings, incoming: *Settings, alloc: Allocator) void 
     if (incoming.fast_mode_model_bound) |value| target.fast_mode_model_bound = value;
     if (incoming.slash_menu_categories) |value| target.slash_menu_categories = value;
     if (incoming.collapse_tool_calls) |value| target.collapse_tool_calls = value;
+    if (incoming.animate_activity) |value| target.animate_activity = value;
     if (incoming.session_titles) |value| target.session_titles = value;
     if (incoming.auto_upgrade) |value| target.auto_upgrade = value;
     if (incoming.update_channel) |value| target.update_channel = value;
@@ -2236,6 +2246,16 @@ test "collapse tool calls parses merges and rejects invalid types" {
         error.InvalidCollapseToolCallsType,
         parseSettingsJson(std.testing.allocator, "{\"collapse_tool_calls\":\"off\"}"),
     );
+}
+
+test "activity animation parses merges and rejects invalid types" {
+    var animated = try parseSettingsJson(std.testing.allocator, "{\"animate_activity\":true}");
+    defer animated.deinit(std.testing.allocator);
+    var static = try parseSettingsJson(std.testing.allocator, "{\"animate_activity\":false}");
+    defer static.deinit(std.testing.allocator);
+    mergeSettings(&animated, &static, std.testing.allocator);
+    try std.testing.expectEqual(false, animated.animate_activity.?);
+    try std.testing.expectError(error.InvalidAnimateActivityType, parseSettingsJson(std.testing.allocator, "{\"animate_activity\":\"off\"}"));
 }
 
 test "slash menu categories parses merges and rejects invalid types" {

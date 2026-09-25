@@ -65,7 +65,10 @@ pub fn build(b: *std.Build) void {
         }),
     });
     exe.root_module.addImport("build_options", build_options.createModule());
-    if (target.result.os.tag == .macos) exe.root_module.linkFramework("ApplicationServices", .{});
+    if (target.result.os.tag == .macos) {
+        exe.root_module.linkFramework("ApplicationServices", .{});
+        exe.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_cmd_v_monitor.c"), .flags = &.{} });
+    }
 
     b.installArtifact(exe);
     const runtime_files = b.addInstallDirectory(.{ .source_dir = b.path("runtime"), .install_dir = .lib, .install_subdir = "handwork", .exclude_extensions = &.{".test.mjs"} });
@@ -93,7 +96,10 @@ pub fn build(b: *std.Build) void {
         .root_module = test_module,
         .filters = if (test_filter) |filter| &.{filter} else &.{},
     });
-    if (target.result.os.tag == .macos) exe_tests.root_module.linkFramework("ApplicationServices", .{});
+    if (target.result.os.tag == .macos) {
+        exe_tests.root_module.linkFramework("ApplicationServices", .{});
+        exe_tests.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_cmd_v_monitor.c"), .flags = &.{} });
+    }
     const run_exe_tests = b.addRunArtifact(exe_tests);
     run_exe_tests.step.dependOn(b.getInstallStep());
     run_exe_tests.setEnvironmentVariable(

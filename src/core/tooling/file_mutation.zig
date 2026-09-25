@@ -4,6 +4,7 @@ const diff_mod = @import("../output/diff.zig");
 const file_mutation_contract = @import("file_mutation_contract.zig");
 const io_mod = @import("../shared/io.zig");
 const pathing = @import("../workspace/pathing.zig");
+const change_tracker = @import("../workspace/change_tracker.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
 
@@ -64,6 +65,7 @@ pub const ChangeTrackerHandoff = struct {
     kind: file_mutation_contract.Kind,
     raw_path: []const u8,
     previous_content: ?[]const u8,
+    expected_content: change_tracker.ContentStamp,
     committed_at_ms: i64,
 };
 
@@ -449,6 +451,7 @@ fn applyWithTestControls(
         prepared.kind,
         prepared.target_path,
         previous_content,
+        prepared.after_content,
     );
     var handoff_owned = true;
     defer if (handoff_owned) handoff.deinit(result_alloc);
@@ -640,6 +643,7 @@ fn dupeCommittedFileHandoff(
     kind: file_mutation_contract.Kind,
     raw_path: []const u8,
     previous_content: ?[]const u8,
+    after_content: []const u8,
 ) Allocator.Error!CommittedFileHandoff {
     const owned_path = try alloc.dupe(u8, preview.path);
     errdefer alloc.free(owned_path);
@@ -679,6 +683,7 @@ fn dupeCommittedFileHandoff(
             .kind = kind,
             .raw_path = owned_raw_path,
             .previous_content = owned_previous_content,
+            .expected_content = change_tracker.ContentStamp.fromContent(after_content),
             .committed_at_ms = 0,
         },
     );
@@ -2386,6 +2391,10 @@ test "apply atomically installs reviewed bytes and returns typed commit metadata
     try std.testing.expectEqual(
         @as(?[]const u8, null),
         committed_handoff.tracker.previous_content,
+    );
+    try std.testing.expectEqualDeep(
+        change_tracker.ContentStamp.fromContent(prepared.prepared.after_content),
+        committed_handoff.tracker.expected_content,
     );
     try std.testing.expectEqual(
         prepared.prepared.preview.additions,

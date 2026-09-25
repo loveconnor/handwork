@@ -5712,7 +5712,7 @@ test "js-host resume store failures and missing records fall back to fresh sessi
         try std.testing.expect(!std.mem.eql(u8, "unusable-session", owner.state.id));
         try std.testing.expectEqual(@as(usize, 0), owner.state.history.len);
         try std.testing.expect(owner.revision == null);
-        try std.testing.expect(std.mem.find(u8, app.transcript.items, "Run /help for commands") != null);
+        try std.testing.expect(std.mem.find(u8, app.transcript.items, "/help for commands") != null);
     }
 }
 

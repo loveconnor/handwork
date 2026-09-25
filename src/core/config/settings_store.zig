@@ -103,6 +103,7 @@ pub const UserSettingsPatch = struct {
     fast_mode: ?bool = null,
     slash_menu_categories: ?bool = null,
     collapse_tool_calls: ?bool = null,
+    animate_activity: ?bool = null,
     update_channel: ?update_target.Channel = null,
     startup_scrollback: ?bool = null,
     prompt_history_enabled: ?bool = null,
@@ -123,6 +124,7 @@ pub const UserSettingsPatch = struct {
             self.fast_mode == null and
             self.slash_menu_categories == null and
             self.collapse_tool_calls == null and
+            self.animate_activity == null and
             self.update_channel == null and
             self.startup_scrollback == null and
             self.prompt_history_enabled == null and
@@ -1033,6 +1035,7 @@ fn applyUserPatchToRoot(
     }
     if (patch.slash_menu_categories) |value| application.changed = try putBool(arena, &root.object, "slash_menu_categories", value) or application.changed;
     if (patch.collapse_tool_calls) |value| application.changed = try putBool(arena, &root.object, "collapse_tool_calls", value) or application.changed;
+    if (patch.animate_activity) |value| application.changed = try putBool(arena, &root.object, "animate_activity", value) or application.changed;
     if (patch.update_channel) |value| application.changed = try putString(arena, &root.object, "update_channel", value.label()) or application.changed;
     if (patch.startup_scrollback) |value| application.changed = try putBool(arena, &root.object, "startup_scrollback", value) or application.changed;
     if (patch.session_titles) |value| application.changed = try putBool(arena, &root.object, "session_titles", value) or application.changed;
@@ -2126,6 +2129,7 @@ test "user patch writes user preferences at top level" {
         .effort = types.ReasoningEffort.literal("high"),
         .fast_mode = true,
         .slash_menu_categories = false,
+        .animate_activity = false,
         .update_channel = .dev,
         .startup_scrollback = false,
         .prompt_history_enabled = false,
@@ -2147,6 +2151,7 @@ test "user patch writes user preferences at top level" {
     try std.testing.expect(std.mem.find(u8, bytes, "\"effort\":\"high\"") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"fast_mode\":true") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"slash_menu_categories\":false") != null);
+    try std.testing.expect(std.mem.find(u8, bytes, "\"animate_activity\":false") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"update_channel\":\"dev\"") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"startup_scrollback\":false") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"prompt_history\":{\"enabled\":false}") != null);

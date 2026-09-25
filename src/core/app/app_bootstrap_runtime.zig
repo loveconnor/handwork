@@ -284,6 +284,7 @@ pub fn Runtime(comptime App: type) type {
             app.fast_mode = startup.fast_mode;
             app.input_runtime.slash_menu_categories = startup.slash_menu_categories;
             app.shell.collapse_tool_calls = startup.collapse_tool_calls;
+            app.shell.animate_activity = startup.animate_activity;
             app.auto_upgrade_enabled = startup.auto_upgrade;
             app.upgrader.configure_channel(startup.update_channel);
             app.effort = startup.effort;
@@ -343,8 +344,8 @@ pub fn Runtime(comptime App: type) type {
                     .{
                         welcome_message.len,
                         ui_render.welcome_message_reserved_rows,
-                        if (std.mem.find(u8, welcome_message, " v") != null) "true" else "false",
-                        if (std.mem.find(u8, welcome_message, "Run /help") != null) "true" else "false",
+                        if (std.mem.find(u8, welcome_message, build_options.app_version) != null) "true" else "false",
+                        if (std.mem.find(u8, welcome_message, "/help") != null) "true" else "false",
                         if (std.mem.find(u8, welcome_message, "Feedback?") != null) "true" else "false",
                         welcome_preview,
                     },

@@ -4,6 +4,18 @@ const debug_trace = @import("../shared/debug_trace.zig");
 const io_mod = @import("../shared/io.zig");
 
 const Allocator = std.mem.Allocator;
+const Sha256 = std.crypto.hash.sha2.Sha256;
+
+pub const ContentStamp = struct {
+    size: usize,
+    sha256: [Sha256.digest_length]u8,
+
+    pub fn fromContent(content: []const u8) ContentStamp {
+        var digest: [Sha256.digest_length]u8 = undefined;
+        Sha256.hash(content, &digest, .{});
+        return .{ .size = content.len, .sha256 = digest };
+    }
+};
 
 pub const OperationKind = enum {
     write,
@@ -14,12 +26,16 @@ pub const FileOperation = struct {
     kind: OperationKind,
     path: []u8,
     previous_content: ?[]u8,
+    expected_content: ContentStamp,
     timestamp_ms: i64,
 };
 
 pub const UndoResult = union(enum) {
     restored: []const u8,
     deleted: []const u8,
+    /// Borrowed from the top operation; the caller must not free it. The
+    /// operation remains available so a conflict cannot silently skip it.
+    conflict: []const u8,
     /// The operation was consumed but could not be reversed, either because its
     /// preimage was never captured or because restoring it failed. Undo must not
     /// guess, and must not report this as a restore.
@@ -53,6 +69,19 @@ pub const ChangeTracker = struct {
     pub fn undoLast(self: *ChangeTracker, alloc: Allocator) UndoResult {
         if (self.stack.items.len == 0) return .empty;
 
+        const pending = self.stack.items[self.stack.items.len - 1];
+        const current = currentContentMatches(alloc, pending.path, pending.expected_content);
+        switch (current) {
+            .matches => {},
+            .absent => if (pending.previous_content != null) return .{ .conflict = pending.path },
+            .conflict => return .{ .conflict = pending.path },
+            .unavailable => {
+                const failed = self.stack.pop().?;
+                if (failed.previous_content) |content| alloc.free(content);
+                return .{ .unavailable = failed.path };
+            },
+        }
+
         const op = self.stack.pop().?;
 
         switch (op.kind) {
@@ -78,6 +107,30 @@ pub const ChangeTracker = struct {
                 return .{ .deleted = op.path };
             },
         }
+    }
+
+    const CurrentContent = enum { matches, absent, conflict, unavailable };
+
+    fn currentContentMatches(alloc: Allocator, path: []const u8, expected: ContentStamp) CurrentContent {
+        const parent_path = std.fs.path.dirname(path) orelse return .unavailable;
+        const name = std.fs.path.basename(path);
+        var parent = io_mod.openDirAbsoluteNoFollow(parent_path, .{}) catch return .unavailable;
+        defer parent.close(io_mod.getIo());
+
+        const entry = parent.statFile(io_mod.getIo(), name, .{ .follow_symlinks = false }) catch |err|
+            return if (err == error.FileNotFound) .absent else .unavailable;
+        if (entry.kind != .file or entry.size != expected.size) return .conflict;
+
+        var file = parent.openFile(io_mod.getIo(), name, .{ .follow_symlinks = false }) catch return .unavailable;
+        defer file.close(io_mod.getIo());
+        const opened = file.stat(io_mod.getIo()) catch return .unavailable;
+        if (opened.kind != .file or opened.size != expected.size) return .conflict;
+        const bytes = io_mod.readFileToEnd(alloc, &file, expected.size + 1) catch return .unavailable;
+        defer alloc.free(bytes);
+        if (bytes.len != expected.size) return .conflict;
+        var digest: [Sha256.digest_length]u8 = undefined;
+        Sha256.hash(bytes, &digest, .{});
+        return if (std.mem.eql(u8, &digest, &expected.sha256)) .matches else .conflict;
     }
 
     /// Restores `content` at `absolute_path` without destroying what is already there
@@ -226,6 +279,7 @@ test "clear releases operations and leaves the tracker empty" {
         .kind = .edit,
         .path = try alloc.dupe(u8, "/workspace/a.txt"),
         .previous_content = try alloc.dupe(u8, "before"),
+        .expected_content = ContentStamp.fromContent("after"),
         .timestamp_ms = 1,
     });
 
@@ -238,6 +292,7 @@ test "clear releases operations and leaves the tracker empty" {
         .kind = .write,
         .path = try alloc.dupe(u8, "/workspace/reused.txt"),
         .previous_content = null,
+        .expected_content = ContentStamp.fromContent("new"),
         .timestamp_ms = 2,
     });
     try std.testing.expectEqual(@as(usize, 1), tracker.stack.items.len);
@@ -254,6 +309,7 @@ test "pushOperation evicts the oldest operation with stable ordering" {
             .kind = .write,
             .path = try std.fmt.allocPrint(alloc, "/tracked/file-{d}", .{i}),
             .previous_content = null,
+            .expected_content = ContentStamp.fromContent("new"),
             .timestamp_ms = @intCast(i),
         });
     }
@@ -279,6 +335,7 @@ test "undoLast restores previous content for write and edit operations" {
         .kind = .write,
         .path = try alloc.dupe(u8, path),
         .previous_content = try alloc.dupe(u8, "original"),
+        .expected_content = ContentStamp.fromContent("modified"),
         .timestamp_ms = 1,
     });
 
@@ -294,6 +351,37 @@ test "undoLast restores previous content for write and edit operations" {
     const content = try readAbsolute(alloc, path);
     defer alloc.free(content);
     try std.testing.expectEqualStrings("original", content);
+}
+
+test "undoLast preserves a later edit to an existing file" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const path = try tmpPath(alloc, tmp.dir, "edited-again.txt");
+    defer alloc.free(path);
+
+    try writeAbsolute(path, "agent bytes");
+    var tracker: ChangeTracker = .{};
+    defer tracker.deinit(alloc);
+    try tracker.pushOperation(alloc, .{
+        .kind = .edit,
+        .path = try alloc.dupe(u8, path),
+        .previous_content = try alloc.dupe(u8, "original bytes"),
+        .expected_content = ContentStamp.fromContent("agent bytes"),
+        .timestamp_ms = 1,
+    });
+
+    // Keep the byte count unchanged so the content digest, rather than size,
+    // detects this conflicting edit.
+    try writeAbsolute(path, "human bytes");
+    switch (tracker.undoLast(alloc)) {
+        .conflict => |conflict_path| try std.testing.expectEqualStrings(path, conflict_path),
+        else => return error.ExpectedConflict,
+    }
+    try std.testing.expectEqual(@as(usize, 1), tracker.stack.items.len);
+    const content = try readAbsolute(alloc, path);
+    defer alloc.free(content);
+    try std.testing.expectEqualStrings("human bytes", content);
 }
 
 test "undoLast deletes new write and edit operations" {
@@ -312,6 +400,7 @@ test "undoLast deletes new write and edit operations" {
         .kind = .edit,
         .path = try alloc.dupe(u8, path),
         .previous_content = null,
+        .expected_content = ContentStamp.fromContent("new content"),
         .timestamp_ms = 1,
     });
 
@@ -325,6 +414,35 @@ test "undoLast deletes new write and edit operations" {
     }
 
     try expectMissing(path);
+}
+
+test "undoLast preserves a later edit to a newly created file" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const path = try tmpPath(alloc, tmp.dir, "created-then-edited.txt");
+    defer alloc.free(path);
+
+    try writeAbsolute(path, "created by agent");
+    var tracker: ChangeTracker = .{};
+    defer tracker.deinit(alloc);
+    try tracker.pushOperation(alloc, .{
+        .kind = .write,
+        .path = try alloc.dupe(u8, path),
+        .previous_content = null,
+        .expected_content = ContentStamp.fromContent("created by agent"),
+        .timestamp_ms = 1,
+    });
+
+    try writeAbsolute(path, "human addition");
+    switch (tracker.undoLast(alloc)) {
+        .conflict => |conflict_path| try std.testing.expectEqualStrings(path, conflict_path),
+        else => return error.ExpectedConflict,
+    }
+    try std.testing.expectEqual(@as(usize, 1), tracker.stack.items.len);
+    const content = try readAbsolute(alloc, path);
+    defer alloc.free(content);
+    try std.testing.expectEqualStrings("human addition", content);
 }
 
 test "undoLast reports deleted for a new write when the file is already absent" {
@@ -341,6 +459,7 @@ test "undoLast reports deleted for a new write when the file is already absent" 
         .kind = .write,
         .path = try alloc.dupe(u8, path),
         .previous_content = null,
+        .expected_content = ContentStamp.fromContent("new content"),
         .timestamp_ms = 1,
     });
 
@@ -379,6 +498,7 @@ test "undoLast reports unavailable when a new file cannot be deleted" {
         .kind = .write,
         .path = try alloc.dupe(u8, path),
         .previous_content = null,
+        .expected_content = ContentStamp.fromContent("new content"),
         .timestamp_ms = 1,
     });
 
@@ -409,6 +529,7 @@ test "undoLast pops before filesystem restore failures, reports them, and does n
         .kind = .write,
         .path = try alloc.dupe(u8, path),
         .previous_content = try alloc.dupe(u8, "content"),
+        .expected_content = ContentStamp.fromContent("expected"),
         .timestamp_ms = 1,
     });
 
@@ -444,6 +565,7 @@ test "undoLast leaves the original file intact when the restore write fails" {
         .kind = .write,
         .path = try alloc.dupe(u8, path),
         .previous_content = try alloc.dupe(u8, preimage),
+        .expected_content = ContentStamp.fromContent(current),
         .timestamp_ms = 1,
     });
 
@@ -484,6 +606,7 @@ test "undo refuses a file whose directory denies writes and leaves it intact" {
         .kind = .edit,
         .path = try alloc.dupe(u8, path),
         .previous_content = try alloc.dupe(u8, "preimage bytes"),
+        .expected_content = ContentStamp.fromContent("current bytes"),
         .timestamp_ms = 1,
     });
 
@@ -498,7 +621,7 @@ test "undo refuses a file whose directory denies writes and leaves it intact" {
     try std.testing.expectEqualStrings("current bytes", survived);
 }
 
-test "undo restore cannot be redirected by a symlink introduced after capture" {
+test "undo refuses a symlink introduced after capture" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -515,6 +638,7 @@ test "undo restore cannot be redirected by a symlink introduced after capture" {
         .kind = .edit,
         .path = try alloc.dupe(u8, recorded_path),
         .previous_content = try alloc.dupe(u8, "preimage bytes"),
+        .expected_content = ContentStamp.fromContent("current bytes"),
         .timestamp_ms = 1,
     });
 
@@ -522,15 +646,16 @@ test "undo restore cannot be redirected by a symlink introduced after capture" {
     tmp.dir.symLink(std.testing.io, redirect_target, "recorded.txt", .{ .is_directory = false }) catch return error.SkipZigTest;
 
     switch (tracker.undoLast(alloc)) {
-        .restored => |restored| alloc.free(restored),
-        else => return error.ExpectedRestore,
+        .conflict => |conflict_path| try std.testing.expectEqualStrings(recorded_path, conflict_path),
+        else => return error.ExpectedConflict,
     }
+    try std.testing.expectEqual(@as(usize, 1), tracker.stack.items.len);
 
     const restored_stat = try tmp.dir.statFile(io_mod.getIo(), "recorded.txt", .{ .follow_symlinks = false });
-    try std.testing.expectEqual(std.Io.File.Kind.file, restored_stat.kind);
+    try std.testing.expectEqual(std.Io.File.Kind.sym_link, restored_stat.kind);
     const restored = try readAbsolute(alloc, recorded_path);
     defer alloc.free(restored);
-    try std.testing.expectEqualStrings("preimage bytes", restored);
+    try std.testing.expectEqualStrings("must stay untouched", restored);
     const untouched = try readAbsolute(alloc, redirect_target);
     defer alloc.free(untouched);
     try std.testing.expectEqualStrings("must stay untouched", untouched);
@@ -560,6 +685,7 @@ test "a locked directory plus a failing write never leaves a half-replaced file"
         .kind = .edit,
         .path = try alloc.dupe(u8, path),
         .previous_content = try alloc.dupe(u8, preimage),
+        .expected_content = ContentStamp.fromContent(current),
         .timestamp_ms = 1,
     });
 

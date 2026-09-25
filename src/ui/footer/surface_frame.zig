@@ -64,6 +64,7 @@ pub const SurfaceFooterFrame = struct {
     tool_activity_label: std.ArrayList(u8) = .empty,
     shimmer_pos: i16 = -render_request.animation_padding,
     thinking_blink: ?bool = null,
+    static_activity: bool = false,
     trace_paint_frame: bool = false,
 
     pub fn deinit(self: *SurfaceFooterFrame, alloc: Allocator) void {
@@ -812,6 +813,7 @@ fn assembleSurfaceFooterFrame(
         .tool_activity_label = tool_activity_label,
         .shimmer_pos = assembly.planner_input.ctx.shimmer_pos,
         .thinking_blink = render_input.frameActivityBlink(assembly.planner_input.ctx),
+        .static_activity = assembly.planner_input.ctx.static_activity,
         .trace_paint_frame = assembly.trace_paint_frame,
     };
 }

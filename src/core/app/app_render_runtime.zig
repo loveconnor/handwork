@@ -689,6 +689,7 @@ pub fn Runtime(comptime App: type) type {
                 .model_supports_effort = model_supports_effort,
                 .ctrl_c_pending = app.input_runtime.gestures.ctrlCExitArmed(),
                 .shimmer_pos = shimmer_pos,
+                .static_activity = !app.shell.animate_activity,
                 .now_ms = now_ms,
                 .model_query_active = model_query != null,
                 .model_picker_stage = model_picker_stage,
@@ -876,6 +877,16 @@ pub fn Runtime(comptime App: type) type {
             // conversation starts.
             if (comptime @hasDecl(@TypeOf(app.shell), "syncWelcomeLayout")) {
                 if (!app.shell.fullTranscriptActive()) {
+                    if (comptime @hasField(App, "auth") and @hasDecl(@TypeOf(app.auth), "credentialSource") and
+                        @hasField(@TypeOf(app.shell), "welcome_cue"))
+                    {
+                        app.shell.welcome_cue = if (app.auth.credentialSource() != null)
+                            .enter_task
+                        else if (comptime @hasDecl(@TypeOf(app.auth), "pickerView"))
+                            if (app.auth.pickerView().active) .choose_provider else .connect_provider
+                        else
+                            .connect_provider;
+                    }
                     _ = app.shell.syncWelcomeLayout(app.alloc) catch |err| {
                         debug_trace.logf("paint", "welcome_resync_failed err={s}", .{@errorName(err)});
                     };
@@ -1783,7 +1794,7 @@ pub fn Runtime(comptime App: type) type {
             }
             return .{
                 .shadow_state = result.state(),
-                .animation_visible = frame_ctx.activity_result.painted,
+                .animation_visible = frame_ctx.activity_result.painted and app.shell.animate_activity,
                 .yolo_warning_visible = !render_reconciliation.alternate_screen_owns_rendering and
                     footer_frame.composed.danger_status_visible,
                 .pending_prompt_presented = pending_submission_card and pending_paint_ctx != null,
@@ -2219,6 +2230,7 @@ fn FramePaintContext(comptime App: type) type {
                 .shimmer_pos = self.footer_frame.shimmer_pos,
                 .style = self.activity_style,
                 .thinking_blink = self.footer_frame.thinking_blink,
+                .static_activity = self.footer_frame.static_activity,
             });
         }
     };
