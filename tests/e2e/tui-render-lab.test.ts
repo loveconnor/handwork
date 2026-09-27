@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { HANDWORK_BIN } from "../evals/eval-helpers";
 import {
   analyzeRun,
+  findLogoRows,
   readQuiescence,
 } from "./render-lab/analyzer";
 import type { RenderLabFrame, RenderLabManifest } from "./render-lab/types";
@@ -175,6 +176,10 @@ test("render-lab analyzer treats thinking token counters as activity rows", () =
   const failures = analyzeRun(manifest).failures.map((failure) => failure.invariant);
 
   expect(failures).toContain("activity-footer-extra-blank");
+});
+
+test("render-lab analyzer recognizes the separate welcome help line", () => {
+  expect(findLogoRows(["handwork", "v0.0.9 · made by Connor Love", "", "Describe a task to begin", "/help for commands"])).toEqual([4]);
 });
 
 test("render-lab analyzer recognizes the real handwork prompt glyph", () => {

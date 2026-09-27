@@ -339,6 +339,27 @@ test "plain byte carries composer fallback without consuming product routing" {
     );
 }
 
+test "VS Code focus reports decode without turning into text" {
+    var decoder = Decoder{};
+    const context = input_action.TerminalDecodeContext{
+        .now_ms = 1,
+        .paste_active = false,
+        .cancel_pending = false,
+    };
+    for ("\x1b[I", 0..) |byte, index| {
+        const ingress = decoder.feed(byte, context);
+        if (index == 2) {
+            try std.testing.expectEqual(input_action.Action.focus_in, ingress.event.?.action.action);
+        } else try std.testing.expect(ingress.event == null);
+    }
+    for ("\x1b[O", 0..) |byte, index| {
+        const ingress = decoder.feed(byte, context);
+        if (index == 2) {
+            try std.testing.expectEqual(input_action.Action.focus_out, ingress.event.?.action.action);
+        } else try std.testing.expect(ingress.event == null);
+    }
+}
+
 test "bare Escape control replay preserves event order" {
     var decoder = Decoder{};
     _ = decoder.feed(0x1b, .{

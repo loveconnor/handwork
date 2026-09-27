@@ -102,6 +102,8 @@ pub const Action = union(enum) {
     remapped_byte: u8,
     escape,
     ignore,
+    focus_in,
+    focus_out,
 };
 
 /// Raw terminal input after UI has attached its layout-independent composer

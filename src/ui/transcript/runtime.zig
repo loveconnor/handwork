@@ -10179,7 +10179,7 @@ pub const TranscriptRuntime = struct {
             }
         }
 
-        return installed or self.full_transcript.depth == .full;
+        return installed or self.full_transcript.depth.active();
     }
 
     pub fn prewarmFullTranscriptPage(
@@ -10191,20 +10191,40 @@ pub const TranscriptRuntime = struct {
     }
 
     pub fn fullTranscriptPreparedForOpen(self: *const TranscriptRuntime) bool {
+        return self.transcriptPagePreparedFor(self.desiredFullTranscriptPageRequest());
+    }
+
+    fn transcriptPagePreparedFor(
+        self: *const TranscriptRuntime,
+        request: full_transcript_page.Request,
+    ) bool {
         if (self.entries.items.len == 0) return true;
         if (self.full_transcript_installed_page_retired) return false;
         const page = if (self.full_transcript_installed_page) |*value| value else return false;
         return page.prepared_window != null and
-            full_transcript_page.sameRequest(
-                self.desiredFullTranscriptPageRequest(),
-                page.source.request,
-            );
+            full_transcript_page.sameRequest(request, page.source.request);
     }
 
     pub fn requestFullTranscriptOpen(self: *TranscriptRuntime) bool {
+        return self.requestTranscriptOpen(.full);
+    }
+
+    pub fn requestTranscriptOpen(
+        self: *TranscriptRuntime,
+        depth: transcript_presentation.Depth,
+    ) bool {
+        std.debug.assert(depth.active());
         self.full_transcript_restore_open_pending = false;
+        const request: full_transcript_page.Request = .{
+            .content_revision = self.full_transcript_content_revision,
+            .cols = self.layout.cols,
+            .anchor = self.full_transcript_page_anchor,
+            .compact = depth == .compact,
+        };
         // Pending primary damage must commit before another buffer can consume it.
-        if (self.fullTranscriptPreparedForOpen() and self.render_requests.pendingInvalidations().isEmpty()) {
+        if (self.transcriptPagePreparedFor(request) and
+            self.render_requests.pendingInvalidations().isEmpty())
+        {
             self.full_transcript_open_request = null;
             debug_trace.logf("full_transcript", "open_request state=ready", .{});
             return true;
@@ -10214,7 +10234,6 @@ pub const TranscriptRuntime = struct {
             debug_trace.logf("full_transcript", "open_request state=cancelled", .{});
             return false;
         }
-        const request = self.desiredFullTranscriptPageRequest();
         if (self.full_transcript_failed_request) |failed| {
             if (full_transcript_page.sameRequest(
                 request,
@@ -10252,6 +10271,10 @@ pub const TranscriptRuntime = struct {
         return self.full_transcript_open_request != null;
     }
 
+    pub fn pendingTranscriptOpenIsCompact(self: *const TranscriptRuntime) bool {
+        return if (self.full_transcript_open_request) |request| request.compact else false;
+    }
+
     pub fn cancelPendingFullTranscriptOpen(self: *TranscriptRuntime) bool {
         if (!self.fullTranscriptOpenPending()) return false;
         self.full_transcript_open_request = null;
@@ -10287,7 +10310,7 @@ pub const TranscriptRuntime = struct {
         checkpoint: ?*build_checkpoint.BuildCheckpoint,
     ) !*full_transcript_screen.Projection {
         try build_checkpoint.poll(checkpoint);
-        std.debug.assert(self.full_transcript.depth == .full);
+        std.debug.assert(self.full_transcript.depth.active());
 
         try self.ensureFullTranscriptPageLoad(capability, full_diff_resolver);
         if (self.installedFullTranscriptPageProjection()) |projection| return projection;
@@ -10343,6 +10366,7 @@ pub const TranscriptRuntime = struct {
             .content_revision = self.full_transcript_content_revision,
             .cols = self.layout.cols,
             .anchor = self.full_transcript_page_anchor,
+            .compact = self.full_transcript.depth == .compact,
         };
     }
 

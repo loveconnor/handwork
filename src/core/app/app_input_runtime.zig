@@ -1266,7 +1266,7 @@ pub fn Runtime(comptime App: type) type {
                 .clipboard_image_paste, .clipboard_text_paste => unreachable,
                 .remapped_byte => unreachable,
                 .escape => unreachable,
-                .ignore => {},
+                .ignore, .focus_in, .focus_out => {},
             }
             return .done;
         }
@@ -10290,7 +10290,7 @@ test "app_input_runtime false paste starts preserve stale paste and gestures" {
     try std.testing.expect(!app.shell.render_requests.hasReason(.footer));
 }
 
-test "app_input_runtime inline upward scroll opens the transcript viewer" {
+test "app_input_runtime inline upward scroll opens the compact conversation viewer" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -10307,12 +10307,18 @@ test "app_input_runtime inline upward scroll opens the transcript viewer" {
 
         try std.testing.expect(app.terminal.fullTranscriptScreenActive());
         try std.testing.expectEqual(
-            transcript_presentation.Depth.full,
+            transcript_presentation.Depth.compact,
             app.shell.transcriptPresentationDepth(),
         );
         try std.testing.expect(!app.shell.full_transcript.follow_tail);
         try std.testing.expect(app.stream.active);
         try std.testing.expect(!app.worker.cancel_requested);
+        try feedRoutingBytes(&app, "\x1b[<65;1;1M");
+        try std.testing.expectEqual(transcript_presentation.Depth.compact, app.shell.transcriptPresentationDepth());
+        try Runtime(RoutingFakeApp).handleByte(&app, 15, 4096, 100);
+        try std.testing.expectEqual(transcript_presentation.Depth.inline_mode, app.shell.transcriptPresentationDepth());
+        try Runtime(RoutingFakeApp).handleByte(&app, 15, 4096, 100);
+        try std.testing.expectEqual(transcript_presentation.Depth.full, app.shell.transcriptPresentationDepth());
     }
 }
 
@@ -10343,10 +10349,12 @@ test "app_input_runtime repeated upward scroll preserves a pending transcript op
     try feedRoutingBytes(&app, "\x1b[<64;1;1M");
     try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
     try std.testing.expect(app.shell.fullTranscriptOpenPending());
+    try std.testing.expect(app.shell.pendingTranscriptOpenIsCompact());
 
     try feedRoutingBytes(&app, "\x1b[<64;1;1M");
     try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
     try std.testing.expect(app.shell.fullTranscriptOpenPending());
+    try std.testing.expect(app.shell.pendingTranscriptOpenIsCompact());
 }
 
 test "app_input_runtime ctrl-o toggles full transcript while arrows preserve detail" {
@@ -10478,7 +10486,7 @@ test "app_input_runtime ctrl-o toggles full transcript while arrows preserve det
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, bytes, "\x1b[?1049h"));
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, bytes, "\x1b[?1049l"));
     try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1000h"));
-    try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1006h"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, bytes, "\x1b[?1006h"));
     try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1000l"));
     try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1006l"));
 }

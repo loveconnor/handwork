@@ -784,6 +784,13 @@ fn enableInteractiveTerminalModes(shell: *TranscriptRuntime, metrics: *Metrics) 
         metrics,
         ui_terminal.interactiveModeEnableSequence(io_mod.getenv("TMUX")),
     );
+    // VS Code owns Command-V. Focus reports let the macOS image monitor ignore
+    // shortcuts used in the editor and other integrated terminal tabs.
+    if (comptime @import("builtin").os.tag == .macos) {
+        if (ui_terminal.isVSCodeTerminal(io_mod.getenv("TERM_PROGRAM"))) {
+            try writeLifecycleTerminalBytes(shell, metrics, ui_terminal.focus_reporting_enable_sequence);
+        }
+    }
 }
 
 fn enterSessionAlternateScreenIfNeeded(
@@ -794,19 +801,24 @@ fn enterSessionAlternateScreenIfNeeded(
     if (terminal.session_alternate_screen) return;
     if (!shouldUseSessionAlternateScreen(io_mod.getenv("TERM_PROGRAM"))) return;
     terminal.session_alternate_screen = true;
-    try writeLifecycleTerminalBytes(shell, metrics, ui_terminal.session_alternate_screen_enter_sequence);
+    try writeLifecycleTerminalBytes(
+        shell, metrics, ui_terminal.sessionAlternateScreenEnterSequence(io_mod.getenv("TERM_PROGRAM")),
+    );
     // A RIS hard reset can make Apple Terminal leave its alternate screen.
     // Session recovery must clear and repaint without changing screen buffers.
     shell.history_reset_uses_ris = false;
 }
 
 fn shouldUseSessionAlternateScreen(term_program: ?[]const u8) bool {
-    return if (term_program) |value| std.mem.eql(u8, value, "Apple_Terminal") else false;
+    return if (term_program) |value|
+        std.mem.eql(u8, value, "Apple_Terminal") or ui_terminal.isVSCodeTerminal(value)
+    else
+        false;
 }
 
-test "Apple Terminal uses an isolated session screen" {
+test "Apple Terminal and VS Code use an isolated session screen" {
     try std.testing.expect(shouldUseSessionAlternateScreen("Apple_Terminal"));
-    try std.testing.expect(!shouldUseSessionAlternateScreen("vscode"));
+    try std.testing.expect(shouldUseSessionAlternateScreen("vscode"));
     try std.testing.expect(!shouldUseSessionAlternateScreen(null));
 }
 
@@ -961,11 +973,30 @@ pub fn openFullTranscript(
     shell: *TranscriptRuntime,
     metrics: *Metrics,
 ) !void {
+    return openTranscriptScreen(alloc, terminal, shell, metrics, .full);
+}
+
+pub fn openCompactTranscript(
+    alloc: Allocator,
+    terminal: *TerminalState,
+    shell: *TranscriptRuntime,
+    metrics: *Metrics,
+) !void {
+    return openTranscriptScreen(alloc, terminal, shell, metrics, .compact);
+}
+
+fn openTranscriptScreen(
+    alloc: Allocator,
+    terminal: *TerminalState,
+    shell: *TranscriptRuntime,
+    metrics: *Metrics,
+    depth: transcript_presentation.Depth,
+) !void {
     if (terminal.alternate_screen_owner != .none and !terminal.fullTranscriptScreenActive()) {
         return error.AlternateScreenAlreadyOwned;
     }
 
-    try setFullTranscriptProjection(alloc, shell, .full);
+    try setFullTranscriptProjection(alloc, shell, depth);
     errdefer {
         if (terminal.fullTranscriptScreenActive()) {
             leaveFullTranscriptScreen(terminal, shell, metrics) catch {};
@@ -1016,6 +1047,7 @@ pub fn handoffFullTranscriptToApproval(
         "depth_transition from={s} to=inline route=root trigger=approval_handoff",
         .{switch (from) {
             .inline_mode => "inline",
+            .compact => "compact",
             .full => "full",
         }},
     );

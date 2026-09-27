@@ -2173,33 +2173,25 @@ test "file approval top-aligns a fitting welcome document and clears below" {
 
     var row: std.ArrayList(u8) = .empty;
     defer row.deinit(alloc);
-    // The compact welcome mark remains visible above the review.
-    var has_logo_fill = false;
-    var logo_col: u16 = 1;
-    while (logo_col <= 80) : (logo_col += 1) {
-        const logo_cell = grid.cellAt(1, logo_col) orelse continue;
-        switch (logo_cell.style.bg) {
-            .default => {},
-            else => {
-                try std.testing.expectEqual(@as(u21, ' '), logo_cell.codepoint);
-                has_logo_fill = true;
-                break;
-            },
-        }
-    }
-    try std.testing.expect(has_logo_fill);
-    try grid.rowTextTrimmed(3, &row);
+    const logo_cell = grid.cellAt(1, 1 + (80 - ui_render.welcome_full_min_cols) / 2 + 1) orelse return error.TestMissingWelcomeLogo;
+    try std.testing.expect(logo_cell.style.bg != .default);
+    const logo_gap = grid.cellAt(1, 1 + (80 - ui_render.welcome_full_min_cols) / 2 + 3) orelse return error.TestMissingWelcomeLogoGap;
+    try std.testing.expect(logo_gap.style.bg == .default);
+    try grid.rowTextTrimmed(6, &row);
+    try std.testing.expect(std.mem.indexOf(u8, row.items, "handwork") != null);
+    row.clearRetainingCapacity();
+    try grid.rowTextTrimmed(8, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "Choose a provider below") != null);
 
-    const transcript_divider = grid.cellAt(6, 1) orelse return error.TestMissingTranscriptDivider;
+    const transcript_divider = grid.cellAt(12, 1) orelse return error.TestMissingTranscriptDivider;
     try std.testing.expectEqual(@as(u21, 0x2500), transcript_divider.codepoint);
 
     row.clearRetainingCapacity();
-    try grid.rowTextTrimmed(7, &row);
+    try grid.rowTextTrimmed(13, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "+ short review") != null);
 
     var approval_divider_row: ?u16 = null;
-    for (8..21) |row_number| {
+    for (14..21) |row_number| {
         const cell = grid.cellAt(@intCast(row_number), 1) orelse continue;
         if (cell.codepoint == 0x2504) approval_divider_row = @intCast(row_number);
     }

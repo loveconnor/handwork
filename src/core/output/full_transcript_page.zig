@@ -11,6 +11,7 @@ pub const Request = struct {
     content_revision: u64,
     cols: u16,
     anchor: Anchor,
+    compact: bool = false,
 };
 
 pub const SourceRange = struct {
@@ -41,11 +42,12 @@ pub fn sourceRange(request: Request, total_entries: usize) SourceRange {
 pub fn sameRequest(lhs: Request, rhs: Request) bool {
     return lhs.content_revision == rhs.content_revision and
         lhs.cols == rhs.cols and
+        lhs.compact == rhs.compact and
         std.meta.eql(lhs.anchor, rhs.anchor);
 }
 
 pub fn sameSurface(lhs: Request, rhs: Request) bool {
-    return lhs.cols == rhs.cols and std.meta.eql(lhs.anchor, rhs.anchor);
+    return lhs.cols == rhs.cols and lhs.compact == rhs.compact and std.meta.eql(lhs.anchor, rhs.anchor);
 }
 
 pub fn previousAnchor(range: SourceRange) ?Anchor {
@@ -98,6 +100,18 @@ test "full transcript page request identity includes revision width and anchor" 
         .content_revision = 73,
         .cols = 96,
         .anchor = .tail,
+    }));
+    try std.testing.expect(!sameRequest(request, .{
+        .content_revision = 73,
+        .cols = 96,
+        .anchor = .tail,
+        .compact = true,
+    }));
+    try std.testing.expect(!sameSurface(request, .{
+        .content_revision = 73,
+        .cols = 96,
+        .anchor = .tail,
+        .compact = true,
     }));
     try std.testing.expect(!sameRequest(request, .{
         .content_revision = 72,

@@ -1077,6 +1077,7 @@ fn composeTranscriptViewerFooterFrame(
     errdefer frame.deinit(alloc);
     const width = shell.layout.cols;
     const navigation = switch (input.ctx.transcript_depth) {
+        .compact => "conversation · ctrl+o close · pgup/pgdn scroll · esc close",
         .full => "full detail · ctrl+o close · pgup/pgdn scroll · esc close",
         .inline_mode => unreachable,
     };

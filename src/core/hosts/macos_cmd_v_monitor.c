@@ -2,11 +2,14 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdlib.h>
 
+bool handwork_vscode_is_frontmost(void);
+
 typedef struct {
     CFMachPortRef tap;
     CFRunLoopSourceRef source;
     CFRunLoopRef run_loop;
     bool pending;
+    bool pending_vscode;
 } HandworkCmdVMonitor;
 
 static CGEventRef observe_key(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *user_info) {
@@ -15,8 +18,11 @@ static CGEventRef observe_key(CGEventTapProxy proxy, CGEventType type, CGEventRe
     if (type == kCGEventKeyDown &&
         CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 9 &&
         CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat) == 0 &&
-        (CGEventGetFlags(event) & kCGEventFlagMaskCommand) != 0) {
+        (CGEventGetFlags(event) & kCGEventFlagMaskCommand) != 0 &&
+        (CGEventGetFlags(event) & (kCGEventFlagMaskShift | kCGEventFlagMaskAlternate |
+                                   kCGEventFlagMaskControl)) == 0) {
         monitor->pending = true;
+        monitor->pending_vscode |= handwork_vscode_is_frontmost();
     }
     return event;
 }
@@ -52,12 +58,14 @@ void *handwork_cmd_v_monitor_create(int *status) {
     return monitor;
 }
 
-bool handwork_cmd_v_monitor_poll(void *opaque) {
+bool handwork_cmd_v_monitor_poll(void *opaque, bool *vscode_frontmost) {
     HandworkCmdVMonitor *monitor = opaque;
     if (!CGEventTapIsEnabled(monitor->tap)) CGEventTapEnable(monitor->tap, true);
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
     const bool pending = monitor->pending;
+    *vscode_frontmost = monitor->pending_vscode;
     monitor->pending = false;
+    monitor->pending_vscode = false;
     return pending;
 }
 

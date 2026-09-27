@@ -560,6 +560,31 @@ const ProjectionBuilder = struct {
     }
 };
 
+test "compact conversation scroll hides expanded tool details and command output" {
+    const alloc = std.testing.allocator;
+    const entries = [_]transcript_blocks.TranscriptEntry{
+        .{ .raw_bytes = .{ .id = 1, .created_at_ms = 0, .bytes = @constCast("● Ran command\n"), .class = .tool_status } },
+        .{ .raw_bytes = .{ .id = 2, .created_at_ms = 0, .bytes = @constCast("│ private command result\n"), .class = .command_output } },
+    };
+    var details = [_]ToolDetailRecord{.{
+        .entry_id = 1,
+        .tool_name = try alloc.dupe(u8, "run_command"),
+        .command_output_entry_id = 2,
+    }};
+    defer details[0].deinit(alloc);
+    const styles: transcript_blocks.Styles = .{
+        .system_notice_label_style = "", .system_notice_text_style = "",
+        .reset_style = "", .dim_style = "", .red_style = "",
+    };
+    var compact = try buildCompactProjection(alloc, &entries, &details, styles, 80);
+    defer compact.deinit(alloc);
+    const visible = try renderProjectionViewportSource(alloc, &compact, null, 80, 12, 0);
+    defer alloc.free(visible);
+    try std.testing.expect(std.mem.indexOf(u8, visible, "Ran command") != null);
+    try std.testing.expect(std.mem.indexOf(u8, visible, "private command result") == null);
+    try std.testing.expect(std.mem.indexOf(u8, visible, "run_command") == null);
+}
+
 test "full projection replaces a compact command entry with the retained command block" {
     const alloc = std.testing.allocator;
 
@@ -3522,6 +3547,34 @@ fn buildProjectionWithDiffResolverInterruptible(
     );
 }
 
+pub fn buildCompactProjection(
+    alloc: Allocator,
+    entries: []const transcript_blocks.TranscriptEntry,
+    details: []const ToolDetailRecord,
+    styles: transcript_blocks.Styles,
+    cols: u16,
+) !Projection {
+    var groups = try tool_group_projection.buildStyledFocused(
+        alloc,
+        entries,
+        details,
+        cols,
+        null,
+        false,
+        .{
+            .marker_style = user_message_card.promptMarkerStyle(),
+            .text_style = ui_render.statusline_style,
+            .reset_style = "\x1b[0m",
+        },
+        styles,
+    );
+    defer groups.deinit(alloc);
+    return buildProjectionWithEntryActionsMode(
+        alloc, entries, details, &.{}, styles, cols, null, null,
+        groups.entry_actions.items, true, null,
+    );
+}
+
 pub fn buildProjectionWithEntryActionsInterruptible(
     alloc: Allocator,
     entries: []const transcript_blocks.TranscriptEntry,
@@ -3532,6 +3585,25 @@ pub fn buildProjectionWithEntryActionsInterruptible(
     anchor_entry_id: ?u32,
     full_diff_resolver: ?FullDiffResolver,
     entry_actions: []const transcript_blocks.EntryRenderAction,
+    checkpoint: ?*build_checkpoint.BuildCheckpoint,
+) !Projection {
+    return buildProjectionWithEntryActionsMode(
+        alloc, entries, details, command_blocks, styles, cols, anchor_entry_id,
+        full_diff_resolver, entry_actions, false, checkpoint,
+    );
+}
+
+fn buildProjectionWithEntryActionsMode(
+    alloc: Allocator,
+    entries: []const transcript_blocks.TranscriptEntry,
+    details: []const ToolDetailRecord,
+    command_blocks: []const command_output_runtime.CommandOutputBlock,
+    styles: transcript_blocks.Styles,
+    cols: u16,
+    anchor_entry_id: ?u32,
+    full_diff_resolver: ?FullDiffResolver,
+    entry_actions: []const transcript_blocks.EntryRenderAction,
+    compact: bool,
     checkpoint: ?*build_checkpoint.BuildCheckpoint,
 ) !Projection {
     std.debug.assert(entry_actions.len == entries.len);
@@ -3553,6 +3625,7 @@ pub fn buildProjectionWithEntryActionsInterruptible(
         .emitted_command_blocks = emitted_command_blocks,
         .full_diff_resolver = full_diff_resolver,
         .cols = cols,
+        .compact = compact,
         .checkpoint = checkpoint,
     };
     const sink = transcript_blocks.FullPresentationSink{
@@ -5716,6 +5789,7 @@ const ProjectionComposeContext = struct {
     emitted_command_blocks: []bool,
     full_diff_resolver: ?FullDiffResolver,
     cols: u16,
+    compact: bool = false,
     entry_index: usize = 0,
     checkpoint: ?*BuildCheckpoint,
 
@@ -5731,6 +5805,7 @@ const ProjectionComposeContext = struct {
         const self = fromOpaque(context);
         self.entry_index = entry_index;
         if (self.entryAction(entry) == .hide) return true;
+        if (self.compact) return false;
         if (self.source_index.renderableCommandBlockIndexForEntry(entry.id()) != null) return false;
         if (self.source_index.commandSourceOwned(entry.id())) return true;
         return false;
@@ -5738,8 +5813,8 @@ const ProjectionComposeContext = struct {
 
     fn overrideKind(context: *anyopaque, entry: transcript_blocks.TranscriptEntry) ?transcript_blocks.TranscriptBlockKind {
         const self = fromOpaque(context);
-        if (self.diffForEntry(entry) != null) return .diff_block;
-        if (self.source_index.renderableCommandBlockIndexForEntry(entry.id()) != null) return .command_output;
+        if (!self.compact and self.diffForEntry(entry) != null) return .diff_block;
+        if (!self.compact and self.source_index.renderableCommandBlockIndexForEntry(entry.id()) != null) return .command_output;
         return switch (self.entryAction(entry)) {
             .override => |value| value.kind,
             .keep, .hide => null,
@@ -5752,14 +5827,16 @@ const ProjectionComposeContext = struct {
         out: *std.Io.Writer.Allocating,
     ) !bool {
         const self = fromOpaque(context);
-        if (self.diffForEntry(entry)) |diff| {
-            const reflowed = try transcript_blocks.reflowDiffBlock(self.alloc, diff, self.cols);
-            defer self.alloc.free(reflowed);
-            try out.writer.writeAll(reflowed);
-            return std.mem.endsWith(u8, reflowed, "\n");
-        }
-        if (self.source_index.renderableCommandBlockIndexForEntry(entry.id())) |index| {
-            return appendCommandBlockAtEntry(self, out, index, entry.id());
+        if (!self.compact) {
+            if (self.diffForEntry(entry)) |diff| {
+                const reflowed = try transcript_blocks.reflowDiffBlock(self.alloc, diff, self.cols);
+                defer self.alloc.free(reflowed);
+                try out.writer.writeAll(reflowed);
+                return std.mem.endsWith(u8, reflowed, "\n");
+            }
+            if (self.source_index.renderableCommandBlockIndexForEntry(entry.id())) |index| {
+                return appendCommandBlockAtEntry(self, out, index, entry.id());
+            }
         }
         return switch (self.entryAction(entry)) {
             .override => |value| blk: {
@@ -5779,18 +5856,20 @@ const ProjectionComposeContext = struct {
         try self.builder.markEntry(entry_id);
         const entry = self.entries[self.entry_index];
         std.debug.assert(entry.id() == entry_id);
-        if (metadataKind(entry)) |kind| {
-            var header_buf: [80]u8 = undefined;
-            if (full_transcript_metadata.formatHeader(
-                &header_buf,
-                self.metadataCreatedAtMs(entry),
-                kind,
-            )) |header| {
-                try out.writer.writeAll(self.builder.styles().dim_style);
-                try out.writer.writeAll("  ");
-                try out.writer.writeAll(header);
-                try out.writer.writeAll(self.builder.styles().reset_style);
-                try out.writer.writeByte('\n');
+        if (!self.compact) {
+            if (metadataKind(entry)) |kind| {
+                var header_buf: [80]u8 = undefined;
+                if (full_transcript_metadata.formatHeader(
+                    &header_buf,
+                    self.metadataCreatedAtMs(entry),
+                    kind,
+                )) |header| {
+                    try out.writer.writeAll(self.builder.styles().dim_style);
+                    try out.writer.writeAll("  ");
+                    try out.writer.writeAll(header);
+                    try out.writer.writeAll(self.builder.styles().reset_style);
+                    try out.writer.writeByte('\n');
+                }
             }
         }
         if (self.anchor_entry_id != null and self.anchor_entry_id.? == entry_id) {
@@ -5819,6 +5898,7 @@ const ProjectionComposeContext = struct {
         out: *std.Io.Writer.Allocating,
     ) !transcript_blocks.FullDetailAppend {
         const self = fromOpaque(context);
+        if (self.compact) return .{};
         const detail = self.source_index.detailForEntry(entry_id) orelse return .{};
         return appendDetailContent(
             out,

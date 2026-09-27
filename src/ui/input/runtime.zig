@@ -2634,7 +2634,8 @@ test "input escape parser keeps private CSI digits in the escape sequence" {
 }
 
 test "input escape parser ignores complete unknown CSI and SS3 sequences" {
-    try expectEscapeAction("[I", .ignore);
+    try expectEscapeAction("[I", .focus_in);
+    try expectEscapeAction("[O", .focus_out);
     try expectEscapeAction("[1;2R", .ignore);
     try expectEscapeAction("[>0q", .ignore);
     try expectEscapeAction("O1;2P", .ignore);

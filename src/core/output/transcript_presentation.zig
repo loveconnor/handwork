@@ -8,12 +8,13 @@ pub const Event = enum {
 
 pub const Depth = enum {
     inline_mode,
+    compact,
     full,
 
     pub fn transition(self: Depth, event: Event) Depth {
         return switch (event) {
             .toggle => if (self == .inline_mode) .full else .inline_mode,
-            .left, .right => if (self.active()) .full else .inline_mode,
+            .left, .right => self,
         };
     }
 
@@ -66,6 +67,11 @@ pub const State = struct {
         var next = self;
         next = switch (requested) {
             .inline_mode => next.closed(),
+            .compact => blk: {
+                var opened = next.open_full();
+                opened.depth = .compact;
+                break :blk opened;
+            },
             .full => next.open_full(),
         };
         return next;

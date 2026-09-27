@@ -233,7 +233,15 @@ pub const Task = struct {
 
     fn run(self: *Task) void {
         const alloc = std.heap.c_allocator;
-        var projection = (if (self.source.fullDiffResolver()) |resolver|
+        var projection = (if (self.source.request.compact)
+            full_transcript_screen.buildCompactProjection(
+                alloc,
+                self.source.entries.items,
+                self.source.details.items,
+                self.source.styles,
+                self.source.request.cols,
+            )
+        else if (self.source.fullDiffResolver()) |resolver|
             full_transcript_screen.buildProjectionWithResolver(
                 alloc,
                 self.source.entries.items,

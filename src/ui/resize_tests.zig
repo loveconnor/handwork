@@ -4404,7 +4404,7 @@ test "approval banner frames prompt after completed tool status" {
     try expectGridContains(&h, "3. No");
 }
 
-test "welcome logo stays pinned while middle transcript rows overflow" {
+test "welcome block stays pinned while middle transcript rows overflow" {
     var h = try Harness.init(std.testing.allocator, 96, 43, 4);
     defer h.deinit();
 
@@ -4431,13 +4431,14 @@ test "welcome logo stays pinned while middle transcript rows overflow" {
     try renderTestFooter(&h, &input, &approval, &h.frame_redraw);
     try h.flush();
 
-    try expectGridContains(&h, "Choose a provider below · /help for commands");
+    try expectGridContains(&h, "Choose a provider below");
+    try expectGridContains(&h, "/help for commands");
     try expectGridContains(&h, "handwork");
     try expectGridNotContains(&h, "content line 0");
     try expectGridContains(&h, "content line 44");
 }
 
-test "welcome logo stays pinned during footer-reserved overflow" {
+test "welcome block stays pinned during footer-reserved overflow" {
     var h = try Harness.init(std.testing.allocator, 96, 43, 4);
     defer h.deinit();
 
@@ -4462,7 +4463,8 @@ test "welcome logo stays pinned during footer-reserved overflow" {
     try std.testing.expect(h.shell.last_visible_transcript_split_active);
     try std.testing.expect(h.shell.last_visible_transcript_split_suffix_start_line > h.shell.last_visible_transcript_split_prefix_lines);
     try expectGridContains(&h, "handwork");
-    try expectGridContains(&h, "Choose a provider below · /help for commands");
+    try expectGridContains(&h, "Choose a provider below");
+    try expectGridContains(&h, "/help for commands");
     try expectGridNotContains(&h, "content line 0");
     try expectGridContains(&h, "content line 44");
 }

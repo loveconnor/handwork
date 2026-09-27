@@ -1,6 +1,12 @@
 const std = @import("std");
 const types = @import("../../core/shared/types.zig");
 
+pub const focus_reporting_enable_sequence = "\x1b[?1004h";
+
+pub fn isVSCodeTerminal(term_program: ?[]const u8) bool {
+    return if (term_program) |value| std.mem.eql(u8, value, "vscode") else false;
+}
+
 pub const hover_tracking_enable_sequence = "\x1b[?1003h\x1b[?1006h";
 pub const interactive_mode_enable_sequence = "\x1b[>4;2m\x1b[>1u\x1b[?2004h\x1b[?5522h\x1b[?7l" ++ hover_tracking_enable_sequence;
 const tmux_interactive_mode_enable_sequence = "\x1b[>4;2m\x1b[?2004h\x1b[?5522h\x1b[?7l" ++ hover_tracking_enable_sequence;
@@ -16,6 +22,17 @@ pub const alternate_mouse_tracking_leave_sequence = "\x1b[?1000l\x1b[?1006l";
 // alternate-screen app is active. Clear the primary viewport and its
 // scrollback before switching so Handwork remains the only visible surface.
 pub const session_alternate_screen_enter_sequence = "\x1b[2J\x1b[3J\x1b[H\x1b[?1049h\x1b[?1007h\x1b[2J\x1b[H";
+// VS Code keeps the shell command in its primary history; leave that history
+// intact and show Handwork in a separate screen until the session exits.
+pub const vscode_session_alternate_screen_enter_sequence = "\x1b[?1049h\x1b[?1007h\x1b[2J\x1b[H";
+
+pub fn sessionAlternateScreenEnterSequence(term_program: ?[]const u8) []const u8 {
+    return if (isVSCodeTerminal(term_program))
+        vscode_session_alternate_screen_enter_sequence
+    else
+        session_alternate_screen_enter_sequence;
+}
+
 pub const session_alternate_screen_reuse_enter_sequence = "\x1b[?1003l\x1b[2J\x1b[H";
 pub const session_alternate_screen_reuse_leave_sequence = "\x1b[2J\x1b[H" ++ hover_tracking_enable_sequence;
 
@@ -136,6 +153,15 @@ test "session alternate screen restore clears without leaving the session buffer
 test "session alternate screen sends wheel gestures to the application" {
     try std.testing.expect(std.mem.find(u8, session_alternate_screen_enter_sequence, "\x1b[?1049h") != null);
     try std.testing.expect(std.mem.find(u8, session_alternate_screen_enter_sequence, "\x1b[?1007h") != null);
+}
+
+test "VS Code isolates the session without clearing shell history" {
+    const sequence = sessionAlternateScreenEnterSequence("vscode");
+    try std.testing.expectEqualStrings(vscode_session_alternate_screen_enter_sequence, sequence);
+    try std.testing.expect(std.mem.find(u8, sequence, "\x1b[?1049h") != null);
+    try std.testing.expect(std.mem.find(u8, sequence, "\x1b[3J") == null);
+    try std.testing.expect(std.mem.find(u8, sequence, "\x1b[?1007h") != null);
+    try std.testing.expectEqualStrings(session_alternate_screen_enter_sequence, sessionAlternateScreenEnterSequence("Apple_Terminal"));
 }
 
 test "session alternate screen clears Apple Terminal history before entry" {

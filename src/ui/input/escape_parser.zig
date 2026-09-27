@@ -528,6 +528,8 @@ pub fn consumeInputEscapeByteWithMouse(
                 },
                 'H' => .home,
                 'F' => .end,
+                'I' => if (meta_prefixed) .ignore else .focus_in,
+                'O' => if (meta_prefixed) .ignore else .focus_out,
                 'Z' => .toggle_permission_mode,
                 '<' => {
                     mouse.reset();

@@ -91,7 +91,7 @@ pub fn Runtime(comptime App: type) type {
                 if (app.shell.fullTranscriptOpenPending()) return true;
             }
 
-            try transitionScreen(app, .toggle);
+            try transitionScreenTo(app, .toggle, .compact);
             if (!screenOwnsInput(app)) return true;
             app.shell.scrollFullTranscript(direction, unit);
             requestActiveSurfaceFrame(app);
@@ -112,30 +112,40 @@ pub fn Runtime(comptime App: type) type {
             app: *App,
             event: transcript_presentation.Event,
         ) !void {
+            return transitionScreenTo(app, event, .full);
+        }
+
+        fn transitionScreenTo(
+            app: *App,
+            event: transcript_presentation.Event,
+            opening_depth: transcript_presentation.Depth,
+        ) !void {
             if (comptime !@hasField(App, "terminal")) {
                 _ = try app.transitionFullTranscriptProjection(event);
                 return;
             }
 
             const from = app.shell.transcriptPresentationDepth();
-            const to = from.transition(event);
+            const to = if (from == .inline_mode and event == .toggle)
+                opening_depth
+            else
+                from.transition(event);
             if (from == to) return;
             if (from == .inline_mode) {
-                std.debug.assert(to == .full);
+                std.debug.assert(to == .full or to == .compact);
                 if (app.terminal.alternate_screen_owner != .none) return;
                 if (app.approval_prompt.isActive()) return;
-                if (comptime @hasDecl(
-                    @TypeOf(app.shell),
-                    "requestFullTranscriptOpen",
-                )) {
-                    if (!app.shell.requestFullTranscriptOpen()) return;
+                if (comptime @hasDecl(@TypeOf(app.shell), "requestTranscriptOpen")) {
+                    if (!app.shell.requestTranscriptOpen(to)) return;
                 }
-                try app_lifecycle.openFullTranscript(
-                    app.alloc,
-                    &app.terminal,
-                    &app.shell,
-                    &app.metrics,
-                );
+                if (to == .compact)
+                    try app_lifecycle.openCompactTranscript(
+                        app.alloc, &app.terminal, &app.shell, &app.metrics,
+                    )
+                else
+                    try app_lifecycle.openFullTranscript(
+                        app.alloc, &app.terminal, &app.shell, &app.metrics,
+                    );
                 requestActiveSurfaceFrame(app);
             } else {
                 std.debug.assert(to == .inline_mode);
@@ -253,6 +263,7 @@ pub fn Runtime(comptime App: type) type {
         fn depthName(depth: transcript_presentation.Depth) []const u8 {
             return switch (depth) {
                 .inline_mode => "inline",
+                .compact => "compact",
                 .full => "full",
             };
         }

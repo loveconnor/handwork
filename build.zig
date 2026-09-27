@@ -67,7 +67,9 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("build_options", build_options.createModule());
     if (target.result.os.tag == .macos) {
         exe.root_module.linkFramework("ApplicationServices", .{});
+        exe.root_module.linkFramework("AppKit", .{});
         exe.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_cmd_v_monitor.c"), .flags = &.{} });
+        exe.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_frontmost_app.m"), .flags = &.{} });
     }
 
     b.installArtifact(exe);
@@ -98,7 +100,9 @@ pub fn build(b: *std.Build) void {
     });
     if (target.result.os.tag == .macos) {
         exe_tests.root_module.linkFramework("ApplicationServices", .{});
+        exe_tests.root_module.linkFramework("AppKit", .{});
         exe_tests.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_cmd_v_monitor.c"), .flags = &.{} });
+        exe_tests.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_frontmost_app.m"), .flags = &.{} });
     }
     const run_exe_tests = b.addRunArtifact(exe_tests);
     run_exe_tests.step.dependOn(b.getInstallStep());

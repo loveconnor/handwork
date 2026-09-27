@@ -546,6 +546,7 @@ const App = struct {
     terminal_input_runtime: TerminalInputRuntime = .{},
     macos_paste_shortcut: macos_paste_shortcut.Monitor = .{},
     macos_cmd_v_scope_warned: bool = false,
+    vscode_terminal_focused: bool = true,
     submission: input_submit_runtime.State = .{},
     pending_images: std.ArrayList(types.ImageAttachment) = .empty,
     next_image_id: usize = 1,
@@ -2673,6 +2674,22 @@ const App = struct {
     ) !void {
         var ingress = initial_ingress;
         while (true) {
+            // Focus reports are terminal state, not composer actions. Do not
+            // route them into a prompt or forward them as input text.
+            if (ingress.event) |event| switch (event) {
+                .action => |decoded| switch (decoded.action) {
+                    .focus_in => {
+                        self.vscode_terminal_focused = true;
+                        return;
+                    },
+                    .focus_out => {
+                        self.vscode_terminal_focused = false;
+                        return;
+                    },
+                    else => {},
+                },
+                else => {},
+            };
             const replay_byte = try InputAppRuntime.handleTerminalInputIngressWithLimits(
                 self,
                 ingress,
@@ -2851,20 +2868,6 @@ const App = struct {
             }, true),
             .disabled, .ready => {},
         }
-        if (self.macos_paste_shortcut.poll()) {
-            switch (macos_paste_shortcut.Monitor.matchesFocusedTerminalTab(self.alloc)) {
-                .yes => try InputAppRuntime.handleHostOwnedClipboardShortcut(self),
-                .no => {},
-                .failed => if (!self.macos_cmd_v_scope_warned) {
-                    self.macos_cmd_v_scope_warned = true;
-                    try self.writeDomainNotice(.{
-                        .topic = "images",
-                        .tone = .neutral,
-                        .body = "Command-V image paste could not check this Terminal tab. Allow Terminal automation when macOS asks, or use Control-V or /paste.",
-                    }, true);
-                },
-            }
-        }
         if (self.terminal.session_alternate_screen and
             self.terminal.alternate_screen_owner == .none and
             self.macos_paste_shortcut.pollScroll())
@@ -2961,21 +2964,24 @@ const App = struct {
         if (try self.shell.pollFullTranscriptPageLoad()) {
             RenderAppRuntime.requestActiveSurfaceFrame(self, .modal);
         }
+        const pending_compact_open = self.shell.pendingTranscriptOpenIsCompact();
         if (!self.shell.fullTranscriptActive() and
             self.shell.takeReadyFullTranscriptOpen() and
             self.terminal.alternate_screen_owner == .none and
             !self.approval_prompt.isActive())
         {
-            try app_lifecycle.openFullTranscript(
-                self.alloc,
-                &self.terminal,
-                &self.shell,
-                &self.metrics,
-            );
+            if (pending_compact_open)
+                try app_lifecycle.openCompactTranscript(
+                    self.alloc, &self.terminal, &self.shell, &self.metrics,
+                )
+            else
+                try app_lifecycle.openFullTranscript(
+                    self.alloc, &self.terminal, &self.shell, &self.metrics,
+                );
             debug_trace.logf(
                 "full_transcript",
-                "depth_transition from=inline to=full route=root trigger=ctrl_o",
-                .{},
+                "depth_transition from=inline to={s} route=root trigger={s}",
+                .{ if (pending_compact_open) @as([]const u8, "compact") else "full", if (pending_compact_open) @as([]const u8, "wheel") else "ctrl_o" },
             );
             RenderAppRuntime.requestActiveSurfaceFrame(self, .modal);
         }
@@ -3158,11 +3164,25 @@ const App = struct {
 
     pub fn loopSettleInputDeliveryEpoch(ctx: *anyopaque) !void {
         const self: *App = @ptrCast(@alignCast(ctx));
-        if (!InputAppRuntime.terminalPasteActive(self)) return;
-        try InputAppRuntime.settleTerminalPasteDeliveryEpochWithLimits(
-            self,
-            input_limits,
-        );
+        if (InputAppRuntime.terminalPasteActive(self)) {
+            try InputAppRuntime.settleTerminalPasteDeliveryEpochWithLimits(self, input_limits);
+        }
+        // Input has been drained: VS Code's focus-out report must be applied
+        // before a session-wide Command-V event is allowed to read the clipboard.
+        if (self.macos_paste_shortcut.poll()) {
+            switch (self.macos_paste_shortcut.matchesFocusedTerminal(self.alloc, self.vscode_terminal_focused)) {
+                .yes => try InputAppRuntime.handleHostOwnedClipboardShortcut(self),
+                .no => {},
+                .failed => if (!self.macos_cmd_v_scope_warned) {
+                    self.macos_cmd_v_scope_warned = true;
+                    try self.writeDomainNotice(.{
+                        .topic = "images",
+                        .tone = .neutral,
+                        .body = "Command-V image paste could not check this Terminal tab. Allow Terminal automation when macOS asks, or use Control-V or /paste.",
+                    }, true);
+                },
+            }
+        }
     }
 
     pub fn loopNextCollectedByte(ctx: *anyopaque) ?u8 {

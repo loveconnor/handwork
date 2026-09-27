@@ -193,49 +193,47 @@ fn writeBuildLabel(
     });
 }
 
-/// Compact HW mark. Background-colored cells avoid seams around block glyphs
-/// in terminals that leave gaps between glyph shapes.
-pub const welcome_logo_rows = [_][]const u8{
-    "██  ██  ██     ██",
-    "██████  ██  █  ██",
-    "██  ██   ███ ███ ",
-};
-pub const welcome_logo_width: u16 = 17;
-const full_block = "█";
-
-fn appendWelcomeLogoRow(out: *std.ArrayList(u8), alloc: std.mem.Allocator, row: []const u8) !void {
-    var index: usize = 0;
-    while (index < row.len) {
-        if (std.mem.startsWith(u8, row[index..], full_block)) {
-            try out.appendSlice(alloc, welcome_logo_fill_style);
-            while (index < row.len and std.mem.startsWith(u8, row[index..], full_block)) {
-                try out.append(alloc, ' ');
-                index += full_block.len;
-            }
-            try out.appendSlice(alloc, reset_style);
-            continue;
-        }
-        try out.append(alloc, row[index]);
-        index += 1;
-    }
-}
-
 /// Author credit in the version line. The name is an OSC 8 hyperlink so
 /// terminals that support it open the site on click; the link is closed
 /// before the line's trailing reset so no hyperlink leaks past the banner.
 pub const author_name = "Connor Love";
 pub const author_url = "https://connorlove.com";
 const author_link = "\x1b]8;;" ++ author_url ++ "\x1b\\" ++ author_name ++ "\x1b]8;;\x1b\\";
-/// Below this width the mark and copy stack into two short text lines.
-pub const welcome_logo_min_cols: u16 = 71;
+
+// Five rows of the landing page's pixel-logo SVG (handwork-site/src/index.html).
+// Filled cells use terminal background color to avoid seams between glyphs.
+const welcome_logo_rows = [_][]const u8{
+    "##   ##  #####  ###    ## ######  ##     ##  ######  ######  ##   ##",
+    "##   ## ##   ## ####   ## ##   ## ##     ## ##    ## ##   ## ##  ## ",
+    "####### ####### ## ##  ## ##   ## ##  #  ## ##    ## ######  #####  ",
+    "##   ## ##   ## ##  ## ## ##   ## ## ### ## ##    ## ##   ## ##  ## ",
+    "##   ## ##   ## ##   #### ######   ### ###   ######  ##   ## ##   ##",
+};
+const welcome_logo_width: u16 = 68;
+// Leave a margin so a full-width logo row cannot trigger terminal autowrap.
+pub const welcome_full_min_cols: u16 = welcome_logo_width + 2;
+
+fn appendWelcomeLogoRow(out: *std.ArrayList(u8), alloc: std.mem.Allocator, row: []const u8) !void {
+    var index: usize = 0;
+    while (index < row.len) {
+        if (row[index] == '#') {
+            try out.appendSlice(alloc, welcome_logo_fill_style);
+            while (index < row.len and row[index] == '#') : (index += 1) try out.append(alloc, ' ');
+            try out.appendSlice(alloc, reset_style);
+        } else {
+            try out.append(alloc, ' ');
+            index += 1;
+        }
+    }
+}
 
 pub const WelcomeCue = enum {
     choose_provider,
     connect_provider,
     enter_task,
 
-    fn text(self: WelcomeCue, compact: bool) []const u8 {
-        return if (compact) switch (self) {
+    fn text(self: WelcomeCue, with_help: bool) []const u8 {
+        return if (with_help) switch (self) {
             .choose_provider => "Choose a provider below · /help for commands",
             .connect_provider => "Run /provider to connect · /help for commands",
             .enter_task => "Describe a task to begin · /help for commands",
@@ -249,13 +247,12 @@ pub const WelcomeCue = enum {
 
 /// Content rows before the trailing blank row.
 pub fn welcomeVisualRows(cols: u16) u16 {
-    return if (cols >= welcome_logo_min_cols) welcome_logo_rows.len else 2;
+    return if (cols >= welcome_full_min_cols) 10 else 2;
 }
 
-/// Startup banner for a terminal wide enough to show the logo. Callers that
-/// know the terminal width should prefer `welcomeMessageForWidth`.
+/// Callers that know the terminal width should prefer `welcomeMessageForWidth`.
 pub fn welcomeMessage(alloc: std.mem.Allocator) ![]u8 {
-    return welcomeMessageForWidth(alloc, welcome_logo_min_cols);
+    return welcomeMessageForWidth(alloc, welcome_full_min_cols);
 }
 
 pub fn welcomeMessageForWidth(alloc: std.mem.Allocator, cols: u16) ![]u8 {
@@ -268,7 +265,7 @@ pub fn welcomeMessageForWidthWithCue(alloc: std.mem.Allocator, cols: u16, cue: W
 
 /// Startup banner with `lead_rows` blank rows above it. The interactive shell
 /// uses the lead to center the splash vertically while nothing else is on
-/// screen; the logo and the version line are centered on the same axis.
+/// screen; the welcome block is centered as a whole.
 pub fn welcomeMessageForLayout(alloc: std.mem.Allocator, cols: u16, lead_rows: u16) ![]u8 {
     return welcomeMessageForLayoutWithCue(alloc, cols, lead_rows, .choose_provider);
 }
@@ -294,27 +291,32 @@ pub fn welcomeMessageForLayoutWithCue(
         .{ dim_style, build_label },
     );
     defer alloc.free(meta);
-    const action = cue.text(true);
     var out: std.ArrayList(u8) = .empty;
     errdefer out.deinit(alloc);
     try out.appendNTimes(alloc, '\n', lead_rows);
-    if (cols >= welcome_logo_min_cols) {
-        const content_width = @max(
-            display_width.visibleWidthIgnoringAnsi(title),
-            @max(display_width.visibleWidthIgnoringAnsi(meta), display_width.visibleWidth(action)),
-        );
-        const indent = (@as(usize, cols) -| (welcome_logo_width + 3 + content_width)) / 2;
-        const lines = [_][]const u8{ title, meta, action };
-        for (welcome_logo_rows, lines, 0..) |logo_row, line, index| {
-            try out.appendNTimes(alloc, ' ', indent);
-            try appendWelcomeLogoRow(&out, alloc, logo_row);
-            try out.appendSlice(alloc, "   ");
-            if (index == 2) try out.appendSlice(alloc, permission_auto_style);
-            try out.appendSlice(alloc, line);
-            if (index == 2) try out.appendSlice(alloc, reset_style);
+    if (cols >= welcome_full_min_cols) {
+        const logo_indent = (@as(usize, cols) - welcome_logo_width) / 2;
+        for (welcome_logo_rows) |row| {
+            try out.appendNTimes(alloc, ' ', logo_indent);
+            try appendWelcomeLogoRow(&out, alloc, row);
             try out.append(alloc, '\n');
         }
         try out.append(alloc, '\n');
+        const labeled_meta = try std.fmt.allocPrint(
+            alloc,
+            "{s}handwork · {s} · made by " ++ author_link ++ reset_style,
+            .{ dim_style, build_label },
+        );
+        defer alloc.free(labeled_meta);
+        try appendCenteredWelcomeLine(&out, alloc, labeled_meta, cols);
+        try out.appendSlice(alloc, "\n\n");
+        try out.appendSlice(alloc, permission_auto_style);
+        try appendCenteredWelcomeLine(&out, alloc, cue.text(false), cols);
+        try out.appendSlice(alloc, reset_style);
+        try out.append(alloc, '\n');
+        try out.appendSlice(alloc, dim_style);
+        try appendCenteredWelcomeLine(&out, alloc, "/help for commands", cols);
+        try out.appendSlice(alloc, reset_style ++ "\n\n");
         return out.toOwnedSlice(alloc);
     }
     if (cols >= 50) {
@@ -333,7 +335,7 @@ pub fn welcomeMessageForLayoutWithCue(
         }
         try out.append(alloc, '\n');
         try out.appendSlice(alloc, permission_auto_style);
-        try appendCenteredWelcomeLine(&out, alloc, action, cols);
+        try appendCenteredWelcomeLine(&out, alloc, cue.text(true), cols);
         try out.appendSlice(alloc, reset_style);
     } else {
         const title_and_version = try std.fmt.allocPrint(
@@ -1017,7 +1019,7 @@ test "welcomeMessage shows version and help hint" {
     const message = try welcomeMessage(std.testing.allocator);
     defer std.testing.allocator.free(message);
 
-    try std.testing.expect(std.mem.find(u8, message, "handwork") != null);
+    try std.testing.expect(std.mem.find(u8, message, welcome_logo_fill_style) != null);
     try std.testing.expect(std.mem.find(u8, message, main.version) != null);
     try std.testing.expect(std.mem.find(u8, message, "/help") != null);
     try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
@@ -1027,10 +1029,8 @@ test "welcomeMessage gives the first action its own readable line" {
     initTheme(false, null);
     const message = try welcomeMessage(std.testing.allocator);
     defer std.testing.allocator.free(message);
-    const name_style = std.mem.find(u8, message, subtitle_style).?;
-    try std.testing.expect(std.mem.startsWith(u8, message[name_style + subtitle_style.len ..], "handwork"));
     const cue_style = std.mem.find(u8, message, permission_auto_style).?;
-    try std.testing.expect(std.mem.startsWith(u8, message[cue_style + permission_auto_style.len ..], "Choose a provider below"));
+    try std.testing.expect(std.mem.find(u8, message[cue_style + permission_auto_style.len ..], "Choose a provider below") != null);
 
     const ready = try welcomeMessageForWidthWithCue(std.testing.allocator, 80, .enter_task);
     defer std.testing.allocator.free(ready);
@@ -1041,15 +1041,18 @@ test "welcomeMessage gives the first action its own readable line" {
     try std.testing.expect(std.mem.find(u8, disconnected, "Run /provider to connect") != null);
 }
 
-test "welcomeMessage uses a three row mark beside the version and action" {
+test "welcomeMessage renders the landing-page wordmark above the action and help" {
     initTheme(false, null);
     const message = try welcomeMessage(std.testing.allocator);
     defer std.testing.allocator.free(message);
 
-    try std.testing.expect(std.mem.find(u8, message, full_block) == null);
-    const line_count = std.mem.count(u8, message, "\n");
-    try std.testing.expectEqual(@as(usize, 4), line_count);
-    try std.testing.expect(line_count <= welcome_message_reserved_rows);
+    try std.testing.expect(std.mem.find(u8, message, "█") == null);
+    try std.testing.expect(std.mem.find(u8, message, welcome_logo_fill_style) != null);
+    try std.testing.expect(std.mem.find(u8, message, "\n\n") != null);
+    try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
+    try std.testing.expect(std.mem.find(u8, message, "/help for commands") != null);
+    try std.testing.expectEqual(@as(usize, 11), std.mem.count(u8, message, "\n"));
+    try std.testing.expect(welcomeVisualRows(welcome_full_min_cols) + 1 <= welcome_message_reserved_rows);
 }
 
 test "welcomeMessageForLayout prepends the requested lead rows" {
@@ -1062,28 +1065,27 @@ test "welcomeMessageForLayout prepends the requested lead rows" {
     try std.testing.expect(std.mem.startsWith(u8, padded, "\n\n\n\n"));
     try std.testing.expectEqualStrings(flat, padded[4..]);
     try std.testing.expectEqual(@as(usize, welcomeVisualRows(100) + 1), std.mem.count(u8, flat, "\n"));
-    try std.testing.expectEqual(@as(u16, 2), welcomeVisualRows(welcome_logo_min_cols - 1));
+    try std.testing.expectEqual(@as(u16, 2), welcomeVisualRows(welcome_full_min_cols - 1));
 }
 
-test "welcomeMessageForWidth keeps the mark and text within wide rows" {
+test "welcomeMessageForWidth centers the wordmark and keeps each row within the terminal" {
     initTheme(false, null);
-    const cols: u16 = 120;
-    const message = try welcomeMessageForWidth(std.testing.allocator, cols);
-    defer std.testing.allocator.free(message);
-
-    var lines = std.mem.splitScalar(u8, message, '\n');
-    var indent: ?usize = null;
-    for (welcome_logo_rows) |_| {
-        const line = lines.next() orelse return error.TestMissingLogoRow;
-        const mark_start = std.mem.indexOf(u8, line, welcome_logo_fill_style).?;
-        if (indent) |value| try std.testing.expectEqual(value, mark_start);
-        indent = mark_start;
-        try std.testing.expect(std.mem.find(u8, line, full_block) == null);
-        const visible = display_width.visibleWidthIgnoringAnsi(line);
-        try std.testing.expect(visible <= cols);
+    for ([_]u16{ welcome_full_min_cols, 120 }) |cols| {
+        const message = try welcomeMessageForWidth(std.testing.allocator, cols);
+        defer std.testing.allocator.free(message);
+        var lines = std.mem.splitScalar(u8, message, '\n');
+        for (welcome_logo_rows) |source_row| {
+            const line = lines.next() orelse return error.TestMissingWelcomeRow;
+            try std.testing.expectEqual(@as(usize, welcome_logo_width), source_row.len);
+            try std.testing.expectEqual(@as(usize, (@as(usize, cols) - welcome_logo_width) / 2), std.mem.indexOfNone(u8, line, " ").?);
+            try std.testing.expectEqual(@as(usize, (@as(usize, cols) - welcome_logo_width) / 2 + welcome_logo_width), display_width.visibleWidthIgnoringAnsi(line));
+        }
+        try std.testing.expectEqualStrings("", lines.next().?);
+        const meta_line = lines.next().?;
+        try std.testing.expect(display_width.visibleWidthIgnoringAnsi(meta_line) <= cols);
+        try std.testing.expectEqualStrings("", lines.next().?);
+        for (0..2) |_| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(lines.next().?) <= cols);
     }
-    try std.testing.expectEqualStrings("", lines.next().?);
-    try std.testing.expect(indent.? > 0);
 }
 
 test "welcomeMessage credits the author with a hyperlink" {
@@ -1101,23 +1103,22 @@ test "welcomeMessage credits the author with a hyperlink" {
     );
 }
 
-test "welcome logo rows share one cell width" {
-    for (welcome_logo_rows) |row| {
-        try std.testing.expectEqual(@as(usize, welcome_logo_width), display_width.visibleWidth(row));
+test "welcomeMessageForWidth keeps the action readable on narrow terminals in both themes" {
+    for ([_]bool{ false, true }) |light| {
+        initTheme(light, null);
+        for ([_]u16{ 24, welcome_full_min_cols - 1 }) |cols| {
+            const message = try welcomeMessageForWidth(std.testing.allocator, cols);
+            defer std.testing.allocator.free(message);
+
+            try std.testing.expect(std.mem.find(u8, message, "█") == null);
+            try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, message, "handwork"));
+            try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
+            try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, message, "\n"));
+            var lines = std.mem.splitScalar(u8, message, '\n');
+            for (0..2) |_| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(lines.next().?) <= cols);
+        }
     }
-}
-
-test "welcomeMessageForWidth stacks two readable lines on narrow terminals" {
     initTheme(false, null);
-    const message = try welcomeMessageForWidth(std.testing.allocator, welcome_logo_min_cols - 1);
-    defer std.testing.allocator.free(message);
-
-    try std.testing.expect(std.mem.find(u8, message, welcome_logo_rows[0]) == null);
-    try std.testing.expect(std.mem.find(u8, message, "handwork") != null);
-    try std.testing.expect(std.mem.find(u8, message, "Choose a provider below") != null);
-    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, message, "\n"));
-    var lines = std.mem.splitScalar(u8, message, '\n');
-    for (0..2) |_| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(lines.next().?) <= welcome_logo_min_cols - 1);
 }
 
 test "build label stays bare on the stable channel" {
