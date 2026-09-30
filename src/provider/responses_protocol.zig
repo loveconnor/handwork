@@ -836,6 +836,7 @@ fn assistantMessagePhase(fields: std.json.ObjectMap) !?AssistantMessagePhase {
 }
 
 pub const Reducer = struct {
+    const event_scratch_bytes = 4096;
     const MessageItem = struct {
         output_index: i64,
         id_hash: ?[TextDigest.digest_length]u8,
@@ -911,17 +912,33 @@ pub const Reducer = struct {
                 limits.aggregate_bytes,
             );
         }
-        var parsed = std.json.parseFromSlice(std.json.Value, alloc, json_text, .{}) catch |err| switch (err) {
-            error.OutOfMemory => return error.OutOfMemory,
-            else => return error.InvalidEvent,
+        // Small deltas need no heap parser arena. Parsed values live only for
+        // this call; durable content, tools, and replay records use `alloc`.
+        // Larger events keep the general parser and release its arena promptly.
+        var scratch_bytes: [event_scratch_bytes]u8 = undefined;
+        var scratch = std.heap.FixedBufferAllocator.init(&scratch_bytes);
+        var fallback: ?std.json.Parsed(std.json.Value) = null;
+        defer if (fallback) |*parsed| parsed.deinit();
+        const small_value: ?std.json.Value = if (json_text.len <= scratch_bytes.len)
+            std.json.parseFromSliceLeaky(std.json.Value, scratch.allocator(), json_text, .{}) catch |err| switch (err) {
+                error.OutOfMemory => null,
+                else => return error.InvalidEvent,
+            }
+        else
+            null;
+        const event_value = small_value orelse blk: {
+            fallback = std.json.parseFromSlice(std.json.Value, alloc, json_text, .{}) catch |err| switch (err) {
+                error.OutOfMemory => return error.OutOfMemory,
+                else => return error.InvalidEvent,
+            };
+            break :blk fallback.?.value;
         };
-        defer parsed.deinit();
-        if (parsed.value != .object) return false;
-        const event_type = stringField(parsed.value.object, "type") orelse return false;
+        if (event_value != .object) return false;
+        const event_type = stringField(event_value.object, "type") orelse return false;
 
         if (std.mem.eql(u8, event_type, "response.output_item.added")) {
-            const output_index = try optional_index(parsed.value.object, "output_index") orelse return false;
-            const item = parsed.value.object.get("item") orelse return false;
+            const output_index = try optional_index(event_value.object, "output_index") orelse return false;
+            const item = event_value.object.get("item") orelse return false;
             if (item != .object) return false;
             const item_type = stringField(item.object, "type") orelse return false;
             if (std.mem.eql(u8, item_type, "function_call")) {
@@ -954,10 +971,10 @@ pub const Reducer = struct {
             std.mem.eql(u8, event_type, "response.refusal.delta"))
         {
             try self.accept_text(alloc, .{
-                .key = try text_key(parsed.value.object),
+                .key = try text_key(event_value.object),
                 .kind = if (std.mem.eql(u8, event_type, "response.refusal.delta")) .refusal else .text,
-                .item_id_hash = try text_identity(parsed.value.object, "item_id"),
-                .text = stringField(parsed.value.object, "delta") orelse return error.InvalidEvent,
+                .item_id_hash = try text_identity(event_value.object, "item_id"),
+                .text = stringField(event_value.object, "delta") orelse return error.InvalidEvent,
                 .mode = .delta,
             }, callbacks, content_capture_limit, limits);
         } else if (std.mem.eql(u8, event_type, "response.output_text.done") or
@@ -965,44 +982,44 @@ pub const Reducer = struct {
         {
             const refusal = std.mem.eql(u8, event_type, "response.refusal.done");
             try self.accept_text(alloc, .{
-                .key = try text_key(parsed.value.object),
+                .key = try text_key(event_value.object),
                 .kind = if (refusal) .refusal else .text,
-                .item_id_hash = try text_identity(parsed.value.object, "item_id"),
-                .text = stringField(parsed.value.object, if (refusal) "refusal" else "text") orelse return error.InvalidEvent,
+                .item_id_hash = try text_identity(event_value.object, "item_id"),
+                .text = stringField(event_value.object, if (refusal) "refusal" else "text") orelse return error.InvalidEvent,
                 .mode = .final,
             }, callbacks, content_capture_limit, limits);
         } else if (std.mem.eql(u8, event_type, "response.content_part.done")) {
-            const part = parsed.value.object.get("part") orelse return error.InvalidEvent;
+            const part = event_value.object.get("part") orelse return error.InvalidEvent;
             if (part != .object) return error.InvalidEvent;
-            try self.finalize_text_part(alloc, try text_key(parsed.value.object), try text_identity(parsed.value.object, "item_id"), part.object, callbacks, content_capture_limit, limits);
+            try self.finalize_text_part(alloc, try text_key(event_value.object), try text_identity(event_value.object, "item_id"), part.object, callbacks, content_capture_limit, limits);
         } else if (std.mem.eql(u8, event_type, "response.reasoning_summary_text.delta") or
             std.mem.eql(u8, event_type, "response.reasoning_text.delta"))
         {
-            if (try optional_index(parsed.value.object, "output_index")) |index| try self.check_output_kind(index, .reasoning);
-            const delta = stringField(parsed.value.object, "delta") orelse return false;
+            if (try optional_index(event_value.object, "output_index")) |index| try self.check_output_kind(index, .reasoning);
+            const delta = stringField(event_value.object, "delta") orelse return false;
             if (callbacks.on_reasoning) |callback| callback(callbacks.context, delta);
         } else if (std.mem.eql(u8, event_type, "response.reasoning_summary_part.done")) {
-            if (try optional_index(parsed.value.object, "output_index")) |index| try self.check_output_kind(index, .reasoning);
+            if (try optional_index(event_value.object, "output_index")) |index| try self.check_output_kind(index, .reasoning);
             if (callbacks.on_reasoning) |callback| callback(callbacks.context, "\n\n");
         } else if (std.mem.eql(u8, event_type, "response.function_call_arguments.delta")) {
-            const output_index = try optional_index(parsed.value.object, "output_index") orelse return false;
+            const output_index = try optional_index(event_value.object, "output_index") orelse return false;
             try self.check_output_kind(output_index, .function_call);
-            const delta = stringField(parsed.value.object, "delta") orelse return false;
+            const delta = stringField(event_value.object, "delta") orelse return false;
             const index = findTool(self.tools.items, output_index) orelse return false;
-            try self.tools.items[index].reconcileIdentity(alloc, parsed.value.object, "item_id", limits);
+            try self.tools.items[index].reconcileIdentity(alloc, event_value.object, "item_id", limits);
             if (self.tools.items[index].arguments_finalized and delta.len > 0) return error.ResponsesToolCallConflict;
             try appendToolArguments(alloc, &self.tools.items[index].arguments, delta, limits.tool_arguments_bytes);
             if (callbacks.on_tool_input) |callback| callback(callbacks.context, delta);
         } else if (std.mem.eql(u8, event_type, "response.function_call_arguments.done")) {
-            const output_index = try optional_index(parsed.value.object, "output_index") orelse return false;
+            const output_index = try optional_index(event_value.object, "output_index") orelse return false;
             try self.check_output_kind(output_index, .function_call);
-            const arguments = stringField(parsed.value.object, "arguments") orelse return error.InvalidEvent;
+            const arguments = stringField(event_value.object, "arguments") orelse return error.InvalidEvent;
             const index = findTool(self.tools.items, output_index) orelse return error.ResponsesToolCallConflict;
-            try self.tools.items[index].reconcileIdentity(alloc, parsed.value.object, "item_id", limits);
+            try self.tools.items[index].reconcileIdentity(alloc, event_value.object, "item_id", limits);
             try self.tools.items[index].finalizeArguments(alloc, arguments, callbacks, limits);
         } else if (std.mem.eql(u8, event_type, "response.output_item.done")) {
-            const output_index = try optional_index(parsed.value.object, "output_index") orelse return false;
-            const item = parsed.value.object.get("item") orelse return false;
+            const output_index = try optional_index(event_value.object, "output_index") orelse return false;
+            const item = event_value.object.get("item") orelse return false;
             if (item != .object) return false;
             const item_type = stringField(item.object, "type") orelse return false;
             if (std.mem.eql(u8, item_type, "function_call")) {
@@ -1019,7 +1036,7 @@ pub const Reducer = struct {
             std.mem.eql(u8, event_type, "response.incomplete") or
             std.mem.eql(u8, event_type, "response.failed"))
         {
-            const response_value = parsed.value.object.get("response") orelse return error.InvalidEvent;
+            const response_value = event_value.object.get("response") orelse return error.InvalidEvent;
             if (response_value != .object) return error.InvalidEvent;
             const status = try terminal_status(event_type, response_value.object);
             const output = response_value.object.get("output") orelse .null;
@@ -1058,7 +1075,7 @@ pub const Reducer = struct {
             }
             return true;
         } else if (std.mem.eql(u8, event_type, "error")) {
-            try self.accept_failure(alloc, parsed.value.object);
+            try self.accept_failure(alloc, event_value.object);
             self.terminal_seen = true;
             self.finish_reason = .provider_error;
             return true;
@@ -1399,6 +1416,76 @@ const ToolRecordTest = struct {
 
     fn ignore(_: *anyopaque, _: []const u8) void {}
 };
+
+test "Responses small escaped deltas need no heap parsing allocations" {
+    var tracked = std.testing.FailingAllocator.init(std.testing.allocator, .{});
+    const alloc = tracked.allocator();
+    var stream = ToolRecordTest.init(alloc);
+    defer stream.deinit();
+    const event =
+        \\{"type":"response.reasoning_summary_text.delta","delta":"escaped \u00e9 text"}
+    ;
+    for (0..8) |_| try stream.apply(event);
+    const allocated = tracked.allocated_bytes;
+    for (0..64) |_| try stream.apply(event);
+    try std.testing.expectEqual(allocated, tracked.allocated_bytes);
+    try std.testing.expectEqual(@as(usize, 0), allocated);
+}
+
+test "Responses large escaped events release fallback parsing scratch" {
+    const alloc = std.testing.allocator;
+    var tracked = std.testing.FailingAllocator.init(alloc, .{});
+    const parse_alloc = tracked.allocator();
+    var stream = ToolRecordTest.init(parse_alloc);
+    defer stream.deinit();
+    var out: std.Io.Writer.Allocating = .init(alloc);
+    defer out.deinit();
+    try out.writer.writeAll("{\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"");
+    for (0..128 * 1024) |_| try out.writer.writeAll("\\u0061");
+    try out.writer.writeAll("\"}");
+    var large_limits = ToolRecordTest.limits;
+    large_limits.aggregate_bytes = 2 * 1024 * 1024;
+    _ = try stream.reducer.applyJson(parse_alloc, out.written(), .{ .context = &stream.context, .on_content = ToolRecordTest.ignore }, &stream.cancelled, null, large_limits);
+    try std.testing.expectEqual(tracked.allocated_bytes, tracked.freed_bytes);
+    for ([_][]const u8{ ToolRecordTest.start, ToolRecordTest.finalized, ToolRecordTest.terminal }) |event| {
+        _ = try stream.reducer.applyJson(parse_alloc, event, .{ .context = &stream.context, .on_content = ToolRecordTest.ignore }, &stream.cancelled, null, large_limits);
+    }
+    const completion = try stream.reducer.finish(parse_alloc, &stream.cancelled, large_limits);
+    defer stream.freeCompletion(completion);
+    try std.testing.expectEqualStrings("call_1", completion.tool_calls[0].id);
+    try std.testing.expectEqualStrings("{\"path\":\"preview.txt\"}", completion.tool_calls[0].arguments_json);
+}
+
+test "Responses fallback parsing releases allocations on failure" {
+    const Probe = struct {
+        fn run(alloc: std.mem.Allocator) !void {
+            var stream = ToolRecordTest.init(alloc);
+            defer stream.deinit();
+            const event = "{\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"" ++ "\\u0061" ** 8192 ++ "\"}";
+            _ = try stream.reducer.applyJson(alloc, event, .{ .context = &stream.context, .on_content = ToolRecordTest.ignore }, &stream.cancelled, null, .{
+                .aggregate_bytes = 128 * 1024,
+                .events = 100,
+                .tool_calls = 4,
+                .tool_identity_bytes = 1024,
+                .tool_arguments_bytes = 4096,
+                .provider_state_bytes = 4096,
+            });
+        }
+    };
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, Probe.run, .{});
+}
+
+test "Responses compact deeply allocated events fall back without retaining scratch" {
+    var tracked = std.testing.FailingAllocator.init(std.testing.allocator, .{});
+    var stream = ToolRecordTest.init(tracked.allocator());
+    defer stream.deinit();
+    const event = "{\"type\":\"unknown\",\"data\":[" ++ "{}," ** 128 ++ "{}]}";
+    try stream.apply(event);
+    try std.testing.expect(tracked.allocated_bytes > 0);
+    try std.testing.expectEqual(tracked.allocated_bytes, tracked.freed_bytes);
+    try stream.apply("{\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"small\"}");
+    try std.testing.expectEqual(tracked.allocated_bytes, tracked.freed_bytes);
+}
 
 test "Responses absent final snapshot preserves completed stream evidence" {
     for ([_][]const u8{ "", ",\"output\":[]", ",\"output\":null" }) |snapshot| {

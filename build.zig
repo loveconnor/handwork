@@ -178,6 +178,23 @@ pub fn build(b: *std.Build) void {
     const run_bench_step = b.step("run-bench-file-index", "Build and run file_index search benchmark");
     run_bench_step.dependOn(&run_bench.step);
 
+    const stream_bench = b.addExecutable(.{
+        .name = "provider-stream-bench",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/provider_stream.zig"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
+    });
+    stream_bench.root_module.addImport("benchmark_exports", benchmark_exports_mod);
+    const install_stream_bench = b.addInstallArtifact(stream_bench, .{});
+    const stream_bench_step = b.step("bench-provider-stream", "Build the local provider stream processing benchmark");
+    stream_bench_step.dependOn(&install_stream_bench.step);
+    const run_stream_bench = b.addRunArtifact(stream_bench);
+    const run_stream_bench_step = b.step("run-bench-provider-stream", "Measure local SSE framing and Responses reduction without network requests");
+    run_stream_bench_step.dependOn(&run_stream_bench.step);
+
     // --- UI activity progress benchmark ---
     const ui_activity_bench = b.addExecutable(.{
         .name = "ui-activity-progress-bench",

@@ -30,7 +30,8 @@ fn line_end(bytes: []const u8) usize {
 }
 
 /// Request-local SSE framing. The caller owns the source and all allocations.
-/// Returned data is borrowed until the next next() call or deinit().
+/// Returned data is borrowed until the next next() call or deinit(). The source
+/// must not be read or modified while the caller uses the returned payload.
 pub const Reader = struct {
     max_event_bytes: usize,
     max_total_bytes: ?usize = null,
@@ -49,6 +50,14 @@ pub const Reader = struct {
     /// Reads through one blank-line delimiter without waiting for the next event.
     /// Cancellation is checked before reads; blocked I/O remains source-owned.
     pub fn next(self: *Reader, alloc: std.mem.Allocator, source: *std.Io.Reader, cancelled: *const std.atomic.Value(bool)) Error!?[]const u8 {
+        // Tiny host buffers usually split JSON events. Keep their existing
+        // assembly path instead of scanning each fragment twice.
+        if (source.buffer.len >= 32) {
+            if (cancelled.load(.seq_cst)) return error.Cancelled;
+            const buffered = try self.buffered_event(source);
+            if (cancelled.load(.seq_cst)) return error.Cancelled;
+            if (buffered) |payload| return payload;
+        }
         self.data.clearRetainingCapacity();
         var saw_data = false;
         while (try self.read_line(alloc, source, cancelled)) |raw| {
@@ -74,6 +83,44 @@ pub const Reader = struct {
             }
         }
         // EOF is not an event delimiter; consumers still require terminal proof.
+        return null;
+    }
+
+    // Most provider events contain one data line and already fit in the source
+    // buffer. Borrow it only when the complete delimiter is buffered: reading
+    // another line could refill the source and invalidate an earlier slice.
+    fn buffered_event(self: *Reader, source: *std.Io.Reader) Error!?[]const u8 {
+        const bytes = source.peekGreedy(1) catch |err| switch (err) {
+            error.EndOfStream => return null,
+            error.ReadFailed => return error.ReadFailed,
+        };
+        var offset: usize = if (self.skip_lf and bytes[0] == '\n') 1 else 0;
+        var first_line = self.first_line;
+        var payload: ?[]const u8 = null;
+        while (offset < bytes.len) {
+            const remaining = bytes[offset..];
+            const end = line_end(remaining);
+            if (end == remaining.len) return null;
+            if (end > self.max_event_bytes) return error.EventTooLarge;
+            const raw = remaining[0..end];
+            const line = if (first_line and std.mem.startsWith(u8, raw, "\xef\xbb\xbf")) raw[3..] else raw;
+            first_line = false;
+            offset += end + 1;
+            switch (classify(line)) {
+                .ignored => {},
+                .boundary => if (payload) |value| {
+                    try self.consume(source, offset);
+                    self.first_line = false;
+                    self.skip_lf = remaining[end] == '\r';
+                    return value;
+                },
+                .data => |value| {
+                    if (payload != null) return null; // Multiline data needs owned assembly.
+                    payload = value;
+                },
+            }
+            if (remaining[end] == '\r' and offset < bytes.len and bytes[offset] == '\n') offset += 1;
+        }
         return null;
     }
 
@@ -265,6 +312,44 @@ fn check_allocations(alloc: std.mem.Allocator) !void {
 
 test "provider framing releases allocations on failure" {
     try std.testing.checkAllAllocationFailures(std.testing.allocator, check_allocations, .{});
+}
+
+test "provider framing delivers buffered events without scratch allocations" {
+    const wires = [_][]const u8{
+        "\xef\xbb\xbf: heartbeat\n\nevent: message\ndata: first\n\ndata:second\n\n",
+        "\xef\xbb\xbf: heartbeat\r\n\r\nevent: message\r\ndata: first\r\n\r\ndata:second\r\n\r\n",
+        ": heartbeat\r\revent: message\rdata: first\r\rdata:second\r\r",
+    };
+    for (wires) |wire| {
+        var source = std.Io.Reader.fixed(wire);
+        var reader = Reader{ .max_event_bytes = 128 };
+        defer reader.deinit(std.testing.failing_allocator);
+        const cancelled = std.atomic.Value(bool).init(false);
+        try std.testing.expectEqualStrings("first", (try reader.next(std.testing.failing_allocator, &source, &cancelled)).?);
+        try std.testing.expectEqualStrings("second", (try reader.next(std.testing.failing_allocator, &source, &cancelled)).?);
+        try std.testing.expectEqual(null, try reader.next(std.testing.failing_allocator, &source, &cancelled));
+    }
+}
+
+test "provider framing cancellation during a buffered event refill prevents publication" {
+    const Source = struct {
+        cancelled: std.atomic.Value(bool) = .init(false),
+        reader: std.Io.Reader,
+
+        fn read_vec(raw: *std.Io.Reader, _: [][]u8) std.Io.Reader.Error!usize {
+            const self: *@This() = @fieldParentPtr("reader", raw);
+            const event = "data: cancelled\n\n";
+            @memcpy(raw.buffer[0..event.len], event);
+            raw.end = event.len;
+            self.cancelled.store(true, .seq_cst);
+            return 0;
+        }
+    };
+    var buffer: [32]u8 = undefined;
+    var source = Source{ .reader = .{ .buffer = &buffer, .seek = 0, .end = 0, .vtable = &.{ .stream = std.Io.Reader.failing.vtable.stream, .readVec = Source.read_vec } } };
+    var reader = Reader{ .max_event_bytes = 128 };
+    defer reader.deinit(std.testing.allocator);
+    try std.testing.expectError(error.Cancelled, reader.next(std.testing.allocator, &source.reader, &source.cancelled));
 }
 
 test "provider framing reuses split-line storage for large events" {

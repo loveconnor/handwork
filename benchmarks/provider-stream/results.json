@@ -1,0 +1,842 @@
+{
+  "recorded_date": "2026-09-30",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "architecture": "arm64",
+  "compiler": "Zig 0.16.0",
+  "optimization": "ReleaseFast",
+  "model_requests": 0,
+  "baseline_revision": "28019d7cbd52ffb6c8d47213fce4be25dc7a9214",
+  "baseline_note": "Baseline production source with the new measurement driver. Candidate also verifies captured bytes and completion metadata outside the timed region.",
+  "binary_sha256": {
+    "baseline": "289791e2450273840e61dd5ec04fd41b9b4af72439ca712731236b11f473b483",
+    "candidate": "74ce40693879d77bcd65bab29f37b20d625598ebda47f75335f888607d2ebc31"
+  },
+  "candidate_source_sha256": {
+    "src/provider/sse.zig": "5835b2cfe397678b780b78373d80d46e571bdd25584e6cd65c1450aa0f643b27",
+    "src/provider/responses_protocol.zig": "e51a893868c63a3e0b2fdef18cfc08b05cd192cedf5d1e52ce79d38465e63f1f",
+    "benchmarks/provider_stream.zig": "69de412befe52239fd03cfa8439dad9baf96ead7380111c46810f6080449e62f"
+  },
+  "method": "Five alternating process pairs; each process reports seven-batch medians after warmup. No builds or other benchmarks ran during the final comparison.",
+  "scope": "Synthetic local SSE framing and Responses reduction only; excludes model inference, network, UI rendering, and overall task time.",
+  "summary": [
+    {
+      "ending": "lf",
+      "chunk_bytes": 262144,
+      "stage": "frame",
+      "baseline_median_ns": 1173917,
+      "candidate_median_ns": 1043666,
+      "throughput_gain_percent": 12.48
+    },
+    {
+      "ending": "lf",
+      "chunk_bytes": 262144,
+      "stage": "frame_and_reduce",
+      "baseline_median_ns": 19609042,
+      "candidate_median_ns": 14283833,
+      "throughput_gain_percent": 37.28
+    },
+    {
+      "ending": "lf",
+      "chunk_bytes": 17,
+      "stage": "frame",
+      "baseline_median_ns": 5615875,
+      "candidate_median_ns": 5616167,
+      "throughput_gain_percent": -0.01
+    },
+    {
+      "ending": "lf",
+      "chunk_bytes": 17,
+      "stage": "frame_and_reduce",
+      "baseline_median_ns": 25489791,
+      "candidate_median_ns": 19559917,
+      "throughput_gain_percent": 30.32
+    },
+    {
+      "ending": "crlf",
+      "chunk_bytes": 262144,
+      "stage": "frame",
+      "baseline_median_ns": 1213667,
+      "candidate_median_ns": 1110000,
+      "throughput_gain_percent": 9.34
+    },
+    {
+      "ending": "crlf",
+      "chunk_bytes": 262144,
+      "stage": "frame_and_reduce",
+      "baseline_median_ns": 19818500,
+      "candidate_median_ns": 14263958,
+      "throughput_gain_percent": 38.94
+    },
+    {
+      "ending": "crlf",
+      "chunk_bytes": 17,
+      "stage": "frame",
+      "baseline_median_ns": 5619541,
+      "candidate_median_ns": 5775625,
+      "throughput_gain_percent": -2.7
+    },
+    {
+      "ending": "crlf",
+      "chunk_bytes": 17,
+      "stage": "frame_and_reduce",
+      "baseline_median_ns": 25605292,
+      "candidate_median_ns": 19873458,
+      "throughput_gain_percent": 28.84
+    }
+  ],
+  "runs": {
+    "baseline": [
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1185000",
+          "ns_per_event": "29",
+          "events_per_second": "33756118"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19601291",
+          "ns_per_event": "490",
+          "events_per_second": "2040732"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5486542",
+          "ns_per_event": "137",
+          "events_per_second": "7290748"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25403042",
+          "ns_per_event": "635",
+          "events_per_second": "1574653"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1184958",
+          "ns_per_event": "29",
+          "events_per_second": "33757314"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19732750",
+          "ns_per_event": "493",
+          "events_per_second": "2027137"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5617917",
+          "ns_per_event": "140",
+          "events_per_second": "7120254"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25254375",
+          "ns_per_event": "631",
+          "events_per_second": "1583923"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1200084",
+          "ns_per_event": "30",
+          "events_per_second": "33331833"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19797583",
+          "ns_per_event": "494",
+          "events_per_second": "2020499"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5647500",
+          "ns_per_event": "141",
+          "events_per_second": "7082957"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "26117083",
+          "ns_per_event": "652",
+          "events_per_second": "1531602"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1232834",
+          "ns_per_event": "30",
+          "events_per_second": "32446379"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "20149375",
+          "ns_per_event": "503",
+          "events_per_second": "1985222"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5740000",
+          "ns_per_event": "143",
+          "events_per_second": "6968815"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25915375",
+          "ns_per_event": "647",
+          "events_per_second": "1543523"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1147625",
+          "ns_per_event": "28",
+          "events_per_second": "34855462"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19609042",
+          "ns_per_event": "490",
+          "events_per_second": "2039926"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5601167",
+          "ns_per_event": "140",
+          "events_per_second": "7141547"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25460417",
+          "ns_per_event": "636",
+          "events_per_second": "1571105"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1182292",
+          "ns_per_event": "29",
+          "events_per_second": "33833435"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19818500",
+          "ns_per_event": "495",
+          "events_per_second": "2018366"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5619042",
+          "ns_per_event": "140",
+          "events_per_second": "7118829"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25605292",
+          "ns_per_event": "640",
+          "events_per_second": "1562216"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1156291",
+          "ns_per_event": "28",
+          "events_per_second": "34594232"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19523459",
+          "ns_per_event": "488",
+          "events_per_second": "2048868"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5615875",
+          "ns_per_event": "140",
+          "events_per_second": "7122843"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25489791",
+          "ns_per_event": "637",
+          "events_per_second": "1569294"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1214417",
+          "ns_per_event": "30",
+          "events_per_second": "32938438"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19473792",
+          "ns_per_event": "486",
+          "events_per_second": "2054094"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5665917",
+          "ns_per_event": "141",
+          "events_per_second": "7059933"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25917792",
+          "ns_per_event": "647",
+          "events_per_second": "1543379"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1173917",
+          "ns_per_event": "29",
+          "events_per_second": "34074811"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "20143500",
+          "ns_per_event": "503",
+          "events_per_second": "1985801"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5787459",
+          "ns_per_event": "144",
+          "events_per_second": "6911668"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25994125",
+          "ns_per_event": "649",
+          "events_per_second": "1538847"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1213667",
+          "ns_per_event": "30",
+          "events_per_second": "32958793"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19967000",
+          "ns_per_event": "499",
+          "events_per_second": "2003355"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5619541",
+          "ns_per_event": "140",
+          "events_per_second": "7118197"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "25349792",
+          "ns_per_event": "633",
+          "events_per_second": "1577961"
+        }
+      ]
+    ],
+    "candidate": [
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "2145375",
+          "ns_per_event": "53",
+          "events_per_second": "18645225"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14417333",
+          "ns_per_event": "360",
+          "events_per_second": "2774507"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5601083",
+          "ns_per_event": "140",
+          "events_per_second": "7141654"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19571875",
+          "ns_per_event": "489",
+          "events_per_second": "2043800"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1110917",
+          "ns_per_event": "27",
+          "events_per_second": "36007190"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14235708",
+          "ns_per_event": "355",
+          "events_per_second": "2809905"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5775625",
+          "ns_per_event": "144",
+          "events_per_second": "6925830"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19393125",
+          "ns_per_event": "484",
+          "events_per_second": "2062638"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1023750",
+          "ns_per_event": "25",
+          "events_per_second": "39073015"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14283833",
+          "ns_per_event": "357",
+          "events_per_second": "2800438"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5640375",
+          "ns_per_event": "141",
+          "events_per_second": "7091904"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19559917",
+          "ns_per_event": "488",
+          "events_per_second": "2045049"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1069709",
+          "ns_per_event": "26",
+          "events_per_second": "37394281"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14520041",
+          "ns_per_event": "362",
+          "events_per_second": "2754882"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5730500",
+          "ns_per_event": "143",
+          "events_per_second": "6980368"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19873458",
+          "ns_per_event": "496",
+          "events_per_second": "2012785"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1069250",
+          "ns_per_event": "26",
+          "events_per_second": "37410334"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14177000",
+          "ns_per_event": "354",
+          "events_per_second": "2821541"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5639500",
+          "ns_per_event": "140",
+          "events_per_second": "7093004"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19781542",
+          "ns_per_event": "494",
+          "events_per_second": "2022137"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1110000",
+          "ns_per_event": "27",
+          "events_per_second": "36036936"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "13992084",
+          "ns_per_event": "349",
+          "events_per_second": "2858830"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5754042",
+          "ns_per_event": "143",
+          "events_per_second": "6951808"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19228292",
+          "ns_per_event": "480",
+          "events_per_second": "2080319"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1027250",
+          "ns_per_event": "25",
+          "events_per_second": "38939888"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14523750",
+          "ns_per_event": "363",
+          "events_per_second": "2754178"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5616167",
+          "ns_per_event": "140",
+          "events_per_second": "7122473"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19324666",
+          "ns_per_event": "483",
+          "events_per_second": "2069945"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1117334",
+          "ns_per_event": "27",
+          "events_per_second": "35800396"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14809083",
+          "ns_per_event": "370",
+          "events_per_second": "2701112"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5791666",
+          "ns_per_event": "144",
+          "events_per_second": "6906648"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "20246666",
+          "ns_per_event": "506",
+          "events_per_second": "1975683"
+        }
+      ],
+      [
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1043666",
+          "ns_per_event": "26",
+          "events_per_second": "38327395"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14259083",
+          "ns_per_event": "356",
+          "events_per_second": "2805299"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5600417",
+          "ns_per_event": "140",
+          "events_per_second": "7142503"
+        },
+        {
+          "ending": "lf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19240959",
+          "ns_per_event": "481",
+          "events_per_second": "2078950"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "1102000",
+          "ns_per_event": "27",
+          "events_per_second": "36298548"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "262144",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "14263958",
+          "ns_per_event": "356",
+          "events_per_second": "2804340"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame",
+          "events": "40001",
+          "median_ns": "5802917",
+          "ns_per_event": "145",
+          "events_per_second": "6893257"
+        },
+        {
+          "ending": "crlf",
+          "chunk_bytes": "17",
+          "stage": "frame_and_reduce",
+          "events": "40001",
+          "median_ns": "19916333",
+          "ns_per_event": "497",
+          "events_per_second": "2008452"
+        }
+      ]
+    ]
+  },
+  "verification": {
+    "sse_tests": 11,
+    "responses_build_tests": 94,
+    "codex_build_tests": 30,
+    "native_integration_tests": 6,
+    "native_release_fast_build": "passed",
+    "provider_suite": "stopped after baseline-reproduced Grok deadline fixture hang",
+    "wasm_core_build": "baseline-reproduced api_key_store.zig:23 error"
+  }
+}
