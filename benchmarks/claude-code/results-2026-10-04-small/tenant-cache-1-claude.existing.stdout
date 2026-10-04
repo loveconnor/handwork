@@ -1,0 +1,28 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ health and profile (0.895917ms)
+✔ organizations scoped to user (0.186584ms)
+✔ logout revokes session (0.13125ms)
+✔ nonmember cannot read a project (0.86975ms)
+✔ nonmember cannot update a project or disturb the cache (5.86175ms)
+✔ missing project is 404 and nonmember list is 403 (0.168917ms)
+✔ lists are cached per organization (0.160541ms)
+✔ list variants stay distinct (0.162792ms)
+✔ cache hits still check membership (0.125541ms)
+✔ update invalidates every variant for only the owning organization (0.205875ms)
+✔ organization ids sharing prefixes or punctuation stay separate (0.189166ms)
+✔ authenticated detail (0.626875ms)
+✔ authenticated list (6.362417ms)
+✔ update then read (0.233375ms)
+✔ anonymous request rejected (0.4465ms)
+✔ invalid update rejected (0.089792ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.444875

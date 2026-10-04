@@ -1,0 +1,41 @@
+{
+  "duration_s": 438.196,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 328220672,
+    "tests": 0,
+    "tools": 696434688
+  },
+  "samples": 6021,
+  "completed": true,
+  "input_tokens": 731780,
+  "output_tokens": 10404,
+  "cached_input_tokens": 676934,
+  "tool_calls": 18,
+  "model_requests": 17,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 34,
+      "outputTokens": 10404,
+      "cacheReadInputTokens": 676934,
+      "cacheCreationInputTokens": 54812,
+      "webSearchRequests": 0,
+      "costUSD": 0.7820987999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1456,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+  "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+  "task": "bullmq",
+  "harness": "claude",
+  "attempt": 2,
+  "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-2-claude/repo",
+  "log": "bullmq-2-claude"
+}

@@ -1,0 +1,32 @@
+{
+  "pagination": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 12.835,
+    "median_peak_mib": 275.6875,
+    "mean_input_tokens": 32897.8,
+    "mean_output_tokens": 1032.4,
+    "mean_tool_calls": 3.8,
+    "mean_model_requests": 4
+  },
+  "search": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 21.242,
+    "median_peak_mib": 275.234375,
+    "mean_input_tokens": 37797.2,
+    "mean_output_tokens": 2095.8,
+    "mean_tool_calls": 3,
+    "mean_model_requests": 4
+  },
+  "tenant-cache": {
+    "attempts": 5,
+    "successes": 5,
+    "median_success_seconds": 47.945,
+    "median_peak_mib": 282.875,
+    "mean_input_tokens": 53216.6,
+    "mean_output_tokens": 5212.6,
+    "mean_tool_calls": 3.2,
+    "mean_model_requests": 4
+  }
+}

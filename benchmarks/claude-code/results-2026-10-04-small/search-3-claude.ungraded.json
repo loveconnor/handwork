@@ -1,0 +1,41 @@
+{
+  "duration_s": 20.78,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 291045376,
+    "tests": 201637888,
+    "tools": 56049664
+  },
+  "samples": 282,
+  "completed": true,
+  "input_tokens": 37555,
+  "output_tokens": 1972,
+  "cached_input_tokens": 33137,
+  "tool_calls": 3,
+  "model_requests": 4,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 1972,
+      "cacheReadInputTokens": 33137,
+      "cacheCreationInputTokens": 4410,
+      "webSearchRequests": 0,
+      "costUSD": 0.0813794,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 97,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+  "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+  "task": "search",
+  "harness": "claude",
+  "attempt": 3,
+  "workspace": "/private/tmp/handwork-claude-vucg11_s/search-3-claude/repo",
+  "log": "search-3-claude"
+}

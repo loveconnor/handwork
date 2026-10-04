@@ -1,0 +1,447 @@
+[
+  {
+    "duration_s": 262.985,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 322453504,
+      "tests": 0,
+      "tools": 694566912
+    },
+    "samples": 3717,
+    "completed": true,
+    "input_tokens": 824268,
+    "output_tokens": 10304,
+    "cached_input_tokens": 775184,
+    "tool_calls": 22,
+    "model_requests": 21,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 42,
+        "outputTokens": 10304,
+        "cacheReadInputTokens": 775184,
+        "cacheCreationInputTokens": 49042,
+        "webSearchRequests": 0,
+        "costUSD": 0.7536207999999998,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 1636,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "bullmq",
+    "harness": "claude",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-1-claude/repo",
+    "log": "bullmq-1-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Expired lock cannot complete",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot complete after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot fail after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot requeue an immediate retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot schedule a delayed retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a single lock",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a batch of locks",
+        "pass": true
+      },
+      {
+        "name": "Killed worker is recovered by a new process",
+        "pass": true
+      },
+      {
+        "name": "Immediate retry limits survive worker restart",
+        "pass": true
+      },
+      {
+        "name": "Delayed retry limits survive worker restart",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "build_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 438.196,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 328220672,
+      "tests": 0,
+      "tools": 696434688
+    },
+    "samples": 6021,
+    "completed": true,
+    "input_tokens": 731780,
+    "output_tokens": 10404,
+    "cached_input_tokens": 676934,
+    "tool_calls": 18,
+    "model_requests": 17,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 34,
+        "outputTokens": 10404,
+        "cacheReadInputTokens": 676934,
+        "cacheCreationInputTokens": 54812,
+        "webSearchRequests": 0,
+        "costUSD": 0.7820987999999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 1456,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "bullmq",
+    "harness": "claude",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-2-claude/repo",
+    "log": "bullmq-2-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Expired lock cannot complete",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot complete after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot fail after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot requeue an immediate retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot schedule a delayed retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a single lock",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a batch of locks",
+        "pass": true
+      },
+      {
+        "name": "Killed worker is recovered by a new process",
+        "pass": true
+      },
+      {
+        "name": "Immediate retry limits survive worker restart",
+        "pass": true
+      },
+      {
+        "name": "Delayed retry limits survive worker restart",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "build_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 252.608,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 325484544,
+      "tests": 0,
+      "tools": 693993472
+    },
+    "samples": 3491,
+    "completed": true,
+    "input_tokens": 753897,
+    "output_tokens": 10564,
+    "cached_input_tokens": 699193,
+    "tool_calls": 19,
+    "model_requests": 18,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 36,
+        "outputTokens": 10564,
+        "cacheReadInputTokens": 699193,
+        "cacheCreationInputTokens": 54668,
+        "webSearchRequests": 0,
+        "costUSD": 0.7886065999999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 1892,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "bullmq",
+    "harness": "claude",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-3-claude/repo",
+    "log": "bullmq-3-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Expired lock cannot complete",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot complete after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot fail after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot requeue an immediate retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot schedule a delayed retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a single lock",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a batch of locks",
+        "pass": true
+      },
+      {
+        "name": "Killed worker is recovered by a new process",
+        "pass": true
+      },
+      {
+        "name": "Immediate retry limits survive worker restart",
+        "pass": true
+      },
+      {
+        "name": "Delayed retry limits survive worker restart",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "build_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 237.708,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 306397184,
+      "tests": 0,
+      "tools": 696844288
+    },
+    "samples": 3269,
+    "completed": true,
+    "input_tokens": 455499,
+    "output_tokens": 8958,
+    "cached_input_tokens": 412232,
+    "tool_calls": 15,
+    "model_requests": 14,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 28,
+        "outputTokens": 8958,
+        "cacheReadInputTokens": 412232,
+        "cacheCreationInputTokens": 43239,
+        "webSearchRequests": 0,
+        "costUSD": 0.6076303999999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 1428,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "bullmq",
+    "harness": "claude",
+    "attempt": 4,
+    "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-4-claude/repo",
+    "log": "bullmq-4-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Expired lock cannot complete",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot complete after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot fail after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot requeue an immediate retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot schedule a delayed retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a single lock",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a batch of locks",
+        "pass": true
+      },
+      {
+        "name": "Killed worker is recovered by a new process",
+        "pass": true
+      },
+      {
+        "name": "Immediate retry limits survive worker restart",
+        "pass": true
+      },
+      {
+        "name": "Delayed retry limits survive worker restart",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "build_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 280.86,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 319848448,
+      "tests": 0,
+      "tools": 691093504
+    },
+    "samples": 3936,
+    "completed": true,
+    "input_tokens": 977640,
+    "output_tokens": 12227,
+    "cached_input_tokens": 914804,
+    "tool_calls": 22,
+    "model_requests": 19,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 38,
+        "outputTokens": 12227,
+        "cacheReadInputTokens": 914804,
+        "cacheCreationInputTokens": 62798,
+        "webSearchRequests": 0,
+        "costUSD": 0.9300368000000001,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 2642,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "bullmq",
+    "harness": "claude",
+    "attempt": 5,
+    "workspace": "/private/tmp/handwork-claude-7lla1sj1/bullmq-5-claude/repo",
+    "log": "bullmq-5-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Expired lock cannot complete",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot complete after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot fail after recovery",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot requeue an immediate retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot schedule a delayed retry",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a single lock",
+        "pass": true
+      },
+      {
+        "name": "Stale owner cannot renew a batch of locks",
+        "pass": true
+      },
+      {
+        "name": "Killed worker is recovered by a new process",
+        "pass": true
+      },
+      {
+        "name": "Immediate retry limits survive worker restart",
+        "pass": true
+      },
+      {
+        "name": "Delayed retry limits survive worker restart",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "build_pass": true,
+    "success": true
+  }
+]

@@ -1,0 +1,143 @@
+{
+  "bullmq": {
+    "label": "BullMQ worker recovery",
+    "attempts": 5,
+    "budget": 1800,
+    "build": "ReleaseFast",
+    "source": "bullmq-recovery",
+    "values": [
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 251.485,
+        "toolCalls": 25.8,
+        "inputTokens": 477491.2,
+        "outputTokens": 2939,
+        "rss": 30.640625
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 446.917,
+        "toolCalls": 30.8,
+        "inputTokens": 539156,
+        "outputTokens": 4461.8,
+        "rss": 778.71875
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 231.599,
+        "toolCalls": 20.2,
+        "inputTokens": 623398.6,
+        "outputTokens": 3643.6,
+        "rss": 205.84375
+      }
+    ]
+  },
+  "search": {
+    "label": "Async search",
+    "attempts": 5,
+    "budget": 600,
+    "build": "ReleaseFast",
+    "values": [
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 40.622,
+        "toolCalls": 5,
+        "inputTokens": 37086.6,
+        "outputTokens": 991.8,
+        "rss": 23.65625
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 55.151,
+        "toolCalls": 15.8,
+        "inputTokens": 78781.2,
+        "outputTokens": 1138.8,
+        "rss": 790.0625
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 32.841,
+        "toolCalls": 4.2,
+        "inputTokens": 82758.2,
+        "outputTokens": 763.4,
+        "rss": 234.015625
+      }
+    ]
+  },
+  "pagination": {
+    "label": "Pagination",
+    "attempts": 5,
+    "budget": 600,
+    "build": "ReleaseFast",
+    "values": [
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 25.376,
+        "toolCalls": 5,
+        "inputTokens": 27880.2,
+        "outputTokens": 462,
+        "rss": 21.90625
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 41.656,
+        "toolCalls": 11,
+        "inputTokens": 42015.8,
+        "outputTokens": 734.4,
+        "rss": 748.1875
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 27.981,
+        "toolCalls": 3.4,
+        "inputTokens": 66153.2,
+        "outputTokens": 566.4,
+        "rss": 237.671875
+      }
+    ]
+  },
+  "cache": {
+    "label": "Authorization and cache isolation",
+    "attempts": 5,
+    "budget": 600,
+    "build": "ReleaseFast",
+    "values": [
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 86.128,
+        "toolCalls": 8.4,
+        "inputTokens": 71894.8,
+        "outputTokens": 2136.2,
+        "rss": 27.265625
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 121.552,
+        "toolCalls": 24.2,
+        "inputTokens": 115747.8,
+        "outputTokens": 3056.8,
+        "rss": 785.3125
+      },
+      {
+        "attempts": 5,
+        "fixes": 5,
+        "time": 83.48,
+        "toolCalls": 6.2,
+        "inputTokens": 129680.2,
+        "outputTokens": 2236,
+        "rss": 235.09375
+      }
+    ]
+  }
+}

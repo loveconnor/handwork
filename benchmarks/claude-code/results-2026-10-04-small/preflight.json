@@ -1,0 +1,37 @@
+{
+  "duration_s": 6.506,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 234323968,
+    "tests": 0,
+    "tools": 75464704
+  },
+  "samples": 94,
+  "completed": true,
+  "input_tokens": 22633,
+  "output_tokens": 423,
+  "cached_input_tokens": 19576,
+  "tool_calls": 3,
+  "model_requests": 3,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 6,
+      "outputTokens": 423,
+      "cacheReadInputTokens": 19576,
+      "cacheCreationInputTokens": 3051,
+      "webSearchRequests": 0,
+      "costUSD": 0.0368072,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 0,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+  "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+  "pass": true
+}

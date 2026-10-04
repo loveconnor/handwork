@@ -1,0 +1,1242 @@
+[
+  {
+    "duration_s": 13.504,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 290488320,
+      "tests": 182763520,
+      "tools": 75644928
+    },
+    "samples": 194,
+    "completed": true,
+    "input_tokens": 32777,
+    "output_tokens": 1085,
+    "cached_input_tokens": 30564,
+    "tool_calls": 4,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1085,
+        "cacheReadInputTokens": 30564,
+        "cacheCreationInputTokens": 2205,
+        "webSearchRequests": 0,
+        "costUSD": 0.045484800000000006,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 35,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "claude",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/pagination-1-claude/repo",
+    "log": "pagination-1-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 24.019,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 300630016,
+      "tests": 209534976,
+      "tools": 71401472
+    },
+    "samples": 344,
+    "completed": true,
+    "input_tokens": 38459,
+    "output_tokens": 2457,
+    "cached_input_tokens": 32275,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 2457,
+        "cacheReadInputTokens": 32275,
+        "cacheCreationInputTokens": 6176,
+        "webSearchRequests": 0,
+        "costUSD": 0.10503499999999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 105,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "search",
+    "harness": "claude",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/search-1-claude/repo",
+    "log": "search-1-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 47.536,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 286064640,
+      "tests": 294273024,
+      "tools": 68435968
+    },
+    "samples": 679,
+    "completed": true,
+    "input_tokens": 51701,
+    "output_tokens": 4958,
+    "cached_input_tokens": 38800,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 4958,
+        "cacheReadInputTokens": 38800,
+        "cacheCreationInputTokens": 12893,
+        "webSearchRequests": 0,
+        "costUSD": 0.210096,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 908,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "claude",
+    "attempt": 1,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-1-claude/repo",
+    "log": "tenant-cache-1-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 13.095,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 293715968,
+      "tests": 190365696,
+      "tools": 70270976
+    },
+    "samples": 190,
+    "completed": true,
+    "input_tokens": 33154,
+    "output_tokens": 1047,
+    "cached_input_tokens": 31479,
+    "tool_calls": 4,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1047,
+        "cacheReadInputTokens": 31479,
+        "cacheCreationInputTokens": 1667,
+        "webSearchRequests": 0,
+        "costUSD": 0.040603799999999995,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 26,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "claude",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/pagination-2-claude/repo",
+    "log": "pagination-2-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 20.315,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 288604160,
+      "tests": 208109568,
+      "tools": 61521920
+    },
+    "samples": 287,
+    "completed": true,
+    "input_tokens": 37392,
+    "output_tokens": 1878,
+    "cached_input_tokens": 33069,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1878,
+        "cacheReadInputTokens": 33069,
+        "cacheCreationInputTokens": 4315,
+        "webSearchRequests": 0,
+        "costUSD": 0.0787258,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 108,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "search",
+    "harness": "claude",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/search-2-claude/repo",
+    "log": "search-2-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 49.575,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 297730048,
+      "tests": 307494912,
+      "tools": 70942720
+    },
+    "samples": 683,
+    "completed": true,
+    "input_tokens": 53588,
+    "output_tokens": 5295,
+    "cached_input_tokens": 40520,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 5295,
+        "cacheReadInputTokens": 40520,
+        "cacheCreationInputTokens": 13060,
+        "webSearchRequests": 0,
+        "costUSD": 0.218516,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 748,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "claude",
+    "attempt": 2,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-2-claude/repo",
+    "log": "tenant-cache-2-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 11.573,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 289079296,
+      "tests": 184893440,
+      "tools": 64602112
+    },
+    "samples": 156,
+    "completed": true,
+    "input_tokens": 32723,
+    "output_tokens": 1000,
+    "cached_input_tokens": 31262,
+    "tool_calls": 4,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1000,
+        "cacheReadInputTokens": 31262,
+        "cacheCreationInputTokens": 1453,
+        "webSearchRequests": 0,
+        "costUSD": 0.0379084,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 40,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "claude",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/pagination-3-claude/repo",
+    "log": "pagination-3-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 20.78,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 291045376,
+      "tests": 201637888,
+      "tools": 56049664
+    },
+    "samples": 282,
+    "completed": true,
+    "input_tokens": 37555,
+    "output_tokens": 1972,
+    "cached_input_tokens": 33137,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1972,
+        "cacheReadInputTokens": 33137,
+        "cacheCreationInputTokens": 4410,
+        "webSearchRequests": 0,
+        "costUSD": 0.0813794,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 97,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "search",
+    "harness": "claude",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/search-3-claude/repo",
+    "log": "search-3-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 52.57,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 297107456,
+      "tests": 362037248,
+      "tools": 75956224
+    },
+    "samples": 713,
+    "completed": true,
+    "input_tokens": 54796,
+    "output_tokens": 5501,
+    "cached_input_tokens": 41079,
+    "tool_calls": 4,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 5501,
+        "cacheReadInputTokens": 41079,
+        "cacheCreationInputTokens": 13709,
+        "webSearchRequests": 0,
+        "costUSD": 0.22793980000000003,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 687,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "claude",
+    "attempt": 3,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-3-claude/repo",
+    "log": "tenant-cache-3-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 12.576,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 288194560,
+      "tests": 130203648,
+      "tools": 75956224
+    },
+    "samples": 174,
+    "completed": true,
+    "input_tokens": 33148,
+    "output_tokens": 1017,
+    "cached_input_tokens": 31472,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1017,
+        "cacheReadInputTokens": 31472,
+        "cacheCreationInputTokens": 1668,
+        "webSearchRequests": 0,
+        "costUSD": 0.0400104,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 34,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "claude",
+    "attempt": 4,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/pagination-4-claude/repo",
+    "log": "pagination-4-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 21.242,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 288112640,
+      "tests": 179142656,
+      "tools": 61161472
+    },
+    "samples": 289,
+    "completed": true,
+    "input_tokens": 37767,
+    "output_tokens": 2078,
+    "cached_input_tokens": 33226,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 2078,
+        "cacheReadInputTokens": 33226,
+        "cacheCreationInputTokens": 4533,
+        "webSearchRequests": 0,
+        "costUSD": 0.0845012,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 77,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "search",
+    "harness": "claude",
+    "attempt": 4,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/search-4-claude/repo",
+    "log": "search-4-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 47.577,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 294879232,
+      "tests": 351682560,
+      "tools": 76201984
+    },
+    "samples": 657,
+    "completed": true,
+    "input_tokens": 53391,
+    "output_tokens": 5192,
+    "cached_input_tokens": 40520,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 5192,
+        "cacheReadInputTokens": 40520,
+        "cacheCreationInputTokens": 12863,
+        "webSearchRequests": 0,
+        "costUSD": 0.21488000000000002,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 599,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "claude",
+    "attempt": 4,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-4-claude/repo",
+    "log": "tenant-cache-4-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 12.835,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 287817728,
+      "tests": 108265472,
+      "tools": 208191488
+    },
+    "samples": 176,
+    "completed": true,
+    "input_tokens": 32687,
+    "output_tokens": 1013,
+    "cached_input_tokens": 31262,
+    "tool_calls": 4,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 1013,
+        "cacheReadInputTokens": 31262,
+        "cacheCreationInputTokens": 1417,
+        "webSearchRequests": 0,
+        "costUSD": 0.0378804,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 35,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "pagination",
+    "harness": "claude",
+    "attempt": 5,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/pagination-5-claude/repo",
+    "log": "pagination-5-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "empty",
+        "pass": true
+      },
+      {
+        "name": "exact page",
+        "pass": true
+      },
+      {
+        "name": "second full page",
+        "pass": true
+      },
+      {
+        "name": "partial page",
+        "pass": true
+      },
+      {
+        "name": "page size one",
+        "pass": true
+      },
+      {
+        "name": "beyond end",
+        "pass": true
+      },
+      {
+        "name": "input unchanged",
+        "pass": true
+      },
+      {
+        "name": "reconstruct all pages",
+        "pass": true
+      },
+      {
+        "name": "invalid boundaries",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 21.666,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 288063488,
+      "tests": 130170880,
+      "tools": 69812224
+    },
+    "samples": 295,
+    "completed": true,
+    "input_tokens": 37813,
+    "output_tokens": 2094,
+    "cached_input_tokens": 33228,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 2094,
+        "cacheReadInputTokens": 33228,
+        "cacheCreationInputTokens": 4577,
+        "webSearchRequests": 0,
+        "costUSD": 0.0851736,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 114,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "search",
+    "harness": "claude",
+    "attempt": 5,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/search-5-claude/repo",
+    "log": "search-5-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "Ordinary search succeeds",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives after newer success",
+        "pass": true
+      },
+      {
+        "name": "Older success arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Older failure arrives while newer request is pending",
+        "pass": true
+      },
+      {
+        "name": "Latest request fails",
+        "pass": true
+      },
+      {
+        "name": "Query cleared during a request",
+        "pass": true
+      },
+      {
+        "name": "Pending request finishes after clearing",
+        "pass": true
+      },
+      {
+        "name": "Query changes A \u2192 B \u2192 A",
+        "pass": true
+      },
+      {
+        "name": "Three requests complete in different orders",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  },
+  {
+    "duration_s": 47.945,
+    "timeout": false,
+    "exit_code": 0,
+    "peak_rss_bytes": {
+      "harness": 296615936,
+      "tests": 385875968,
+      "tools": 74170368
+    },
+    "samples": 674,
+    "completed": true,
+    "input_tokens": 52607,
+    "output_tokens": 5117,
+    "cached_input_tokens": 39644,
+    "tool_calls": 3,
+    "model_requests": 4,
+    "model_usage": {
+      "claude-opus-5-5": {
+        "inputTokens": 8,
+        "outputTokens": 5117,
+        "cacheReadInputTokens": 39644,
+        "cacheCreationInputTokens": 12955,
+        "webSearchRequests": 0,
+        "costUSD": 0.21394080000000001,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 796,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+    "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+    "task": "tenant-cache",
+    "harness": "claude",
+    "attempt": 5,
+    "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-5-claude/repo",
+    "log": "tenant-cache-5-claude",
+    "protected_files_unchanged": true,
+    "no_dependencies": true,
+    "checks": [
+      {
+        "name": "actual owner read authorization and status conventions",
+        "pass": true
+      },
+      {
+        "name": "unauthorized updates preserve storage and warmed entries",
+        "pass": true
+      },
+      {
+        "name": "list authorization including warm cache and revocation",
+        "pass": true
+      },
+      {
+        "name": "organizations have distinct lists with a dual member",
+        "pass": true
+      },
+      {
+        "name": "all pagination and sorting combinations remain distinct",
+        "pass": true
+      },
+      {
+        "name": "updates invalidate every own list variant while preserving other caches",
+        "pass": true
+      },
+      {
+        "name": "caching remains enabled and repeated lists skip repository",
+        "pass": true
+      },
+      {
+        "name": "opaque organization prefixes do not collide during invalidation",
+        "pass": true
+      }
+    ],
+    "existing_tests_pass": true,
+    "verifier_pass": true,
+    "success": true
+  }
+]

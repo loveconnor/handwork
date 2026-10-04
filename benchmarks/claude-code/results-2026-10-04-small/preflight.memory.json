@@ -1,0 +1,1642 @@
+[
+  {
+    "seconds": 0.001,
+    "totals": {
+      "harness": 4079616,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 4079616,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.069,
+    "totals": {
+      "harness": 115163136,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 115163136,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.132,
+    "totals": {
+      "harness": 158744576,
+      "tests": 0,
+      "tools": 196608
+    },
+    "processes": [
+      {
+        "pid": 52897,
+        "ppid": 52886,
+        "rss": 196608,
+        "kind": "tools",
+        "command": "(git)"
+      },
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 158744576,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.2,
+    "totals": {
+      "harness": 178323456,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 178323456,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.265,
+    "totals": {
+      "harness": 180109312,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 180109312,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.333,
+    "totals": {
+      "harness": 180224000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 180224000,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.403,
+    "totals": {
+      "harness": 180224000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 180224000,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.472,
+    "totals": {
+      "harness": 180224000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 180224000,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.54,
+    "totals": {
+      "harness": 180322304,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 180322304,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.606,
+    "totals": {
+      "harness": 206995456,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 206995456,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.673,
+    "totals": {
+      "harness": 207765504,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 207765504,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.74,
+    "totals": {
+      "harness": 213712896,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 213712896,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.809,
+    "totals": {
+      "harness": 216940544,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 216940544,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.879,
+    "totals": {
+      "harness": 216940544,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 216940544,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 0.95,
+    "totals": {
+      "harness": 216940544,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 216940544,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.022,
+    "totals": {
+      "harness": 220086272,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220086272,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.09,
+    "totals": {
+      "harness": 220086272,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220086272,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.159,
+    "totals": {
+      "harness": 220446720,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220446720,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.229,
+    "totals": {
+      "harness": 220479488,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220479488,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.299,
+    "totals": {
+      "harness": 220479488,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220479488,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.37,
+    "totals": {
+      "harness": 220479488,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220479488,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.441,
+    "totals": {
+      "harness": 220479488,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220479488,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.509,
+    "totals": {
+      "harness": 220856320,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220856320,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.58,
+    "totals": {
+      "harness": 220856320,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220856320,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.648,
+    "totals": {
+      "harness": 220856320,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220856320,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.715,
+    "totals": {
+      "harness": 220856320,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 220856320,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.781,
+    "totals": {
+      "harness": 221184000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 221184000,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.849,
+    "totals": {
+      "harness": 221184000,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 221184000,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.912,
+    "totals": {
+      "harness": 223543296,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223543296,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 1.981,
+    "totals": {
+      "harness": 223543296,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223543296,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.049,
+    "totals": {
+      "harness": 223543296,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223543296,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.118,
+    "totals": {
+      "harness": 223543296,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223543296,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.189,
+    "totals": {
+      "harness": 223543296,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223543296,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.26,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.33,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.399,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.468,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.538,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.61,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.682,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.754,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.823,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.895,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 2.965,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.032,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.098,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.165,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.235,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.306,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.377,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.448,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.518,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.59,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.66,
+    "totals": {
+      "harness": 223559680,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 223559680,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.731,
+    "totals": {
+      "harness": 224034816,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224034816,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.798,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.868,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 3.939,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.009,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.081,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.152,
+    "totals": {
+      "harness": 224051200,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 224051200,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.224,
+    "totals": {
+      "harness": 225558528,
+      "tests": 0,
+      "tools": 2179072
+    },
+    "processes": [
+      {
+        "pid": 52992,
+        "ppid": 52886,
+        "rss": 2179072,
+        "kind": "tools",
+        "command": "(zsh)"
+      },
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 225558528,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.29,
+    "totals": {
+      "harness": 225689600,
+      "tests": 0,
+      "tools": 51281920
+    },
+    "processes": [
+      {
+        "pid": 52994,
+        "ppid": 52886,
+        "rss": 2719744,
+        "kind": "tools",
+        "command": "/bin/zsh -c -l SNAPSHOT_FILE=/Users/connorlove/.claude/shell-snapshots/snapshot-zsh-1791124882160-a26n2i.sh\\012      source \"/Users/connorlove/.zshrc\" < /dev/null\\012      \\012\\012      # First, create/clear the snapshot file\\012      echo \"# Snapshot file\" >| \"$SNAPSHOT_FILE\"\\012\\012      # When this file is sourced, we first unalias to avoid conflicts\\012      # This is necessary because aliases get \"frozen\" inside function definitions at definition time,\\012      # which can cause unexpected behavior when functions use commands that conflict with aliases\\012      echo \"# Unset all aliases to avoid conflicts with functions\" >> \"$SNAPSHOT_FILE\"\\012      echo \"unalias -a 2>/dev/null || true\" >> \"$SNAPSHOT_FILE\"\\012\\012      \\012      echo \"# Functions\" >> \"$SNAPSHOT_FILE\"\\012\\012      # Force autoload all functions first\\012      typeset -f > /dev/null 2>&1\\012\\012      # Now get user function names - filter completion functions (single underscore prefix)\\012      # but keep double-underscore helpers (e.g. __zsh_like_cd from mise, __pyenv_init)\\012      typeset +f | grep -vE '^_[^_]' | while read func; do\\012        typeset -f \"$func\" >> \"$SNAPSHOT_FILE\"\\012      done\\012    \\012      echo \"# Shell Options\" >> \"$SNAPSHOT_FILE\"\\012      setopt | sed 's/^/setopt /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012    \\012      echo \"# Aliases\" >> \"$SNAPSHOT_FILE\"\\012      # Filter out winpty aliases on Windows to avoid \"stdin is not a tty\" errors\\012      # Git Bash automatically creates aliases like \"alias node='winpty node.exe'\" for\\012      # programs that need Win32 Console in mintty, but winpty fails when there's no TTY\\012      if [[ \"$OSTYPE\" == \"msys\" ]] || [[ \"$OSTYPE\" == \"cygwin\" ]]; then\\012        alias | grep -v \"='winpty \" | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012      else\\012        alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012      fi\\012  \\012\\012      \\012      # Check for rg availability\\012      echo \"# Check for rg availability\" >> \"$SNAPSHOT_FILE\"\\012      echo \"if ! hash rg 2>/dev/null && ! typeset -f rg >/dev/null 2>&1; then\" >> \"$SNAPSHOT_FILE\"\\012  \\012      cat >> \"$SNAPSHOT_FILE\" << 'RIPGREP_FUNC_END'\\012  function rg {\\012  local _cc_bin=\"${CLAUDE_CODE_EXECPATH:-}\"\\012  [[ -x $_cc_bin ]] || _cc_bin=/Users/connorlove/.local/bin/claude\\012  if [[ ! -x $_cc_bin ]]; then command rg ${1+\"$@\"}; return; fi\\012  if [[ -n ${ZSH_VERSION:-} ]]; then\\012    ARGV0=rg \"$_cc_bin\" ${1+\"$@\"}\\012  elif [[ \"$OSTYPE\" == \"msys\" ]] || [[ \"$OSTYPE\" == \"cygwin\" ]] || [[ \"$OSTYPE\" == \"win32\" ]]; then\\012    ARGV0=rg \"$_cc_bin\" ${1+\"$@\"}\\012  else\\012    (exec -a rg \"$_cc_bin\" ${1+\"$@\"})\\012  fi\\012}\\012RIPGREP_FUNC_END\\012    \\012      echo \"fi\" >> \"$SNAPSHOT_FILE\"\\012  \\012      echo \"# Shadow pkill to refuse patterns matching the CLI process\" >> \"$SNAPSHOT_FILE\"\\012      cat >> \"$SNAPSHOT_FILE\" << 'PKILL_FUNC_END'\\012unalias pkill 2>/dev/null || true\\012function pkill {\\012  if [ -n \"${CLAUDE_PID:-}\" ] && [ -r \"/proc/${CLAUDE_PID}/comm\" ]; then\\012    local _cc_skip=\"\" _cc_a\\012    local -a _cc_probe=()\\012    for _cc_a in ${1+\"$@\"}; do\\012      if [ -n \"$_cc_skip\" ]; then _cc_skip=\"\"; continue; fi\\012      case \"$_cc_a\" in\\012        --signal) _cc_skip=1 ;;\\012        --signal=*|-e|--echo) ;;\\012        -[0-9]*) ;;\\012        -[PUGOF]?*) _cc_probe+=(\"$_cc_a\") ;;\\012        -[ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ0-9]*) ;;\\012        *) _cc_probe+=(\"$_cc_a\") ;;\\012      esac\\012    done\\012    if command pgrep ${_cc_probe[@]+\"${_cc_probe[@]}\"} 2>/dev/null | command grep -qx \"${CLAUDE_PID}\"; then\\012      printf 'pkill: refusing to run \u2014 this pattern matches the Claude CLI process (PID %s). Narrow the pattern, or target your own children with `pkill -P $$ ...`.\\n' \"${CLAUDE_PID}\" >&2\\012      return 1\\012    fi\\012  fi\\012  command pkill ${1+\"$@\"}\\012}\\012PKILL_FUNC_END\\012    \\012\\012      # Add PATH to the file\\012      cat >> \"$SNAPSHOT_FILE\" << 'PATH_END_tsclp0a2k8e'\\012export PATH=/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin:/Users/connorlove/.vite-plus/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/connorlove/.opencode/bin:/opt/homebrew/opt/postgresql@16/bin:/Library/TeX/texbin:/Users/connorlove/.antigravity/antigravity/bin:/opt/homebrew/opt/openjdk/bin:/Users/connorlove/.bun/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/go/bin:/opt/homebrew/bin:/Users/connorlove/.codex/tmp/arg0/codex-arg0lFbAWP:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/connorlove/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/connorlove/.opencode/bin:/opt/homebrew/opt/postgresql@16/bin:/Users/connorlove/.antigravity/antigravity/bin:/opt/homebrew/opt/openjdk/bin:/Users/connorlove/.local/bin:/Users/connorlove/.bun/bin:/Users/connorlove/Library/pnpm:/Users/connorlove/.cargo/bin:/Users/connorlove/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS\\012PATH_END_tsclp0a2k8e\\012  \\012\\012      # Exit silently on success, only report errors\\012      if [ ! -f \"$SNAPSHOT_FILE\" ]; then\\012        echo \"Error: Snapshot file was not created at $SNAPSHOT_FILE\" >&2\\012        exit 1\\012      fi\\012"
+      },
+      {
+        "pid": 52996,
+        "ppid": 52994,
+        "rss": 48562176,
+        "kind": "tools",
+        "command": "ng completion script"
+      },
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 225689600,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.357,
+    "totals": {
+      "harness": 225689600,
+      "tests": 0,
+      "tools": 75464704
+    },
+    "processes": [
+      {
+        "pid": 52994,
+        "ppid": 52886,
+        "rss": 2719744,
+        "kind": "tools",
+        "command": "/bin/zsh -c -l SNAPSHOT_FILE=/Users/connorlove/.claude/shell-snapshots/snapshot-zsh-1791124882160-a26n2i.sh\\012      source \"/Users/connorlove/.zshrc\" < /dev/null\\012      \\012\\012      # First, create/clear the snapshot file\\012      echo \"# Snapshot file\" >| \"$SNAPSHOT_FILE\"\\012\\012      # When this file is sourced, we first unalias to avoid conflicts\\012      # This is necessary because aliases get \"frozen\" inside function definitions at definition time,\\012      # which can cause unexpected behavior when functions use commands that conflict with aliases\\012      echo \"# Unset all aliases to avoid conflicts with functions\" >> \"$SNAPSHOT_FILE\"\\012      echo \"unalias -a 2>/dev/null || true\" >> \"$SNAPSHOT_FILE\"\\012\\012      \\012      echo \"# Functions\" >> \"$SNAPSHOT_FILE\"\\012\\012      # Force autoload all functions first\\012      typeset -f > /dev/null 2>&1\\012\\012      # Now get user function names - filter completion functions (single underscore prefix)\\012      # but keep double-underscore helpers (e.g. __zsh_like_cd from mise, __pyenv_init)\\012      typeset +f | grep -vE '^_[^_]' | while read func; do\\012        typeset -f \"$func\" >> \"$SNAPSHOT_FILE\"\\012      done\\012    \\012      echo \"# Shell Options\" >> \"$SNAPSHOT_FILE\"\\012      setopt | sed 's/^/setopt /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012    \\012      echo \"# Aliases\" >> \"$SNAPSHOT_FILE\"\\012      # Filter out winpty aliases on Windows to avoid \"stdin is not a tty\" errors\\012      # Git Bash automatically creates aliases like \"alias node='winpty node.exe'\" for\\012      # programs that need Win32 Console in mintty, but winpty fails when there's no TTY\\012      if [[ \"$OSTYPE\" == \"msys\" ]] || [[ \"$OSTYPE\" == \"cygwin\" ]]; then\\012        alias | grep -v \"='winpty \" | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012      else\\012        alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> \"$SNAPSHOT_FILE\"\\012      fi\\012  \\012\\012      \\012      # Check for rg availability\\012      echo \"# Check for rg availability\" >> \"$SNAPSHOT_FILE\"\\012      echo \"if ! hash rg 2>/dev/null && ! typeset -f rg >/dev/null 2>&1; then\" >> \"$SNAPSHOT_FILE\"\\012  \\012      cat >> \"$SNAPSHOT_FILE\" << 'RIPGREP_FUNC_END'\\012  function rg {\\012  local _cc_bin=\"${CLAUDE_CODE_EXECPATH:-}\"\\012  [[ -x $_cc_bin ]] || _cc_bin=/Users/connorlove/.local/bin/claude\\012  if [[ ! -x $_cc_bin ]]; then command rg ${1+\"$@\"}; return; fi\\012  if [[ -n ${ZSH_VERSION:-} ]]; then\\012    ARGV0=rg \"$_cc_bin\" ${1+\"$@\"}\\012  elif [[ \"$OSTYPE\" == \"msys\" ]] || [[ \"$OSTYPE\" == \"cygwin\" ]] || [[ \"$OSTYPE\" == \"win32\" ]]; then\\012    ARGV0=rg \"$_cc_bin\" ${1+\"$@\"}\\012  else\\012    (exec -a rg \"$_cc_bin\" ${1+\"$@\"})\\012  fi\\012}\\012RIPGREP_FUNC_END\\012    \\012      echo \"fi\" >> \"$SNAPSHOT_FILE\"\\012  \\012      echo \"# Shadow pkill to refuse patterns matching the CLI process\" >> \"$SNAPSHOT_FILE\"\\012      cat >> \"$SNAPSHOT_FILE\" << 'PKILL_FUNC_END'\\012unalias pkill 2>/dev/null || true\\012function pkill {\\012  if [ -n \"${CLAUDE_PID:-}\" ] && [ -r \"/proc/${CLAUDE_PID}/comm\" ]; then\\012    local _cc_skip=\"\" _cc_a\\012    local -a _cc_probe=()\\012    for _cc_a in ${1+\"$@\"}; do\\012      if [ -n \"$_cc_skip\" ]; then _cc_skip=\"\"; continue; fi\\012      case \"$_cc_a\" in\\012        --signal) _cc_skip=1 ;;\\012        --signal=*|-e|--echo) ;;\\012        -[0-9]*) ;;\\012        -[PUGOF]?*) _cc_probe+=(\"$_cc_a\") ;;\\012        -[ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ0-9]*) ;;\\012        *) _cc_probe+=(\"$_cc_a\") ;;\\012      esac\\012    done\\012    if command pgrep ${_cc_probe[@]+\"${_cc_probe[@]}\"} 2>/dev/null | command grep -qx \"${CLAUDE_PID}\"; then\\012      printf 'pkill: refusing to run \u2014 this pattern matches the Claude CLI process (PID %s). Narrow the pattern, or target your own children with `pkill -P $$ ...`.\\n' \"${CLAUDE_PID}\" >&2\\012      return 1\\012    fi\\012  fi\\012  command pkill ${1+\"$@\"}\\012}\\012PKILL_FUNC_END\\012    \\012\\012      # Add PATH to the file\\012      cat >> \"$SNAPSHOT_FILE\" << 'PATH_END_tsclp0a2k8e'\\012export PATH=/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/bin:/Users/connorlove/.vite-plus/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/connorlove/.opencode/bin:/opt/homebrew/opt/postgresql@16/bin:/Library/TeX/texbin:/Users/connorlove/.antigravity/antigravity/bin:/opt/homebrew/opt/openjdk/bin:/Users/connorlove/.bun/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/go/bin:/opt/homebrew/bin:/Users/connorlove/.codex/tmp/arg0/codex-arg0lFbAWP:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/connorlove/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/connorlove/.opencode/bin:/opt/homebrew/opt/postgresql@16/bin:/Users/connorlove/.antigravity/antigravity/bin:/opt/homebrew/opt/openjdk/bin:/Users/connorlove/.local/bin:/Users/connorlove/.bun/bin:/Users/connorlove/Library/pnpm:/Users/connorlove/.cargo/bin:/Users/connorlove/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS\\012PATH_END_tsclp0a2k8e\\012  \\012\\012      # Exit silently on success, only report errors\\012      if [ ! -f \"$SNAPSHOT_FILE\" ]; then\\012        echo \"Error: Snapshot file was not created at $SNAPSHOT_FILE\" >&2\\012        exit 1\\012      fi\\012"
+      },
+      {
+        "pid": 52996,
+        "ppid": 52994,
+        "rss": 72744960,
+        "kind": "tools",
+        "command": "(node)"
+      },
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 225689600,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.423,
+    "totals": {
+      "harness": 228327424,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228327424,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.49,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.558,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.628,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.698,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.765,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.835,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.906,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 4.977,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.048,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.12,
+    "totals": {
+      "harness": 228540416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 228540416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.19,
+    "totals": {
+      "harness": 230490112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230490112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.256,
+    "totals": {
+      "harness": 230490112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230490112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.323,
+    "totals": {
+      "harness": 230490112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230490112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.394,
+    "totals": {
+      "harness": 230490112,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230490112,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.462,
+    "totals": {
+      "harness": 230506496,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230506496,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.531,
+    "totals": {
+      "harness": 230506496,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230506496,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.602,
+    "totals": {
+      "harness": 230588416,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230588416,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.673,
+    "totals": {
+      "harness": 230703104,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230703104,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.744,
+    "totals": {
+      "harness": 230703104,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230703104,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.816,
+    "totals": {
+      "harness": 230735872,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230735872,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.887,
+    "totals": {
+      "harness": 230735872,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230735872,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 5.959,
+    "totals": {
+      "harness": 230785024,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230785024,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.03,
+    "totals": {
+      "harness": 230785024,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 230785024,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.098,
+    "totals": {
+      "harness": 233865216,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 233865216,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.165,
+    "totals": {
+      "harness": 234323968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 234323968,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.231,
+    "totals": {
+      "harness": 234323968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 234323968,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.302,
+    "totals": {
+      "harness": 234323968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 234323968,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.372,
+    "totals": {
+      "harness": 234323968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 234323968,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  },
+  {
+    "seconds": 6.44,
+    "totals": {
+      "harness": 234323968,
+      "tests": 0,
+      "tools": 0
+    },
+    "processes": [
+      {
+        "pid": 52886,
+        "ppid": 52753,
+        "rss": 234323968,
+        "kind": "harness",
+        "command": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe -p Read probe.txt, change its only line from before to after, then run: test \"$(cat probe.txt)\" = after && printf \"PROBE_OK\\n\". Use normal tools. Do not install dependencies. Summarize verification. --model claude-opus-5-5 --effort medium --safe-mode --strict-mcp-config --no-session-persistence --dangerously-skip-permissions --tools Read,Edit,Write,Bash,Glob,Grep --output-format stream-json --verbose"
+      }
+    ]
+  }
+]

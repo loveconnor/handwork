@@ -1,0 +1,45 @@
+{
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "attempts_per_task": 5,
+  "base": "/private/tmp/handwork-claude-vucg11_s",
+  "tasks": [
+    {
+      "base": "/private/tmp/handwork-claude-vucg11_s",
+      "private": "/private/tmp/handwork-claude-vucg11_s/private",
+      "fixture": "/private/tmp/handwork-claude-vucg11_s/private/pagination/fixture",
+      "commit": "a2495bfa6c4c5feb062a6a86b646b47bddb29daa",
+      "task": "pagination",
+      "prompt": "Fix the reported bug in this repository. Inspect the relevant code, make the smallest appropriate change, and run the existing tests. Do not modify tests or install dependencies. Summarize your changes and verification.\n\nBug report: Pagination loses the last item at page boundaries. Fix paginate in src/pagination.ts so that each one-based page returns all of its items, including a final partial page, without changing the public API.",
+      "verifier": "/private/tmp/handwork-claude-vucg11_s/private/pagination/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-claude-vucg11_s",
+      "private": "/private/tmp/handwork-claude-vucg11_s/private",
+      "fixture": "/private/tmp/handwork-claude-vucg11_s/private/search/fixture",
+      "commit": "46e49361b113af64c181cdc9937c6fb7313595ac",
+      "task": "search",
+      "prompt": "Fix the reported bug in this repository.\n\nBug report:\nWhen a user changes their search quickly, results sometimes\nrevert to an earlier query. An earlier request can also clear\nthe loading indicator or display an error while the current\nrequest is still running.\n\nRequired behavior:\n- Only the latest search may update results, loading, or errors.\n- Clearing the query must immediately clear results and errors\n  and stop the loading indicator.\n- Requests that finish after the query is cleared must not\n  repopulate the results.\n- Preserve the existing public API and normal search behavior.\n\nInspect the relevant code, make the smallest appropriate change,\nand run the existing tests. Do not modify tests or install\ndependencies. Summarize your changes and verification.",
+      "verifier": "/private/tmp/handwork-claude-vucg11_s/private/search/verify.mjs"
+    },
+    {
+      "base": "/private/tmp/handwork-claude-vucg11_s",
+      "private": "/private/tmp/handwork-claude-vucg11_s/private",
+      "fixture": "/private/tmp/handwork-claude-vucg11_s/private/tenant-cache/fixture",
+      "commit": "4752b03c92985b349f4ab382abb0a8401289c352",
+      "task": "tenant-cache",
+      "prompt": "Fix the reported organization-isolation bugs in this repository.\n\nBug report:\n- A signed-in user can sometimes read or update a project belonging\n  to an organization they do not belong to.\n- After switching organizations, the project list sometimes shows\n  projects from the previous organization.\n- After updating a project, its organization's list can remain stale.\n\nRequired behavior:\n- Project reads and updates must require membership in the project's\n  owning organization.\n- Organization project lists must require membership in the requested\n  organization.\n- Unauthorized requests must not return project data or modify storage.\n- Project-list caching must isolate organizations and preserve all\n  existing pagination and sorting parameters.\n- A successful update must invalidate every cached list variant for\n  the affected organization.\n- Unrelated organizations' cached lists must remain usable.\n- Authorization must still be checked when serving cached results.\n- Preserve existing API signatures, response shapes, status-code\n  conventions, and ordinary authorized behavior.\n- Keep caching enabled.\n\nInspect the relevant code, implement the fix, and run the existing\ntests. Do not modify existing tests or install dependencies.\nYou may add new tests.\n\nSummarize the changes and the verification you performed.",
+      "verifier": "/private/tmp/handwork-claude-vucg11_s/private/tenant-cache/verify.mjs"
+    }
+  ],
+  "claude_version": "2.1.289 (Claude Code)",
+  "binary": "/Users/connorlove/.vite-plus/js_runtime/node/24.21.0/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "binary_sha256": "03d66745e3bb69ec727d66023696f3820bc0a00a8a5ba725eb6706d0c67cbe69",
+  "machine": "macOS-26.5.2-arm64-arm-64bit",
+  "profile": "Safe mode, six native tools, no MCP, plugins, skills, personal context or persisted sessions; model-only egress",
+  "budgets": {
+    "pagination": 600,
+    "search": 600,
+    "tenant-cache": 600
+  }
+}

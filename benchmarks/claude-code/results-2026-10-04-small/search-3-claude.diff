@@ -1,0 +1,35 @@
+diff --git a/src/search/controller.ts b/src/search/controller.ts
+index d6ab5ca..1e1105c 100644
+--- a/src/search/controller.ts
++++ b/src/search/controller.ts
+@@ -16,6 +16,7 @@ export interface SearchController {
+ export function createSearchController(api: SearchApi): SearchController {
+   let state: SearchState = { query: '', results: [], loading: false, error: null };
+   const listeners = new Set<(state: SearchState) => void>();
++  let latestRequest = 0;
+   const getState = (): SearchState => ({ ...state, results: [...state.results] });
+   const update = (patch: Partial<SearchState>): void => {
+     state = { ...state, ...patch };
+@@ -31,6 +32,7 @@ export function createSearchController(api: SearchApi): SearchController {
+     },
+     async search(query) {
+       const normalized = query.trim();
++      const request = ++latestRequest;
+       if (!normalized) {
+         update({ query: '', results: [], loading: false, error: null });
+         return;
+@@ -38,11 +40,11 @@ export function createSearchController(api: SearchApi): SearchController {
+       update({ query: normalized, loading: true, error: null });
+       try {
+         const results = await api.search(normalized);
+-        update({ results });
++        if (request === latestRequest) update({ results });
+       } catch (error) {
+-        update({ error: error instanceof Error ? error.message : String(error) });
++        if (request === latestRequest) update({ error: error instanceof Error ? error.message : String(error) });
+       } finally {
+-        update({ loading: false });
++        if (request === latestRequest) update({ loading: false });
+       }
+     },
+   };

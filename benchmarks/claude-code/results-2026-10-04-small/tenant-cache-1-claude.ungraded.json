@@ -1,0 +1,41 @@
+{
+  "duration_s": 47.536,
+  "timeout": false,
+  "exit_code": 0,
+  "peak_rss_bytes": {
+    "harness": 286064640,
+    "tests": 294273024,
+    "tools": 68435968
+  },
+  "samples": 679,
+  "completed": true,
+  "input_tokens": 51701,
+  "output_tokens": 4958,
+  "cached_input_tokens": 38800,
+  "tool_calls": 3,
+  "model_requests": 4,
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 4958,
+      "cacheReadInputTokens": 38800,
+      "cacheCreationInputTokens": 12893,
+      "webSearchRequests": 0,
+      "costUSD": 0.210096,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 908,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "token_basis": "Client-reported aggregate usage, including cache creation and cache reads",
+  "request_count_basis": "Unique assistant message IDs; transport retries not separately exposed",
+  "task": "tenant-cache",
+  "harness": "claude",
+  "attempt": 1,
+  "workspace": "/private/tmp/handwork-claude-vucg11_s/tenant-cache-1-claude/repo",
+  "log": "tenant-cache-1-claude"
+}
