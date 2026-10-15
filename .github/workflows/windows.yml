@@ -37,6 +37,8 @@ jobs:
         run: zig build test-platform -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Test settings, sessions and commands
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          HANDWORK_E2E_PUBLIC_HTTPS: '1'
         shell: pwsh
         run: zig build test-platform-integration -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Exercise CLI and npm installation

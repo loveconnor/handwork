@@ -12,6 +12,7 @@ const commands = @import("core/execution/command_runner.zig");
 const shells = @import("core/terminal/shell_resolver.zig");
 
 test "platform integration persists settings history and a resumable session in Unicode paths" {
+    errdefer |err| std.debug.print("storage integration failed: {s}\n", .{@errorName(err)});
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -79,6 +80,7 @@ test "platform integration persists settings history and a resumable session in 
 
 test "platform integration Windows commands preserve quotes streams exit and timeout" {
     if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
+    errdefer |err| std.debug.print("Windows command integration failed: {s}\n", .{@errorName(err)});
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -112,6 +114,7 @@ test "platform integration Windows commands preserve quotes streams exit and tim
 }
 
 test "platform integration private read snapshots survive unlink while mutation handles reject it" {
+    errdefer |err| std.debug.print("snapshot integration failed: {s}\n", .{@errorName(err)});
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     var file = try io_mod.createPrivateFile(tmp.dir, io_mod.getIo(), "snapshot", .{ .exclusive = true });
@@ -120,4 +123,35 @@ test "platform integration private read snapshots survive unlink while mutation 
     try tmp.dir.deleteFile(io_mod.getIo(), "snapshot");
     try io_mod.verifyReadOnlyPrivateRegularFile(file);
     try std.testing.expectError(error.DurablePathUnsafe, io_mod.verifyPrivateRegularFile(file));
+}
+
+test "platform integration public DNS and HTTPS use system certificate trust" {
+    // Opt in on hosts with Internet access; all local fixture checks stay
+    // available offline. CI already downloads its compiler from this host.
+    const alloc = std.testing.allocator;
+    const enabled = std.testing.environ.getAlloc(alloc, "HANDWORK_E2E_PUBLIC_HTTPS") catch |err| switch (err) {
+        error.EnvironmentVariableMissing => return error.SkipZigTest,
+        else => return err,
+    };
+    defer alloc.free(enabled);
+    if (!std.mem.eql(u8, enabled, "1")) return error.SkipZigTest;
+    errdefer |err| std.debug.print("DNS/TLS integration failed: {s}\n", .{@errorName(err)});
+    const http = @import("tools/web/http_fetch.zig");
+    const policy = @import("tools/web/url_policy.zig");
+    var url = try policy.normalize(alloc, "https://ziglang.org/download/index.json");
+    defer url.deinit(alloc);
+    var result = try http.fetch(alloc, url, .{
+        .max_body_bytes = 2 * 1024 * 1024,
+        .deadline = .{ .deadline_ms = io_mod.milliTimestamp() + 20_000 },
+    }, http.defaultTransport());
+    defer result.deinit(alloc);
+    switch (result) {
+        .success => |success| {
+            try std.testing.expectEqual(std.http.Status.ok, success.status);
+            const parsed = try std.json.parseFromSlice(std.json.Value, alloc, success.body, .{});
+            defer parsed.deinit();
+            try std.testing.expect(parsed.value.object.contains("0.16.0"));
+        },
+        else => return error.HttpsFetchFailed,
+    }
 }

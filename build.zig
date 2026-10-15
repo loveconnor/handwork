@@ -32,6 +32,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .link_libc = true,
+            .error_tracing = true,
         }),
     });
     const platform_check = b.step("platform-check", "Compile platform adapter tests without running them");
@@ -152,6 +153,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .link_libc = true,
+        .error_tracing = true,
     });
     integration_module.addImport("build_options", build_options.createModule());
     if (target.result.os.tag == .windows) {
