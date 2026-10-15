@@ -2523,6 +2523,15 @@ fn collectOutput(
         }
 
         if (streams_finished) {
+            // Windows has no separate Unix supervisor retaining the pipes.
+            // EOF is not proof that the leader exited; keep deadline and
+            // cancellation checks alive until its process handle is signaled.
+            if (comptime builtin.os.tag == .windows) {
+                if (source.* == .natural and leader_status.* == null) {
+                    io_mod.sleep(10 * std.time.ns_per_ms);
+                    continue;
+                }
+            }
             if (source.* == .natural or
                 signal_started_ms == null or
                 force_kill_sent or
@@ -2574,6 +2583,7 @@ fn collectOutput(
 
         if (!keep_reading) {
             streams_finished = true;
+            if (comptime builtin.os.tag == .windows) continue;
             if (source.* == .natural or
                 signal_started_ms == null or
                 force_kill_sent or

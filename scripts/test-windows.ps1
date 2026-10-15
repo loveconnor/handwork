@@ -19,7 +19,7 @@ try {
     Invoke-Checked -Program npm.cmd -Arguments @('pack', '--ignore-scripts', '--pack-destination', $scratch)
     $tarball = (Get-ChildItem $scratch -Filter '*.tgz' | Select-Object -First 1).FullName
     $prefix = Join-Path $scratch 'install'
-    Invoke-Checked -Program npm.cmd -Arguments @('install', '--global', '--prefix', $prefix, '--ignore-scripts', '--no-audit', '--no-fund', $tarball)
+    Invoke-Checked -Program npm.cmd -Arguments @('install', '--global', '--prefix', $prefix, '--no-audit', '--no-fund', $tarball)
     Invoke-Checked -Program (Join-Path $prefix 'handwork.cmd') -Arguments @('--version')
 } finally {
     Remove-Item -LiteralPath $scratch -Recurse -Force

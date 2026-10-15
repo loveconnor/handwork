@@ -98,6 +98,17 @@ test "platform integration Windows commands preserve quotes streams exit and tim
     try std.testing.expect(std.mem.indexOf(u8, result.output, "\"quoted 日本語\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, result.output, "<stderr>\nstderr-marker") != null);
     try std.testing.expectError(error.TimeoutExpired, commands.executeCommand(.{ .max_command_output_bytes = 4096, .timeout_ms = 200 }, alloc, "ping -n 30 127.0.0.1 >nul", workspace));
+    const powershell = try std.fs.path.join(alloc, &.{ std.fs.path.dirname(shell).?, "WindowsPowerShell", "v1.0", "powershell.exe" });
+    defer alloc.free(powershell);
+    const close_pipes =
+        \\Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class ClosePipes { [DllImport("kernel32.dll")] public static extern IntPtr GetStdHandle(int id); [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle); }';
+        \\[ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-11)) | Out-Null;
+        \\[ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-12)) | Out-Null;
+        \\[IO.File]::WriteAllText('closed.marker', 'ready');
+        \\Start-Sleep -Seconds 8
+    ;
+    try std.testing.expectError(error.TimeoutExpired, commands.executeCommandInEnvironment(.{ .max_command_output_bytes = 4096, .timeout_ms = 5000 }, alloc, close_pipes, workspace, .{ .clean = powershell }));
+    try tmp.dir.access(io_mod.getIo(), "日本語 %PATH% & workspace/closed.marker", .{});
 }
 
 test "platform integration private read snapshots survive unlink while mutation handles reject it" {
