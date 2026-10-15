@@ -1,3 +1,4 @@
+param([switch]$SkipBuild)
 $ErrorActionPreference = 'Stop'
 function Invoke-Checked {
     param([string]$Program, [string[]]$Arguments)
@@ -5,9 +6,11 @@ function Invoke-Checked {
     & $Program @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Program failed with exit code $LASTEXITCODE" }
 }
-Invoke-Checked -Program zig -Arguments @('build', '-Doptimize=ReleaseSafe')
-Invoke-Checked -Program zig -Arguments @('build', 'test-platform', '-Doptimize=ReleaseSafe')
-Invoke-Checked -Program zig -Arguments @('build', 'test-platform-integration', '-Doptimize=ReleaseSafe')
+if (-not $SkipBuild) {
+    Invoke-Checked -Program zig -Arguments @('build', '-Doptimize=ReleaseSafe')
+    Invoke-Checked -Program zig -Arguments @('build', 'test-platform', '-Doptimize=ReleaseSafe', '--test-timeout', '60s')
+    Invoke-Checked -Program zig -Arguments @('build', 'test-platform-integration', '-Doptimize=ReleaseSafe', '--test-timeout', '60s')
+}
 Invoke-Checked -Program node -Arguments @('--test', 'scripts/tests/npm-launcher.test.cjs')
 Invoke-Checked -Program node -Arguments @('scripts/windows-smoke.mjs')
 

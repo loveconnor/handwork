@@ -27,6 +27,15 @@ jobs:
           $destination = Join-Path $env:RUNNER_TEMP 'zig'
           Expand-Archive $archive $destination
           (Get-ChildItem $destination -Directory | Select-Object -First 1).FullName | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Build and exercise native Windows behavior and npm installation
+      - name: Build Windows executable
         shell: pwsh
-        run: ./scripts/test-windows.ps1
+        run: zig build -Doptimize=ReleaseSafe
+      - name: Test native Windows adapters
+        shell: pwsh
+        run: zig build test-platform -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Test settings, sessions and commands
+        shell: pwsh
+        run: zig build test-platform-integration -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Exercise CLI and npm installation
+        shell: pwsh
+        run: ./scripts/test-windows.ps1 -SkipBuild

@@ -330,6 +330,24 @@ test "Windows console enables and restores modes and UTF-8 code pages" {
         if (win.WriteConsoleInputW(input, &events, 1, &written) == 0 or written != 1) return error.ConsoleInputFailed;
         try std.testing.expect(try waitForEnter(input.?, 100));
         try std.testing.expect(!try waitForEnter(input.?, 0));
+        // Manual OAuth input must accept pasted UTF-16 surrogate pairs and
+        // observe cancellation without waiting for a cooked line to finish.
+        for (&events) |*event| {
+            event.* = std.mem.zeroes(win.INPUT_RECORD);
+            event.EventType = win.KEY_EVENT;
+            event.Event.KeyEvent.bKeyDown = 1;
+            event.Event.KeyEvent.wRepeatCount = 1;
+        }
+        events[0].Event.KeyEvent.uChar.UnicodeChar = 0xd83d;
+        events[1].Event.KeyEvent.uChar.UnicodeChar = 0xde00;
+        events[2].Event.KeyEvent.uChar.UnicodeChar = 3;
+        if (win.WriteConsoleInputW(input, &events, events.len, &written) == 0 or written != events.len) return error.ConsoleInputFailed;
+        var high_surrogate: ?u16 = null;
+        const pasted = (try pollLineBytes(input.?, &bytes, &high_surrogate)).?;
+        try std.testing.expectEqualStrings("😀", bytes[0..pasted]);
+        try std.testing.expectEqual(@as(?u16, null), high_surrogate);
+        try std.testing.expectError(error.Cancelled, pollLineBytes(input.?, &bytes, &high_surrogate));
+        try std.testing.expectEqual(@as(?usize, null), try pollLineBytes(input.?, &bytes, &high_surrogate));
     }
     try state.restore();
     try state.restore();
