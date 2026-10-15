@@ -2,6 +2,7 @@
 //! ready. Keep this root independent of application, provider and session code.
 test {
     _ = @import("core/hosts/process_startup.zig");
+    _ = @import("core/hosts/windows_file_io.zig");
     _ = @import("core/hosts/windows_private_storage.zig");
     _ = @import("core/hosts/windows_paths.zig");
     _ = @import("core/hosts/windows_sockets.zig");

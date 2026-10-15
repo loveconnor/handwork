@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 const darwin_process_spawn = @import("darwin_process_spawn.zig");
 const windows_private_storage = @import("../hosts/windows_private_storage.zig");
 const windows_paths = @import("../hosts/windows_paths.zig");
+const windows_file_io = @import("../hosts/windows_file_io.zig");
 
 pub const RawEnviron = [*:null]const ?[*:0]const u8;
 
@@ -22,7 +23,11 @@ pub fn setIo(zio: std.Io) void {
 }
 
 fn process_io_for(comptime os_tag: std.Target.Os.Tag, zio: std.Io) std.Io {
-    return if (os_tag == .macos) darwin_process_spawn.wrap(zio) else zio;
+    return switch (os_tag) {
+        .macos => darwin_process_spawn.wrap(zio),
+        .windows => windows_file_io.wrap(zio),
+        else => zio,
+    };
 }
 
 pub fn getIo() std.Io {

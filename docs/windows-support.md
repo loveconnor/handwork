@@ -1,8 +1,9 @@
 # Windows port status
 
-Windows support is experimental and has not been executed on a Windows host in
-this work session. The full application and its integration tests cross-compile
-for Windows x64 and ARM64. The published npm release has not been changed.
+Windows support is experimental. The Windows x64 executable builds on GitHub's
+native Windows runner, and all platform adapter tests pass there. Native
+settings/session and CLI/npm journeys are still being verified. Windows ARM64
+is cross-compiled only. The published npm release has not been changed.
 
 ## Implemented
 
@@ -47,14 +48,17 @@ paths, command quoting, separate output streams, exit status and timeout.
 
 The CLI smoke test uses a local HTTP provider with a dummy API key. It performs
 API-key login, runs a shell tool that creates a Unicode-named file, saves the
-conversation, and resumes it in another process. It does not call a paid model.
+conversation, collects a background command, and resumes it in another process. It does not call a paid model.
 The PowerShell script also packs and installs into a temporary npm global prefix
-and invokes npm's actual Windows command shim. Its partial-architecture package
+and invokes npm's actual Windows command shim, then repeats the full CLI journey
+through the installed launcher. Its partial-architecture package
 is only a test fixture; release packing requires all three targets.
 
-`.github/workflows/windows.yml` runs this script on GitHub's native Windows
-runner after a push, pull request or manual dispatch. The workflow has been
-prepared locally; it has not run in this work session.
+`.github/workflows/windows.yml` runs these checks in named steps on GitHub's
+native Windows runner after a push, pull request or manual dispatch. It also
+checks public DNS, HTTPS and system certificate trust against the Zig download
+index. Set `HANDWORK_E2E_PUBLIC_HTTPS=1` to enable that Internet-dependent check
+when running locally. Individual native tests have a 60-second deadline.
 
 On this Mac, the shared storage integration and CLI smoke test run with:
 
@@ -100,9 +104,11 @@ before publishing a package that advertises Windows support.
 
 ## Remaining limitations and release gates
 
-- A native Windows run is still required. Verify directory flushing and ACL
-  repair, then exercise login, editing, permission approval/rejection,
-  cancellation, resize, exit and resume in Windows Terminal and VS Code.
+- The full native CLI/npm journey must pass before release. Directory flushing,
+  ACL repair, console mode restoration, socket exchange and owned descendant
+  cleanup have passed on Windows. Manual login, editing, permission approval /
+  rejection, cancellation, resize, exit and resume in Windows Terminal and
+  VS Code still require an interactive walkthrough.
 - Managed interactive terminals (`tty: true`) still use the existing Unix PTY
   host and remain unsupported on Windows. Captured commands (`tty: false`),
   including managed background execution, use the Windows command runner.

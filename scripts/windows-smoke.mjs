@@ -82,7 +82,7 @@ function run(args) {
     child.on('error', error => { clearTimeout(timer); reject(error); });
     child.on('close', code => {
       clearTimeout(timer);
-      if (code !== 0) reject(new Error(`CLI exited ${code}: ${stderr}\n${stdout}`));
+      if (code !== 0) reject(new Error(`CLI ${args.join(' ')} exited ${code}: ${stderr}\n${stdout}`));
       else resolveRun({ stdout, stderr });
     });
   });
