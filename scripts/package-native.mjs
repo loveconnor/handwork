@@ -17,7 +17,10 @@ for (const [platform, arch, zigTarget] of targets) {
   if (selected && selected !== `${platform}-${arch}`) continue;
   const prefix = join(root, 'prebuilds', `${platform}-${arch}`);
   if (!checkOnly) {
-    const result = spawnSync('zig', ['build', ...(platform === process.platform && arch === process.arch ? [] : [`-Dtarget=${zigTarget}`]), '-Doptimize=ReleaseFast', '--prefix', prefix], { cwd: root, stdio: 'inherit' });
+    // Keep native macOS SDK discovery, but always use a baseline Windows
+    // target so a package built on Windows does not require its builder's CPU.
+    const nativeMac = platform === 'darwin' && platform === process.platform && arch === process.arch;
+    const result = spawnSync('zig', ['build', ...(nativeMac ? [] : [`-Dtarget=${zigTarget}`]), '-Doptimize=ReleaseFast', '--prefix', prefix], { cwd: root, stdio: 'inherit' });
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status ?? 1);
   }

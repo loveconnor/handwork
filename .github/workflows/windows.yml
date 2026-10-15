@@ -28,14 +28,18 @@ jobs:
           Expand-Archive $archive $destination
           (Get-ChildItem $destination -Directory | Select-Object -First 1).FullName | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Build Windows executable
+        id: build
         shell: pwsh
         run: zig build -Doptimize=ReleaseSafe
       - name: Test native Windows adapters
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: zig build test-platform -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Test settings, sessions and commands
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: zig build test-platform-integration -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Exercise CLI and npm installation
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: ./scripts/test-windows.ps1 -SkipBuild

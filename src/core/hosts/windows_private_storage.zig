@@ -305,7 +305,19 @@ test "Windows private storage creates protected ACLs and rejects an unrestricted
     if (c.SetSecurityInfo(file.handle, c.SE_FILE_OBJECT, c.DACL_SECURITY_INFORMATION | c.PROTECTED_DACL_SECURITY_INFORMATION, null, null, broad.acl(), null) != c.ERROR_SUCCESS) return error.PrivateStatePermissionsUnsupported;
     try std.testing.expectError(error.PrivateStatePermissionsUnsupported, verify(file.handle, false));
     try protect(file.handle, false);
-    try opened.dir.hardLink("日本語.json", opened.dir, "linked.json", std.testing.io, .{});
+    // std.Io's Windows hardLink backend is not implemented in Zig 0.16.
+    // Use the native API so this still tests rejection of a real hard link.
+    const alloc = std.testing.allocator;
+    var path_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    const path_length = try file.realPath(std.testing.io, &path_buffer);
+    const original_path = path_buffer[0..path_length];
+    const linked_path = try std.fs.path.join(alloc, &.{ std.fs.path.dirname(original_path).?, "linked.json" });
+    defer alloc.free(linked_path);
+    const original_wide = try std.unicode.utf8ToUtf16LeAllocZ(alloc, original_path);
+    defer alloc.free(original_wide);
+    const linked_wide = try std.unicode.utf8ToUtf16LeAllocZ(alloc, linked_path);
+    defer alloc.free(linked_wide);
+    if (c.CreateHardLinkW(linked_wide, original_wide, null) == 0) return error.HardLinkCreationFailed;
     try std.testing.expectError(error.DurablePathUnsafe, verify(file.handle, false));
     try std.testing.expectError(error.DurablePathUnsafe, createFile(std.testing.io, opened.dir, "linked.json", false));
 }
