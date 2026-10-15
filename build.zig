@@ -22,7 +22,6 @@ const NapiSurface = enum {
 
 pub fn build(b: *std.Build) void {
     // Use the same bundled Windows headers and ABI on native and cross builds.
-    // Zig 0.16's translation of the installed MSVC SDK headers fails to compile.
     const target = b.standardTargetOptions(.{
         .default_target = if (@import("builtin").os.tag == .windows) .{ .abi = .gnu } else .{},
     });

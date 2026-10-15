@@ -13,6 +13,9 @@ const workspace = join(root, 'workspace 日本語');
 await mkdir(home);
 await mkdir(workspace);
 const command = process.platform === 'win32' ? 'echo command-ok> "result 日本語.txt"' : 'printf command-ok > "result 日本語.txt"';
+const backgroundCommand = process.platform === 'win32'
+  ? 'ping -n 3 127.0.0.1 >nul\r\necho background-ok> "background 日本語.txt"'
+  : 'sleep 2; printf background-ok > "background 日本語.txt"';
 let completions = 0;
 let requests = 0;
 function sse(events) {
@@ -20,6 +23,9 @@ function sse(events) {
 }
 const completed = { choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 3, completion_tokens: 5 } };
 const textDelta = text => ({ choices: [{ delta: { content: text }, finish_reason: null }] });
+function toolResponse(id, request) {
+  return sse([{ choices: [{ delta: { tool_calls: [{ index: 0, id, type: 'function', function: { name: 'shell', arguments: JSON.stringify({ request }) } }] }, finish_reason: null }] }, { choices: [{ delta: {}, finish_reason: 'tool_calls' }] }, '[DONE]']);
+}
 const server = createServer(async (request, response) => {
   try {
     const chunks = [];
@@ -37,8 +43,18 @@ const server = createServer(async (request, response) => {
       response.end(sse([textDelta('Platform smoke'), completed, '[DONE]']));
       return;
     }
-    if (completions++ === 0) {
-      response.end(sse([{ choices: [{ delta: { tool_calls: [{ index: 0, id: 'platform_command', type: 'function', function: { name: 'shell', arguments: JSON.stringify({ request: { action: 'run', command, tty: false, timeout_ms: 10000, yield_time_ms: 30000 } }) } }] }, finish_reason: null }] }, { choices: [{ delta: {}, finish_reason: 'tool_calls' }] }, '[DONE]']));
+    const step = completions++;
+    if (step === 0) {
+      response.end(toolResponse('platform_command', { action: 'run', command, tty: false, timeout_ms: 10000, yield_time_ms: 30000 }));
+    } else if (step === 1) {
+      response.end(toolResponse('platform_background', { action: 'run', command: backgroundCommand, tty: false, timeout_ms: 10000, yield_time_ms: 0 }));
+    } else if (step === 2) {
+      const toolResult = JSON.parse(body).messages.filter(message => message.role === 'tool').at(-1)?.content;
+      assert.equal(typeof toolResult, 'string');
+      assert.match(toolResult, /"state"\s*:\s*"running"/);
+      const sessionId = /"session_id"\s*:\s*"([^"]+)"/.exec(toolResult)?.[1];
+      assert.ok(sessionId, 'background command must return its session ID');
+      response.end(toolResponse('platform_collect', { action: 'interact', session_id: sessionId, yield_time_ms: 30000 }));
     } else {
       response.end(sse([textDelta('platform-smoke-ok'), completed, '[DONE]']));
     }
@@ -79,11 +95,12 @@ try {
   assert.ok(first.session_id, 'ask must save a session');
   assert.match(JSON.stringify(first), /platform-smoke-ok/);
   assert.match(await readFile(join(workspace, 'result 日本語.txt'), 'utf8'), /command-ok/);
+  assert.match(await readFile(join(workspace, 'background 日本語.txt'), 'utf8'), /background-ok/);
   const second = JSON.parse((await run(['ask', '--json', '--yolo', '--resume-id', first.session_id, 'Continue this session.'])).stdout);
   assert.equal(second.session_id, first.session_id);
   assert.match(JSON.stringify(second), /platform-smoke-ok/);
-  assert.ok(requests >= 3);
-  console.log(`PASS ${process.platform}-${process.arch}: launch, loopback provider, shell tool, Unicode file, saved session and resume`);
+  assert.ok(requests >= 5);
+  console.log(`PASS ${process.platform}-${process.arch}: launch, loopback provider, shell and background tools, Unicode files, saved session and resume`);
 } finally {
   server.closeAllConnections();
   await new Promise(resolveClose => server.close(resolveClose));
