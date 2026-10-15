@@ -666,6 +666,9 @@ fn unavailableWaitForEnter(_: ?*anyopaque, _: u64) bool {
 }
 
 fn realWaitForEnter(_: ?*anyopaque, timeout_ms: u64) bool {
+    if (comptime builtin.os.tag == .windows) {
+        return @import("../../ui/terminal/windows_console.zig").waitForEnter(std.Io.File.stdin().handle, timeout_ms) catch false;
+    }
     var fds = [_]std.posix.pollfd{.{
         .fd = std.posix.STDIN_FILENO,
         .events = std.posix.POLL.IN,

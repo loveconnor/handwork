@@ -13,8 +13,8 @@ const max_record_bytes: usize = 256 * 1024;
 const compaction_threshold_bytes: u64 = 1024 * 1024;
 const compaction_record_limit: usize = 1000;
 const compaction_byte_limit: usize = 1024 * 1024;
-const private_dir_permissions = std.Io.File.Permissions.fromMode(0o700);
-const private_file_permissions = std.Io.File.Permissions.fromMode(0o600);
+const private_dir_permissions = io_mod.private_dir_permissions;
+const private_file_permissions = io_mod.private_file_permissions;
 
 pub const LoadedPromptHistoryEntry = struct {
     text: []u8,
@@ -238,15 +238,8 @@ pub const Store = struct {
             };
         }
 
-        self.durable_home.?.dir.setPermissions(
-            io_mod.getIo(),
-            private_dir_permissions,
-        ) catch return error.PrivateStatePermissionsUnsupported;
-        const stat = try self.durable_home.?.dir.stat(io_mod.getIo());
-        if (stat.kind != .directory) return error.DurablePathUnsafe;
-        if (stat.permissions.toMode() & 0o777 != 0o700) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        io_mod.setPrivateDirPermissions(io_mod.getIo(), self.durable_home.?.dir) catch return error.PrivateStatePermissionsUnsupported;
+        try io_mod.verifyPrivateDirectory(self.durable_home.?.dir);
     }
 
     fn acquireLock(self: *Store) !io_mod.TimedAdvisoryLock {
@@ -274,7 +267,7 @@ pub const Store = struct {
         }) catch |err| switch (err) {
             error.FileNotFound => create: {
                 if (!create) return null;
-                const new_file = self.durable_home.?.dir.createFile(zio, history_file, .{
+                const new_file = io_mod.createPrivateFile(self.durable_home.?.dir, zio, history_file, .{
                     .read = true,
                     .truncate = false,
                     .exclusive = true,
@@ -295,14 +288,11 @@ pub const Store = struct {
         const initial = try file.stat(zio);
         if (initial.kind != .file or initial.nlink != 1) return error.DurablePathUnsafe;
         if (writable) {
-            file.setPermissions(zio, private_file_permissions) catch {
+            io_mod.setPrivateFilePermissions(zio, file) catch {
                 return error.PrivateStatePermissionsUnsupported;
             };
         }
-        const verified = if (writable) try file.stat(zio) else initial;
-        if (verified.permissions.toMode() & 0o777 != 0o600) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        try io_mod.verifyPrivateRegularFile(file);
         if (created) {
             if (self.fail_history_parent_sync) {
                 return error.DurableLayoutFailed;
@@ -877,11 +867,7 @@ fn historyPath(alloc: Allocator, home: []const u8) ![]u8 {
 fn ensureFixtureHome(home: []const u8) !void {
     const handwork_dir = try profile_paths.rootDir(std.testing.allocator, home);
     defer std.testing.allocator.free(handwork_dir);
-    std.Io.Dir.createDirAbsolute(
-        std.testing.io,
-        handwork_dir,
-        std.Io.File.Permissions.fromMode(0o700),
-    ) catch |err| switch (err) {
+    io_mod.createPrivateDirAbsolute(std.testing.io, handwork_dir) catch |err| switch (err) {
         error.PathAlreadyExists => {},
         else => return err,
     };
@@ -891,9 +877,9 @@ fn writeFixture(home: []const u8, bytes: []const u8) !void {
     try ensureFixtureHome(home);
     const path = try historyPath(std.testing.allocator, home);
     defer std.testing.allocator.free(path);
-    var file = try std.Io.Dir.createFileAbsolute(std.testing.io, path, .{
+    var file = try io_mod.createPrivateFileAbsolute(std.testing.io, path, .{
         .truncate = true,
-        .permissions = std.Io.File.Permissions.fromMode(0o600),
+        .permissions = io_mod.private_file_permissions,
     });
     defer file.close(std.testing.io);
     try file.writeStreamingAll(std.testing.io, bytes);

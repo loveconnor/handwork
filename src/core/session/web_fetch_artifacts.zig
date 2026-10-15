@@ -253,7 +253,7 @@ fn ensureManagedDir(parent_path: []const u8, child_name: []const u8) !void {
             .follow_symlinks = false,
         }) catch |err| switch (err) {
             error.FileNotFound => {
-                parent.createDir(zio, child_name, std.Io.File.Permissions.fromMode(0o700)) catch |create_err| switch (create_err) {
+                io_mod.createPrivateDir(parent, zio, child_name) catch |create_err| switch (create_err) {
                     error.PathAlreadyExists => continue,
                     error.NotDir, error.SymLinkLoop => return error.CorruptArtifactStore,
                     else => return create_err,
@@ -265,12 +265,9 @@ fn ensureManagedDir(parent_path: []const u8, child_name: []const u8) !void {
             else => return err,
         };
         defer child.close(zio);
-        child.setPermissions(zio, std.Io.File.Permissions.fromMode(0o700)) catch
+        io_mod.setPrivateDirPermissions(zio, child) catch
             return error.CorruptArtifactStore;
-        const stat = try child.stat(zio);
-        if (stat.kind != .directory or stat.permissions.toMode() & 0o777 != 0o700) {
-            return error.CorruptArtifactStore;
-        }
+        io_mod.verifyPrivateDirectory(child) catch return error.CorruptArtifactStore;
         return;
     }
     return error.CorruptArtifactStore;

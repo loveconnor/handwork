@@ -264,9 +264,9 @@ pub fn terminalSupportForOs(os_tag: std.Target.Os.Tag) TerminalSupport {
 
 pub fn nativeForOs(os_tag: std.Target.Os.Tag) Capabilities {
     return .{
-        .process_control = os_tag != .windows and os_tag != .wasi,
-        .url_open = os_tag == .macos or os_tag == .linux,
-        .native_url_open = os_tag == .macos,
+        .process_control = os_tag != .wasi,
+        .url_open = os_tag == .macos or os_tag == .linux or os_tag == .windows,
+        .native_url_open = os_tag == .macos or os_tag == .windows,
         .terminal = terminalSupportForOs(os_tag),
     };
 }
@@ -343,9 +343,9 @@ test "native host capabilities expose process and URL support" {
     try std.testing.expectEqual(TerminalSupport.supported, linux.terminal);
 
     const windows = nativeForOs(.windows);
-    try std.testing.expect(!windows.process_control);
-    try std.testing.expect(!windows.url_open);
-    try std.testing.expect(!windows.native_url_open);
+    try std.testing.expect(windows.process_control);
+    try std.testing.expect(windows.url_open);
+    try std.testing.expect(windows.native_url_open);
     try std.testing.expectEqual(TerminalSupport.unsupported, windows.terminal);
 
     const wasi = nativeForOs(.wasi);

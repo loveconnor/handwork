@@ -31,8 +31,10 @@ pub fn load(alloc: std.mem.Allocator, id: model.ProviderId) !?[]u8 {
         else => return err,
     };
     defer file.close(io.getIo());
-    const stat = try file.stat(io.getIo());
-    if (stat.kind != .file or stat.nlink != 1 or stat.permissions.toMode() & 0o077 != 0) return error.InsecureAuthFile;
+    io.verifyOwnerOnlyRegularFile(file) catch |err| switch (err) {
+        error.DurablePathUnsafe, error.PrivateStatePermissionsUnsupported => return error.InsecureAuthFile,
+        else => return err,
+    };
     const key = try io.readFileToEnd(alloc, &file, 8192);
     errdefer secret.zeroAndFree(alloc, key);
     if (!config.validProviderKey(id, key)) return error.InvalidApiKey;

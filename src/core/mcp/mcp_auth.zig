@@ -2075,6 +2075,12 @@ fn validateJsonContentType(content_type: ?[]const u8) !void {
 
 fn setSocketTimeouts(socket: std.posix.socket_t, seconds: i64) void {
     if (comptime host_target.is_wasm) return;
+    if (comptime builtin.os.tag == .windows) {
+        @import("../hosts/windows_sockets.zig").setTimeouts(@intFromPtr(socket), seconds) catch |err| {
+            debug_trace.logf("mcp", "OAuth socket timeout setup failed err={s}", .{@errorName(err)});
+        };
+        return;
+    }
     const timeout = std.posix.timeval{ .sec = seconds, .usec = 0 };
     const receive_rc = std.c.setsockopt(
         socket,

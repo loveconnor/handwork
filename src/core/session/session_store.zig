@@ -449,12 +449,7 @@ fn openUsageRecoveryProfileRoot(
         else => return err,
     };
     errdefer profile.close(zio);
-    const stat = try profile.stat(zio);
-    if (stat.kind != .directory or
-        stat.permissions.toMode() & 0o777 != 0o700)
-    {
-        return error.InvalidUsageRecoveryIndex;
-    }
+    io_mod.verifyPrivateDirectory(profile) catch return error.InvalidUsageRecoveryIndex;
     return .{ .dir = profile };
 }
 
@@ -472,12 +467,7 @@ fn openUsageRecoveryDir(
         else => return err,
     };
     errdefer dir.close(io_mod.getIo());
-    const stat = try dir.stat(io_mod.getIo());
-    if (stat.kind != .directory or
-        stat.permissions.toMode() & 0o777 != 0o700)
-    {
-        return error.InvalidUsageRecoveryIndex;
-    }
+    io_mod.verifyPrivateDirectory(dir) catch return error.InvalidUsageRecoveryIndex;
     return .{ .dir = dir };
 }
 
@@ -496,11 +486,11 @@ fn validateUsageRecoveryMarker(
     };
     defer marker.close(io_mod.getIo());
     const stat = try marker.stat(io_mod.getIo());
+    io_mod.verifyPrivateRegularFile(marker) catch return error.InvalidUsageRecoveryIndex;
     if (stat.kind != .file or
         stat.nlink != 1 or
         stat.size == 0 or
-        stat.size > max_usage_recovery_marker_bytes or
-        stat.permissions.toMode() & 0o777 != 0o600)
+        stat.size > max_usage_recovery_marker_bytes)
     {
         return error.InvalidUsageRecoveryIndex;
     }
@@ -618,9 +608,10 @@ pub const Store = struct {
     fn readRememberedSessionFile(alloc: Allocator, file: *std.Io.File) ![]u8 {
         const stat = try file.stat(io_mod.getIo());
         // An atomic replacement can unlink the valid version already opened here.
-        if (stat.kind != .file or stat.nlink > 1 or stat.permissions.toMode() & 0o777 != 0o600 or stat.size > 256) {
+        if (stat.kind != .file or stat.nlink > 1 or stat.size > 256) {
             return error.InvalidRememberedSession;
         }
+        try io_mod.verifyReadOnlyPrivateRegularFile(file.*);
         const bytes = try io_mod.readFileToEnd(alloc, file, 256);
         defer alloc.free(bytes);
         return try alloc.dupe(u8, try parseRememberedSessionId(bytes));
@@ -659,7 +650,7 @@ pub const Store = struct {
             else => return err,
         };
         defer profile.close(zio);
-        if ((try profile.stat(zio)).permissions.toMode() & 0o777 != 0o700) return error.SessionPathUnsafe;
+        io_mod.verifyPrivateDirectory(profile) catch return error.SessionPathUnsafe;
         if (create) return try io_mod.openOrCreateVerifiedPrivateDirFromDir(profile, "continue");
         var directory = profile.openDir(zio, "continue", .{
             .iterate = true,
@@ -669,7 +660,7 @@ pub const Store = struct {
             else => return err,
         };
         errdefer directory.close(zio);
-        if ((try directory.stat(zio)).permissions.toMode() & 0o777 != 0o700) return error.SessionPathUnsafe;
+        io_mod.verifyPrivateDirectory(directory) catch return error.SessionPathUnsafe;
         return .{ .dir = directory };
     }
 
@@ -4540,14 +4531,10 @@ fn loadedWriterBelongsToRoot(
 }
 
 fn prepareWritableSessionDir(dir: std.Io.Dir) !void {
-    const permissions = std.Io.File.Permissions.fromMode(0o700);
-    dir.setPermissions(io_mod.getIo(), permissions) catch
-        return error.PrivateStatePermissionsUnsupported;
+    io_mod.setPrivateDirPermissions(io_mod.getIo(), dir) catch return error.PrivateStatePermissionsUnsupported;
     const stat = try dir.stat(io_mod.getIo());
     if (stat.kind != .directory) return error.SessionPathUnsafe;
-    if (stat.permissions.toMode() & 0o777 != 0o700) {
-        return error.PrivateStatePermissionsUnsupported;
-    }
+    try io_mod.verifyPrivateDirectory(dir);
 }
 
 fn initWithHome(alloc: Allocator, home: []const u8, workspace_root: []const u8, ensure_layout: bool) !Store {

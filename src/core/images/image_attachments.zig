@@ -240,7 +240,11 @@ fn loadResolvedImageAttachment(
 }
 
 pub fn createTempSnapshotDir(alloc: std.mem.Allocator) ![]u8 {
-    const temp_root = try io_mod.realpathAlloc(alloc, "/tmp");
+    const temp_path = if (builtin.os.tag == .windows)
+        io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory
+    else
+        "/tmp";
+    const temp_root = try io_mod.realpathAlloc(alloc, temp_path);
     defer alloc.free(temp_root);
     for (0..16) |_| {
         var suffix: u64 = undefined;
@@ -251,11 +255,7 @@ pub fn createTempSnapshotDir(alloc: std.mem.Allocator) ![]u8 {
             .{ temp_root, suffix },
         );
         errdefer alloc.free(path);
-        std.Io.Dir.createDirAbsolute(
-            io_mod.getIo(),
-            path,
-            std.Io.File.Permissions.fromMode(0o700),
-        ) catch |err| switch (err) {
+        io_mod.createPrivateDirAbsolute(io_mod.getIo(), path) catch |err| switch (err) {
             error.PathAlreadyExists => {
                 alloc.free(path);
                 continue;
@@ -569,13 +569,14 @@ pub fn captureInlineImageBytes(
     defer deleteSnapshotFile(snapshot_dir_handle, source_name, "capture_acp_source");
 
     {
-        var source = try snapshot_dir_handle.createFile(
+        var source = try io_mod.createPrivateFile(
+            snapshot_dir_handle,
             io_mod.getIo(),
             source_name,
             .{
                 .truncate = false,
                 .exclusive = true,
-                .permissions = std.Io.File.Permissions.fromMode(0o600),
+                .permissions = io_mod.private_file_permissions,
                 .resolve_beneath = true,
             },
         );
@@ -664,13 +665,14 @@ fn captureImageSnapshotFromOpenFileWithBudget(
             .{ attachment.id, candidate_suffix },
         );
         cleanup_candidate_temp = true;
-        var candidate_placeholder = try snapshot_dir_handle.createFile(
+        var candidate_placeholder = try io_mod.createPrivateFile(
+            snapshot_dir_handle,
             io_mod.getIo(),
             candidate_temp_name.?,
             .{
                 .truncate = false,
                 .exclusive = true,
-                .permissions = std.Io.File.Permissions.fromMode(0o600),
+                .permissions = io_mod.private_file_permissions,
                 .resolve_beneath = true,
             },
         );
@@ -755,13 +757,14 @@ fn streamSourceToFile(
     limit: usize,
     budget: CaptureBudget,
 ) !SnapshotMetadata {
-    var destination = try destination_dir.createFile(
+    var destination = try io_mod.createPrivateFile(
+        destination_dir,
         io_mod.getIo(),
         destination_name,
         .{
             .truncate = false,
             .exclusive = true,
-            .permissions = std.Io.File.Permissions.fromMode(0o600),
+            .permissions = io_mod.private_file_permissions,
             .resolve_beneath = true,
         },
     );
@@ -1104,11 +1107,7 @@ fn openOrCreateSnapshotDirectoryNoFollow(path: []const u8) !std.Io.Dir {
         snapshot_dir_open_options,
     ) catch |err| switch (err) {
         error.FileNotFound => blk: {
-            parent.createDir(
-                io_mod.getIo(),
-                name,
-                std.Io.File.Permissions.fromMode(0o700),
-            ) catch |create_err| switch (create_err) {
+            io_mod.createPrivateDir(parent, io_mod.getIo(), name) catch |create_err| switch (create_err) {
                 error.PathAlreadyExists => {},
                 else => return unsafeSnapshotPathError(create_err),
             };
@@ -1245,13 +1244,14 @@ pub fn copyVerifiedImageAttachmentToDir(
         deleteSnapshotFile(snapshot_dir_handle, temp_name, "clone_snapshot_temp");
     };
 
-    var destination = try snapshot_dir_handle.createFile(
+    var destination = try io_mod.createPrivateFile(
+        snapshot_dir_handle,
         io_mod.getIo(),
         temp_name,
         .{
             .truncate = false,
             .exclusive = true,
-            .permissions = std.Io.File.Permissions.fromMode(0o600),
+            .permissions = io_mod.private_file_permissions,
             .resolve_beneath = true,
         },
     );
@@ -1811,7 +1811,7 @@ pub const ClipboardImageAttachment = struct {
     }
 };
 
-pub fn loadClipboardImageAttachment(alloc: std.mem.Allocator) !ClipboardImageAttachment {
+pub fn loadClipboardImageAttachment(alloc: std.mem.Allocator) anyerror!ClipboardImageAttachment {
     if (builtin.os.tag != .macos) return error.Unsupported;
 
     const source_dir = try createTempSnapshotDir(alloc);
@@ -2607,11 +2607,7 @@ test "extractInlineImageAttachments preserves image-looking directories" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDir(
-        std.testing.io,
-        "photos.png",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, std.testing.io, "photos.png");
     const workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(workspace);
 
@@ -3558,11 +3554,7 @@ test "verified snapshot loading rejects a symlinked directory" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     const original = "\x89PNG\r\n\x1a\nsymlink-directory";
-    try tmp.dir.createDir(
-        std.testing.io,
-        "owned",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, std.testing.io, "owned");
     {
         var owned = try tmp.dir.openDir(std.testing.io, "owned", .{});
         defer owned.close(std.testing.io);

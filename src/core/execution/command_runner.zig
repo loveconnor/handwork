@@ -1048,7 +1048,7 @@ fn finishCollectedProcess(
 }
 
 fn executeProcess(scratch: Allocator, cfg: Config, argv: []const []const u8, cwd: []const u8) !CollectedProcess {
-    return executeProcessWithInput(scratch, cfg, argv, cwd, false, true);
+    return executeProcessWithInput(scratch, cfg, argv, cwd, false, true, null);
 }
 
 fn executeProcessWithInput(
@@ -1058,14 +1058,17 @@ fn executeProcessWithInput(
     cwd: []const u8,
     closed_input: bool,
     isolate_process_group: bool,
+    environment: ?*const std.process.Environ.Map,
 ) !CollectedProcess {
     const started_ms = io_mod.milliTimestamp();
     var child = try std.process.spawn(io_mod.getIo(), .{
         .argv = argv,
+        .environ_map = environment,
         .stdin = if (closed_input) .pipe else .ignore,
         .stdout = .pipe,
         .stderr = .pipe,
         .cwd = .{ .path = cwd },
+        .start_suspended = builtin.os.tag == .windows,
         .pgid = if (isolate_process_group and builtin.os.tag != .windows and builtin.os.tag != .wasi) 0 else null,
     });
     if (child.stdin) |input| {
@@ -1510,11 +1513,11 @@ fn createCommandArtifactInDir(alloc: Allocator, dir: []const u8) !CommandArtifac
     errdefer alloc.free(stderr_file);
 
     const zio = io_mod.getIo();
-    var output = try std.Io.Dir.createFileAbsolute(zio, output_file, .{ .truncate = true });
+    var output = try io_mod.createPrivateFileAbsolute(zio, output_file, .{ .truncate = true });
     errdefer output.close(zio);
-    var stdout = try std.Io.Dir.createFileAbsolute(zio, stdout_file, .{ .truncate = true });
+    var stdout = try io_mod.createPrivateFileAbsolute(zio, stdout_file, .{ .truncate = true });
     errdefer stdout.close(zio);
-    var stderr = try std.Io.Dir.createFileAbsolute(zio, stderr_file, .{ .truncate = true });
+    var stderr = try io_mod.createPrivateFileAbsolute(zio, stderr_file, .{ .truncate = true });
     errdefer stderr.close(zio);
 
     return .{
@@ -1542,13 +1545,17 @@ fn artifactPath(alloc: Allocator, dir: []const u8, stem: []const u8, suffix: []c
 }
 
 fn fallbackCommandArtifactDir(alloc: Allocator) ![]u8 {
-    const temp_root = io_mod.getenv("TMPDIR") orelse "/tmp";
+    const temp_root = if (builtin.os.tag == .windows)
+        io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory
+    else
+        io_mod.getenv("TMPDIR") orelse "/tmp";
     const pid_text = try std.fmt.allocPrint(alloc, "{d}", .{currentProcessId()});
     defer alloc.free(pid_text);
     return std.fs.path.join(alloc, &.{ temp_root, command_artifact_fallback_dir_name, pid_text });
 }
 
 fn currentProcessId() u64 {
+    if (comptime builtin.os.tag == .windows) return @import("../hosts/windows_processes.zig").currentId();
     return @intCast(std.c.getpid());
 }
 
@@ -1581,9 +1588,10 @@ fn executeRawBashWithResultCommand(
     result_command: []const u8,
     cwd: []const u8,
 ) !command_contract.RunCommandResult {
-    if (builtin.os.tag == .windows) {
-        const argv = [_][]const u8{ "cmd", "/C", execution_command };
-        const result = try executeProcess(scratch, cfg, &argv, cwd);
+    if (comptime builtin.os.tag == .windows) {
+        var buffer: [std.fs.max_path_bytes]u8 = undefined;
+        const shell = shell_resolver.configuredLoginShellInto(&buffer) orelse return error.MissingLoginShell;
+        const result = try executeWindowsShell(scratch, cfg, shell, execution_command, cwd, false);
         return formatCollectedOutput(alloc, result_command, cwd, result);
     }
 
@@ -1602,6 +1610,71 @@ fn executeRawBashWithResultCommand(
     return formatCollectedOutput(alloc, result_command, cwd, result);
 }
 
+fn executeWindowsShell(
+    scratch: Allocator,
+    cfg: Config,
+    shell_path: []const u8,
+    command: []const u8,
+    cwd: []const u8,
+    clean: bool,
+) !CollectedProcess {
+    const basename = std.fs.path.basenameWindows(shell_path);
+    if (!std.ascii.eqlIgnoreCase(basename, "cmd.exe") and
+        !std.ascii.eqlIgnoreCase(basename, "powershell.exe") and
+        !std.ascii.eqlIgnoreCase(basename, "pwsh.exe"))
+    {
+        const invocation = try shell_resolver.capturedInvocation(scratch, if (clean) .{ .clean = shell_path } else .{ .user = shell_path }, command);
+        return executeProcess(scratch, cfg, invocation.argv(), cwd);
+    }
+    if (!std.ascii.eqlIgnoreCase(basename, "cmd.exe")) {
+        // EncodedCommand avoids the C argv quoting rules changing PowerShell
+        // source, including embedded quotes, backslashes and non-ASCII text.
+        const wide = try std.unicode.utf8ToUtf16LeAlloc(scratch, command);
+        const raw = std.mem.sliceAsBytes(wide);
+        const encoded = try scratch.alloc(u8, std.base64.standard.Encoder.calcSize(raw.len));
+        _ = std.base64.standard.Encoder.encode(encoded, raw);
+        const argv = if (clean)
+            &[_][]const u8{ shell_path, "-NoLogo", "-NonInteractive", "-NoProfile", "-EncodedCommand", encoded }
+        else
+            &[_][]const u8{ shell_path, "-NoLogo", "-NonInteractive", "-EncodedCommand", encoded };
+        return executeProcess(scratch, cfg, argv, cwd);
+    }
+    // cmd.exe does not use C argv escaping for /C source. Keep the source in
+    // an ACL-protected batch file and pass only its path through argv.
+    const base = io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory;
+    var random: [16]u8 = undefined;
+    io_mod.getIo().random(&random);
+    const leaf = try std.fmt.allocPrint(scratch, "handwork-command-{s}", .{std.fmt.bytesToHex(random, .lower)});
+    var parent = try std.Io.Dir.openDirAbsolute(io_mod.getIo(), base, .{ .iterate = true, .follow_symlinks = false });
+    defer parent.close(io_mod.getIo());
+    try io_mod.createPrivateDir(parent, io_mod.getIo(), leaf);
+    defer parent.deleteDir(io_mod.getIo(), leaf) catch {};
+    var directory = try parent.openDir(io_mod.getIo(), leaf, .{ .iterate = true, .follow_symlinks = false });
+    defer directory.close(io_mod.getIo());
+    try io_mod.verifyPrivateDirectory(directory);
+    var script = try io_mod.createPrivateFile(directory, io_mod.getIo(), "command.cmd", .{ .exclusive = true });
+    var script_open = true;
+    defer if (script_open) script.close(io_mod.getIo());
+    defer directory.deleteFile(io_mod.getIo(), "command.cmd") catch {};
+    try script.writeStreamingAll(io_mod.getIo(), "@echo off\r\n@chcp 65001 >nul\r\n");
+    try script.writeStreamingAll(io_mod.getIo(), command);
+    try script.writeStreamingAll(io_mod.getIo(), "\r\n");
+    script.close(io_mod.getIo());
+    script_open = false;
+    const path = try std.fs.path.join(scratch, &.{ base, leaf, "command.cmd" });
+    // cmd expands percent variables once. Passing the quoted path as a value
+    // keeps literal %NAME% and metacharacters in the directory out of source.
+    var environment = try io_mod.cloneEnvironMap(scratch);
+    defer environment.deinit();
+    const quoted_path = try std.fmt.allocPrint(scratch, "\"{s}\"", .{path});
+    try environment.put("HANDWORK_COMMAND_FILE", quoted_path);
+    const argv = if (clean)
+        &[_][]const u8{ shell_path, "/D", "/V:OFF", "/S", "/C", "%HANDWORK_COMMAND_FILE%" }
+    else
+        &[_][]const u8{ shell_path, "/V:OFF", "/S", "/C", "%HANDWORK_COMMAND_FILE%" };
+    return executeProcessWithInput(scratch, cfg, argv, cwd, false, true, &environment);
+}
+
 fn executeRawInvocation(
     alloc: Allocator,
     scratch: Allocator,
@@ -1610,16 +1683,13 @@ fn executeRawInvocation(
     cwd: []const u8,
     invocation: *const shell_resolver.Invocation,
 ) !command_contract.RunCommandResult {
-    if (builtin.os.tag == .windows or builtin.os.tag == .wasi) {
+    if (builtin.os.tag == .wasi) {
         return error.InvalidCommandEnvironment;
     }
-    const result = try executeProcessWithScript(
-        scratch,
-        cfg,
-        invocation.argv(),
-        cwd,
-        "",
-    );
+    const result = if (comptime builtin.os.tag == .windows)
+        try executeWindowsShell(scratch, cfg, invocation.path, command, cwd, invocation.clean_start)
+    else
+        try executeProcessWithScript(scratch, cfg, invocation.argv(), cwd, "");
     return formatCollectedOutput(alloc, command, cwd, result);
 }
 
@@ -2196,18 +2266,21 @@ const ProcessObserver = struct {
     stdout: std.Io.File,
     stderr: std.Io.File,
     detached_pipes: bool = false,
+    windows_job: if (builtin.os.tag == .windows) ?@import("../hosts/windows_processes.zig").Job else void = if (builtin.os.tag == .windows) null else {},
+    windows_status: ?command_contract.CommandStatus = null,
 
     fn init(child: *std.process.Child) !ProcessObserver {
         const process_id = child.id orelse return error.SpawnFailed;
         const stdout = child.stdout orelse return error.SpawnFailed;
         const stderr = child.stderr orelse return error.SpawnFailed;
-        const detached_pipes = comptime builtin.os.tag != .windows and
-            builtin.os.tag != .wasi;
+        const detached_pipes = comptime builtin.os.tag != .wasi;
+        const windows_job = if (builtin.os.tag == .windows) try @import("../hosts/windows_processes.zig").Job.attachSuspended(child) else {};
         if (detached_pipes) {
             child.stdout = null;
             child.stderr = null;
         }
         return .{
+            .windows_job = windows_job,
             .waiter = ChildWaiter.init(child),
             .process_id = process_id,
             .stdout = stdout,
@@ -2217,6 +2290,9 @@ const ProcessObserver = struct {
     }
 
     fn deinit(self: *ProcessObserver) void {
+        if (comptime builtin.os.tag == .windows) {
+            if (self.windows_job) |*job| job.deinit();
+        }
         if (self.detached_pipes) {
             self.stdout.close(self.waiter.io);
             self.stderr.close(self.waiter.io);
@@ -2230,7 +2306,19 @@ const ProcessObserver = struct {
     }
 
     fn observe(self: *ProcessObserver) ?command_contract.CommandStatus {
-        if (comptime builtin.os.tag == .windows or builtin.os.tag == .wasi) return null;
+        if (comptime builtin.os.tag == .windows) {
+            if (self.windows_status) |status| return status;
+            if (!(@import("../hosts/windows_processes.zig").exited(self.process_id) catch return null)) return null;
+            // Kill descendants before draining EOF; they may hold inherited pipes.
+            if (self.windows_job) |*job| job.terminate() catch |err| {
+                debug_trace.logf("core", "Windows descendant cleanup failed; closing owned job err={s}", .{@errorName(err)});
+                job.deinit();
+                self.windows_job = null;
+            };
+            self.windows_status = statusFromTerm(self.waiter.child.wait(self.waiter.io) catch |err| return indeterminateStatus(err));
+            return self.windows_status;
+        }
+        if (comptime builtin.os.tag == .wasi) return null;
         if (!self.waiter.isReady()) return null;
         const term = self.waiter.awaitReady() catch |err| {
             return indeterminateStatus(err);
@@ -2302,7 +2390,11 @@ const ProcessObserver = struct {
         protocol: TerminationProtocol,
         intent: TerminationIntent,
     ) !void {
-        if (builtin.os.tag == .windows or builtin.os.tag == .wasi) {
+        if (comptime builtin.os.tag == .windows) {
+            if (self.windows_job) |job| try job.terminate();
+            return;
+        }
+        if (comptime builtin.os.tag == .wasi) {
             self.waiter.child.kill(self.waiter.io);
             return;
         }
@@ -2761,6 +2853,8 @@ fn signalProcessGroup(pid: std.posix.pid_t, signal: std.posix.SIG) !void {
 }
 
 fn terminateRemainingProcessGroup(pid: std.posix.pid_t) void {
+    // Windows descendants are owned by ProcessObserver.windows_job.
+    if (comptime builtin.os.tag == .windows or builtin.os.tag == .wasi) return;
     signalProcessGroup(pid, std.posix.SIG.KILL) catch |err| {
         debug_trace.logf(
             "core",

@@ -3,8 +3,8 @@ const config_runtime = @import("../config/config_runtime.zig");
 const io_mod = @import("../shared/io.zig");
 
 const Allocator = std.mem.Allocator;
-const private_dir_permissions = std.Io.File.Permissions.fromMode(0o700);
-const private_file_permissions = std.Io.File.Permissions.fromMode(0o600);
+const private_dir_permissions = io_mod.private_dir_permissions;
+const private_file_permissions = io_mod.private_file_permissions;
 
 pub const subagent_relationship_index_file = "relationship-index.bin";
 
@@ -351,11 +351,7 @@ const CapabilityImpl = struct {
             error.FileNotFound => blk: {
                 if (!create_if_missing) return null;
                 if (self.mode != .writable) return error.SessionChildReadOnly;
-                parent.dir.createDir(
-                    io_mod.getIo(),
-                    name,
-                    private_dir_permissions,
-                ) catch |create_err| switch (create_err) {
+                io_mod.createPrivateDir(parent.dir, io_mod.getIo(), name) catch |create_err| switch (create_err) {
                     error.PathAlreadyExists => {},
                     error.NotDir, error.SymLinkLoop => {
                         return error.SessionPathUnsafe;
@@ -379,7 +375,7 @@ const CapabilityImpl = struct {
         errdefer dir.close(io_mod.getIo());
 
         if (self.mode == .writable) {
-            dir.setPermissions(io_mod.getIo(), private_dir_permissions) catch
+            io_mod.setPrivateDirPermissions(io_mod.getIo(), dir) catch
                 return error.PrivateStatePermissionsUnsupported;
         }
         try verifyPrivateDirectory(dir);
@@ -548,7 +544,7 @@ pub const SessionChildCapability = struct {
         };
         errdefer route.close(io_mod.getIo());
         if (mode == .writable) {
-            route.setPermissions(io_mod.getIo(), private_dir_permissions) catch
+            io_mod.setPrivateDirPermissions(io_mod.getIo(), route) catch
                 return error.PrivateStatePermissionsUnsupported;
         }
         return initOpenedLegacyRoute(alloc, route, route_path, kind, mode);
@@ -636,19 +632,12 @@ pub const SessionChildCapability = struct {
         };
         errdefer records.close(io_mod.getIo());
         if (mode == .writable) {
-            records.setPermissions(
-                io_mod.getIo(),
-                private_dir_permissions,
-            ) catch return error.PrivateStatePermissionsUnsupported;
+            io_mod.setPrivateDirPermissions(io_mod.getIo(), records) catch return error.PrivateStatePermissionsUnsupported;
         }
         try verifyPrivateDirectory(records);
 
         if (mode == .writable) {
-            records.createDir(
-                io_mod.getIo(),
-                "logs",
-                private_dir_permissions,
-            ) catch |err| switch (err) {
+            io_mod.createPrivateDir(records, io_mod.getIo(), "logs") catch |err| switch (err) {
                 error.PathAlreadyExists => {},
                 error.NotDir, error.SymLinkLoop => {
                     return error.SessionPathUnsafe;
@@ -670,10 +659,7 @@ pub const SessionChildCapability = struct {
         errdefer if (logs) |route| route.close(io_mod.getIo());
         if (logs) |route| {
             if (mode == .writable) {
-                route.setPermissions(
-                    io_mod.getIo(),
-                    private_dir_permissions,
-                ) catch return error.PrivateStatePermissionsUnsupported;
+                io_mod.setPrivateDirPermissions(io_mod.getIo(), route) catch return error.PrivateStatePermissionsUnsupported;
             }
             try verifyPrivateDirectory(route);
         }
@@ -862,7 +848,7 @@ pub const SessionChildCapability = struct {
         if (self.impl.mode != .writable) return error.SessionChildReadOnly;
         try self.impl.resolveIndeterminate(kind);
         const route_dir = (try self.impl.route(kind, true)).?;
-        var file = route_dir.dir.createFile(io_mod.getIo(), name, .{
+        var file = io_mod.createPrivateFile(route_dir.dir, io_mod.getIo(), name, .{
             .read = true,
             .truncate = false,
             .exclusive = true,
@@ -883,14 +869,16 @@ pub const SessionChildCapability = struct {
                     },
                     else => return stat_err,
                 };
-                try verifyPrivateStat(existing);
+                const existing_file = try io_mod.openExistingRegularFile(route_dir.dir, name, .read_only);
+                defer existing_file.close(io_mod.getIo());
+                try verifyPrivateStat(existing, existing_file);
                 return error.PathAlreadyExists;
             },
             else => return err,
         };
         var file_open = true;
         errdefer if (file_open) file.close(io_mod.getIo());
-        file.setPermissions(io_mod.getIo(), private_file_permissions) catch
+        io_mod.setPrivateFilePermissions(io_mod.getIo(), file) catch
             return error.PrivateStatePermissionsUnsupported;
         try verifyPrivateRegularFile(file);
         io_mod.syncVerifiedDir(route_dir.dir) catch {
@@ -1024,7 +1012,9 @@ pub const SessionChildCapability = struct {
                 },
                 else => return err,
             };
-            try verifyPrivateStat(file_stat);
+            const listed_file = try io_mod.openExistingRegularFile(route_dir.dir, entry.name, .read_only);
+            defer listed_file.close(io_mod.getIo());
+            try verifyPrivateStat(file_stat, listed_file);
             const owned_name = try alloc.dupe(u8, entry.name);
             errdefer alloc.free(owned_name);
             try names.append(alloc, owned_name);
@@ -1226,6 +1216,12 @@ fn validateName(name: []const u8) !void {
 }
 
 fn verifyPrivateDirectory(dir: std.Io.Dir) !void {
+    if (comptime @import("builtin").os.tag == .windows) {
+        return io_mod.verifyPrivateDirectory(dir) catch |err| switch (err) {
+            error.DurablePathUnsafe => error.SessionPathUnsafe,
+            else => return err,
+        };
+    }
     const stat = try dir.stat(io_mod.getIo());
     if (stat.kind != .directory) return error.SessionPathUnsafe;
     if (stat.permissions.toMode() & 0o777 != 0o700) {
@@ -1234,21 +1230,34 @@ fn verifyPrivateDirectory(dir: std.Io.Dir) !void {
 }
 
 fn verifyPrivateRegularFile(file: std.Io.File) !void {
-    try verifyPrivateStat(try file.stat(io_mod.getIo()));
+    try verifyPrivateStat(try file.stat(io_mod.getIo()), file);
 }
 
 fn verifyPrivateOpenedStat(
+    file: std.Io.File,
     stat: std.Io.File.Stat,
     mode: std.Io.Dir.OpenFileOptions.Mode,
 ) !void {
     io_mod.verifyOpenedRegularFile(stat, mode) catch
         return error.SessionPathUnsafe;
+    if (comptime @import("builtin").os.tag == .windows) {
+        return (if (mode == .read_only) io_mod.verifyReadOnlyPrivateRegularFile(file) else io_mod.verifyPrivateRegularFile(file)) catch |err| switch (err) {
+            error.DurablePathUnsafe => error.SessionPathUnsafe,
+            else => return err,
+        };
+    }
     if (stat.permissions.toMode() & 0o777 != 0o600) {
         return error.PrivateStatePermissionsUnsupported;
     }
 }
 
-fn verifyPrivateStat(stat: std.Io.File.Stat) !void {
+fn verifyPrivateStat(stat: std.Io.File.Stat, file: std.Io.File) !void {
+    if (comptime @import("builtin").os.tag == .windows) {
+        return io_mod.verifyPrivateRegularFile(file) catch |err| switch (err) {
+            error.DurablePathUnsafe => error.SessionPathUnsafe,
+            else => return err,
+        };
+    }
     if (stat.kind != .file or stat.nlink != 1) {
         return error.SessionPathUnsafe;
     }
@@ -1273,16 +1282,16 @@ fn openPrivateFile(
     };
     errdefer file.close(io_mod.getIo());
     if (capability_mode == .writable and mode != .read_only) {
-        file.setPermissions(io_mod.getIo(), private_file_permissions) catch
+        io_mod.setPrivateFilePermissions(io_mod.getIo(), file) catch
             return error.PrivateStatePermissionsUnsupported;
     }
-    try verifyPrivateOpenedStat(try file.stat(io_mod.getIo()), mode);
+    try verifyPrivateOpenedStat(file, try file.stat(io_mod.getIo()), mode);
     return file;
 }
 
 fn managedStat(file: std.Io.File) !ManagedStat {
     const stat = try file.stat(io_mod.getIo());
-    try verifyPrivateStat(stat);
+    try verifyPrivateStat(stat, file);
     return .{
         .size = stat.size,
         .modified_at_ns = stat.mtime.nanoseconds,
@@ -1326,11 +1335,7 @@ fn openTestSession(
     alloc: Allocator,
     tmp: *std.testing.TmpDir,
 ) !struct { dir: std.Io.Dir, display_path: []u8 } {
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        "session",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "session");
     const display_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "session");
     errdefer alloc.free(display_path);
     const dir = try tmp.dir.openDir(io_mod.getIo(), "session", .{
@@ -1356,7 +1361,7 @@ test "private read-only file remains valid after atomic replacement unlinks it" 
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    var target = try tmp.dir.createFile(io_mod.getIo(), "target", .{
+    var target = try io_mod.createPrivateFile(tmp.dir, io_mod.getIo(), "target", .{
         .truncate = true,
         .permissions = private_file_permissions,
     });
@@ -1367,7 +1372,7 @@ test "private read-only file remains valid after atomic replacement unlinks it" 
         .read_only,
     );
     defer file.close(io_mod.getIo());
-    var replacement = try tmp.dir.createFile(io_mod.getIo(), "replacement", .{
+    var replacement = try io_mod.createPrivateFile(tmp.dir, io_mod.getIo(), "replacement", .{
         .truncate = true,
         .permissions = private_file_permissions,
     });
@@ -1376,10 +1381,10 @@ test "private read-only file remains valid after atomic replacement unlinks it" 
 
     const stat = try file.stat(io_mod.getIo());
     try std.testing.expectEqual(@as(u64, 0), stat.nlink);
-    try verifyPrivateOpenedStat(stat, .read_only);
+    try verifyPrivateOpenedStat(file, stat, .read_only);
     try std.testing.expectError(
         error.SessionPathUnsafe,
-        verifyPrivateOpenedStat(stat, .read_write),
+        verifyPrivateOpenedStat(file, stat, .read_write),
     );
 }
 
@@ -1438,11 +1443,7 @@ test "managed child capability rejects invalid names and unsafe routes" {
             "linked.txt",
         ),
     );
-    try session.dir.createDir(
-        io_mod.getIo(),
-        "tool-results/wrong-kind",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(session.dir, io_mod.getIo(), "tool-results/wrong-kind");
     try std.testing.expectError(
         error.SessionPathUnsafe,
         capability.createExclusiveFile(
@@ -1466,14 +1467,10 @@ test "managed child capability rejects invalid names and unsafe routes" {
         ),
     );
 
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        "outside",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
-    var wrong_kind = try session.dir.createFile(io_mod.getIo(), "artifacts", .{
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "outside");
+    var wrong_kind = try io_mod.createPrivateFile(session.dir, io_mod.getIo(), "artifacts", .{
         .truncate = true,
-        .permissions = std.Io.File.Permissions.fromMode(0o600),
+        .permissions = io_mod.private_file_permissions,
     });
     wrong_kind.close(io_mod.getIo());
     try std.testing.expectError(
@@ -1551,11 +1548,7 @@ test "retained route handle contains pathname swaps" {
     try first.writeAll("original");
     try first.sync();
 
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        "outside",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "outside");
     try session.dir.rename(
         "tool-results",
         session.dir,
@@ -1680,11 +1673,7 @@ test "subagent control capability rejects a symlinked route" {
     var session = try openTestSession(alloc, &tmp);
     defer session.dir.close(io_mod.getIo());
     defer alloc.free(session.display_path);
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        "outside",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "outside");
     try session.dir.symLink(
         io_mod.getIo(),
         "../outside",
@@ -1757,11 +1746,7 @@ test "terminal capabilities are private route restricted and reject symlinks" {
         "terminal-owned",
         io_mod.getIo(),
     );
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        "outside-terminal",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "outside-terminal");
     try session.dir.symLink(
         io_mod.getIo(),
         "../outside-terminal",

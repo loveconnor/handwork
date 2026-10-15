@@ -14,6 +14,10 @@ const Target = update_target.Target;
 
 fn setRecvTimeout(conn: *std.http.Client.Connection) void {
     const sock = conn.stream_writer.stream.socket.handle;
+    if (comptime builtin.os.tag == .windows) {
+        @import("../hosts/windows_sockets.zig").setTimeouts(@intFromPtr(sock), recv_timeout_sec) catch {};
+        return;
+    }
     const timeout = std.posix.timeval{ .sec = recv_timeout_sec, .usec = 0 };
     std.posix.setsockopt(sock, std.posix.SOL.SOCKET, std.posix.SO.RCVTIMEO, std.mem.asBytes(&timeout)) catch {};
 }
@@ -62,6 +66,7 @@ fn platformFromTarget() ?[]const u8 {
     const os: ?[]const u8 = switch (builtin.os.tag) {
         .macos => "macos",
         .linux => "linux",
+        .windows => "windows",
         else => null,
     };
     const arch: ?[]const u8 = switch (builtin.cpu.arch) {

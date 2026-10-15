@@ -23,6 +23,34 @@ const NapiSurface = enum {
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const platform_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/platform_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
+    });
+    const platform_check = b.step("platform-check", "Compile platform adapter tests without running them");
+    if (target.result.os.tag == .windows) {
+        platform_tests.root_module.linkSystemLibrary("advapi32", .{});
+        platform_tests.root_module.linkSystemLibrary("ws2_32", .{});
+        platform_tests.root_module.linkSystemLibrary("shell32", .{});
+        platform_tests.root_module.linkSystemLibrary("ole32", .{});
+    }
+    platform_check.dependOn(&platform_tests.step);
+    const terminal_platform_check = b.addObject(.{
+        .name = "terminal-platform-check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/terminal_platform_check.zig"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
+    });
+    platform_check.dependOn(&terminal_platform_check.step);
+    const platform_run = b.step("test-platform", "Run platform adapter tests on the target host");
+    platform_run.dependOn(&b.addRunArtifact(platform_tests).step);
     const pgso_artifact = b.option(
         PgsoArtifact,
         "pgso-artifact",
@@ -65,6 +93,12 @@ pub fn build(b: *std.Build) void {
         }),
     });
     exe.root_module.addImport("build_options", build_options.createModule());
+    if (target.result.os.tag == .windows) {
+        exe.root_module.linkSystemLibrary("advapi32", .{});
+        exe.root_module.linkSystemLibrary("ws2_32", .{});
+        exe.root_module.linkSystemLibrary("shell32", .{});
+        exe.root_module.linkSystemLibrary("ole32", .{});
+    }
     if (target.result.os.tag == .macos) {
         exe.root_module.linkFramework("ApplicationServices", .{});
         exe.root_module.linkFramework("AppKit", .{});
@@ -94,6 +128,12 @@ pub fn build(b: *std.Build) void {
         .error_tracing = true,
     });
     test_module.addImport("build_options", build_options.createModule());
+    if (target.result.os.tag == .windows) {
+        test_module.linkSystemLibrary("advapi32", .{});
+        test_module.linkSystemLibrary("ws2_32", .{});
+        test_module.linkSystemLibrary("shell32", .{});
+        test_module.linkSystemLibrary("ole32", .{});
+    }
     const exe_tests = b.addTest(.{
         .root_module = test_module,
         .filters = if (test_filter) |filter| &.{filter} else &.{},
@@ -104,6 +144,23 @@ pub fn build(b: *std.Build) void {
         exe_tests.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_cmd_v_monitor.c"), .flags = &.{} });
         exe_tests.root_module.addCSourceFile(.{ .file = b.path("src/core/hosts/macos_frontmost_app.m"), .flags = &.{} });
     }
+    const integration_module = b.createModule(.{
+        .root_source_file = b.path("src/platform_integration_tests.zig"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    integration_module.addImport("build_options", build_options.createModule());
+    if (target.result.os.tag == .windows) {
+        integration_module.linkSystemLibrary("advapi32", .{});
+        integration_module.linkSystemLibrary("ws2_32", .{});
+        integration_module.linkSystemLibrary("shell32", .{});
+        integration_module.linkSystemLibrary("ole32", .{});
+    }
+    const integration_tests = b.addTest(.{ .root_module = integration_module, .filters = &.{"platform integration"} });
+    platform_check.dependOn(&integration_tests.step);
+    const integration_step = b.step("test-platform-integration", "Run storage and command platform journeys");
+    integration_step.dependOn(&b.addRunArtifact(integration_tests).step);
     const run_exe_tests = b.addRunArtifact(exe_tests);
     run_exe_tests.step.dependOn(b.getInstallStep());
     run_exe_tests.setEnvironmentVariable(

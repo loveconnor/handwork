@@ -2113,16 +2113,11 @@ pub fn Handlers(comptime App: type) type {
 
 const trace_transcript_max_line_bytes: usize = 300;
 
-fn traceFilePermissions() std.Io.File.Permissions {
-    const builtin = @import("builtin");
-    return switch (builtin.os.tag) {
-        .windows => .default_file,
-        else => std.Io.File.Permissions.fromMode(0o600),
-    };
-}
-
 fn writeTraceReportFile(alloc: std.mem.Allocator, contents: []const u8) ![]u8 {
-    const tmp_dir = io_mod.getenv("TMPDIR") orelse "/tmp";
+    const tmp_dir = if (@import("builtin").os.tag == .windows)
+        io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory
+    else
+        io_mod.getenv("TMPDIR") orelse "/tmp";
     const trimmed = std.mem.trimEnd(u8, tmp_dir, "/");
     const now_ms = io_mod.milliTimestamp();
     const now_secs: i64 = @max(@divFloor(now_ms, 1000), 0);
@@ -2147,10 +2142,9 @@ fn writeTraceReportFile(alloc: std.mem.Allocator, contents: []const u8) ![]u8 {
         });
         errdefer alloc.free(path);
 
-        var file = std.Io.Dir.createFileAbsolute(io_mod.getIo(), path, .{
+        var file = io_mod.createPrivateFileAbsolute(io_mod.getIo(), path, .{
             .truncate = false,
             .exclusive = true,
-            .permissions = traceFilePermissions(),
         }) catch |err| switch (err) {
             error.PathAlreadyExists => {
                 alloc.free(path);
@@ -2379,12 +2373,12 @@ fn writeCurrentStateSummary(writer: *std.Io.Writer, app: anytype, alloc: std.mem
 }
 
 fn writeProcessSummary(writer: *std.Io.Writer, alloc: std.mem.Allocator) !void {
-    const pid = std.c.getpid();
+    const pid = if (comptime @import("builtin").os.tag == .windows) @import("../hosts/windows_processes.zig").currentId() else std.c.getpid();
     try writer.print("process: pid={d}", .{pid});
     if (countOpenFileDescriptors()) |fd_count| try writer.print(" open_fds={d}", .{fd_count});
     try writer.writeByte('\n');
 
-    const ps = processMemorySnapshot(alloc, pid) catch null;
+    const ps = if (comptime @import("builtin").os.tag == .windows) null else processMemorySnapshot(alloc, pid) catch null;
     if (ps) |text| {
         defer alloc.free(text);
         const trimmed = std.mem.trim(u8, text, " \t\r\n");

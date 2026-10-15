@@ -420,7 +420,7 @@ fn environmentForProfile(
     }
     if (profile == .git_read_only) {
         try environment.put("GIT_CONFIG_NOSYSTEM", "1");
-        try environment.put("GIT_CONFIG_GLOBAL", "/dev/null");
+        try environment.put("GIT_CONFIG_GLOBAL", if (@import("builtin").os.tag == .windows) "NUL" else "/dev/null");
         try environment.put("GIT_OPTIONAL_LOCKS", "0");
         try environment.put("GIT_TERMINAL_PROMPT", "0");
         try environment.put("GIT_PAGER", "cat");

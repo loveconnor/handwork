@@ -1,4 +1,6 @@
 const std = @import("std");
+const builtin = @import("builtin");
+const windows_storage = @import("../hosts/windows_private_storage.zig");
 const host = @import("../hosts/host.zig");
 const host_target = @import("../hosts/target.zig");
 const io_mod = @import("../shared/io.zig");
@@ -24,8 +26,12 @@ pub fn requireWritableProfileFile(file_name: []const u8, lock_name: []const u8) 
         .follow_symlinks = false,
     }) catch |err| {
         if (err != error.FileNotFound) return error.CredentialStorageUnavailable;
-        const stat = home_dir.stat(io_mod.getIo()) catch return error.CredentialStorageUnavailable;
-        if (stat.permissions.toMode() & 0o200 == 0) return error.CredentialStorageUnavailable;
+        if (comptime builtin.os.tag == .windows) {
+            if (!(windows_storage.canWrite(home_dir.handle, true) catch false)) return error.CredentialStorageUnavailable;
+        } else {
+            const stat = home_dir.stat(io_mod.getIo()) catch return error.CredentialStorageUnavailable;
+            if (stat.permissions.toMode() & 0o200 == 0) return error.CredentialStorageUnavailable;
+        }
         return false;
     };
     defer profile_dir.close(io_mod.getIo());
@@ -47,6 +53,18 @@ pub fn storageError(file_name: []const u8, err: anyerror) error{ OutOfMemory, Ca
 
 /// Borrows the verified store directory; checks metadata without changing it.
 pub fn requireWritableInDir(dir: std.Io.Dir, file_name: []const u8) error{CredentialStorageUnavailable}!bool {
+    if (comptime builtin.os.tag == .windows) {
+        io_mod.verifyPrivateDirectory(dir) catch return error.CredentialStorageUnavailable;
+        var file = dir.openFile(io_mod.getIo(), file_name, .{
+            .mode = .read_write,
+            .allow_directory = false,
+            .follow_symlinks = false,
+            .resolve_beneath = true,
+        }) catch |err| return if (err == error.FileNotFound) false else error.CredentialStorageUnavailable;
+        defer file.close(io_mod.getIo());
+        io_mod.verifyPrivateRegularFile(file) catch return error.CredentialStorageUnavailable;
+        return true;
+    }
     const dir_stat = dir.stat(io_mod.getIo()) catch return error.CredentialStorageUnavailable;
     if (dir_stat.permissions.toMode() & 0o200 == 0) return error.CredentialStorageUnavailable;
     const stat = dir.statFile(io_mod.getIo(), file_name, .{ .follow_symlinks = false }) catch |err| {
@@ -88,9 +106,9 @@ fn profileFileFromHome(
     defer file.close(io_mod.getIo());
 
     const stat = file.stat(io_mod.getIo()) catch return .unavailable;
+    io_mod.verifyOwnerOnlyRegularFile(file) catch return .unavailable;
     if (stat.kind != .file or
         stat.nlink != 1 or
-        stat.permissions.toMode() & 0o077 != 0 or
         stat.size == 0 or
         stat.size > max_bytes)
     {

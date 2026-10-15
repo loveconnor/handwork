@@ -1,4 +1,16 @@
 const std = @import("std");
+const is_windows = @import("builtin").os.tag == .windows;
+const windows_sockets = @import("../hosts/windows_sockets.zig");
+const PollFd = if (is_windows) windows_sockets.PollFd else std.posix.pollfd;
+const Poll = if (is_windows) windows_sockets.Poll else std.posix.POLL;
+fn pollSocket(fds: []PollFd, timeout: i32) !usize {
+    if (comptime is_windows) return windows_sockets.poll(fds, timeout);
+    return std.posix.poll(fds, timeout);
+}
+fn pollHandle(socket: std.posix.socket_t) if (is_windows) usize else std.posix.socket_t {
+    if (comptime is_windows) return @intFromPtr(socket);
+    return socket;
+}
 const debug_trace = @import("../shared/debug_trace.zig");
 const io_mod = @import("../shared/io.zig");
 
@@ -134,15 +146,15 @@ fn listenerReady(
     cancel_flag: *std.atomic.Value(bool),
 ) !bool {
     if (cancel_flag.load(.seq_cst)) return error.Cancelled;
-    var fds = [_]std.posix.pollfd{.{
-        .fd = listener.socket.handle,
-        .events = std.posix.POLL.IN,
+    var fds = [_]PollFd{.{
+        .fd = pollHandle(listener.socket.handle),
+        .events = Poll.IN,
         .revents = 0,
     }};
-    const ready = try std.posix.poll(&fds, poll_ms);
+    const ready = try pollSocket(&fds, poll_ms);
     if (cancel_flag.load(.seq_cst)) return error.Cancelled;
     if (ready == 0) return false;
-    if ((fds[0].revents & std.posix.POLL.IN) == 0) {
+    if ((fds[0].revents & Poll.IN) == 0) {
         return error.OAuthCallbackListenerFailed;
     }
     return true;
@@ -160,12 +172,12 @@ fn requestReadable(
             0
         else
             @intCast(@min(remaining_ms, poll_ms));
-        var fds = [_]std.posix.pollfd{.{
-            .fd = socket,
-            .events = std.posix.POLL.IN,
+        var fds = [_]PollFd{.{
+            .fd = pollHandle(socket),
+            .events = Poll.IN,
             .revents = 0,
         }};
-        const ready = try std.posix.poll(&fds, wait_ms);
+        const ready = try pollSocket(&fds, wait_ms);
         if (cancel_flag.load(.seq_cst)) return error.Cancelled;
         if (ready != 0) return true;
         if (remaining_ms <= 0) return false;

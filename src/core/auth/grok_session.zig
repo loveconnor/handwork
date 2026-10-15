@@ -131,11 +131,12 @@ fn loadFromDir(alloc: Allocator, handwork_dir: *std.Io.Dir) !?Session {
     };
     defer file.close(io_mod.getIo());
 
-    const stat = file.stat(io_mod.getIo()) catch |err| return session_presence.storageError(auth_file_name, err);
-    if (stat.kind != .file or stat.nlink != 1 or stat.permissions.toMode() & 0o077 != 0) {
+    io_mod.verifyOwnerOnlyRegularFile(file) catch |err| {
+        if (err != error.DurablePathUnsafe and err != error.PrivateStatePermissionsUnsupported)
+            return session_presence.storageError(auth_file_name, err);
         debug_trace.logf("auth", "Grok session load failed step=permissions err=InsecureAuthFile", .{});
         return error.InsecureAuthFile;
-    }
+    };
 
     const bytes = io_mod.readFileToEnd(alloc, &file, max_auth_file_bytes) catch |err| return session_presence.storageError(auth_file_name, err);
     defer secret.zeroAndFree(alloc, bytes);
@@ -194,23 +195,7 @@ fn lockMutation(open_handwork_dir: io_mod.VerifiedDir) !Mutation {
 }
 
 fn openExistingPrivateHandworkDir(home_dir: *io_mod.VerifiedDir) !io_mod.VerifiedDir {
-    var dir = try home_dir.dir.openDir(io_mod.getIo(), profile_paths.root_dir_name, .{
-        .iterate = true,
-        .follow_symlinks = false,
-    });
-    errdefer dir.close(io_mod.getIo());
-
-    const initial_stat = try dir.stat(io_mod.getIo());
-    if (initial_stat.kind != .directory) return error.DurablePathUnsafe;
-    if (initial_stat.permissions.toMode() & 0o200 == 0) return error.PrivateStatePermissionsUnsupported;
-    dir.setPermissions(io_mod.getIo(), std.Io.File.Permissions.fromMode(0o700)) catch {
-        return error.PrivateStatePermissionsUnsupported;
-    };
-    const stat = try dir.stat(io_mod.getIo());
-    if (stat.kind != .directory or stat.permissions.toMode() & 0o777 != 0o700) {
-        return error.PrivateStatePermissionsUnsupported;
-    }
-    return .{ .dir = dir };
+    return io_mod.openExistingPrivateDirectory(home_dir.dir, profile_paths.root_dir_name);
 }
 
 pub fn parse(alloc: Allocator, bytes: []const u8) !Session {
