@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 function Invoke-Checked {
     param([string]$Program, [string[]]$Arguments)
+    Write-Host "Running: $Program $($Arguments -join ' ')"
     & $Program @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Program failed with exit code $LASTEXITCODE" }
 }
@@ -21,6 +22,8 @@ try {
     $prefix = Join-Path $scratch 'install'
     Invoke-Checked -Program npm.cmd -Arguments @('install', '--global', '--prefix', $prefix, '--no-audit', '--no-fund', $tarball)
     Invoke-Checked -Program (Join-Path $prefix 'handwork.cmd') -Arguments @('--version')
+    $launcher = Join-Path $prefix 'node_modules/handwork/bin/handwork.cjs'
+    Invoke-Checked -Program node -Arguments @('scripts/windows-smoke.mjs', $launcher)
 } finally {
     Remove-Item -LiteralPath $scratch -Recurse -Force
 }

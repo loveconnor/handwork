@@ -56,7 +56,9 @@ const env = {
 };
 function run(args) {
   return new Promise((resolveRun, reject) => {
-    const child = spawn(binary, args, { cwd: workspace, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = binary.endsWith('.cjs')
+      ? spawn(process.execPath, [binary, ...args], { cwd: workspace, env, stdio: ['ignore', 'pipe', 'pipe'] })
+      : spawn(binary, args, { cwd: workspace, env, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
     const timer = setTimeout(() => { child.kill(); reject(new Error(`Timed out: ${args.join(' ')}`)); }, 45000);
     child.stdout.setEncoding('utf8').on('data', chunk => { stdout += chunk; });
