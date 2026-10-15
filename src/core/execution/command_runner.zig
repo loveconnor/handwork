@@ -1048,6 +1048,16 @@ fn finishCollectedProcess(
 }
 
 fn executeProcess(scratch: Allocator, cfg: Config, argv: []const []const u8, cwd: []const u8) !CollectedProcess {
+    if (comptime builtin.os.tag == .windows) {
+        // Include the normalized startup environment for every shell profile,
+        // including HOME and child-only variables supplied by the host.
+        var environment = io_mod.cloneEnvironMap(scratch) catch |err| switch (err) {
+            error.EnvironmentUnavailable => try std.process.Environ.createMap(.{ .block = .global }, scratch),
+            else => return err,
+        };
+        defer environment.deinit();
+        return executeProcessWithInput(scratch, cfg, argv, cwd, false, true, &environment);
+    }
     return executeProcessWithInput(scratch, cfg, argv, cwd, false, true, null);
 }
 
@@ -1629,7 +1639,12 @@ fn executeWindowsShell(
     if (!std.ascii.eqlIgnoreCase(basename, "cmd.exe")) {
         // EncodedCommand avoids the C argv quoting rules changing PowerShell
         // source, including embedded quotes, backslashes and non-ASCII text.
-        const wide = try std.unicode.utf8ToUtf16LeAlloc(scratch, command);
+        const utf8_command = try std.fmt.allocPrint(
+            scratch,
+            "$OutputEncoding = [System.Text.UTF8Encoding]::new($false); [Console]::OutputEncoding = $OutputEncoding;\r\n{s}",
+            .{command},
+        );
+        const wide = try std.unicode.utf8ToUtf16LeAlloc(scratch, utf8_command);
         const raw = std.mem.sliceAsBytes(wide);
         const encoded = try scratch.alloc(u8, std.base64.standard.Encoder.calcSize(raw.len));
         _ = std.base64.standard.Encoder.encode(encoded, raw);

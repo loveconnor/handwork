@@ -103,6 +103,10 @@ test "platform integration Windows commands preserve quotes streams exit and tim
     try std.testing.expectError(error.TimeoutExpired, commands.executeCommand(.{ .max_command_output_bytes = 4096, .timeout_ms = 200 }, alloc, "ping -n 30 127.0.0.1 >nul", workspace));
     const powershell = try std.fs.path.join(alloc, &.{ std.fs.path.dirname(shell).?, "WindowsPowerShell", "v1.0", "powershell.exe" });
     defer alloc.free(powershell);
+    try environment.put("HANDWORK_ENV_FIXTURE", "日本語");
+    const powershell_result = try commands.executeCommandInEnvironment(.{ .max_command_output_bytes = 4096 }, alloc, "Write-Output ('powershell-' + $env:HANDWORK_ENV_FIXTURE)", workspace, .{ .clean = powershell });
+    defer alloc.free(powershell_result.output);
+    try std.testing.expect(std.mem.indexOf(u8, powershell_result.output, "powershell-日本語") != null);
     const marker_path = try std.fs.path.join(alloc, &.{ workspace, "closed.marker" });
     defer alloc.free(marker_path);
     try environment.put("HANDWORK_CLOSED_PIPE_MARKER", marker_path);
