@@ -1,5 +1,6 @@
 // Host contract:
-// - fields: stdout_file, shadow_vt, shadow_vt_alloc, layout,
+// - methods: outputFile
+// - fields: shadow_vt, shadow_vt_alloc, layout,
 //   viewport_top_row, installed pre-handwork document state
 // This module owns the normal frame sink. Exact probes, lifecycle controls,
 // titles, crash recovery, and noninteractive output stay with their domain
@@ -41,7 +42,7 @@ pub fn disableShadowVt(shell: anytype) void {
 pub fn writeFrameBytes(shell: anytype, metrics: *Metrics, bytes: []const u8) terminal_diff.FrameSinkWriteResult {
     var accepted_bytes: usize = 0;
     while (accepted_bytes < bytes.len) {
-        const written = shell.stdout_file.writeStreaming(
+        const written = shell.outputFile().writeStreaming(
             io_mod.getIo(),
             &.{},
             &.{bytes[accepted_bytes..]},
@@ -76,6 +77,10 @@ test "writeFrameBytes writes the frame without feeding shadow" {
     const FakeShell = struct {
         stdout_file: std.Io.File,
         shadow_vt: ?*vt_emulator.Grid = null,
+
+        fn outputFile(self: *const @This()) std.Io.File {
+            return self.stdout_file;
+        }
     };
 
     var tmp = std.testing.tmpDir(.{});
@@ -101,6 +106,10 @@ test "standalone presentation bell is written without changing the shadow grid" 
     const FakeShell = struct {
         stdout_file: std.Io.File,
         shadow_vt: ?*vt_emulator.Grid = null,
+
+        fn outputFile(self: *const @This()) std.Io.File {
+            return self.stdout_file;
+        }
     };
 
     var tmp = std.testing.tmpDir(.{});

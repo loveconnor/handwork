@@ -821,6 +821,42 @@ pub fn terminalTitleFor(out: *const std.Io.File) host.TerminalTitle {
     };
 }
 
+pub fn terminalTitleForOptional(out: *const ?std.Io.File) host.TerminalTitle {
+    return .{ .context = @constCast(out), .set_fn = struct {
+        fn set(raw: ?*anyopaque, label: []const u8) void {
+            const target: *const ?std.Io.File = @ptrCast(@alignCast(raw.?));
+            const file = target.* orelse std.Io.File.stdout();
+            terminalTitleFor(&file).set(label);
+        }
+    }.set, .clear_fn = struct {
+        fn clear(raw: ?*anyopaque) void {
+            const target: *const ?std.Io.File = @ptrCast(@alignCast(raw.?));
+            const file = target.* orelse std.Io.File.stdout();
+            terminalTitleFor(&file).clear();
+        }
+    }.clear };
+}
+
+test "optional terminal title output follows redirected files" {
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const first = try tmp.dir.createFile(std.testing.io, "first.log", .{ .read = true });
+    defer first.close(std.testing.io);
+    const second = try tmp.dir.createFile(std.testing.io, "second.log", .{ .read = true });
+    defer second.close(std.testing.io);
+    var output: ?std.Io.File = first;
+    const title = terminalTitleForOptional(&output);
+    title.set("first");
+    output = second;
+    title.set("second");
+    title.clear();
+    var buffer: [64]u8 = undefined;
+    const first_len = try first.readPositionalAll(std.testing.io, &buffer, 0);
+    try std.testing.expectEqualStrings("\x1b]2;first\x07", buffer[0..first_len]);
+    const second_len = try second.readPositionalAll(std.testing.io, &buffer, 0);
+    try std.testing.expectEqualStrings("\x1b]2;second\x07\x1b]2;\x07", buffer[0..second_len]);
+}
+
 fn titleOutput(raw: ?*anyopaque) std.Io.File {
     const out: *const std.Io.File = @ptrCast(@alignCast(raw.?));
     return out.*;

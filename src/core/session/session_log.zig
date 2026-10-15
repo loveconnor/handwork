@@ -19,8 +19,8 @@ const session_permission_state = @import("../permissions/session_permission_stat
 
 const Allocator = std.mem.Allocator;
 const Identifier = session_event.Identifier;
-const private_dir_permissions = std.Io.File.Permissions.fromMode(0o700);
-const private_file_permissions = std.Io.File.Permissions.fromMode(0o600);
+const private_dir_permissions = io_mod.private_dir_permissions;
+const private_file_permissions = io_mod.private_file_permissions;
 const lock_deadline_ms: u64 = 2000;
 const events_file = "events.jsonl";
 const authority_file = "authority.json";
@@ -114,6 +114,8 @@ test "conversation cut counts standalone text without changing steering prefixes
 pub const ConversationWriter = struct {
     alloc: Allocator,
     file: std.Io.File,
+    // Windows publication closes child files while retaining the writer state.
+    file_is_open: bool = true,
     committed_bytes: u64 = 0,
     last_seq: u64 = 0,
     latest_checkpoint_coverage: u64 = 0,
@@ -209,8 +211,14 @@ pub const ConversationWriter = struct {
             self.alloc.free(@constCast(pending.tool_name));
         }
         self.pending_tool_calls.deinit(self.alloc);
-        self.file.close(io_mod.getIo());
+        if (self.file_is_open) self.closeFile();
         self.* = undefined;
+    }
+
+    fn closeFile(self: *ConversationWriter) void {
+        std.debug.assert(self.file_is_open);
+        self.file.close(io_mod.getIo());
+        self.file_is_open = false;
     }
 
     pub fn append(
@@ -3186,7 +3194,7 @@ pub const Root = struct {
                         .mode = mode,
                     };
                 }
-                std.Io.Dir.createDirAbsolute(zio, home_path, private_dir_permissions) catch |create_err| switch (create_err) {
+                io_mod.createPrivateDirAbsolute(zio, home_path) catch |create_err| switch (create_err) {
                     error.PathAlreadyExists => {},
                     else => return create_err,
                 };
@@ -3228,7 +3236,7 @@ pub const Root = struct {
         };
         defer durable_home.close(zio);
         if (mode == .writable) {
-            durable_home.setPermissions(zio, private_dir_permissions) catch
+            io_mod.setPrivateDirPermissions(zio, durable_home) catch
                 return error.PrivateStatePermissionsUnsupported;
         }
         try verifyPrivateDir(durable_home, mode);
@@ -3260,7 +3268,7 @@ pub const Root = struct {
         };
         errdefer sessions_dir.close(zio);
         if (mode == .writable) {
-            sessions_dir.setPermissions(zio, private_dir_permissions) catch
+            io_mod.setPrivateDirPermissions(zio, sessions_dir) catch
                 return error.PrivateStatePermissionsUnsupported;
         }
         try verifyPrivateDir(sessions_dir, mode);
@@ -3297,11 +3305,7 @@ pub const Root = struct {
         const suffix = std.fmt.bytesToHex(random, .lower);
         const staging_name = try std.fmt.allocPrint(alloc, "creating+{s}", .{suffix});
         defer alloc.free(staging_name);
-        sessions.dir.createDir(
-            io_mod.getIo(),
-            staging_name,
-            private_dir_permissions,
-        ) catch return failLoadedWritableSession(error.SessionStartFailed);
+        io_mod.createPrivateDir(sessions.dir, io_mod.getIo(), staging_name) catch return failLoadedWritableSession(error.SessionStartFailed);
         var unpublished = true;
         errdefer if (unpublished) {
             debug_trace.logf("session", "session creation discarded unpublished state id={s}", .{initial_state.id});
@@ -3340,9 +3344,14 @@ pub const Root = struct {
             options,
         );
         writable_owned = false;
-        errdefer loaded.deinit(alloc);
+        var loaded_owned = true;
+        errdefer if (loaded_owned) loaded.deinit(alloc);
         try loaded.conversation_writer.file.sync(io_mod.getIo());
         try io_mod.syncVerifiedDir(loaded.log.dir.dir);
+        if (comptime builtin.os.tag == .windows) {
+            loaded_owned = false;
+            return publishWindowsSession(alloc, sessions.dir, staging_name, loaded, options, &unpublished);
+        }
         publishSessionDirectory(sessions.dir, staging_name, initial_state.id) catch |err| {
             if (err == error.PathAlreadyExists) return error.SessionAlreadyExists;
             debug_trace.logf("session", "session creation publication failed id={s} err={s}", .{ initial_state.id, @errorName(err) });
@@ -3517,6 +3526,59 @@ fn publishSessionDirectory(parent: std.Io.Dir, staging: []const u8, target: []co
     }
 }
 
+/// Takes ownership of `initial`. Windows cannot rename a directory with open
+/// child files. Keep the directory and in-memory writer state, close its files,
+/// publish, then reacquire the writer on that same directory object.
+fn publishWindowsSession(
+    alloc: Allocator,
+    parent: std.Io.Dir,
+    staging: []const u8,
+    initial: LoadedWritableSession,
+    options: Options,
+    unpublished: *bool,
+) !LoadedWritableSession {
+    var loaded = initial;
+    var loaded_owned = true;
+    defer if (loaded_owned) loaded.deinit(alloc);
+    var expected = (try loadConversationStateIfPresent(alloc, &loaded.log.dir, loaded.active_id)) orelse
+        return error.InvalidSessionMetadata;
+    defer expected.deinit(alloc);
+    loaded.conversation_writer.closeFile();
+    // Closing the last write handle can finalize Windows modification times.
+    // Capture the identity only after that close, while still holding the lock.
+    const expected_stat = blk: {
+        const file = try openManagedFile(&loaded.log.dir, events_file, .read_only);
+        defer file.close(io_mod.getIo());
+        break :blk try file.stat(io_mod.getIo());
+    };
+    loaded.log.park();
+    publishSessionDirectory(parent, staging, loaded.active_id) catch |err| {
+        if (err == error.PathAlreadyExists) return error.SessionAlreadyExists;
+        return err;
+    };
+    unpublished.* = false;
+    io_mod.syncVerifiedDir(parent) catch return error.SessionStartFailed;
+    loaded.log.writer_lock = acquireLockWithDeadline(&loaded.log.dir, session_lock_file, true, options.session_lock_deadline_ms) catch |err|
+        return mapSessionLockError(err);
+    var current = (try loadConversationStateIfPresent(alloc, &loaded.log.dir, loaded.active_id)) orelse
+        return error.InvalidSessionMetadata;
+    defer current.deinit(alloc);
+    const file = try openManagedFile(&loaded.log.dir, events_file, .read_write);
+    var file_owned = true;
+    defer if (file_owned) file.close(io_mod.getIo());
+    const stat = try file.stat(io_mod.getIo());
+    // Publication briefly releases the lock. Do not adopt another writer's
+    // changes or resume through a replacement event-log object.
+    if (stat.inode != expected_stat.inode or stat.size != expected_stat.size or
+        !std.meta.eql(stat.mtime, expected_stat.mtime) or
+        !try durableStatesEqual(expected, current)) return error.SessionWriterChanged;
+    loaded.conversation_writer.file = file;
+    loaded.conversation_writer.file_is_open = true;
+    file_owned = false;
+    loaded_owned = false;
+    return loaded;
+}
+
 fn validateLeaf(name: []const u8) !void {
     if (name.len == 0 or std.mem.eql(u8, name, ".") or
         std.mem.eql(u8, name, "..") or
@@ -3529,17 +3591,13 @@ fn validateLeaf(name: []const u8) !void {
 fn verifyPrivateDir(dir: std.Io.Dir, mode: OpenMode) !void {
     const stat = try dir.stat(io_mod.getIo());
     if (stat.kind != .directory) return error.SessionPathUnsafe;
-    if (mode == .writable and stat.permissions.toMode() & 0o777 != 0o700) {
-        return error.PrivateStatePermissionsUnsupported;
-    }
+    if (mode == .writable) try io_mod.verifyPrivateDirectory(dir);
 }
 
 fn verifyManagedFile(file: std.Io.File, mode: OpenMode) !void {
     const stat = try file.stat(io_mod.getIo());
     if (stat.kind != .file or stat.nlink != 1) return error.SessionPathUnsafe;
-    if (mode == .writable and stat.permissions.toMode() & 0o777 != 0o600) {
-        return error.PrivateStatePermissionsUnsupported;
-    }
+    if (mode == .writable) try io_mod.verifyPrivateRegularFile(file);
 }
 
 fn openSessionDir(
@@ -3557,7 +3615,7 @@ fn openSessionDir(
     };
     errdefer dir.close(io_mod.getIo());
     if (mode == .writable) {
-        dir.setPermissions(io_mod.getIo(), private_dir_permissions) catch
+        io_mod.setPrivateDirPermissions(io_mod.getIo(), dir) catch
             return error.PrivateStatePermissionsUnsupported;
     }
     try verifyPrivateDir(dir, mode);
@@ -3589,7 +3647,7 @@ fn createManagedFile(
     name: []const u8,
 ) !std.Io.File {
     try validateLeaf(name);
-    var file = dir.dir.createFile(io_mod.getIo(), name, .{
+    var file = io_mod.createPrivateFile(dir.dir, io_mod.getIo(), name, .{
         .read = true,
         .truncate = false,
         .exclusive = true,
@@ -3600,7 +3658,7 @@ fn createManagedFile(
         else => return err,
     };
     errdefer file.close(io_mod.getIo());
-    file.setPermissions(io_mod.getIo(), private_file_permissions) catch
+    io_mod.setPrivateFilePermissions(io_mod.getIo(), file) catch
         return error.PrivateStatePermissionsUnsupported;
     try verifyManagedFile(file, .writable);
     return file;
@@ -3787,7 +3845,7 @@ const TempRoot = struct {
     fn init(alloc: Allocator) !TempRoot {
         var tmp = std.testing.tmpDir(.{});
         errdefer tmp.cleanup();
-        try tmp.dir.createDir(io_mod.getIo(), "home", std.Io.File.Permissions.fromMode(0o700));
+        try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), "home");
         const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
         errdefer alloc.free(home);
         var root = try Root.initFromHome(alloc, home, .writable);
@@ -4429,7 +4487,7 @@ test "legacy import migrates permissions before publishing controls" {
         .assistant = @constCast("existing answer"),
     } }};
     initial.history = try session.snapshotOwnedContextHistory(alloc, &history, 0, 0);
-    try temp.root.sessions.?.dir.createDir(std.testing.io, initial.id, private_dir_permissions);
+    try io_mod.createPrivateDir(temp.root.sessions.?.dir, std.testing.io, initial.id);
     {
         var writable = try temp.root.openWritableSessionDir(alloc, initial.id, lock_deadline_ms);
         var writable_owned = true;
@@ -4479,7 +4537,7 @@ test "legacy import omits empty file paths without losing execution history" {
         .event = .{ .turn_completed = .{ .files = &files } },
     }));
     initial.history = try session.snapshotOwnedContextHistory(alloc, &history, 0, 0);
-    try temp.root.sessions.?.dir.createDir(std.testing.io, initial.id, private_dir_permissions);
+    try io_mod.createPrivateDir(temp.root.sessions.?.dir, std.testing.io, initial.id);
     {
         var writable = try temp.root.openWritableSessionDir(alloc, initial.id, lock_deadline_ms);
         var writable_owned = true;
@@ -4554,7 +4612,7 @@ test "legacy import preserves the active retained tail and complete archive" {
     };
     initial.history = try session.snapshotOwnedContextHistory(alloc, &history, 0, 0);
     initial.context_history_start = 3;
-    try temp.root.sessions.?.dir.createDir(std.testing.io, initial.id, private_dir_permissions);
+    try io_mod.createPrivateDir(temp.root.sessions.?.dir, std.testing.io, initial.id);
     {
         var writable = try temp.root.openWritableSessionDir(alloc, initial.id, lock_deadline_ms);
         var writable_owned = true;
@@ -4616,7 +4674,7 @@ test "legacy import preserves published events and active recovery after metadat
         .max_provider_attempts = 3,
         .consumed_provider_attempts = 1,
     }).dupe(alloc);
-    try temp.root.sessions.?.dir.createDir(std.testing.io, initial.id, private_dir_permissions);
+    try io_mod.createPrivateDir(temp.root.sessions.?.dir, std.testing.io, initial.id);
     {
         var writable = try temp.root.openWritableSessionDir(alloc, initial.id, lock_deadline_ms);
         defer writable.deinit(alloc);
@@ -4766,7 +4824,7 @@ test "root session creation never replaces a racing target" {
 
         fn lock(context: ?*anyopaque, _: LockKind) void {
             const self: *@This() = @ptrCast(@alignCast(context.?));
-            self.root.sessions.?.dir.createDir(std.testing.io, "racing-session", private_dir_permissions) catch |err| {
+            io_mod.createPrivateDir(self.root.sessions.?.dir, std.testing.io, "racing-session") catch |err| {
                 if (err != error.PathAlreadyExists) self.failure = err;
                 return;
             };
@@ -5629,7 +5687,7 @@ test "recovery cleanup failure does not reject a durable conversation append" {
         .recovery_checkpoint_set = .{ .checkpoint = checkpoint },
     }, 20);
     try loaded.log.dir.dir.deleteFile(std.testing.io, recovery_checkpoint_file);
-    try loaded.log.dir.dir.createDir(std.testing.io, recovery_checkpoint_file, private_dir_permissions);
+    try io_mod.createPrivateDir(loaded.log.dir.dir, std.testing.io, recovery_checkpoint_file);
     const position = try loaded.appendEvent(alloc, .{ .history_turn_committed = .{
         .conversation_language = initial.conversation_language,
         .total_input_tokens = 0,
@@ -6052,7 +6110,7 @@ test "language metadata failure retains ownership of the committed work identity
     defer loaded.deinit(alloc);
     loaded.freshly_started = false;
     try loaded.log.dir.dir.deleteFile(std.testing.io, "session.json");
-    try loaded.log.dir.dir.createDir(std.testing.io, "session.json", private_dir_permissions);
+    try io_mod.createPrivateDir(loaded.log.dir.dir, std.testing.io, "session.json");
     try std.testing.expectError(error.SessionPersistenceUncertain, loaded.appendEvent(alloc, .{ .history_turn_committed = .{
         .work_id = @constCast("committed-work"),
         .conversation_language = .literal("fr"),

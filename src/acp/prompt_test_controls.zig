@@ -1,7 +1,7 @@
 const std = @import("std");
 const io_mod = @import("../core/shared/io.zig");
 
-const private_file_permissions = std.Io.File.Permissions.fromMode(0o600);
+const private_file_permissions = io_mod.private_file_permissions;
 
 const Controls = struct {
     terminal_ready_path: []const u8,
@@ -43,7 +43,7 @@ fn controlsFromPaths(
 }
 
 fn writeMarker(path: []const u8, contents: []const u8) !void {
-    var file = try std.Io.Dir.createFileAbsolute(io_mod.getIo(), path, .{
+    var file = try io_mod.createPrivateFileAbsolute(io_mod.getIo(), path, .{
         .truncate = true,
         .permissions = private_file_permissions,
     });

@@ -200,7 +200,7 @@ pub const Paths = struct {
     endpoint_path: []u8,
 
     pub fn open(alloc: Allocator, home: []const u8) !Paths {
-        if (!isSupported()) return error.TerminalHostUnsupported;
+        if (comptime !isSupported()) return error.TerminalHostUnsupported;
         var selection = try resolveEndpointSelection(
             alloc,
             builtin.os.tag,
@@ -289,11 +289,7 @@ fn openVerifiedPrivateRuntimeDir(
         .follow_symlinks = false,
     }) catch |err| switch (err) {
         error.FileNotFound => blk: {
-            parent.createDir(
-                zio,
-                name,
-                std.Io.File.Permissions.fromMode(0o700),
-            ) catch |create_err| switch (create_err) {
+            io_mod.createPrivateDir(parent, zio, name) catch |create_err| switch (create_err) {
                 error.PathAlreadyExists => {},
                 else => return create_err,
             };
@@ -364,6 +360,7 @@ fn validatePrivateRuntimeDir(
 ) !void {
     if (stat.kind != .directory) return error.RuntimeDirectoryUnsafe;
     if (owner_uid != uid) return error.RuntimeDirectoryOwnerMismatch;
+    if (comptime builtin.os.tag == .windows) return error.TerminalHostUnsupported;
     if (stat.permissions.toMode() & 0o777 != 0o700) {
         return error.PrivateStatePermissionsUnsupported;
     }

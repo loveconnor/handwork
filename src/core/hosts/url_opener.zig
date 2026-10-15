@@ -19,6 +19,7 @@ fn openUrlForHost(_: ?*anyopaque, alloc: Allocator, url: []const u8) host.UrlOpe
 }
 
 fn openUrl(alloc: Allocator, url: []const u8) Allocator.Error!bool {
+    if (comptime builtin.os.tag == .windows) return @import("windows_shell.zig").openWebUrl(alloc, url);
     return launchUrl(alloc, url, builtin.os.tag, .{}) == .opened;
 }
 

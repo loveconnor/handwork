@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const agent_steps = @import("agent_steps.zig");
 const debug_trace = @import("../shared/debug_trace.zig");
 const io_mod = @import("../shared/io.zig");
@@ -793,6 +794,7 @@ pub fn parsePermissionAction(raw: []const u8) ?types.PermissionAction {
 
 pub fn makeAbsolutePath(path_abs: []const u8) !void {
     const zio = io_mod.getIo();
+    if (comptime builtin.os.tag == .windows) return std.Io.Dir.cwd().createDirPath(zio, path_abs);
     var root = try std.Io.Dir.openDirAbsolute(zio, "/", .{});
     defer root.close(zio);
 

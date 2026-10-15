@@ -74,6 +74,7 @@ pub const AutoUpgrade = struct {
         alloc: Allocator,
         current: update_target.CurrentBuild,
     ) void {
+        if (comptime @import("builtin").os.tag == .windows) return;
         self.setPreviousRevision(current.revision);
         if (helpers.resolveCdnBase().len == 0) return;
         self.thread = std.Thread.spawn(.{}, runLoop, .{ self, alloc, current }) catch return;

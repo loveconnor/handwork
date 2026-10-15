@@ -895,6 +895,20 @@ pub const advertisement_set = tool_set_contract.ToolSet{
     .read_only_tool_names = read_only_tool_names[0..],
 };
 
+const chat_tools = [_]tool_dispatch.Tool{ read_file, web_fetch, web_search, read_tool_result };
+const chat_tools_without_search = [_]tool_dispatch.Tool{ read_file, web_fetch, read_tool_result };
+pub const chat_set = tool_set_contract.ToolSet{
+    .registry = .{ .tools = &chat_tools },
+    .order = &.{ "read_file", "web_fetch", "web_search", "read_tool_result" },
+    .read_only_tool_names = &.{"read_file"},
+};
+
+pub const chat_set_without_search = tool_set_contract.ToolSet{
+    .registry = .{ .tools = &chat_tools_without_search },
+    .order = &.{ "read_file", "web_fetch", "read_tool_result" },
+    .read_only_tool_names = &.{"read_file"},
+};
+
 pub fn lookup(name: []const u8) ?ToolSpec {
     const spec = registry.lookup(name) orelse return null;
     return spec.*;

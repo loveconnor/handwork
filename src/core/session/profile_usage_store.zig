@@ -13,8 +13,8 @@ const max_record_bytes: usize = 16 * 1024;
 const max_records: usize = 200_000;
 const compaction_threshold_bytes: u64 = 8 * 1024 * 1024;
 const retention_ms: i64 = std.time.ms_per_day * 35;
-const private_dir_permissions = std.Io.Dir.Permissions.fromMode(0o700);
-const private_file_permissions = std.Io.File.Permissions.fromMode(0o600);
+const private_dir_permissions = io_mod.private_dir_permissions;
+const private_file_permissions = io_mod.private_file_permissions;
 
 pub const AppendOutcome = enum {
     appended,
@@ -269,11 +269,7 @@ pub const Store = struct {
 
     fn validateReadable(self: *Store) !void {
         const durable_home = self.durable_home orelse return;
-        const stat = try durable_home.dir.stat(io_mod.getIo());
-        if (stat.kind != .directory) return error.DurablePathUnsafe;
-        if (stat.permissions.toMode() & 0o777 != 0o700) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        try io_mod.verifyPrivateDirectory(durable_home.dir);
     }
 
     fn ensureWritable(self: *Store) !void {
@@ -293,15 +289,8 @@ pub const Store = struct {
                 else => return error.DurableLayoutFailed,
             };
         }
-        self.durable_home.?.dir.setPermissions(
-            io_mod.getIo(),
-            private_dir_permissions,
-        ) catch return error.PrivateStatePermissionsUnsupported;
-        const stat = try self.durable_home.?.dir.stat(io_mod.getIo());
-        if (stat.kind != .directory) return error.DurablePathUnsafe;
-        if (stat.permissions.toMode() & 0o777 != 0o700) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        io_mod.setPrivateDirPermissions(io_mod.getIo(), self.durable_home.?.dir) catch return error.PrivateStatePermissionsUnsupported;
+        try io_mod.verifyPrivateDirectory(self.durable_home.?.dir);
     }
 
     fn acquireLock(self: *Store) !io_mod.TimedAdvisoryLock {
@@ -327,13 +316,7 @@ pub const Store = struct {
             else => return err,
         };
         errdefer file.close(zio);
-        const stat = try file.stat(zio);
-        if (stat.kind != .file or stat.nlink != 1) {
-            return error.DurablePathUnsafe;
-        }
-        if (stat.permissions.toMode() & 0o777 != 0o600) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        try io_mod.verifyPrivateRegularFile(file);
 
         const started = self.lock_ops.now_ms(self.lock_ops.ctx);
         const deadline = started + @as(i64, @intCast(lock_deadline_ms));
@@ -356,21 +339,19 @@ pub const Store = struct {
         }
     }
 
-    fn lockFileExists(self: *Store) !bool {
-        const durable_home = self.durable_home orelse return false;
-        const stat = durable_home.dir.statFile(io_mod.getIo(), usage_lock_file, .{
-            .follow_symlinks = false,
-        }) catch |err| switch (err) {
-            error.FileNotFound => return false,
-            error.SymLinkLoop, error.NotDir => return error.DurablePathUnsafe,
+    fn openExistingLockForPresence(_: *Store, dir: std.Io.Dir) !?std.Io.File {
+        return io_mod.openExistingRegularFile(dir, usage_lock_file, .read_only) catch |err| switch (err) {
+            error.FileNotFound => return null,
+            error.SymLinkLoop, error.NotDir, error.IsDir => return error.DurablePathUnsafe,
             else => return err,
         };
-        if (stat.kind != .file or stat.nlink != 1) {
-            return error.DurablePathUnsafe;
-        }
-        if (stat.permissions.toMode() & 0o777 != 0o600) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+    }
+
+    fn lockFileExists(self: *Store) !bool {
+        const durable_home = self.durable_home orelse return false;
+        const file = try self.openExistingLockForPresence(durable_home.dir) orelse return false;
+        defer file.close(io_mod.getIo());
+        try io_mod.verifyPrivateRegularFile(file);
         return true;
     }
 
@@ -388,7 +369,7 @@ pub const Store = struct {
         ) catch |err| switch (err) {
             error.FileNotFound => create_file: {
                 if (!create) return null;
-                const new_file = self.durable_home.?.dir.createFile(zio, usage_file, .{
+                const new_file = io_mod.createPrivateFile(self.durable_home.?.dir, zio, usage_file, .{
                     .read = true,
                     .truncate = false,
                     .exclusive = true,
@@ -412,13 +393,10 @@ pub const Store = struct {
             if (writable) .read_write else .read_only,
         );
         if (writable) {
-            file.setPermissions(zio, private_file_permissions) catch
+            io_mod.setPrivateFilePermissions(zio, file) catch
                 return error.PrivateStatePermissionsUnsupported;
         }
-        const verified = if (writable) try file.stat(zio) else initial;
-        if (verified.permissions.toMode() & 0o777 != 0o600) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
+        try io_mod.verifyPrivateRegularFile(file);
         if (created) {
             io_mod.syncVerifiedDir(self.durable_home.?.dir) catch
                 return error.DurableLayoutFailed;
@@ -1293,11 +1271,7 @@ test "profile usage store leaves an incomplete tail intact when repair exceeds r
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        ".handwork",
-        std.Io.Dir.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), ".handwork");
     var profile = try tmp.dir.openDir(io_mod.getIo(), ".handwork", .{ .iterate = true });
     defer profile.close(io_mod.getIo());
     profile.setPermissions(io_mod.getIo(), .fromMode(0o700)) catch
@@ -1307,13 +1281,13 @@ test "profile usage store leaves an incomplete tail intact when repair exceeds r
     defer contents.deinit();
     for (0..max_records) |_| try writeCoverage(&contents.writer, 1);
     try contents.writer.writeAll("{\"schema_version\":1");
-    var file = try profile.createFile(io_mod.getIo(), usage_file, .{
+    var file = try io_mod.createPrivateFile(profile, io_mod.getIo(), usage_file, .{
         .permissions = private_file_permissions,
     });
     try file.writeStreamingAll(io_mod.getIo(), contents.written());
     const original_length = try file.length(io_mod.getIo());
     file.close(io_mod.getIo());
-    var lock = try profile.createFile(io_mod.getIo(), usage_lock_file, .{
+    var lock = try io_mod.createPrivateFile(profile, io_mod.getIo(), usage_lock_file, .{
         .permissions = private_file_permissions,
     });
     lock.close(io_mod.getIo());
@@ -1405,7 +1379,7 @@ test "profile usage reads reject an unsafe profile directory without repairing i
         .reasoning_tokens = null,
         .total_cost = 0.001,
     });
-    var file = try profile.createFile(io_mod.getIo(), usage_file, .{
+    var file = try io_mod.createPrivateFile(profile, io_mod.getIo(), usage_file, .{
         .permissions = private_file_permissions,
     });
     try file.writeStreamingAll(io_mod.getIo(), contents.written());
@@ -1428,11 +1402,7 @@ test "profile usage store decodes a large ledger with stable id indexing" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDir(
-        io_mod.getIo(),
-        ".handwork",
-        std.Io.File.Permissions.fromMode(0o700),
-    );
+    try io_mod.createPrivateDir(tmp.dir, io_mod.getIo(), ".handwork");
     var profile = try tmp.dir.openDir(io_mod.getIo(), ".handwork", .{ .iterate = true });
     defer profile.close(io_mod.getIo());
     profile.setPermissions(io_mod.getIo(), .fromMode(0o700)) catch
@@ -1463,12 +1433,12 @@ test "profile usage store decodes a large ledger with stable id indexing" {
             .total_cost = 0.001,
         });
     }
-    var file = try profile.createFile(io_mod.getIo(), usage_file, .{
+    var file = try io_mod.createPrivateFile(profile, io_mod.getIo(), usage_file, .{
         .permissions = private_file_permissions,
     });
     try file.writeStreamingAll(io_mod.getIo(), contents.written());
     file.close(io_mod.getIo());
-    var lock = try profile.createFile(io_mod.getIo(), usage_lock_file, .{
+    var lock = try io_mod.createPrivateFile(profile, io_mod.getIo(), usage_lock_file, .{
         .permissions = private_file_permissions,
     });
     lock.close(io_mod.getIo());

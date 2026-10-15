@@ -1,0 +1,47 @@
+name: Windows
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Zig 0.16.0 with its published checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $index = Invoke-RestMethod https://ziglang.org/download/index.json
+          $release = $index.'0.16.0'.'x86_64-windows'
+          if (-not $release) { throw 'Zig 0.16.0 Windows release is unavailable' }
+          $archive = Join-Path $env:RUNNER_TEMP 'zig.zip'
+          Invoke-WebRequest $release.tarball -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $release.shasum) { throw 'Zig checksum mismatch' }
+          $destination = Join-Path $env:RUNNER_TEMP 'zig'
+          Expand-Archive $archive $destination
+          (Get-ChildItem $destination -Directory | Select-Object -First 1).FullName | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Build packaged Windows executable
+        id: build
+        shell: pwsh
+        run: node scripts/package-native.mjs --target=win32-x64
+      - name: Test native Windows adapters
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: pwsh
+        run: zig build test-platform -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Test settings, sessions and commands
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          HANDWORK_E2E_PUBLIC_HTTPS: '1'
+        shell: pwsh
+        run: zig build test-platform-integration -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Exercise CLI and npm installation
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: pwsh
+        run: ./scripts/test-windows.ps1 -SkipBuild

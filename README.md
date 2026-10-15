@@ -81,7 +81,7 @@ npm ci
 zig build
 ```
 
-Those adapters require Node.js 22.12+ or 20.19+. The npm package's macOS arm64 restriction is not a promise of support for other source-build targets.
+Those adapters require Node.js 22.12+ or 20.19+. This checkout includes experimental Windows x64 and ARM64 build targets and portable npm packaging. Windows x64 installation, commands, settings and saved-session flows pass [native CI](https://github.com/loveconnor/handwork/actions/runs/38819044192). ARM64 is cross-compiled only; see [Windows port status](docs/windows-support.md) for the checks and remaining limitations.
 
 ### Update
 

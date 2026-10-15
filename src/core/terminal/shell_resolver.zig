@@ -14,12 +14,14 @@ pub const ResolveError = error{
 pub const Profile = command_environment.Profile;
 pub const Environment = command_environment.Environment;
 
-const ShellKind = enum { bash, zsh };
+const ShellKind = enum { bash, zsh, cmd, powershell };
 
 fn shellKind(path: []const u8) ?ShellKind {
-    const basename = std.fs.path.basename(path);
+    const basename = std.fs.path.basenameWindows(path);
     if (std.mem.eql(u8, basename, "bash")) return .bash;
     if (std.mem.eql(u8, basename, "zsh")) return .zsh;
+    if (std.ascii.eqlIgnoreCase(basename, "cmd.exe")) return .cmd;
+    if (std.ascii.eqlIgnoreCase(basename, "powershell.exe") or std.ascii.eqlIgnoreCase(basename, "pwsh.exe")) return .powershell;
     return null;
 }
 
@@ -36,6 +38,7 @@ fn supportedLoginShell(configured_login_shell: ?[]const u8) ResolveError![]const
 
 pub const Invocation = struct {
     path: []const u8,
+    clean_start: bool = false,
     values: [6][]const u8 = @splat(""),
     len: usize = 0,
 
@@ -49,7 +52,11 @@ pub const Invocation = struct {
     }
 
     pub fn setCommand(self: *Invocation, command: []const u8) void {
-        self.append("-c");
+        self.append(switch (shellKind(self.path).?) {
+            .cmd => "/C",
+            .powershell => "-Command",
+            else => "-c",
+        });
         self.append(command);
     }
 };
@@ -78,7 +85,7 @@ pub fn resolve(
 
     const kind = shellKind(selection.path) orelse return error.UnsupportedShell;
 
-    var result = Invocation{ .path = selection.path };
+    var result = Invocation{ .path = selection.path, .clean_start = selection.clean_start };
     result.append(selection.path);
     switch (kind) {
         .bash => {
@@ -89,6 +96,15 @@ pub fn resolve(
                 result.append("--login");
             }
             result.append("-i");
+        },
+        .cmd => {
+            if (selection.clean_start) result.append("/D");
+            result.append("/S");
+        },
+        .powershell => {
+            result.append("-NoLogo");
+            result.append("-NonInteractive");
+            if (selection.clean_start) result.append("-NoProfile");
         },
         .zsh => {
             if (selection.clean_start) {
@@ -103,6 +119,13 @@ pub fn resolve(
 }
 
 pub fn configuredLoginShellInto(buffer: []u8) ?[]const u8 {
+    if (comptime builtin.os.tag == .windows) {
+        const directory = std.os.windows.getSystemDirectoryWtf16Le();
+        const path = std.unicode.wtf16LeToWtf8Alloc(std.heap.page_allocator, directory) catch return null;
+        defer std.heap.page_allocator.free(path);
+        return std.fmt.bufPrint(buffer, "{s}\\cmd.exe", .{std.mem.trimEnd(u8, path, "\\/")}) catch null;
+    }
+
     if (comptime !builtin.link_libc or builtin.os.tag == .windows or builtin.os.tag == .wasi) {
         return null;
     }
@@ -231,6 +254,7 @@ pub fn formatInvocationCommand(
 }
 
 fn removeInteractiveFlag(invocation: *Invocation) void {
+    if (shellKind(invocation.path) == .cmd or shellKind(invocation.path) == .powershell) return;
     std.debug.assert(invocation.len > 0);
     std.debug.assert(std.mem.eql(u8, invocation.values[invocation.len - 1], "-i"));
     invocation.len -= 1;

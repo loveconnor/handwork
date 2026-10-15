@@ -181,6 +181,10 @@ pub const Client = struct {
 };
 
 fn applyResponseTimeout(stream: std.Io.net.Stream) void {
+    if (comptime @import("builtin").os.tag == .windows) {
+        @import("../../core/hosts/windows_sockets.zig").setTimeoutMillis(@intFromPtr(stream.socket.handle), 250) catch {};
+        return;
+    }
     std.posix.setsockopt(
         stream.socket.handle,
         std.posix.SOL.SOCKET,

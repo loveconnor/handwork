@@ -1617,6 +1617,7 @@ fn finalizeTurn(raw_ctx: *anyopaque, turn_id: u64, outcome: types.TurnPresentati
 
 fn appendRuntimeContext(raw_ctx: *anyopaque, arena: Allocator, messages: *std.ArrayList(ChatMessage)) !void {
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
+    if (ctx.state.standalone_chat) return;
     const session = if (ctx.state.active_session) |*active| active else unreachable;
     try ctx.state.cfg.context_registry.appendDefaultTransient(.{
         .workspace_root = ctx.state.workspace_root,
@@ -1628,6 +1629,7 @@ fn appendRuntimeContext(raw_ctx: *anyopaque, arena: Allocator, messages: *std.Ar
 
 fn appendStaticContext(raw_ctx: *anyopaque, arena: Allocator, project_context: ?[]const u8, messages: *std.ArrayList(ChatMessage)) !void {
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
+    if (ctx.state.standalone_chat) return;
     try ctx.state.cfg.context_registry.appendDefaultStatic(.{
         .project_context = project_context orelse ctx.modelVisibleProjectContext(),
     }, arena, messages);
@@ -1655,6 +1657,21 @@ fn snapshotMcpDefinition(raw_ctx: *anyopaque, arena: Allocator, name: []const u8
 
 fn validateToolCall(raw_ctx: *anyopaque, arena: Allocator, call: ToolCall) !agent_runtime.ToolCallValidationResult {
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
+    if (ctx.state.standalone_chat) {
+        if (ctx.toolRegistry().lookup(call.name) == null) return .{ .failure = "This tool is unavailable in a standalone chat." };
+        if (std.mem.eql(u8, call.name, "read_file")) {
+            const parsed = std.json.parseFromSlice(std.json.Value, arena, call.arguments_json, .{}) catch return .{ .failure = "Invalid attachment path." };
+            defer parsed.deinit();
+            const value = if (parsed.value == .object) parsed.value.object.get("path") else null;
+            if (value == null or value.? != .string) return .{ .failure = "Invalid attachment path." };
+            const joined = try std.fs.path.resolve(arena, &.{ ctx.state.workspace_root, value.?.string });
+            defer arena.free(joined);
+            const resolved = io_mod.realpathAlloc(arena, joined) catch return .{ .failure = "Attachment is unavailable." };
+            defer arena.free(resolved);
+            const root = ctx.state.workspace_root;
+            if (!std.mem.startsWith(u8, resolved, root) or resolved.len <= root.len or resolved[root.len] != std.fs.path.sep) return .{ .failure = "Standalone chats can only read their attached files." };
+        }
+    }
     if (ctx.state.active_session) |session| {
         const mode = ctx.captured_mode orelse session.mode;
         if (try ctx.state.cfg.mode_registry.toolPolicyDeniedJson(arena, activeToolSet(ctx.state), mode, call.name)) |reason| {
@@ -4800,4 +4817,42 @@ test "ACP prompt agent config carries request options from active session" {
     try std.testing.expectEqual(state.cfg.provider_retry_count, state.web_search_runtime.provider_retry_count);
     try std.testing.expectEqualStrings(state.cfg.provider_chat_url, state.web_search_runtime.provider_chat_url);
     try std.testing.expectEqualStrings("/models", tool_ctx.provider_models_path);
+}
+
+test "standalone chats restrict tools to web and their own attachments" {
+    const alloc = std.testing.allocator;
+    var arena_state = std.heap.ArenaAllocator.init(alloc);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    try tmp.dir.createDirPath(std.testing.io, "chat");
+    try tmp.dir.writeFile(std.testing.io, .{ .sub_path = "chat/attached.txt", .data = "attachment" });
+    try tmp.dir.writeFile(std.testing.io, .{ .sub_path = "outside.txt", .data = "private" });
+    try createSymlinkOrSkip(tmp.dir, "../outside.txt", "chat/linked.txt");
+    const root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "chat");
+    defer alloc.free(root);
+    var state = try initTestAcpState(alloc, root, .ask);
+    defer state.deinit();
+    state.standalone_chat = true;
+    var ctx = AcpContext{ .alloc = alloc, .state = &state, .session_id = "session_1" };
+    const registry = ctx.toolRegistry();
+    var projection = try tool_projection_mod.buildModelToolProjectionForSet(alloc, activeToolSet(&state), .{});
+    defer projection.deinit(alloc);
+    try std.testing.expect(projection.advertised_functions.len == 3);
+    try std.testing.expect(tool_projection_mod.containsName(projection.advertised_names, "web_search"));
+    try std.testing.expect(registry.lookup("web_search") != null);
+    try std.testing.expect(registry.lookup("web_fetch") != null);
+    for ([_][]const u8{ "shell", "write_file", "edit_file", "glob_files", "grep_files", "subagent", "skill", "mcp_select_tool" }) |name| {
+        try std.testing.expect(registry.lookup(name) == null);
+        const result = try validateToolCall(@ptrCast(&ctx), arena, .{ .id = "denied", .name = name, .arguments_json = "{}" });
+        try std.testing.expect(result == .failure);
+    }
+    for ([_][]const u8{ "../outside.txt", "linked.txt" }) |path| {
+        const args = try std.fmt.allocPrint(arena, "{{\"path\":\"{s}\"}}", .{path});
+        const result = try validateToolCall(@ptrCast(&ctx), arena, .{ .id = "escape", .name = "read_file", .arguments_json = args });
+        try std.testing.expect(result == .failure);
+    }
+    const allowed = try validateToolCall(@ptrCast(&ctx), arena, .{ .id = "attachment", .name = "read_file", .arguments_json = "{\"path\":\"attached.txt\"}" });
+    try std.testing.expect(allowed != .failure);
 }

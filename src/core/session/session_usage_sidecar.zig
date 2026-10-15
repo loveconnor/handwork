@@ -208,9 +208,7 @@ pub fn capture(
         if (err == error.FileNotFound) return .missing;
         return .{ .invalid = @errorName(err) };
     };
-    if (initial.kind != .file or initial.nlink != 1 or
-        initial.permissions.toMode() & 0o777 != 0o600)
-    {
+    if (initial.kind != .file or initial.nlink != 1) {
         return .{ .invalid = "unsafe_initial_shape" };
     }
     if (initial.size == 0) return .{ .invalid = "empty" };
@@ -227,11 +225,10 @@ pub fn capture(
         return .{ .invalid = @errorName(err) };
     };
     defer file.close(io_mod.getIo());
+    io_mod.verifyPrivateRegularFile(file) catch return .{ .invalid = "unsafe_permissions" };
     const verified = file.stat(io_mod.getIo()) catch |err|
         return .{ .invalid = @errorName(err) };
-    if (verified.kind != .file or verified.nlink != 1 or
-        verified.permissions.toMode() & 0o777 != 0o600)
-    {
+    if (verified.kind != .file or verified.nlink != 1) {
         return .{ .invalid = "unsafe_verified_shape" };
     }
     if (verified.size != initial.size) return .{ .invalid = "changed_during_open" };

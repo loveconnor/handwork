@@ -83,7 +83,7 @@ pub fn buildRequest(
     try writeResponsesInput(writer, std.heap.c_allocator, projected orelse request.messages, request.verified_images, budget);
     try writer.writeByte(']');
 
-    _ = try responses_protocol.writeTools(writer, alloc, request.tools);
+    _ = try responses_protocol.writeToolsWithNativeSearch(writer, alloc, request.tools, true);
     try writer.writeAll(",\"tool_choice\":");
     try std.json.Stringify.value(request.tool_choice.label(), .{}, writer);
     try writer.writeAll(",\"parallel_tool_calls\":true,\"include\":[\"reasoning.encrypted_content\"]");
@@ -919,4 +919,16 @@ test "OpenAI Codex rejects a 129th streamed tool call" {
     } else |err| {
         try std.testing.expectEqual(error.OpenAICodexToolCallLimitExceeded, err);
     }
+}
+
+test "standalone Codex chats send native web search only when advertised" {
+    const alloc = std.testing.allocator;
+    const instructions = [_]types.ChatMessage{.{ .role = .system, .content = "Chat normally." }};
+    const messages = [_]types.ChatMessage{.{ .role = .user, .content = "Search for current news." }};
+    const body = try buildRequest(alloc, .{ .model = "gpt-5.4", .tool_choice = .auto, .provider_options = .{}, .instructions = &instructions, .messages = &messages, .tools = .{ .advertised_names = &.{"web_search"} } });
+    defer alloc.free(body);
+    try std.testing.expect(std.mem.find(u8, body, "\"type\":\"web_search\",\"external_web_access\":true") != null);
+    const no_search = try buildRequest(alloc, .{ .model = "gpt-5.4", .tool_choice = .auto, .provider_options = .{}, .instructions = &instructions, .messages = &messages });
+    defer alloc.free(no_search);
+    try std.testing.expect(std.mem.find(u8, no_search, "\"type\":\"web_search\"") == null);
 }

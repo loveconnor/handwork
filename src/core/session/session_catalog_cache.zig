@@ -159,7 +159,8 @@ pub const Loaded = struct {
         var file = try dir.openFile(io_mod.getIo(), file_name, .{ .follow_symlinks = false, .allow_directory = false, .resolve_beneath = true });
         defer file.close(io_mod.getIo());
         const stat = try file.stat(io_mod.getIo());
-        if (stat.kind != .file or stat.nlink > 1 or (stat.permissions.toMode() & 0o077) != 0 or stat.size > max_bytes) return error.InvalidCatalogCache;
+        io_mod.verifyOwnerOnlyRegularFile(file) catch return error.InvalidCatalogCache;
+        if (stat.kind != .file or stat.nlink > 1 or stat.size > max_bytes) return error.InvalidCatalogCache;
         const bytes = try alloc.alloc(u8, @intCast(stat.size));
         errdefer alloc.free(bytes);
         var offset: usize = 0;
@@ -466,11 +467,11 @@ fn statOptional(dir: std.Io.Dir, path: []const u8) !?std.Io.File.Stat {
 
 fn sameStat(a: std.Io.File.Stat, b: std.Io.File.Stat) bool {
     return a.inode == b.inode and a.nlink == b.nlink and a.kind == b.kind and a.size == b.size and
-        a.permissions.toMode() == b.permissions.toMode() and a.mtime.nanoseconds == b.mtime.nanoseconds and a.ctime.nanoseconds == b.ctime.nanoseconds;
+        a.permissions == b.permissions and a.mtime.nanoseconds == b.mtime.nanoseconds and a.ctime.nanoseconds == b.ctime.nanoseconds;
 }
 
 fn addStat(hash: *Sha256, stat: std.Io.File.Stat) void {
-    const values = [_]u128{ stat.inode, stat.nlink, stat.size, @intFromEnum(stat.kind), stat.permissions.toMode(), @bitCast(@as(i128, stat.mtime.nanoseconds)), @bitCast(@as(i128, stat.ctime.nanoseconds)) };
+    const values = [_]u128{ @bitCast(@as(i128, stat.inode)), stat.nlink, stat.size, @intFromEnum(stat.kind), @intFromEnum(stat.permissions), @bitCast(@as(i128, stat.mtime.nanoseconds)), @bitCast(@as(i128, stat.ctime.nanoseconds)) };
     var bytes: [16]u8 = undefined;
     for (values) |value| {
         std.mem.writeInt(u128, &bytes, value, .little);

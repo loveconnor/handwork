@@ -19,9 +19,14 @@ fn captureToken(
     alloc: Allocator,
     pid_text: []const u8,
 ) process_provider.ProviderError!process_identity.ProcessInstanceToken {
-    const pid = std.fmt.parseInt(std.posix.pid_t, pid_text, 10) catch
+    const pid = std.fmt.parseInt(if (builtin.os.tag == .windows) u32 else std.posix.pid_t, pid_text, 10) catch
         return error.InvalidPid;
     return switch (builtin.os.tag) {
+        .windows => @import("../../core/hosts/windows_processes.zig").captureToken(pid) catch |err| switch (err) {
+            error.ProcessNotFound => error.ProcessNotFound,
+            error.PermissionDenied => error.PermissionDenied,
+            else => error.ProcessIdentityUnavailable,
+        },
         .linux => captureLinuxToken(alloc, pid) catch |err| switch (err) {
             error.OutOfMemory => error.OutOfMemory,
             error.ProcessNotFound => error.ProcessNotFound,
@@ -228,8 +233,17 @@ fn signalProcess(
         .unavailable => return error.ProcessIdentityIndeterminate,
     }
     if (!host.current().process_control) return error.Unsupported;
-    const pid = std.fmt.parseInt(std.posix.pid_t, pid_text, 10) catch
+    const pid = std.fmt.parseInt(if (builtin.os.tag == .windows) u32 else std.posix.pid_t, pid_text, 10) catch
         return error.InvalidPid;
+    if (comptime builtin.os.tag == .windows) {
+        return @import("../../core/hosts/windows_processes.zig").terminateTree(alloc, pid, expected) catch |err| switch (err) {
+            error.OutOfMemory => error.OutOfMemory,
+            error.ProcessIdentityMismatch => error.ProcessIdentityMismatch,
+            error.ProcessNotFound => error.ProcessNotFound,
+            error.PermissionDenied => error.PermissionDenied,
+            else => error.ProcessIdentityUnavailable,
+        };
+    }
     var tracker = try process_tree.Tracker.init(alloc);
     defer tracker.deinit();
     tracker.refresh(pid) catch |err| switch (err) {

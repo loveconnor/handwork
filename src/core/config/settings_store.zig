@@ -363,18 +363,22 @@ pub const Store = struct {
         errdefer durable_home.close(zio);
 
         if (mode == .writable) {
-            durable_home.setPermissions(zio, std.Io.File.Permissions.fromMode(0o700)) catch {
+            io_mod.setPrivateDirPermissions(zio, durable_home) catch {
                 return error.PrivateStatePermissionsUnsupported;
             };
         }
         const stat = try durable_home.stat(zio);
         if (stat.kind != .directory) return error.DurablePathUnsafe;
-        const durable_mode = stat.permissions.toMode() & 0o777;
-        if (mode == .writable and durable_mode != 0o700) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
-        if (mode == .read_only and durableModeWritableByGroupOrOther(durable_mode)) {
-            return error.PrivateStatePermissionsUnsupported;
+        if (comptime @import("builtin").os.tag == .windows) {
+            try io_mod.verifyPrivateDirectory(durable_home);
+        } else {
+            const durable_mode = stat.permissions.toMode() & 0o777;
+            if (mode == .writable and durable_mode != 0o700) {
+                return error.PrivateStatePermissionsUnsupported;
+            }
+            if (mode == .read_only and durableModeWritableByGroupOrOther(durable_mode)) {
+                return error.PrivateStatePermissionsUnsupported;
+            }
         }
 
         return .{
@@ -727,17 +731,21 @@ pub const Store = struct {
         const stat = try file.stat(zio);
         try io_mod.verifyOpenedRegularFile(stat, open_mode);
         if (self.mode == .writable) {
-            file.setPermissions(zio, std.Io.File.Permissions.fromMode(0o600)) catch {
+            io_mod.setPrivateFilePermissions(zio, file) catch {
                 return error.PrivateStatePermissionsUnsupported;
             };
         }
         const verified_stat = if (self.mode == .writable) try file.stat(zio) else stat;
-        const primary_mode = verified_stat.permissions.toMode() & 0o777;
-        if (self.mode == .writable and primary_mode != 0o600) {
-            return error.PrivateStatePermissionsUnsupported;
-        }
-        if (self.mode == .read_only and durableModeWritableByGroupOrOther(primary_mode)) {
-            return error.PrivateStatePermissionsUnsupported;
+        if (comptime @import("builtin").os.tag == .windows) {
+            try io_mod.verifyPrivateRegularFile(file);
+        } else {
+            const primary_mode = verified_stat.permissions.toMode() & 0o777;
+            if (self.mode == .writable and primary_mode != 0o600) {
+                return error.PrivateStatePermissionsUnsupported;
+            }
+            if (self.mode == .read_only and durableModeWritableByGroupOrOther(primary_mode)) {
+                return error.PrivateStatePermissionsUnsupported;
+            }
         }
         if (verified_stat.size > max_settings_bytes) return .oversized;
         return .{ .bytes = try io_mod.readFileToEnd(alloc, &file, max_settings_bytes + 1) };

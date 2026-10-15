@@ -263,7 +263,7 @@ pub fn writeInitializeResponse(w: *std.Io.Writer, image_prompts: bool) !void {
     try w.writeAll("{\"protocolVersion\":");
     try w.print("{d}", .{protocol_version});
     try w.writeAll(",\"agentCapabilities\":{");
-    try w.writeAll("\"loadSession\":true,");
+    try w.writeAll("\"loadSession\":true,\"handwork\":{\"backgroundTask\":true,\"standaloneChat\":true},");
     try w.print("\"promptCapabilities\":{{\"image\":{s},\"audio\":false,\"embeddedContext\":true}},", .{if (image_prompts) "true" else "false"});
     try w.writeAll("\"mcpCapabilities\":{\"http\":true,\"sse\":true},");
     try w.writeAll("\"sessionCapabilities\":{\"list\":{},\"resume\":{},\"close\":{}}");

@@ -2079,7 +2079,11 @@ fn buildTurnContextFragment(arena: Allocator, workspace_root: []const u8) ![]con
     const cwd = currentWorkingDirectory(arena) catch "(unavailable)";
     const os_text = try host.operatingSystemText(arena);
     const date_text = try todayUtcText(arena);
-    const shell = shellPath() orelse "(unknown)";
+    var shell_buffer: [4096]u8 = undefined;
+    const shell = if (comptime @import("builtin").os.tag == .windows)
+        @import("../core/terminal/shell_resolver.zig").configuredLoginShellInto(&shell_buffer) orelse "(unknown)"
+    else
+        shellPath() orelse "(unknown)";
     const home = homeDir() orelse "(unknown)";
     const git = collectGitInfo(arena, workspace_root) catch GitInfo{};
 
@@ -2097,6 +2101,9 @@ fn buildTurnContextFragment(arena: Allocator, workspace_root: []const u8) ![]con
     try out.writer.writeAll("shell_path: ");
     try model_context_encoding.writeScalar(&out.writer, shell);
     try out.writer.writeByte('\n');
+    if (comptime @import("builtin").os.tag == .windows) {
+        try out.writer.writeAll("shell_execution: Command Prompt batch syntax; captured commands only; tty=true is unavailable\n");
+    }
     try out.writer.print("date_utc: {s}\n", .{date_text});
     try out.writer.writeAll("home_directory: ");
     try model_context_encoding.writeScalar(&out.writer, home);

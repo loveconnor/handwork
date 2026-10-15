@@ -4238,7 +4238,7 @@ test "render diagnostic commit skips unchanged same-row paints" {
 
 pub const TranscriptRuntime = struct {
     welcome_cue: ui_render.WelcomeCue = .choose_provider,
-    stdout_file: std.Io.File = std.Io.File.stdout(),
+    stdout_file: ?std.Io.File = null,
     sync_updates_enabled: bool = true,
     history_reset_uses_ris: bool = false,
     layout: Layout = undefined,
@@ -4516,6 +4516,11 @@ pub const TranscriptRuntime = struct {
 
     pub fn initBacking(self: *TranscriptRuntime, alloc: Allocator) !void {
         return transcript_store.initBacking(self, alloc);
+    }
+
+    pub fn outputFile(self: *const TranscriptRuntime) std.Io.File {
+        // Windows resolves standard handles at runtime rather than at comptime.
+        return self.stdout_file orelse std.Io.File.stdout();
     }
 
     pub fn ensurePaintReservation(self: *TranscriptRuntime, alloc: Allocator) !void {

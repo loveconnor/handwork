@@ -478,6 +478,7 @@ fn openExistingPrivateChild(
 }
 
 fn normalizeAndVerifyPrivateDir(dir: std.Io.Dir) !void {
+    if (comptime @import("builtin").os.tag == .windows) return io_mod.verifyPrivateDirectory(dir);
     const initial = try dir.stat(io_mod.getIo());
     if (initial.kind != .directory) return error.DurablePathUnsafe;
     if (initial.permissions.toMode() & 0o200 == 0) {
@@ -562,11 +563,7 @@ fn loadFromDir(alloc: Allocator, dir: *io_mod.VerifiedDir) !?Store {
         else => return err,
     };
     defer file.close(io_mod.getIo());
-    const stat = try file.stat(io_mod.getIo());
-    if (stat.kind != .file or stat.nlink != 1) return error.DurablePathUnsafe;
-    if (stat.permissions.toMode() & 0o777 != 0o600) {
-        return error.PrivateStatePermissionsUnsupported;
-    }
+    try io_mod.verifyPrivateRegularFile(file);
     const bytes = try io_mod.readFileToEnd(alloc, &file, max_store_bytes);
     defer secret.zeroAndFree(alloc, bytes);
     return try parseStore(alloc, bytes);

@@ -53,8 +53,12 @@ pub fn describeToolTitle(registry: tool_dispatch.Registry, arena: Allocator, cal
 }
 
 pub fn activeToolSet(state: *const server.ServerState) tool_set_contract.ToolSet {
+    if (comptime host_target.is_wasm) return if (state.host_tools.tools.len > 0) state.host_tools.toolSet() else tool_set_contract.empty;
+    if (state.standalone_chat and !state.background_task) {
+        const provider = if (state.active_session) |session| session.provider else state.provider;
+        return if (provider == .codex) builtin_tools.chat_set else builtin_tools.chat_set_without_search;
+    }
     if (state.host_tools.tools.len > 0) return state.host_tools.toolSet();
-    if (comptime host_target.is_wasm) return tool_set_contract.empty;
     return if (state.cfg.allow_native_tools) builtin_tools.advertisement_set else tool_set_contract.empty;
 }
 

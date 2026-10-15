@@ -631,11 +631,19 @@ pub fn writeTools(
     alloc: std.mem.Allocator,
     tools: stream_provider.ToolSelection,
 ) !usize {
+    return writeToolsWithNativeSearch(writer, alloc, tools, false);
+}
+
+pub fn writeToolsWithNativeSearch(writer: *std.Io.Writer, alloc: std.mem.Allocator, tools: stream_provider.ToolSelection, native_search: bool) !usize {
     var count: usize = 0;
     var out: std.Io.Writer.Allocating = .init(alloc);
     defer out.deinit();
     try out.writer.writeAll(",\"tools\":[");
 
+    if (native_search and containsName(tools.advertised_names, "web_search") and tools.advertisedFunction("web_search") == null) {
+        try out.writer.writeAll("{\"type\":\"web_search\",\"external_web_access\":true}");
+        count += 1;
+    }
     for (tools.advertised_names) |name| {
         const tool = tools.advertisedFunction(name) orelse continue;
         if (count > 0) try out.writer.writeByte(',');
@@ -857,6 +865,7 @@ pub const Reducer = struct {
         json: ?[]u8,
     };
 
+    citations: std.ArrayList(struct { url: []u8, title: []u8 }) = .empty,
     content: std.ArrayList(u8) = .empty,
     message_items: std.ArrayList(MessageItem) = .empty,
     reasoning_items: std.ArrayList(ReasoningItem) = .empty,
@@ -879,6 +888,11 @@ pub const Reducer = struct {
     }
 
     pub fn deinit(self: *Reducer, alloc: std.mem.Allocator) void {
+        for (self.citations.items) |citation| {
+            alloc.free(citation.url);
+            alloc.free(citation.title);
+        }
+        self.citations.deinit(alloc);
         self.content.deinit(alloc);
         self.message_items.deinit(alloc);
         self.text_parts.deinit(alloc);
@@ -1062,6 +1076,7 @@ pub const Reducer = struct {
                 }
             }
             if (cancel_flag.load(.seq_cst)) return error.Cancelled;
+            try self.append_citations(alloc, callbacks, content_capture_limit, limits);
             self.terminal_seen = true;
             self.finish_reason = finishReason(
                 status,
@@ -1270,7 +1285,58 @@ pub const Reducer = struct {
                 .output_index = output_index,
                 .content_index = std.math.cast(i64, content_index) orelse return error.ResourceLimitExceeded,
             }, identity, part.object, callbacks, capture_limit, limits);
+            try self.collect_citations(alloc, part.object);
         }
+    }
+
+    fn collect_citations(self: *Reducer, alloc: std.mem.Allocator, fields: std.json.ObjectMap) !void {
+        const annotations = fields.get("annotations") orelse return;
+        if (annotations != .array) return;
+        for (annotations.array.items) |annotation| {
+            if (annotation != .object) continue;
+            const kind = stringField(annotation.object, "type") orelse continue;
+            if (!std.mem.eql(u8, kind, "url_citation")) continue;
+            const url = stringField(annotation.object, "url") orelse continue;
+            if (url.len > 8192 or !(std.mem.startsWith(u8, url, "https://") or std.mem.startsWith(u8, url, "http://"))) continue;
+            if (std.mem.findAny(u8, url, "<>\\ \t\r\n") != null) continue;
+            var duplicate = false;
+            for (self.citations.items) |prior| {
+                if (std.mem.eql(u8, prior.url, url)) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate or self.citations.items.len >= 128) continue;
+            const title = stringField(annotation.object, "title") orelse url;
+            const owned_url = try alloc.dupe(u8, url);
+            errdefer alloc.free(owned_url);
+            const owned_title = try alloc.dupe(u8, if (title.len <= 4096) title else url);
+            errdefer alloc.free(owned_title);
+            try self.citations.append(alloc, .{ .url = owned_url, .title = owned_title });
+        }
+    }
+
+    fn append_citations(self: *Reducer, alloc: std.mem.Allocator, callbacks: StreamCallbacks, capture_limit: ?usize, limits: StreamLimits) !void {
+        if (self.citations.items.len == 0) return;
+        const last = self.last_text_key orelse return;
+        var out: std.Io.Writer.Allocating = .init(alloc);
+        defer out.deinit();
+        try out.writer.writeAll("\n\nSources:");
+        for (self.citations.items) |citation| {
+            try out.writer.writeAll("\n- [");
+            for (citation.title) |char| {
+                if (char == '[' or char == ']' or char == '\\') try out.writer.writeByte('\\');
+                try out.writer.writeByte(if (char < 32) ' ' else char);
+            }
+            try out.writer.print("](<{s}>)", .{citation.url});
+        }
+        try self.accept_text(alloc, .{
+            .key = .{ .output_index = last.output_index, .content_index = std.math.add(i64, last.content_index, 1) catch return error.ResourceLimitExceeded },
+            .kind = .text,
+            .mode = .final,
+            .text = out.written(),
+            .item_id_hash = null,
+        }, callbacks, capture_limit, limits);
     }
 
     fn reconcileToolItem(
@@ -2876,4 +2942,18 @@ test "Responses protocol owns one subscription billing projection" {
         44,
         .{ .input_tokens = 10 },
     )) == null);
+}
+
+test "Responses native web citations stream and persist once with safe links" {
+    var stream = TextRecordTest.init(std.testing.allocator);
+    defer stream.deinit();
+    const item = .{ .type = "message", .id = "msg", .content = .{.{ .type = "output_text", .text = "Answer.", .annotations = .{
+        .{ .type = "url_citation", .url = "https://example.com/source", .title = "A [source]" },
+        .{ .type = "url_citation", .url = "https://example.com/source", .title = "Duplicate" },
+        .{ .type = "url_citation", .url = "javascript:alert(1)", .title = "Unsafe" },
+    } }} };
+    try stream.delta(0, 0, "Answer.");
+    try stream.json(.{ .type = "response.output_item.done", .output_index = 0, .item = item });
+    try stream.json(.{ .type = "response.completed", .response = .{ .status = "completed", .output = .{item} } });
+    try stream.finish("Answer.\n\nSources:\n- [A \\[source\\]](<https://example.com/source>)");
 }

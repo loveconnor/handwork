@@ -497,7 +497,7 @@ const App = struct {
     }
 
     pub fn terminalTitle(self: *const Self) host.TerminalTitle {
-        return ui_render.terminalTitleFor(&self.shell.stdout_file);
+        return ui_render.terminalTitleForOptional(&self.shell.stdout_file);
     }
 
     alloc: Allocator,
@@ -2972,11 +2972,17 @@ const App = struct {
         {
             if (pending_compact_open)
                 try app_lifecycle.openCompactTranscript(
-                    self.alloc, &self.terminal, &self.shell, &self.metrics,
+                    self.alloc,
+                    &self.terminal,
+                    &self.shell,
+                    &self.metrics,
                 )
             else
                 try app_lifecycle.openFullTranscript(
-                    self.alloc, &self.terminal, &self.shell, &self.metrics,
+                    self.alloc,
+                    &self.terminal,
+                    &self.shell,
+                    &self.metrics,
                 );
             debug_trace.logf(
                 "full_transcript",
@@ -3240,10 +3246,17 @@ pub fn main(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char)
 fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !void {
     const raw_args = rawArgs(c_argc, c_argv);
     const raw_env: RawEnviron = @ptrCast(c_envp);
+    var windows_environment: ?std.process.Environ.Map = null;
+    defer if (windows_environment) |*environment| environment.deinit();
+    if (comptime builtin.os.tag == .windows) {
+        windows_environment = try std.process.Environ.createMap(.{ .block = .global }, processAllocator());
+        try @import("core/hosts/process_startup.zig").normalizeWindowsHome(&windows_environment.?);
+        io_mod.setEnvironMap(&windows_environment.?);
+    }
 
     if (comptime terminal_host.isSupported()) {
         if (terminal_tmux_session.isCaptureModeRaw(raw_args)) {
-            io_mod.setRawEnviron(raw_env);
+            installRawEnvironment(raw_env);
             const process_args = argsFromRaw(raw_args);
             var threaded = std.Io.Threaded.init(processAllocator(), .{
                 .argv0 = .init(process_args),
@@ -3255,7 +3268,7 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
             return;
         }
         if (terminal_tmux_session.isLauncherModeRaw(raw_args)) {
-            io_mod.setRawEnviron(raw_env);
+            installRawEnvironment(raw_env);
             const process_args = argsFromRaw(raw_args);
             var threaded = std.Io.Threaded.init(processAllocator(), .{
                 .argv0 = .init(process_args),
@@ -3271,7 +3284,7 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
             return;
         }
         if (terminal_native_session.isControlModeRaw(raw_args)) {
-            io_mod.setRawEnviron(raw_env);
+            installRawEnvironment(raw_env);
             const process_args = argsFromRaw(raw_args);
             var threaded = std.Io.Threaded.init(processAllocator(), .{
                 .argv0 = .init(process_args),
@@ -3283,7 +3296,7 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
             return;
         }
         if (terminal_native_session.isLauncherModeRaw(raw_args)) {
-            io_mod.setRawEnviron(raw_env);
+            installRawEnvironment(raw_env);
             const process_args = argsFromRaw(raw_args);
             var threaded = std.Io.Threaded.init(processAllocator(), .{
                 .argv0 = .init(process_args),
@@ -3295,7 +3308,7 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
             return;
         }
         if (terminal_host.isInternalModeRaw(raw_args)) {
-            io_mod.setRawEnviron(raw_env);
+            installRawEnvironment(raw_env);
             const process_args = argsFromRaw(raw_args);
             var threaded = std.Io.Threaded.init(processAllocator(), .{
                 .argv0 = .init(process_args),
@@ -3325,7 +3338,7 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
     var cli_arg_buf: [64][:0]const u8 = undefined;
     const cli_args = if (raw_args.len <= 1) &.{} else try cliArgsFromRaw(raw_args, &cli_arg_buf);
     if (command_runner.isForegroundSessionInvocation(cli_args)) {
-        io_mod.setRawEnviron(raw_env);
+        installRawEnvironment(raw_env);
         const process_args = argsFromRaw(raw_args);
         var threaded = std.Io.Threaded.init(processAllocator(), .{
             .argv0 = .init(process_args),
@@ -3359,7 +3372,7 @@ fn writeTopLevelHelpFast(raw_env: RawEnviron) !void {
 }
 
 fn runNonBenchmark(raw_args: []const [*:0]const u8, raw_env: RawEnviron, cli_args: []const [:0]const u8) !void {
-    io_mod.setRawEnviron(raw_env);
+    installRawEnvironment(raw_env);
 
     const alloc = processAllocator();
     const auth_mode = credentials.parseAuthMode(rawEnvValue(raw_env, "HANDWORK_AUTH_MODE")) catch {
@@ -3418,14 +3431,19 @@ fn rawArgs(c_argc: c_int, c_argv: [*][*:0]c_char) []const [*:0]const u8 {
     return argv[0..argc];
 }
 
+fn installRawEnvironment(raw_env: RawEnviron) void {
+    // mainC installs a Unicode environment snapshot on Windows. Do not replace
+    // it with the C runtime's code-page-encoded envp during later startup stages.
+    if (comptime builtin.os.tag == .windows) return;
+    io_mod.setRawEnviron(raw_env);
+}
+
 fn argsFromRaw(raw_args: []const [*:0]const u8) std.process.Args {
-    return .{ .vector = raw_args };
+    return @import("core/hosts/process_startup.zig").args(raw_args);
 }
 
 fn environBlockFromRaw(raw_env: RawEnviron) std.process.Environ.Block {
-    var count: usize = 0;
-    while (raw_env[count] != null) : (count += 1) {}
-    return .{ .slice = raw_env[0..count :null] };
+    return @import("core/hosts/process_startup.zig").environ(raw_env);
 }
 
 fn shouldRunBenchmarkNoArgRaw(raw_args: []const [*:0]const u8, raw_env: RawEnviron) bool {
@@ -3842,7 +3860,7 @@ fn handleSigWinchWeb() callconv(.c) void {
     resize_interlock.noteResizeSignal();
 }
 
-const handle_sigwinch: app_lifecycle.ResizeHandler = if (host_target.is_wasm)
+const handle_sigwinch: app_lifecycle.ResizeHandler = if (host_target.is_wasm or builtin.os.tag == .windows)
     handleSigWinchWeb
 else
     handleSigWinchNative;

@@ -439,9 +439,13 @@ const StdinManualCodeReader = struct {
     buffer: [login_flow.max_manual_code_bytes]u8 = undefined,
     len: usize = 0,
     closed: bool = false,
+    high_surrogate: ?u16 = null,
 
     fn poll(self: *StdinManualCodeReader) !?[]const u8 {
         if (self.closed) return null;
+        if (comptime @import("builtin").os.tag == .windows) return self.pollWindows();
+        var chunk: [512]u8 = undefined;
+        defer @memset(&chunk, 0);
         var fds = [_]std.posix.pollfd{.{
             .fd = std.posix.STDIN_FILENO,
             .events = std.posix.POLL.IN,
@@ -450,9 +454,6 @@ const StdinManualCodeReader = struct {
         const ready = try std.posix.poll(&fds, 0);
         if (ready == 0 or
             (fds[0].revents & (std.posix.POLL.IN | std.posix.POLL.HUP)) == 0) return null;
-
-        var chunk: [512]u8 = undefined;
-        defer @memset(&chunk, 0);
         const read_len = try std.posix.read(std.posix.STDIN_FILENO, &chunk);
         if (read_len == 0) {
             self.closed = true;
@@ -469,9 +470,40 @@ const StdinManualCodeReader = struct {
         return null;
     }
 
+    fn pollWindows(self: *StdinManualCodeReader) !?[]const u8 {
+        var chunk: [512]u8 = undefined;
+        defer @memset(&chunk, 0);
+        while (true) {
+            const size = (try @import("../../ui/terminal/windows_console.zig").pollLineBytes(std.Io.File.stdin().handle, &chunk, &self.high_surrogate)) orelse return null;
+            if (size == 0) {
+                self.closed = true;
+                return if (self.len == 0) null else self.buffer[0..self.len];
+            }
+            for (chunk[0..size]) |byte| {
+                if (byte == '\n' or byte == '\r') {
+                    self.closed = true;
+                    return self.buffer[0..self.len];
+                }
+                if (byte == 8) {
+                    if (self.len > 0) {
+                        const previous_len = self.len;
+                        self.len -= 1;
+                        while (self.len > 0 and self.buffer[self.len] & 0xc0 == 0x80) self.len -= 1;
+                        @memset(self.buffer[self.len..previous_len], 0);
+                    }
+                    continue;
+                }
+                if (self.len == self.buffer.len) return error.GrokAuthorizationCodeTooLong;
+                self.buffer[self.len] = byte;
+                self.len += 1;
+            }
+        }
+    }
+
     fn clear(self: *StdinManualCodeReader) void {
         @memset(self.buffer[0..self.len], 0);
         self.len = 0;
+        self.high_surrogate = null;
     }
 
     fn deinit(self: *StdinManualCodeReader) void {

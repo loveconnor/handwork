@@ -57,10 +57,12 @@ const AcpMethod = enum {
     session_cancel,
     session_new,
     session_load,
+    session_read,
     session_resume,
     session_close,
     session_list,
     session_remove,
+    session_rewind,
     session_prompt,
     session_set_config_option,
     session_set_mode,
@@ -70,6 +72,8 @@ const AcpMethod = enum {
     providers_list,
     providers_connect,
     providers_disconnect,
+    desktop_permission,
+    desktop_directory,
     unknown,
 
     fn parse(method: []const u8) AcpMethod {
@@ -78,10 +82,12 @@ const AcpMethod = enum {
         if (std.mem.eql(u8, method, "session/cancel")) return .session_cancel;
         if (std.mem.eql(u8, method, "session/new")) return .session_new;
         if (std.mem.eql(u8, method, "session/load")) return .session_load;
+        if (std.mem.eql(u8, method, "handwork/session/read")) return .session_read;
         if (std.mem.eql(u8, method, "session/resume")) return .session_resume;
         if (std.mem.eql(u8, method, "session/close")) return .session_close;
         if (std.mem.eql(u8, method, "session/list")) return .session_list;
         if (std.mem.eql(u8, method, "session/remove")) return .session_remove;
+        if (std.mem.eql(u8, method, "session/rewind")) return .session_rewind;
         if (std.mem.eql(u8, method, "session/prompt")) return .session_prompt;
         if (std.mem.eql(u8, method, "session/set_config_option")) return .session_set_config_option;
         if (std.mem.eql(u8, method, "session/set_mode")) return .session_set_mode;
@@ -91,6 +97,8 @@ const AcpMethod = enum {
         if (std.mem.eql(u8, method, "handwork/providers/list")) return .providers_list;
         if (std.mem.eql(u8, method, "handwork/providers/connect")) return .providers_connect;
         if (std.mem.eql(u8, method, "handwork/providers/disconnect")) return .providers_disconnect;
+        if (std.mem.eql(u8, method, "handwork/settings/permission")) return .desktop_permission;
+        if (std.mem.eql(u8, method, "handwork/settings/directory")) return .desktop_directory;
         return .unknown;
     }
 
@@ -102,6 +110,7 @@ const AcpMethod = enum {
             .session_set_mode,
             .session_new,
             .session_load,
+            .session_read,
             .session_resume,
             .session_close,
             .libhandwork_new,
@@ -111,7 +120,10 @@ const AcpMethod = enum {
             => false,
             .session_list,
             .session_remove,
+            .session_rewind,
             .session_prompt,
+            .desktop_permission,
+            .desktop_directory,
             .session_set_config_option,
             .libhandwork_checkpoint,
             .libhandwork_restore,
@@ -190,6 +202,7 @@ const PendingLegacyUrl = struct {
 };
 
 pub const ActiveSessionState = struct {
+    background_task: bool = false,
     session_id: []u8,
     store: ?session_store.Store = null,
     writable: ?session_store.LoadedWritableSession = null,
@@ -261,7 +274,9 @@ pub const ServerState = struct {
     client_fs_read: bool = false,
     client_fs_write: bool = false,
     client_terminal: bool = false,
+    background_task: bool = false,
     client_elicitation: elicitation.Capabilities = .{},
+    standalone_chat: bool = false,
     workspace_root: []u8 = &.{},
     workspace_access: workspace_access.WorkspaceAccess = .{},
     api_key: []u8 = &.{},
@@ -1202,6 +1217,14 @@ fn dispatch(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void 
         return handleInitialize(state, alloc, msg);
     }
 
+    // This local stdio extension reads the user's saved conversation only.
+    // It needs no provider credentials, model catalog, tools, or session runtime.
+    if (comptime !host_target.is_wasm) {
+        if (method == .session_read and !state.cfg.minimal_kernel) {
+            return sessions.handleReadSession(state, alloc, msg);
+        }
+    }
+
     if (!state.initialized) {
         return state.writer.writeError(alloc, msg.id, .{
             .code = ErrorCode.invalid_request,
@@ -1255,6 +1278,7 @@ fn dispatch(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void 
         .session_close => handleCloseSession(state, alloc, msg),
         .session_list => sessions.handleListSessions(state, alloc, msg),
         .session_remove => sessions.handleRemoveSession(state, alloc, msg),
+        .session_rewind => sessions.handleRewindSession(state, alloc, msg),
         .session_prompt => startPrompt(state, alloc, msg),
         .session_set_config_option => handleSetConfigOption(state, alloc, msg),
         .session_set_mode => handleSetMode(state, alloc, msg),
@@ -1264,7 +1288,10 @@ fn dispatch(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void 
         .providers_list => providers.handleList(state, alloc, msg),
         .providers_connect => providers.handleConnect(state, alloc, msg),
         .providers_disconnect => providers.handleDisconnect(state, alloc, msg),
+        .desktop_permission => @import("desktop_settings.zig").handlePermission(state, alloc, msg),
+        .desktop_directory => @import("desktop_settings.zig").handleDirectory(state, alloc, msg),
         .initialize,
+        .session_read,
         .request_cancel,
         .session_cancel,
         .unknown,
@@ -1591,6 +1618,8 @@ const InitializeRequest = struct {
     client_fs_read: bool = false,
     client_fs_write: bool = false,
     client_terminal: bool = false,
+    background_task: bool = false,
+    standalone_chat: bool = false,
     client_elicitation: elicitation.Capabilities = .{},
     host_tools: host_tool_runtime.Runtime = .{},
     host_instructions: []u8 = &.{},
@@ -1620,6 +1649,7 @@ fn parseInitializeRequest(
         return error.InvalidInitializeParams;
 
     var request = InitializeRequest{};
+    errdefer if (request.host_instructions.len > 0) alloc.free(request.host_instructions);
     const capabilities = parsed.value.object.get("clientCapabilities") orelse
         return request;
     if (capabilities != .object) return request;
@@ -1637,6 +1667,25 @@ fn parseInitializeRequest(
         request.client_terminal = value == .bool and value.bool;
     }
     request.client_elicitation = elicitation.parseAcpCapabilities(capabilities);
+    // Presentation instructions belong to the host, outside persisted user text.
+    // This capability does not enable host tools or filesystem/terminal access.
+    if (capabilities.object.get("handwork")) |handwork| {
+        if (handwork != .object) return error.InvalidInitializeParams;
+        if (handwork.object.get("backgroundTask")) |background| {
+            if (background != .bool) return error.InvalidInitializeParams;
+            request.background_task = background.bool;
+        }
+        if (handwork.object.get("standaloneChat")) |standalone| {
+            if (standalone != .bool) return error.InvalidInitializeParams;
+            request.standalone_chat = standalone.bool;
+        }
+        if (handwork.object.get("responseInstructions")) |instructions| {
+            if (instructions != .string or instructions.string.len > 64 * 1024 or
+                std.mem.indexOfScalar(u8, instructions.string, 0) != null)
+                return error.InvalidInitializeParams;
+            request.host_instructions = try alloc.dupe(u8, instructions.string);
+        }
+    }
     if (allow_libhandwork) {
         if (capabilities.object.get("libhandwork")) |libhandwork| {
             if (libhandwork != .object) return error.InvalidInitializeParams;
@@ -1649,11 +1698,59 @@ fn parseInitializeRequest(
                 if (instructions != .string or instructions.string.len > 64 * 1024) {
                     return error.InvalidInitializeParams;
                 }
-                request.host_instructions = try alloc.dupe(u8, instructions.string);
+                const replacement = try alloc.dupe(u8, instructions.string);
+                if (request.host_instructions.len > 0) alloc.free(request.host_instructions);
+                request.host_instructions = replacement;
             }
         }
     }
     return request;
+}
+
+test "ACP desktop response instructions are owned without granting host tools" {
+    const alloc = std.testing.allocator;
+    var request = try parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"responseInstructions":"Render Honest AI blocks."}}}
+    , false);
+    defer request.deinit(alloc);
+    try std.testing.expectEqualStrings("Render Honest AI blocks.", request.host_instructions);
+    try std.testing.expectEqual(@as(usize, 0), request.host_tools.tools.len);
+    try std.testing.expect(!request.client_fs_read and !request.client_fs_write and !request.client_terminal);
+}
+
+test "ACP desktop response instructions reject invalid capability values" {
+    const alloc = std.testing.allocator;
+    try std.testing.expectError(error.InvalidInitializeParams, parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"responseInstructions":42}}}
+    , false));
+    try std.testing.expectError(error.InvalidInitializeParams, parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"responseInstructions":"bad\u0000text"}}}
+    , false));
+}
+
+test "ACP desktop response instructions enforce the size limit and release error paths" {
+    const alloc = std.testing.allocator;
+    const large = try alloc.alloc(u8, 64 * 1024 + 1);
+    defer alloc.free(large);
+    @memset(large, 'x');
+    const raw = try std.fmt.allocPrint(alloc, "{{\"protocolVersion\":1,\"clientCapabilities\":{{\"handwork\":{{\"responseInstructions\":\"{s}\"}}}}}}", .{large});
+    defer alloc.free(raw);
+    try std.testing.expectError(error.InvalidInitializeParams, parseInitializeRequest(alloc, raw, false));
+    try std.testing.expectError(error.InvalidInitializeParams, parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"responseInstructions":"format"},"libhandwork":false}}
+    , true));
+}
+
+test "ACP initialize background task is explicit and typed" {
+    const alloc = std.testing.allocator;
+    var request = try parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"backgroundTask":true}}}
+    , false);
+    defer request.deinit(alloc);
+    try std.testing.expect(request.background_task);
+    try std.testing.expectError(error.InvalidInitializeParams, parseInitializeRequest(alloc,
+        \\{"protocolVersion":1,"clientCapabilities":{"handwork":{"backgroundTask":"true"}}}
+    , false));
 }
 
 test "ACP initialize owns libhandwork tools and instructions" {
@@ -1850,7 +1947,7 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
     state.session_titles = startup.session_title_generation;
 
     if (comptime !host_target.is_wasm) {
-        if (!state.cfg.minimal_kernel) {
+        if (!state.cfg.minimal_kernel and !request.background_task and !request.standalone_chat) {
             var loaded_skills = try app_runtime_setup.loadSkills(alloc, state.workspace_root, builtin_skills.root_policy);
             errdefer loaded_skills.deinit(alloc);
             skill_runtime.traceDiagnostics("acp_startup", loaded_skills.diagnostics);
@@ -1886,6 +1983,14 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
         );
     }
 
+    state.background_task = request.background_task;
+    if (state.background_task) restrictBackgroundTask(state);
+    state.standalone_chat = request.standalone_chat;
+    if (state.standalone_chat) {
+        state.cfg.allow_acp_mcp = false;
+        state.context_enabled = false;
+        state.lifecycle_view = hooks.RuntimeView.empty();
+    }
     state.client_fs_read = request.client_fs_read;
     state.client_fs_write = request.client_fs_write;
     state.client_terminal = request.client_terminal;
@@ -1896,7 +2001,7 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
     if (state.host_instructions.len > 0) alloc.free(state.host_instructions);
     state.host_instructions = request.host_instructions;
     request.host_instructions = &.{};
-    debug_trace.logf("acp", "libhandwork host capabilities tools={d} instructions_bytes={d}", .{
+    debug_trace.logf("acp", "host capabilities tools={d} instructions_bytes={d}", .{
         state.host_tools.tools.len,
         state.host_instructions.len,
     });
@@ -1906,6 +2011,40 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
     defer out.deinit();
     try acp_types.writeInitializeResponse(&out.writer, !host_target.is_wasm);
     try state.writer.writeResponse(alloc, msg.id, out.writer.buffered());
+}
+
+fn restrictBackgroundTask(state: *ServerState) void {
+    // Background completions use only the host's bounded context snapshot.
+    state.cfg.allow_native_tools = false;
+    state.cfg.allow_acp_mcp = false;
+    state.context_enabled = false;
+    state.session_titles = false;
+    state.lifecycle_view = hooks.RuntimeView.empty();
+}
+
+test "ACP background tasks have no tools or persistence and keep route changes in memory" {
+    const alloc = std.testing.allocator;
+    var state: ServerState = undefined;
+    state.host_tools = .{};
+    restrictBackgroundTask(&state);
+    try std.testing.expect(!state.cfg.allow_native_tools);
+    try std.testing.expect(!state.cfg.allow_acp_mcp);
+    try std.testing.expect(!state.context_enabled);
+    try std.testing.expect(!state.session_titles);
+    try std.testing.expectEqual(@as(usize, 0), @import("tool_call_presentation.zig").activeToolSet(&state).registry.tools.len);
+    var active: ActiveSessionState = undefined;
+    active.background_task = true;
+    active.writable = null;
+    active.model = try alloc.dupe(u8, "old-model");
+    defer alloc.free(active.model);
+    try commitActiveSessionProvider(alloc, &active, .anthropic, "next-model");
+    try std.testing.expectEqualStrings("next-model", active.model);
+    try std.testing.expectEqual(model_provider.ProviderId.anthropic, active.provider);
+    try commitActiveSessionFastMode(alloc, &active, false);
+    try commitActiveSessionEffort(alloc, &active, .auto);
+    try std.testing.expect(!active.fast_mode);
+    try std.testing.expect(active.effort == .auto);
+    try std.testing.expect(active.writable == null);
 }
 
 fn handleCancel(state: *ServerState, notify_client: bool) void {
@@ -2038,7 +2177,11 @@ fn handleSetConfigOption(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Me
                 }
             }
         }
-        if (host_target.is_wasm and session.writable == null) {
+        if (session.background_task) {
+            const next_model = try alloc.dupe(u8, value);
+            alloc.free(session.model);
+            session.model = next_model;
+        } else if (host_target.is_wasm and session.writable == null) {
             const next_model = alloc.dupe(u8, value) catch
                 return state.writer.writeError(alloc, msg.id, .{
                     .code = ErrorCode.internal_error,
@@ -2289,6 +2432,13 @@ fn commitActiveSessionProvider(
     provider: model_provider.ProviderId,
     model: []const u8,
 ) !void {
+    if (session.background_task) {
+        const next_model = try alloc.dupe(u8, model);
+        alloc.free(session.model);
+        session.model = next_model;
+        session.provider = provider;
+        return;
+    }
     session.session_write_mutex.lockUncancelable(io_mod.getIo());
     defer session.session_write_mutex.unlock(io_mod.getIo());
     const writable = if (session.writable) |*active|
@@ -2347,6 +2497,10 @@ fn commitSessionModel(
 }
 
 fn commitActiveSessionFastMode(alloc: Allocator, session: *ActiveSessionState, enabled: bool) !void {
+    if (session.background_task) {
+        session.fast_mode = enabled;
+        return;
+    }
     if (host_target.is_wasm and session.writable == null) {
         const previous = session.fast_mode;
         session.fast_mode = enabled;
@@ -2368,6 +2522,10 @@ fn commitActiveSessionEffort(
     session: *ActiveSessionState,
     effort: types.ReasoningEffort,
 ) !void {
+    if (session.background_task) {
+        session.effort = effort;
+        return;
+    }
     if (host_target.is_wasm and session.writable == null) {
         const previous = session.effort;
         session.effort = effort;
@@ -2876,6 +3034,7 @@ fn acpModelTestState(
 test "ACP fast mode keeps the previous preference when persistence is unavailable" {
     if (host_target.is_wasm) return;
     var active: ActiveSessionState = undefined;
+    active.background_task = false;
     active.writable = null;
     active.session_write_mutex = .init;
     active.fast_mode = false;
@@ -2889,6 +3048,7 @@ test "ACP fast mode keeps the previous preference when persistence is unavailabl
 test "ACP model commits honor the active session write boundary" {
     const alloc = std.testing.allocator;
     var active: ActiveSessionState = undefined;
+    active.background_task = false;
     active.writable = null;
     active.session_write_mutex = .init;
     active.model = try alloc.dupe(u8, "old-model");
@@ -2942,6 +3102,7 @@ test "ACP publishes an account-bound refreshed Codex token for later prompts" {
     state.credential_source = .chatgpt_subscription;
     state.credential_refresh_after_ms = 1;
     var active: ActiveSessionState = undefined;
+    active.background_task = false;
     active.api_key = state.api_key;
     active.account_id = state.account_id;
     active.credential_source = .chatgpt_subscription;
@@ -3037,6 +3198,7 @@ test "ACP usage flush preserves snapshot ownership on allocation failure" {
     writable.state = durable;
     durable_owned = false;
     var active: ActiveSessionState = undefined;
+    active.background_task = false;
     active.writable = writable;
     active.session_rt = runtime;
     runtime_owned = false;

@@ -19,6 +19,14 @@ pub const ProcessInstanceToken = struct {
         var parts = std.mem.splitScalar(u8, text, ':');
         const platform = parts.next() orelse
             return error.InvalidProcessInstanceToken;
+        if (std.mem.eql(u8, platform, "windows")) {
+            const created = parts.next() orelse return error.InvalidProcessInstanceToken;
+            if (parts.next() != null or !isCanonicalDecimal(created)) return error.InvalidProcessInstanceToken;
+            var token = ProcessInstanceToken{};
+            @memcpy(token.bytes[0..text.len], text);
+            token.len = @intCast(text.len);
+            return token;
+        }
         const boot_id = parts.next() orelse
             return error.InvalidProcessInstanceToken;
         if (!isLowerHex(boot_id, 32)) {
@@ -138,4 +146,11 @@ test "process instance tokens are canonical and require exact match" {
             "linux:00112233445566778899AABBCCDDEEFF:12345",
         ),
     );
+}
+
+test "Windows creation-time tokens require canonical bounded values" {
+    const token = try ProcessInstanceToken.parse("windows:134000000000000000");
+    try std.testing.expectEqualStrings("windows:134000000000000000", token.view());
+    for ([_][]const u8{ "windows:", "windows:01", "windows:-1", "windows:1:2", "windows:18446744073709551616" }) |invalid|
+        try std.testing.expectError(error.InvalidProcessInstanceToken, ProcessInstanceToken.parse(invalid));
 }

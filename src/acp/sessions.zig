@@ -64,6 +64,7 @@ pub fn handleNewLibhandworkSession(
     defer if (session_rt_owned) session_rt.deinit(alloc);
 
     state.active_session = .{
+        .background_task = state.background_task,
         .session_id = session_id,
         .model = model,
         .provider = state.provider,
@@ -185,6 +186,7 @@ pub fn commitWasmSession(alloc: Allocator, session: *server.ActiveSessionState) 
 }
 
 pub fn handleNewSession(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void {
+    if (state.background_task) return handleNewLibhandworkSession(state, alloc, msg);
     var mcp_configs = mcp_servers.parse(alloc, msg.params_raw) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         else => return state.writer.writeError(alloc, msg.id, .{
@@ -517,6 +519,100 @@ const RestoreKind = enum {
     }
 };
 
+const RewindPrefix = struct {
+    alloc: Allocator,
+    target: usize,
+    expected: []const u8,
+    seen: usize = 0,
+    matched: bool = false,
+    image_target: bool = false,
+    history: std.ArrayList(types.HistoryTurn) = .empty,
+
+    pub fn append(self: *@This(), turn: types.HistoryTurn) !void {
+        const user = switch (turn) {
+            .assistant => |value| value.user.text,
+            .interrupted => |value| value.user.text,
+            .compacted_summary => return,
+        };
+        if (self.seen == self.target) self.image_target = switch (turn) {
+            .assistant => |value| value.user.images.len > 0,
+            .interrupted => |value| value.user.images.len > 0,
+            .compacted_summary => false,
+        };
+        if (self.seen == self.target) self.matched = std.mem.eql(u8, user, self.expected);
+        if (self.seen < self.target) {
+            const copy = try types.dupeHistoryTurn(self.alloc, turn);
+            errdefer types.freeHistoryTurn(self.alloc, copy);
+            try self.history.append(self.alloc, copy);
+        }
+        self.seen += 1;
+    }
+
+    fn deinit(self: *@This()) void {
+        for (self.history.items) |turn| types.freeHistoryTurn(self.alloc, turn);
+        self.history.deinit(self.alloc);
+    }
+};
+
+/// Creates a durable replacement conversation from the canonical prefix. The
+/// original remains recoverable, and no workspace tools are replayed here.
+pub fn handleRewindSession(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void {
+    const raw = msg.params_raw orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Missing rewind params" });
+    const parsed = std.json.parseFromSlice(std.json.Value, alloc, raw, .{}) catch
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid rewind params" });
+    defer parsed.deinit();
+    if (parsed.value != .object) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid rewind params" });
+    const root = parsed.value.object;
+    const id = root.get("sessionId") orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Missing sessionId" });
+    const index = root.get("turnIndex") orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Missing turnIndex" });
+    const expected = root.get("expectedText") orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Missing expectedText" });
+    if (id != .string or index != .integer or index.integer < 0 or index.integer > 100000 or expected != .string or expected.string.len > 1024 * 1024)
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid rewind target" });
+    const active = if (state.active_session) |*value| value else return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_request, .message = "No active session" });
+    if (!std.mem.eql(u8, active.session_id, id.string) or active.pending_prompt_id != null)
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_request, .message = "Chat changed or is still running" });
+    const store = active.store orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_request, .message = "This session cannot edit saved history" });
+    const writable = if (active.writable) |*value| value else return error.SessionPersistenceUnavailable;
+    if (writable.state.subagent_child) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_request, .message = "Cannot rewind a managed child session" });
+    var prefix = RewindPrefix{ .alloc = alloc, .target = @intCast(index.integer), .expected = expected.string };
+    defer prefix.deinit();
+    try store.visitConversationHistory(alloc, active.session_id, &prefix);
+    if (prefix.image_target) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_request, .message = "Editing image messages is not available. Send a new prompt with the images attached." });
+    if (!prefix.matched) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "The selected message changed. Reload the chat before editing." });
+    var seed = seed: {
+        active.session_write_mutex.lockUncancelable(io_mod.getIo());
+        defer active.session_write_mutex.unlock(io_mod.getIo());
+        break :seed try writable.state.dupe(alloc);
+    };
+    defer seed.deinit(alloc);
+    const new_id = try session_store.generateSessionId(alloc);
+    alloc.free(seed.id);
+    seed.id = new_id;
+    const retained = try prefix.history.toOwnedSlice(alloc);
+    types.freeHistoryTurnSlice(alloc, seed.history);
+    seed.history = retained;
+    seed.context_history_start = 0;
+    seed.created_at_ms = io_mod.milliTimestamp();
+    seed.updated_at_ms = seed.created_at_ms;
+    seed.total_input_tokens = 0;
+    seed.total_output_tokens = 0;
+    if (seed.usage) |*usage| usage.deinit(alloc);
+    seed.usage = null;
+    seed.permission_state.deinit(alloc);
+    seed.permission_state = .{};
+    if (seed.recovery_checkpoint) |*checkpoint| checkpoint.deinit(alloc);
+    seed.recovery_checkpoint = null;
+    if (seed.last_subagent_work_id) |work_id| alloc.free(work_id);
+    seed.last_subagent_work_id = null;
+    var created = try store.startWritableSession(alloc, seed);
+    created.deinit(alloc);
+    const params = try std.fmt.allocPrint(alloc, "{{\"sessionId\":\"{s}\",\"mcpServers\":[]}}", .{new_id});
+    defer alloc.free(params);
+    var load = msg.*;
+    load.params_raw = params;
+    try handleLoadSession(state, alloc, &load);
+}
+
 pub fn handleLoadSession(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void {
     return handleRestoreSession(state, alloc, msg, .load);
 }
@@ -848,6 +944,11 @@ fn sendPendingRecoveryUpdate(
     session_id: []const u8,
     checkpoint: ?session_codec.RecoveryCheckpoint,
 ) !void {
+    var output = HistoryOutput{ .writer = &state.writer, .registry = tool_call_presentation.activeToolRegistry(state) };
+    try writePendingRecoveryUpdate(&output, alloc, session_id, checkpoint);
+}
+
+fn writePendingRecoveryUpdate(state: *HistoryOutput, alloc: Allocator, session_id: []const u8, checkpoint: ?session_codec.RecoveryCheckpoint) !void {
     const recovery = checkpoint orelse return;
     try sendUserHistoryTurn(state, alloc, session_id, recovery.user);
     try sendExecutionHistory(state, alloc, session_id, recovery.execution);
@@ -875,7 +976,7 @@ fn sendPendingRecoveryUpdate(
     try out.writer.writeByte('}');
     try state.writer.writeNotification(
         alloc,
-        "session/update",
+        state.method,
         out.writer.buffered(),
     );
 }
@@ -893,7 +994,9 @@ fn writeLoadSessionResponse(
     try server.refreshModelCatalogForOptions(state);
     var out: std.Io.Writer.Allocating = .init(alloc);
     defer out.deinit();
-    try out.writer.writeAll("{\"configOptions\":[");
+    try out.writer.writeAll("{\"sessionId\":");
+    try writeJsonStr(state.active_session.?.session_id, &out.writer);
+    try out.writer.writeAll(",\"configOptions\":[");
     if (comptime !host_target.is_wasm) {
         try writeProviderConfigOption(&out.writer, state.active_session.?.provider, state.cfg.provider_set);
         try out.writer.writeAll(",");
@@ -1249,7 +1352,54 @@ fn sendActiveHistoryUpdates(state: *server.ServerState, alloc: Allocator, sessio
     }
 }
 
+/// Reading a transcript never acquires a session writer, refreshes credentials,
+/// discovers models, or starts project MCP servers.
+pub fn handleReadSession(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void {
+    const parsed = std.json.parseFromSlice(std.json.Value, alloc, msg.params_raw orelse "null", .{}) catch
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid session ID" });
+    defer parsed.deinit();
+    const value = if (parsed.value == .object) parsed.value.object.get("sessionId") else null;
+    if (value == null or value.? != .string) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid session ID" });
+    const id = value.?.string;
+    session_store.validateSessionId(id) catch return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid session ID" });
+    const workspace = try io_mod.realpathAlloc(alloc, state.cfg.workspace_root_override orelse ".");
+    defer alloc.free(workspace);
+    var store = (if (state.cfg.home_override) |home|
+        session_store.Store.initReadOnlyFromHome(alloc, home, workspace)
+    else
+        session_store.Store.initReadOnly(alloc, workspace)) catch
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.internal_error, .message = "Session store not available" });
+    defer store.deinit(alloc);
+    var detail = subagent_resume_admission.loadVisibleReadOnlyDetail(store, alloc, id, .{}) catch
+        return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Chat could not be read" });
+    defer detail.deinit(alloc);
+    var output = HistoryOutput{ .writer = &state.writer, .registry = tool_call_presentation.activeToolRegistry(state), .method = "handwork/session_read_update" };
+    for (detail.state.history) |turn| try writeHistoryTurn(&output, alloc, id, turn);
+    try writePendingRecoveryUpdate(&output, alloc, id, detail.state.recovery_checkpoint);
+    var response: std.Io.Writer.Allocating = .init(alloc);
+    defer response.deinit();
+    try response.writer.writeAll("{\"sessionId\":");
+    try writeJsonStr(id, &response.writer);
+    try response.writer.writeAll(",\"title\":");
+    try writeJsonStr(detail.summary.title orelse "Chat", &response.writer);
+    try response.writer.writeAll(",\"cwd\":");
+    try writeJsonStr(detail.state.workspace_root, &response.writer);
+    try response.writer.writeAll("}");
+    try state.writer.writeResponse(alloc, msg.id, response.writer.buffered());
+}
+
+const HistoryOutput = struct {
+    writer: *jsonrpc.Writer,
+    registry: tool_dispatch.Registry,
+    method: []const u8 = "session/update",
+};
+
 fn sendHistoryTurnAsUpdates(state: *server.ServerState, alloc: Allocator, session_id: []const u8, turn: types.HistoryTurn) !void {
+    var output = HistoryOutput{ .writer = &state.writer, .registry = tool_call_presentation.activeToolRegistry(state) };
+    try writeHistoryTurn(&output, alloc, session_id, turn);
+}
+
+fn writeHistoryTurn(state: *HistoryOutput, alloc: Allocator, session_id: []const u8, turn: types.HistoryTurn) !void {
     switch (turn) {
         .assistant => |assistant| try sendUserHistoryTurn(state, alloc, session_id, assistant.user),
         .interrupted => |interrupted| try sendUserHistoryTurn(state, alloc, session_id, interrupted.user),
@@ -1278,7 +1428,7 @@ fn sendHistoryTurnAsUpdates(state: *server.ServerState, alloc: Allocator, sessio
 }
 
 fn sendUserHistoryTurn(
-    state: *server.ServerState,
+    state: *HistoryOutput,
     alloc: Allocator,
     session_id: []const u8,
     user: types.UserTurn,
@@ -1318,12 +1468,12 @@ fn sendUserHistoryTurn(
             snapshot.bytes,
         );
         try out.writer.writeAll("}");
-        try state.writer.writeNotification(alloc, "session/update", out.writer.buffered());
+        try state.writer.writeNotification(alloc, state.method, out.writer.buffered());
     }
 }
 
 fn sendUserHistoryChunk(
-    state: *server.ServerState,
+    state: *HistoryOutput,
     alloc: Allocator,
     session_id: []const u8,
     message_id: []const u8,
@@ -1340,11 +1490,11 @@ fn sendUserHistoryChunk(
         text,
     );
     try out.writer.writeAll("}");
-    try state.writer.writeNotification(alloc, "session/update", out.writer.buffered());
+    try state.writer.writeNotification(alloc, state.method, out.writer.buffered());
 }
 
 fn sendExecutionHistory(
-    state: *server.ServerState,
+    state: *HistoryOutput,
     alloc: Allocator,
     session_id: []const u8,
     execution: types.ExecutionMemory,
@@ -1354,7 +1504,7 @@ fn sendExecutionHistory(
     defer arena_state.deinit();
     const frames = try planExecutionReplay(
         arena_state.allocator(),
-        tool_call_presentation.activeToolRegistry(state),
+        state.registry,
         execution,
     );
     for (frames) |frame| {
@@ -1469,7 +1619,7 @@ fn planExecutionReplay(
 }
 
 fn sendHistoryToolCall(
-    state: *server.ServerState,
+    state: *HistoryOutput,
     alloc: Allocator,
     session_id: []const u8,
     call: ReplayToolCall,
@@ -1481,7 +1631,7 @@ fn sendHistoryToolCall(
     try out.writer.writeAll(",\"update\":");
     try acp_types.writeToolCall(&out.writer, call.id, call.name, call.title, call.kind, .pending, call.raw_input);
     try out.writer.writeAll("}");
-    try state.writer.writeNotification(alloc, "session/update", out.writer.buffered());
+    try state.writer.writeNotification(alloc, state.method, out.writer.buffered());
     if (call.status == .pending) return;
     out.clearRetainingCapacity();
     try out.writer.writeAll("{\"sessionId\":");
@@ -1489,10 +1639,10 @@ fn sendHistoryToolCall(
     try out.writer.writeAll(",\"update\":");
     try acp_types.writeToolCallUpdate(&out.writer, call.id, call.status, call.content_text);
     try out.writer.writeAll("}");
-    try state.writer.writeNotification(alloc, "session/update", out.writer.buffered());
+    try state.writer.writeNotification(alloc, state.method, out.writer.buffered());
 }
 
-fn sendAgentHistoryChunk(state: *server.ServerState, alloc: Allocator, session_id: []const u8, text: []const u8) !void {
+fn sendAgentHistoryChunk(state: *HistoryOutput, alloc: Allocator, session_id: []const u8, text: []const u8) !void {
     var message_id: acp_types.MessageIdBuffer = undefined;
     var out: std.Io.Writer.Allocating = .init(alloc);
     defer out.deinit();
@@ -1505,7 +1655,7 @@ fn sendAgentHistoryChunk(state: *server.ServerState, alloc: Allocator, session_i
         text,
     );
     try out.writer.writeAll("}");
-    try state.writer.writeNotification(alloc, "session/update", out.writer.buffered());
+    try state.writer.writeNotification(alloc, state.method, out.writer.buffered());
 }
 
 /// Slash commands an external ACP client can fulfil with the surface it already
@@ -2912,4 +3062,67 @@ test "ACP same-session restore retires the replaced MCP runtime after active use
     if (restore.err) |err| return err;
     try std.testing.expect(retired_before_destroy);
     try std.testing.expect(!completed_while_leased);
+}
+
+test "ACP rewind prefix excludes the edited turn and all later replies" {
+    const alloc = std.testing.allocator;
+    var prefix = RewindPrefix{ .alloc = alloc, .target = 1, .expected = "second" };
+    defer prefix.deinit();
+    try prefix.append(.{ .assistant = .{ .user = .{ .text = @constCast("first") }, .assistant = @constCast("first reply") } });
+    try prefix.append(.{ .assistant = .{ .user = .{ .text = @constCast("second") }, .assistant = @constCast("second reply") } });
+    try prefix.append(.{ .assistant = .{ .user = .{ .text = @constCast("third") }, .assistant = @constCast("third reply") } });
+    try std.testing.expect(prefix.matched);
+    try std.testing.expectEqual(@as(usize, 1), prefix.history.items.len);
+    try std.testing.expectEqualStrings("first", prefix.history.items[0].assistant.user.text);
+    var stale = RewindPrefix{ .alloc = alloc, .target = 0, .expected = "different" };
+    defer stale.deinit();
+    try stale.append(.{ .assistant = .{ .user = .{ .text = @constCast("first") }, .assistant = @constCast("reply") } });
+    try std.testing.expect(!stale.matched);
+    try std.testing.expectEqual(@as(usize, 0), stale.history.items.len);
+}
+
+test "ACP rewind creates a persistent prefix while preserving the original conversation" {
+    const alloc = std.testing.allocator;
+    var arena_state = std.heap.ArenaAllocator.init(alloc);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
+    try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
+    try tmp.dir.writeFile(io_mod.getIo(), .{ .sub_path = "home/.handwork/settings.json", .data = "{}" });
+    const home_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
+    defer alloc.free(home_path);
+    const workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "workspace");
+    defer alloc.free(workspace);
+    const home = try AcpSessionTestHome.install(alloc, home_path);
+    defer home.deinit();
+    var capture = try tmp.dir.createFile(io_mod.getIo(), "rewind.jsonl", .{ .read = true });
+    defer capture.close(io_mod.getIo());
+    var state = try initAcpSessionTestState(arena, workspace, capture);
+    defer state.deinit();
+    state.cfg.allow_acp_mcp = false;
+    var new_msg = jsonrpc.Message{ .id = .{ .integer = 1 }, .method = "session/new", .params_raw = "{\"mcpServers\":[]}" };
+    try handleNewSession(&state, arena, &new_msg);
+    const original_id = try arena.dupe(u8, state.active_session.?.session_id);
+    inline for (.{ "first", "second" }) |text| {
+        _ = try state.active_session.?.writable.?.appendEvent(arena, .{ .history_turn_committed = .{
+            .conversation_language = .literal("en"),
+            .total_input_tokens = 0,
+            .total_output_tokens = 0,
+            .turn = .{ .assistant = .{ .user = .{ .text = @constCast(text) }, .assistant = @constCast("original reply") } },
+        } }, io_mod.milliTimestamp());
+    }
+    const params = try std.fmt.allocPrint(arena, "{{\"sessionId\":\"{s}\",\"turnIndex\":1,\"expectedText\":\"second\"}}", .{original_id});
+    var rewind = jsonrpc.Message{ .id = .{ .integer = 2 }, .method = "session/rewind", .params_raw = params };
+    try handleRewindSession(&state, arena, &rewind);
+    try std.testing.expect(!std.mem.eql(u8, original_id, state.active_session.?.session_id));
+    try std.testing.expectEqual(@as(usize, 1), state.active_session.?.session_rt.agent.history.items.len);
+    try std.testing.expectEqualStrings("first", state.active_session.?.session_rt.agent.history.items[0].assistant.user.text);
+    var old = try state.active_session.?.store.?.loadReadOnly(arena, original_id);
+    defer old.deinit(arena);
+    try std.testing.expectEqual(@as(usize, 2), old.history.len);
+    var edited = try state.active_session.?.store.?.loadReadOnly(arena, state.active_session.?.session_id);
+    defer edited.deinit(arena);
+    try std.testing.expectEqual(@as(usize, 1), edited.history.len);
 }
