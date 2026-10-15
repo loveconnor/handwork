@@ -38,6 +38,12 @@ release step; the implementation does not publish automatically.
 
 ## Verification
 
+[Native Windows x64 CI](https://github.com/loveconnor/handwork/actions/runs/38819044192)
+passed 27 Zig tests, two launcher tests, and both the staged and npm-installed
+CLI smoke journeys. One POSIX-only test was skipped. These checks use the
+ReleaseFast Windows package and a local provider fixture; they do not establish
+live OAuth or interactive TUI compatibility.
+
 On a Windows machine with Zig 0.16.0, Node.js and npm, run from PowerShell:
 
 ```powershell
