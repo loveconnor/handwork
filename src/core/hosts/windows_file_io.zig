@@ -18,13 +18,56 @@ pub fn wrap(original: std.Io) std.Io {
 }
 
 fn openFile(userdata: ?*anyopaque, dir: std.Io.Dir, path: []const u8, options: std.Io.Dir.OpenFileOptions) std.Io.File.OpenError!std.Io.File {
-    var file = try original_vtable.?.dirOpenFile(userdata, dir, path, options);
-    // Threaded.dirOpenFileWtf16 uses ASYNCHRONOUS when follow_symlinks=false
-    // but returns nonblocking=false. NtReadFile can then return PENDING into
-    // the synchronous reader's unreachable branch. Match the actual handle
-    // mode so reads and writes await completion through the async backend.
-    if (!options.follow_symlinks) file.flags.nonblocking = true;
+    const io: std.Io = .{ .userdata = userdata, .vtable = original_vtable.? };
+    if (options.follow_symlinks) return original_vtable.?.dirOpenFile(userdata, dir, path, options);
+
+    // Zig 0.16 opens no-follow handles asynchronously but labels them as
+    // synchronous. Merely changing the label cannot support streaming writes:
+    // Windows maintains a file position only on synchronous disk handles.
+    // Reopen the same object through its handle, without resolving its path.
+    var unlocked_options = options;
+    unlocked_options.lock = .none;
+    const original = try original_vtable.?.dirOpenFile(userdata, dir, path, unlocked_options);
+    defer original.close(io);
+    const file = try reopenSynchronous(io, original, options);
+    errdefer file.close(io);
+    if (options.lock != .none) {
+        if (options.lock_nonblocking) {
+            if (!try file.tryLock(io, options.lock)) return error.WouldBlock;
+        } else try file.lock(io, options.lock);
+    }
     return file;
+}
+
+fn reopenSynchronous(io: std.Io, original: std.Io.File, options: std.Io.Dir.OpenFileOptions) std.Io.File.OpenError!std.Io.File {
+    const windows = std.os.windows;
+    const attributes: windows.OBJECT.ATTRIBUTES = .{
+        .RootDirectory = original.handle,
+        .ObjectName = @constCast(&windows.UNICODE_STRING.empty),
+    };
+    var handle: windows.HANDLE = undefined;
+    var status_block: windows.IO_STATUS_BLOCK = undefined;
+    while (true) {
+        try io.checkCancel();
+        switch (windows.ntdll.NtCreateFile(&handle, .{
+            .GENERIC = .{ .READ = options.isRead(), .WRITE = options.isWrite() },
+            .STANDARD = .{ .SYNCHRONIZE = true },
+        }, &attributes, &status_block, null, .{ .NORMAL = true }, .VALID_FLAGS, .OPEN, .{
+            .NON_DIRECTORY_FILE = !options.allow_directory or options.isWrite(),
+            .IO = .SYNCHRONOUS_NONALERT,
+            .OPEN_REPARSE_POINT = true,
+        }, null, 0)) {
+            .SUCCESS => return .{ .handle = handle, .flags = .{ .nonblocking = false } },
+            .CANCELLED => continue,
+            .ACCESS_DENIED => return error.AccessDenied,
+            .DELETE_PENDING, .SHARING_VIOLATION => return error.FileBusy,
+            .OBJECT_NAME_NOT_FOUND, .OBJECT_PATH_NOT_FOUND => return error.FileNotFound,
+            .FILE_IS_A_DIRECTORY => return error.IsDir,
+            .NOT_A_DIRECTORY => return error.NotDir,
+            .INSUFFICIENT_RESOURCES, .NO_MEMORY => return error.SystemResources,
+            else => |status| return windows.unexpectedStatus(status),
+        }
+    }
 }
 
 test "Windows no-follow file handles read and write through the matching I/O mode" {

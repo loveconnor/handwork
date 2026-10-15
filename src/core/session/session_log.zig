@@ -114,6 +114,8 @@ test "conversation cut counts standalone text without changing steering prefixes
 pub const ConversationWriter = struct {
     alloc: Allocator,
     file: std.Io.File,
+    // Windows publication closes child files while retaining the writer state.
+    file_is_open: bool = true,
     committed_bytes: u64 = 0,
     last_seq: u64 = 0,
     latest_checkpoint_coverage: u64 = 0,
@@ -209,8 +211,14 @@ pub const ConversationWriter = struct {
             self.alloc.free(@constCast(pending.tool_name));
         }
         self.pending_tool_calls.deinit(self.alloc);
-        self.file.close(io_mod.getIo());
+        if (self.file_is_open) self.closeFile();
         self.* = undefined;
+    }
+
+    fn closeFile(self: *ConversationWriter) void {
+        std.debug.assert(self.file_is_open);
+        self.file.close(io_mod.getIo());
+        self.file_is_open = false;
     }
 
     pub fn append(
@@ -3336,9 +3344,14 @@ pub const Root = struct {
             options,
         );
         writable_owned = false;
-        errdefer loaded.deinit(alloc);
+        var loaded_owned = true;
+        errdefer if (loaded_owned) loaded.deinit(alloc);
         try loaded.conversation_writer.file.sync(io_mod.getIo());
         try io_mod.syncVerifiedDir(loaded.log.dir.dir);
+        if (comptime builtin.os.tag == .windows) {
+            loaded_owned = false;
+            return publishWindowsSession(alloc, sessions.dir, staging_name, loaded, options, &unpublished);
+        }
         publishSessionDirectory(sessions.dir, staging_name, initial_state.id) catch |err| {
             if (err == error.PathAlreadyExists) return error.SessionAlreadyExists;
             debug_trace.logf("session", "session creation publication failed id={s} err={s}", .{ initial_state.id, @errorName(err) });
@@ -3511,6 +3524,59 @@ fn publishSessionDirectory(parent: std.Io.Dir, staging: []const u8, target: []co
             },
         }
     }
+}
+
+/// Takes ownership of `initial`. Windows cannot rename a directory with open
+/// child files. Keep the directory and in-memory writer state, close its files,
+/// publish, then reacquire the writer on that same directory object.
+fn publishWindowsSession(
+    alloc: Allocator,
+    parent: std.Io.Dir,
+    staging: []const u8,
+    initial: LoadedWritableSession,
+    options: Options,
+    unpublished: *bool,
+) !LoadedWritableSession {
+    var loaded = initial;
+    var loaded_owned = true;
+    defer if (loaded_owned) loaded.deinit(alloc);
+    var expected = (try loadConversationStateIfPresent(alloc, &loaded.log.dir, loaded.active_id)) orelse
+        return error.InvalidSessionMetadata;
+    defer expected.deinit(alloc);
+    loaded.conversation_writer.closeFile();
+    // Closing the last write handle can finalize Windows modification times.
+    // Capture the identity only after that close, while still holding the lock.
+    const expected_stat = blk: {
+        const file = try openManagedFile(&loaded.log.dir, events_file, .read_only);
+        defer file.close(io_mod.getIo());
+        break :blk try file.stat(io_mod.getIo());
+    };
+    loaded.log.park();
+    publishSessionDirectory(parent, staging, loaded.active_id) catch |err| {
+        if (err == error.PathAlreadyExists) return error.SessionAlreadyExists;
+        return err;
+    };
+    unpublished.* = false;
+    io_mod.syncVerifiedDir(parent) catch return error.SessionStartFailed;
+    loaded.log.writer_lock = acquireLockWithDeadline(&loaded.log.dir, session_lock_file, true, options.session_lock_deadline_ms) catch |err|
+        return mapSessionLockError(err);
+    var current = (try loadConversationStateIfPresent(alloc, &loaded.log.dir, loaded.active_id)) orelse
+        return error.InvalidSessionMetadata;
+    defer current.deinit(alloc);
+    const file = try openManagedFile(&loaded.log.dir, events_file, .read_write);
+    var file_owned = true;
+    defer if (file_owned) file.close(io_mod.getIo());
+    const stat = try file.stat(io_mod.getIo());
+    // Publication briefly releases the lock. Do not adopt another writer's
+    // changes or resume through a replacement event-log object.
+    if (stat.inode != expected_stat.inode or stat.size != expected_stat.size or
+        !std.meta.eql(stat.mtime, expected_stat.mtime) or
+        !try durableStatesEqual(expected, current)) return error.SessionWriterChanged;
+    loaded.conversation_writer.file = file;
+    loaded.conversation_writer.file_is_open = true;
+    file_owned = false;
+    loaded_owned = false;
+    return loaded;
 }
 
 fn validateLeaf(name: []const u8) !void {

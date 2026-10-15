@@ -1,9 +1,9 @@
 # Windows port status
 
-Windows support is experimental. The Windows x64 executable builds on GitHub's
-native Windows runner, and all platform adapter tests pass there. Native
-settings/session and CLI/npm journeys are still being verified. Windows ARM64
-is cross-compiled only. The published npm release has not been changed.
+Windows support is experimental. Windows x64 has native GitHub Actions checks
+for installation, commands, settings, saved sessions and networking. Windows
+ARM64 is cross-compiled only. Publishing the prepared npm package is a separate
+release step; the implementation does not publish automatically.
 
 ## Implemented
 
@@ -15,7 +15,10 @@ is cross-compiled only. The published npm release has not been changed.
   user and SYSTEM before content is written. Verification rejects foreign
   owners, broad grants, reparse points and hard links. Read snapshots retain
   their identity if atomic replacement unlinks them; mutation handles require a
-  linked file. Durable settings and session commits report directory-flush failures.
+  linked file. Durable settings and session commits report directory-flush
+  failures. New sessions close child files before directory publication, retain
+  the directory handle across rename, then reacquire the writer and reject
+  intervening changes.
 - The pinned HTTP fetcher uses nonblocking Winsock, `WSAPoll`, socket error
   inspection and bounded send/receive operations. OAuth callback polling and
   socket timeouts use Windows operations. Browser sign-in opens HTTP(S) URLs
@@ -41,14 +44,16 @@ On a Windows machine with Zig 0.16.0, Node.js and npm, run from PowerShell:
 ./scripts/test-windows.ps1
 ```
 
-The script builds the executable and runs console, ACL, path, loopback socket,
+The script stages the native ReleaseFast package and runs console, ACL, path,
+loopback socket,
 process identity and descendant cleanup tests. Integration tests cover settings,
 prompt history, session creation and resume, private read snapshots, Unicode
 paths, command quoting, separate output streams, exit status and timeout.
 
 The CLI smoke test uses a local HTTP provider with a dummy API key. It performs
-API-key login, runs a shell tool that creates a Unicode-named file, saves the
-conversation, collects a background command, and resumes it in another process. It does not call a paid model.
+API-key login, runs foreground and background commands that create Unicode-named
+files, saves the conversation, and resumes that conversation in another process.
+It does not call a paid model.
 The PowerShell script also packs and installs into a temporary npm global prefix
 and invokes npm's actual Windows command shim, then repeats the full CLI journey
 through the installed launcher. Its partial-architecture package
@@ -133,3 +138,6 @@ before publishing a package that advertises Windows support.
 - [ShellExecuteW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shellexecutew)
 
 - [Command Prompt variable expansion](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cmd)
+
+- [Synchronous and asynchronous file positions](https://learn.microsoft.com/en-us/windows/win32/fileio/synchronous-and-asynchronous-i-o)
+- [Windows directory rename requirements](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/87f86c9b-6c2a-4803-84b7-131a74a434fa)

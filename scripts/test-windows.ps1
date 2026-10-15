@@ -7,12 +7,14 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) { throw "$Program failed with exit code $LASTEXITCODE" }
 }
 if (-not $SkipBuild) {
-    Invoke-Checked -Program zig -Arguments @('build', '-Doptimize=ReleaseSafe')
+    $architecture = (& node -p 'process.arch').Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to determine the Node.js architecture' }
+    Invoke-Checked -Program node -Arguments @('scripts/package-native.mjs', "--target=win32-$architecture")
     Invoke-Checked -Program zig -Arguments @('build', 'test-platform', '-Doptimize=ReleaseSafe', '--test-timeout', '60s')
     Invoke-Checked -Program zig -Arguments @('build', 'test-platform-integration', '-Doptimize=ReleaseSafe', '--test-timeout', '60s')
 }
 Invoke-Checked -Program node -Arguments @('--test', 'scripts/tests/npm-launcher.test.cjs')
-Invoke-Checked -Program node -Arguments @('scripts/windows-smoke.mjs')
+Invoke-Checked -Program node -Arguments @('scripts/windows-smoke.mjs', 'bin/handwork.cjs')
 
 # Exercise npm's actual Windows command shim in an isolated global prefix.
 # This temporary package tests only this runner's architecture; release packing

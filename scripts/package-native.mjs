@@ -13,6 +13,9 @@ const targets = [
 ];
 const checkOnly = process.argv.includes('--check');
 const selected = process.argv.find(value => value.startsWith('--target='))?.slice('--target='.length);
+if (selected !== undefined && !targets.some(([platform, arch]) => selected === `${platform}-${arch}`)) {
+  throw new Error(`Unsupported package target: ${selected}`);
+}
 for (const [platform, arch, zigTarget] of targets) {
   if (selected && selected !== `${platform}-${arch}`) continue;
   const prefix = join(root, 'prebuilds', `${platform}-${arch}`);

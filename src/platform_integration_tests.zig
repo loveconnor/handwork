@@ -68,6 +68,7 @@ test "platform integration persists settings history and a resumable session in 
     {
         var writable = try store.startWritableSession(alloc, state);
         defer writable.deinit(alloc);
+        try std.testing.expectError(error.SessionBusy, store.resumeTargetForWrite(alloc, .{ .id = writable.active_id }, workspace, .{ .log = .{ .session_lock_deadline_ms = 0 } }));
         try store.rememberSessionId(alloc, writable.active_id);
     }
     const remembered = (try store.readRememberedSessionId(alloc)).?;
@@ -102,15 +103,19 @@ test "platform integration Windows commands preserve quotes streams exit and tim
     try std.testing.expectError(error.TimeoutExpired, commands.executeCommand(.{ .max_command_output_bytes = 4096, .timeout_ms = 200 }, alloc, "ping -n 30 127.0.0.1 >nul", workspace));
     const powershell = try std.fs.path.join(alloc, &.{ std.fs.path.dirname(shell).?, "WindowsPowerShell", "v1.0", "powershell.exe" });
     defer alloc.free(powershell);
+    const marker_path = try std.fs.path.join(alloc, &.{ workspace, "closed.marker" });
+    defer alloc.free(marker_path);
+    try environment.put("HANDWORK_CLOSED_PIPE_MARKER", marker_path);
     const close_pipes =
+        \\$ErrorActionPreference = 'Stop';
         \\Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class ClosePipes { [DllImport("kernel32.dll")] public static extern IntPtr GetStdHandle(int id); [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle); }';
-        \\[ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-11)) | Out-Null;
-        \\[ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-12)) | Out-Null;
-        \\[IO.File]::WriteAllText('closed.marker', 'ready');
-        \\Start-Sleep -Seconds 8
+        \\if (-not [ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-11))) { exit 11 };
+        \\if (-not [ClosePipes]::CloseHandle([ClosePipes]::GetStdHandle(-12))) { exit 12 };
+        \\[IO.File]::WriteAllText($env:HANDWORK_CLOSED_PIPE_MARKER, 'ready');
+        \\Start-Sleep -Seconds 30
     ;
-    try std.testing.expectError(error.TimeoutExpired, commands.executeCommandInEnvironment(.{ .max_command_output_bytes = 4096, .timeout_ms = 5000 }, alloc, close_pipes, workspace, .{ .clean = powershell }));
-    try tmp.dir.access(io_mod.getIo(), "日本語 %PATH% & workspace/closed.marker", .{});
+    try std.testing.expectError(error.TimeoutExpired, commands.executeCommandInEnvironment(.{ .max_command_output_bytes = 4096, .timeout_ms = 15000 }, alloc, close_pipes, workspace, .{ .clean = powershell }));
+    try std.Io.Dir.cwd().access(io_mod.getIo(), marker_path, .{});
 }
 
 test "platform integration private read snapshots survive unlink while mutation handles reject it" {
