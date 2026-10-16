@@ -532,15 +532,13 @@ fn readGitCommit(b: *std.Build) []const u8 {
 }
 
 fn readAppVersion(b: *std.Build) []const u8 {
-    const bytes = std.Io.Dir.cwd().readFileAlloc(b.graph.io, "src/main.zig", b.allocator, .limited(1024 * 1024)) catch
-        @panic("could not read src/main.zig to resolve app version");
+    const bytes = std.Io.Dir.cwd().readFileAlloc(b.graph.io, "package.json", b.allocator, .limited(1024 * 1024)) catch
+        @panic("could not read package.json to resolve app version");
     defer b.allocator.free(bytes);
 
-    const prefix = "pub const version = \"";
-    const start = (std.mem.find(u8, bytes, prefix) orelse
-        @panic("could not find pub const version in src/main.zig")) + prefix.len;
-    const end_rel = std.mem.findScalar(u8, bytes[start..], '"') orelse
-        @panic("could not parse pub const version in src/main.zig");
-    return b.allocator.dupe(u8, bytes[start .. start + end_rel]) catch
+    const package = std.json.parseFromSlice(struct { version: []const u8 }, b.allocator, bytes, .{ .ignore_unknown_fields = true }) catch
+        @panic("could not parse version in package.json");
+    defer package.deinit();
+    return b.allocator.dupe(u8, package.value.version) catch
         @panic("could not allocate app version");
 }
