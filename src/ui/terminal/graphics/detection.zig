@@ -108,9 +108,10 @@ pub const ProbeFacts = struct {
 
 pub const kitty_query_id: u32 = 31;
 
-/// Sent together; DA1 comes last because every terminal answers it, so its
-/// reply marks the end of the other answers.
-pub const probe_query = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\" ++ "\x1b[16t" ++ "\x1b[14t" ++ "\x1b[c";
+/// XTSMGRAPHICS detects image add-ons that report SIXEL
+/// geometry even when DA1 does not advertise attribute 4. An early DA1 can
+/// precede add-on activation, so it alone does not complete detection.
+pub const probe_query = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\" ++ "\x1b[16t" ++ "\x1b[14t" ++ "\x1b[?2;1;0S" ++ "\x1b[c";
 
 /// Parses every complete reply found in `bytes`.
 pub fn parseProbeReplies(bytes: []const u8) ProbeFacts {
@@ -134,6 +135,14 @@ pub fn parseProbeReplies(bytes: []const u8) ProbeFacts {
                 if (j >= bytes.len) break;
                 const params = bytes[esc + 2 .. j];
                 switch (bytes[j]) {
+                    'S' => {
+                        var it = std.mem.splitScalar(u8, params, ';');
+                        const item = it.next() orelse "";
+                        const status = it.next() orelse "";
+                        const width = std.fmt.parseInt(u32, it.next() orelse "", 10) catch 0;
+                        const height = std.fmt.parseInt(u32, it.next() orelse "", 10) catch 0;
+                        if (std.mem.eql(u8, item, "?2") and std.mem.eql(u8, status, "0") and width > 0 and height > 0) facts.sixel = true;
+                    },
                     'c' => if (params.len > 0 and params[0] == '?') {
                         facts.device_attributes_seen = true;
                         var it = std.mem.splitScalar(u8, params[1..], ';');
@@ -160,10 +169,22 @@ pub fn parseProbeReplies(bytes: []const u8) ProbeFacts {
 }
 
 pub fn chooseFromProbe(env: Environment, facts: ProbeFacts, fallback: Protocol) Protocol {
+    // VS Code's image add-on can acknowledge Kitty queries without drawing
+    // Unicode placeholders. Use its documented SIXEL path.
+    if (env.term_program) |program| {
+        if (std.ascii.eqlIgnoreCase(program, "vscode")) return if (facts.sixel) .sixel else fallback;
+    }
     // Konsole answers the kitty query but does not draw Unicode placeholders.
     if (facts.kitty_graphics and env.konsole_version == null) return .kitty;
     if (facts.sixel) return .sixel;
     return fallback;
+}
+
+pub fn probeComplete(env: Environment, facts: ProbeFacts, kernel_pixels_known: bool) bool {
+    if (!facts.device_attributes_seen) return false;
+    const chosen = chooseFromProbe(env, facts, .blocks);
+    if (chosen == .blocks) return false;
+    return !chosen.requiresExactCellSize() or kernel_pixels_known or facts.cell.isKnown() or facts.window.isKnown();
 }
 
 /// Cell size from the most direct source available: the kernel's pixel
@@ -224,6 +245,31 @@ test "probe choice prefers kitty, then sixel, and distrusts Konsole's kitty repl
     try std.testing.expectEqual(Protocol.kitty, chooseFromProbe(.{}, both, .blocks));
     try std.testing.expectEqual(Protocol.sixel, chooseFromProbe(.{ .konsole_version = "230800" }, both, .blocks));
     try std.testing.expectEqual(Protocol.blocks, chooseFromProbe(.{}, .{}, .blocks));
+    try std.testing.expectEqual(Protocol.sixel, chooseFromProbe(.{ .term_program = "vscode" }, both, .blocks));
+    try std.testing.expectEqual(Protocol.blocks, chooseFromProbe(.{ .term_program = "vscode" }, .{ .kitty_graphics = true }, .blocks));
+}
+
+test "XTSMGRAPHICS detects image add-ons without DA1 sixel attributes" {
+    const replies = "\x1b[?1;2c\x1b[?2;0;756;742S\x1b[6;14;7t";
+    const facts = parseProbeReplies(replies);
+    try std.testing.expect(facts.sixel);
+    try std.testing.expectEqual(CellSize{ .width_px = 7, .height_px = 14 }, facts.cell);
+    // Graphics geometry is a canvas limit, not the terminal's window size.
+    try std.testing.expect(!facts.window.isKnown());
+    for ([_][]const u8{ "\x1b[?2;1;756;742S", "\x1b[?2;0;0;742S", "\x1b[?2;0;756;0S", "\x1b[?1;0;256S", "\x1b[?2;0;756;742" }) |invalid|
+        try std.testing.expect(!parseProbeReplies(invalid).sixel);
+}
+
+test "VS Code probing waits past early DA1 until graphics and geometry arrive" {
+    const env = Environment{ .term_program = "vscode" };
+    const early = "\x1b[?1;2c";
+    try std.testing.expect(!probeComplete(env, parseProbeReplies(early), true));
+    const graphics = early ++ "\x1b_Gi=31;OK\x1b\\\x1b[?2;0;756;742S";
+    try std.testing.expect(!probeComplete(env, parseProbeReplies(graphics), false));
+    try std.testing.expect(probeComplete(env, parseProbeReplies(graphics), true));
+    const complete = graphics ++ "\x1b[6;14;7t\x1b[?62;4;9;22c";
+    try std.testing.expect(probeComplete(env, parseProbeReplies(complete), false));
+    try std.testing.expectEqual(Protocol.sixel, chooseFromProbe(env, parseProbeReplies(complete), .blocks));
 }
 
 test "cell size resolution and the sixel safety fallback" {

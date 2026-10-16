@@ -8,9 +8,10 @@ const shell_runtime = @import("../shell_runtime.zig");
 const detection = @import("graphics/detection.zig");
 const inline_images = @import("../images/inline_images.zig");
 
-/// Replies normally arrive within one round trip; the deadline only bounds
-/// terminals that ignore DA1 entirely.
+/// Bound startup work while allowing a newly opened terminal's image add-on
+/// to finish loading after the core terminal has already answered DA1.
 const probe_deadline_ms: i64 = 250;
+const probe_retry_ms: i64 = 80;
 
 pub fn detectCapabilities(
     terminal_state: *const shell_runtime.TerminalState,
@@ -38,7 +39,7 @@ pub fn detectCapabilities(
         // Known terminals still need a cell size when the kernel lacks one.
         .decided => |chosen| chosen != .none and chosen != .blocks and !winsize_px.isKnown(),
     };
-    if (needs_probe) facts = probe(terminal_state);
+    if (needs_probe) facts = probe(terminal_state, env, winsize_px.isKnown());
 
     const chosen = switch (decision) {
         .decided => |forced| forced,
@@ -75,22 +76,28 @@ fn windowPixels() detection.CellSize {
     return .{ .width_px = ws.xpixel, .height_px = ws.ypixel };
 }
 
-fn probe(terminal_state: *const shell_runtime.TerminalState) detection.ProbeFacts {
+fn probe(terminal_state: *const shell_runtime.TerminalState, env: detection.Environment, kernel_pixels_known: bool) detection.ProbeFacts {
     var stdout_file = std.Io.File.stdout();
     stdout_file.writeStreamingAll(io_mod.getIo(), detection.probe_query) catch return .{};
 
     var buf: [512]u8 = undefined;
     var len: usize = 0;
     const deadline_ms = io_mod.milliTimestamp() + probe_deadline_ms;
+    var retry_ms = io_mod.milliTimestamp() + probe_retry_ms;
     while (len < buf.len) {
         const now_ms = io_mod.milliTimestamp();
         if (now_ms >= deadline_ms) break;
-        const poll = terminal_state.pollInput(@intCast(deadline_ms - now_ms)) catch break;
-        if (poll.closed() or !poll.readable) break;
+        if (now_ms >= retry_ms) {
+            stdout_file.writeStreamingAll(io_mod.getIo(), detection.probe_query) catch break;
+            retry_ms = now_ms + probe_retry_ms;
+        }
+        const poll = terminal_state.pollInput(@intCast(@min(deadline_ms, retry_ms) - now_ms)) catch break;
+        if (poll.closed()) break;
+        if (!poll.readable) continue;
         const n = terminal_state.read(buf[len..]) catch break;
         if (n == 0) break;
         len += n;
-        if (detection.parseProbeReplies(buf[0..len]).device_attributes_seen) break;
+        if (detection.probeComplete(env, detection.parseProbeReplies(buf[0..len]), kernel_pixels_known)) break;
     }
     return detection.parseProbeReplies(buf[0..len]);
 }

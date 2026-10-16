@@ -42,7 +42,7 @@ Handwork picks the protocol at startup:
 | Windows Terminal 1.22+, xterm, foot, VS Code with images enabled, other SIXEL terminals | SIXEL | Pixels are drawn over blank cells after each frame. |
 | Apple Terminal, the Windows console host, tmux, screen, and anything else | Half blocks | Each cell shows two pixels with `▀`/`▄` and 24-bit (or 256) colors. |
 
-Terminals that are not recognized by their environment variables are asked directly: Handwork sends a Kitty graphics query and a device-attributes request at startup and uses the answers. SIXEL needs the terminal's cell size in pixels; when the terminal does not report it, Handwork uses half blocks instead of guessing.
+Terminals that are not recognized by their environment variables are asked directly: Handwork queries Kitty graphics, SIXEL geometry (XTSMGRAPHICS), device attributes, and pixel dimensions. It retries briefly when the terminal answers before its image add-on is ready. SIXEL needs the terminal's cell size in pixels; when the terminal does not report it, Handwork uses half blocks instead of guessing.
 
 Inside tmux or screen, Handwork always uses half blocks. Passing graphics through a multiplexer is not supported.
 
@@ -55,6 +55,8 @@ The conversation viewer receives wheel reports directly in Apple Terminal and VS
 ### VS Code
 
 VS Code disables terminal images by default. This repository's `.vscode/settings.json` enables `terminal.integrated.enableImages` for the workspace. Start a new integrated terminal after applying the setting, then restart Handwork so it can detect pixel graphics. Image support also requires VS Code's terminal GPU acceleration; keep `terminal.integrated.gpuAcceleration` set to `auto` or `on`.
+
+Handwork selects SIXEL in VS Code, even when the terminal also acknowledges a Kitty query: that acknowledgment does not establish support for Handwork's Unicode placeholder rendering. Startup probes wait for usable graphics and pixel dimensions instead of treating an early device-attributes reply as a final answer. This follows the graphics-specific probing used in [Oh My Pi](https://github.com/can1357/oh-my-pi/blob/afdc8bd10e69974bfcd7565a2c6f70d1b488919c/packages/tui/src/tui.ts#L2413), while retaining Handwork's own renderer.
 
 When terminal image support is disabled, Mermaid diagrams use native text and raster images use half blocks. `HANDWORK_IMAGES=off` keeps diagram source and image labels as text instead. See [VS Code's terminal documentation](https://code.visualstudio.com/docs/terminal/advanced#_images).
 
