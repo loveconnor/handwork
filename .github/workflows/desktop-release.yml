@@ -60,6 +60,7 @@ jobs:
       run:
         working-directory: desktop-app
     env:
+      ZIG_GLOBAL_CACHE_DIR: ${{ github.workspace }}/.zig-global-cache
       HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/win32-${{ matrix.arch }}/bin/handwork.exe
     steps:
       - uses: actions/checkout@v4
@@ -70,9 +71,17 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: desktop-app/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run test:desktop
       - run: npm run typecheck
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .zig-cache
+            .zig-global-cache
+          key: desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          restore-keys: |
+            desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - name: Build the bundled native engine
         working-directory: .
@@ -127,6 +136,7 @@ jobs:
       run:
         working-directory: desktop-app
     env:
+      ZIG_GLOBAL_CACHE_DIR: ${{ github.workspace }}/.zig-global-cache
       HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/darwin-arm64/bin/handwork
     steps:
       - uses: actions/checkout@v4
@@ -137,9 +147,17 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: desktop-app/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run test:desktop
       - run: npm run typecheck
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .zig-cache
+            .zig-global-cache
+          key: desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          restore-keys: |
+            desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - working-directory: .
         run: node scripts/package-native.mjs --target=darwin-arm64

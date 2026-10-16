@@ -5,7 +5,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import path from 'node:path';
-import { extractFile } from '@electron/asar';
+import { extractFile, uncache } from '@electron/asar';
 import yaml from 'js-yaml';
 import { Cdp, pause } from './cdp.mjs';
 
@@ -67,7 +67,11 @@ async function launch(port) {
   }
   throw new Error('Update test UI did not load');
 }
-const versionOnDisk = () => JSON.parse(extractFile(path.join(path.dirname(executable), 'resources/app.asar'), 'package.json')).version;
+const versionOnDisk = () => {
+  const archive = path.join(path.dirname(executable), 'resources/app.asar');
+  uncache(archive);
+  return JSON.parse(extractFile(archive, 'package.json')).version;
+};
 async function waitFor(action, message, timeout = 60000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) { if (await action()) return; await pause(300); }
