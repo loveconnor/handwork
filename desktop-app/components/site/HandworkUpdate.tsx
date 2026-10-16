@@ -18,7 +18,7 @@ export default function HandworkUpdate({ api, busy, compact = false, prepareRest
     const unsubscribe = api.onEvent(event => { if (event.method === 'desktop/update' && mounted) { receivedEvent = true; setState(event.params as unknown as UpdateState); setFailure(''); } });
     return () => { mounted = false; unsubscribe(); };
   }, [api]);
-  if (!api) return null;
+  if (!api || !state.version || ['idle', 'checking', 'unavailable'].includes(state.status)) return null;
   const label = {
     idle: 'Check for updates', checking: 'Checking…', available: 'Download update',
     downloading: `Downloading ${state.progress ?? 0}%`, downloaded: 'Restart to update',

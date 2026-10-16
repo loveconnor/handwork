@@ -466,7 +466,7 @@ export default function HandworkHarness() {
       if (pendingSettings && !await pendingSettings) throw new Error("The setting change failed. Choose a provider and try again.");
       if (promptOperation !== operation.current && activeSession.current === promptSession) {
         setConversation(current => ({ ...current, entries: current.entries.filter(entry => entry.id !== localId) }));
-        setDraft(prompt); setAttachments(files); setNotice("Response stopped.");
+        setDraft(prompt); setAttachments(files);
         return;
       }
       dispatched = true;
@@ -475,7 +475,7 @@ export default function HandworkHarness() {
       if (reason === 'end_turn' && activeSession.current !== promptSession) {
         setUnreadSessions(current => new Set(current).add(promptSession));
       }
-      if (activeSession.current === promptSession && reason && reason !== "end_turn") setNotice(reason === "cancelled" ? "Response stopped. Completed actions have not been undone." : `Response ended: ${reason.replaceAll("_", " ")}`);
+      if (activeSession.current === promptSession && reason && reason !== "end_turn" && reason !== "cancelled") setNotice(`Response ended: ${reason.replaceAll("_", " ")}`);
     } catch (cause) {
       if (!dispatched) setConversation(current => ({ ...current, entries: current.entries.filter(entry => entry.id !== localId) }));
       if (activeSession.current === promptSession) {

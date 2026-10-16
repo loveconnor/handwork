@@ -1,10 +1,17 @@
 "use client";
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ChevronDown, Folder, FolderOpen, LoaderCircle, Plus, Ellipsis, Pencil, Pin, X, Trash2 } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
 import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuSeparator } from '@/components/ui/menu';
 
 type Chat = { id: string; label: string; workspace?: string; updatedAt?: string; pinned?: boolean };
+
+function CollapsibleChats({ open, children }: { open: boolean; children: ReactNode }) {
+  return <div className="handwork-sidebar-collapse" data-open={open} aria-hidden={!open} inert={!open}>
+    <div className="handwork-sidebar-collapse-content">{children}</div>
+  </div>;
+}
+
 export function HandworkSidebarContent({ projects, sessions, activeSession, runningSession, runningSessions, unreadSessions, busy, connecting, disabled, chatDisabled, onAdd, onNewProjectChat, onChat, openSessions, onRename, onPin, onClose, onDelete }: {
   projects: string[]; sessions: Chat[]; activeSession: string; runningSession: string; runningSessions?: Set<string>; unreadSessions: Set<string>; busy: boolean; connecting: boolean; disabled: boolean; chatDisabled: boolean;
   onAdd: () => void; onChat: (chat: Chat) => void;
@@ -13,6 +20,7 @@ export function HandworkSidebarContent({ projects, sessions, activeSession, runn
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const recentsOpen = !collapsed.has('recents');
   const toggle = (setter: typeof setCollapsed, key: string) => setter(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; });
   const chatRow = (chat: Chat, group: string) => {
     const active = activeSession === chat.id && (group === 'recents' ? !chat.workspace : chat.workspace === group);
@@ -44,17 +52,17 @@ export function HandworkSidebarContent({ projects, sessions, activeSession, runn
           <Button variant="ghost" size="sm" className="handwork-project-name" title={project} aria-expanded={open} onClick={() => toggle(setCollapsed, project)}>{open ? <FolderOpen aria-hidden width={16} height={16} /> : <Folder aria-hidden width={16} height={16} />}<span>{project.split('/').filter(Boolean).pop() || project}</span></Button>
           <Button variant="ghost" size="icon-sm" aria-label={`New chat in ${project.split('/').filter(Boolean).pop() || project}`} title="New chat in project" disabled={disabled} onClick={() => onNewProjectChat(project)}><Plus aria-hidden width={16} height={16} /></Button>
         </div>
-        {open && <div className="handwork-project-chats">{shown.map(chat => chatRow(chat, project))}
+        <CollapsibleChats open={open}><div className="handwork-project-chats">{shown.map(chat => chatRow(chat, project))}
           {!chats.length && <span className="handwork-sidebar-empty">No chats yet</span>}
           {chats.length > 5 && <Button className="handwork-show-more" variant="ghost" size="sm" onClick={() => toggle(setExpanded, project)}>{expanded.has(project) ? 'Show fewer' : 'Show more'}</Button>}
-        </div>}
+        </div></CollapsibleChats>
       </section>;
     })}
     <section aria-label="Recents">
-      <Button variant="ghost" size="sm" className="handwork-recents-heading" aria-expanded={!collapsed.has('recents')} onClick={() => toggle(setCollapsed, 'recents')}>Recents<ChevronDown aria-hidden width={13} height={13} /></Button>
-      {!collapsed.has('recents') && <div className="handwork-recent-chats">{sessions.slice(0, expanded.has('recents') ? undefined : 10).map(chat => chatRow(chat, 'recents'))}
+      <Button variant="ghost" size="sm" className="handwork-recents-heading" aria-expanded={recentsOpen} onClick={() => toggle(setCollapsed, 'recents')}>Recents<ChevronDown className="handwork-section-chevron" aria-hidden width={13} height={13} /></Button>
+      <CollapsibleChats open={recentsOpen}><div className="handwork-recent-chats">{sessions.slice(0, expanded.has('recents') ? undefined : 10).map(chat => chatRow(chat, 'recents'))}
         {sessions.length > 10 && <Button variant="ghost" size="sm" className="handwork-show-more" onClick={() => toggle(setExpanded, 'recents')}>{expanded.has('recents') ? 'Show fewer' : 'Show more'}</Button>}
-      </div>}
+      </div></CollapsibleChats>
     </section>
   </div>;
 }

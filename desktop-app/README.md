@@ -1,6 +1,6 @@
 # Handwork Desktop
 
-Canonical source: `desktop-app/` in [loveconnor/handwork](https://github.com/loveconnor/handwork). Run desktop commands from that folder. The engine is built from the repository root; the older sibling-checkout layout is also supported for local development.
+This checkout contains the desktop app at the repository root. Run desktop commands here. The native engine lives in the sibling `handwork/` checkout. Signed releases are built from the synchronized `desktop-app/` folder in [loveconnor/handwork](https://github.com/loveconnor/handwork).
 
 New chat opens a standalone conversation with messages and attachments. Start a
 project chat from the project's menu. Standalone chats use a private directory,
@@ -133,6 +133,19 @@ after changing the Zig engine so the bundled binary matches its protocol.
 
 ### Desktop updates
 
+Pushes to this standalone repository run desktop tests and typechecking. They do
+not publish an app update. To release the current desktop source through the
+existing signing credentials and public update feed, sync it into a clean engine
+checkout:
+
+```sh
+node scripts/sync-release-source.mjs ../handwork
+```
+
+Review, commit, and push the resulting `desktop-app/` changes in that checkout.
+The sync copies only tracked source files and excludes repository workflows;
+local dependencies, credentials, and build outputs are never copied.
+
 Pushes to `main` in `loveconnor/handwork` automatically build and test desktop
 releases after every push to main. The workflow assigns a newer
 version from the base desktop version and GitHub run number, builds Windows x64
@@ -167,9 +180,6 @@ secrets to enable the macOS release job: `MAC_CSC_LINK` (base64 P12 certificate)
 `latest-mac.yml` only on success. Until those credentials exist, Windows releases
 continue and unsigned Mac builds explain that a signed release is required.
 Never disable the Mac signature requirement to work around missing credentials.
-CI imports the selected signing identity into a disposable runner keychain before
-building. The encrypted certificate file is removed immediately after import,
-and the keychain and its search-list entry are removed after the job.
 
 For a signed release built on this Mac, create or import a **Developer ID
 Application** identity using Xcode Settings > Accounts > Manage Certificates.

@@ -5,6 +5,7 @@
 @import "./honest-compat.css";
 @import "honestui/prose.css";
 @import "honestui/syntax.css";
+@import "./fonts.css";
 
 html, body, #root { height: 100%; margin: 0; }
 body { font-family: var(--hui-font-family-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif); background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); }
@@ -56,6 +57,13 @@ button:disabled { cursor: not-allowed; }
 .handwork-activity-history { display: flex; flex-direction: column; gap: 16px; padding: 12px 0 4px 16px; border-inline-start: 1px solid var(--hui-color-border-base-primary); margin: 8px 0 0 6px; }
 .handwork-activity-note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .handwork-user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.handwork-submission { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.handwork-submission > p { margin: 0; }
+.handwork-submission-fields { display: flex; flex-direction: column; gap: 12px; margin: 0; padding-top: 14px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-submission-fields > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: baseline; }
+.handwork-submission-fields dt { color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 20px; }
+.handwork-submission-fields dd { margin: 0; min-width: 0; font-size: 13px; line-height: 20px; }
+.handwork-submission-empty { color: var(--hui-color-foreground-base-tertiary); }
 .handwork-empty { width: 100%; max-width: 768px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; text-align: center; }
 .handwork-empty h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.025em; line-height: 32px; margin: 0; overflow-wrap: anywhere; }
 .handwork-greeting-project { text-decoration-line: underline; text-decoration-style: dotted; text-decoration-thickness: 1px; text-underline-offset: 5px; }
@@ -196,6 +204,11 @@ button:disabled { cursor: not-allowed; }
 .handwork-sidebar-heading, .handwork-sidebar-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .handwork-sidebar-heading .handwork-brand { margin-right: auto; }
 .handwork-sidebar-groups { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.handwork-sidebar-collapse { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.handwork-sidebar-collapse[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.handwork-sidebar-collapse-content { min-height: 0; overflow: hidden; }
+.handwork-section-chevron { transform: rotate(-90deg); transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.handwork-recents-heading[aria-expanded="true"] .handwork-section-chevron { transform: rotate(0deg); }
 .handwork-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; padding-left: 8px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
 .handwork-project-heading { display: flex; align-items: center; gap: 2px; }
 .handwork-project-name { flex: 1; min-width: 0; justify-content: flex-start; padding-inline: 8px; gap: 8px; font-weight: 500; min-height: 32px; }

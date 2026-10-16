@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, Notification, session, shell } from 'electron';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -88,7 +88,15 @@ function createWindow() {
   });
   const currentWindow = window;
   const wc = window.webContents;
-  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  wc.setWindowOpenHandler(({ url }) => {
+    try {
+      const target = new URL(url);
+      if (['https:', 'http:'].includes(target.protocol) && !target.username && !target.password) {
+        void shell.openExternal(target.href).catch(error => console.error(`Could not open source: ${error.message}`));
+      }
+    } catch { /* Invalid links cannot leave the app. */ }
+    return { action: 'deny' };
+  });
   wc.on('will-navigate', (event) => event.preventDefault());
   wc.on('will-redirect', (event) => event.preventDefault());
   wc.on('will-attach-webview', (event) => event.preventDefault());
@@ -159,8 +167,32 @@ if (process.platform === 'darwin' && !app.isPackaged) {
   updateDockIcon();
   nativeTheme.on('updated', updateDockIcon);
 }
+const updateMenuIcon = process.platform === 'darwin'
+  ? nativeImage.createFromNamedImage('arrow.triangle.2.circlepath').resize({ width: 12, height: 12 })
+  : undefined;
+updateMenuIcon?.setTemplateImage(true);
 Menu.setApplicationMenu(Menu.buildFromTemplate([
-  ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
+  ...(process.platform === 'darwin' ? [{ role: 'appMenu', submenu: [
+    { role: 'about' },
+    { label: 'Check for Updates…', icon: updateMenuIcon, click: async () => {
+      const state = await desktopUpdater.check();
+      if (['idle', 'error', 'unavailable'].includes(state.status)) {
+        const options = { type: state.status === 'error' ? 'warning' : 'info', title: 'Handwork Updates', message: state.message };
+        if (window && !window.isDestroyed()) await dialog.showMessageBox(window, options);
+        else await dialog.showMessageBox(options);
+      } else if (window && !window.isDestroyed()) {
+        if (window.isMinimized()) window.restore();
+        window.show();
+        window.focus();
+      }
+    } },
+    { type: 'separator' },
+    { role: 'services' },
+    { type: 'separator' },
+    { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' },
+    { type: 'separator' },
+    { role: 'quit' },
+  ] }] : []),
   { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: () => window?.webContents.send(EVENT_CHANNEL, { method: 'desktop/open-settings' }) },
   { role: 'editMenu' },
   { label: 'View', submenu: [

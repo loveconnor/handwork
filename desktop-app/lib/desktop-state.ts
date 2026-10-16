@@ -50,6 +50,8 @@ export function applyUpdate(state: Conversation, update: RecordValue): Conversat
   const content = record(update.content);
   const delta = content.type === "image" ? "[Image attachment in saved session]" : text(content.text);
   if (!delta) return state;
+  // ACP emits this operational notice as assistant text, including during history replay.
+  if (kind === "assistant" && delta.trim() === "cancelled") return state;
   const explicitId = text(update.messageId);
   const last = state.entries.at(-1);
   const id = explicitId || (last?.kind === kind ? last.id : `${kind}-${state.entries.length}`);

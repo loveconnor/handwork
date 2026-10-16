@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "main": "electron/main.mjs",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "license": "MIT",
   "description": "Handwork's native coding engine in the shared desktop harness",
   "author": "Connor Love",
@@ -54,6 +54,22 @@
       "target": "dir",
       "artifactName": "Handwork-${version}-${arch}.${ext}"
     },
+    "win": {
+      "icon": "electron/assets/handwork.png",
+      "target": "nsis",
+      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Handwork",
+      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}",
+      "useZip": true,
+      "differentialPackage": false
+    },
     "dmg": {
       "background": "electron/assets/dmg-background.png",
       "window": {
@@ -75,22 +91,6 @@
           "path": "/Applications"
         }
       ]
-    },
-    "win": {
-      "icon": "electron/assets/handwork.png",
-      "target": "nsis",
-      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Handwork",
-      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}",
-      "useZip": true,
-      "differentialPackage": false
     }
   },
   "devDependencies": {
@@ -98,6 +98,7 @@
     "@base-ui/react": "^1.6.0",
     "@electron/notarize": "2.5.0",
     "@tailwindcss/postcss": "^4.1.8",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -120,11 +121,13 @@
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
     "shadow-plugin": "^2.1.0",
     "simple-icons": "^16.31.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.1.8",
     "typescript": "^5",
+    "unified": "^11.0.5",
     "vite": "^8.3.0"
   },
   "dependencies": {

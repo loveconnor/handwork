@@ -1,17 +1,41 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import HandworkInteractiveView from './HandworkInteractiveView';
 import { ChatMessage } from '@/components/ui/chat-thread';
 import { Markdown } from 'honestui/ai/markdown';
 import { ThinkingState, ThinkingText } from 'honestui/ai/thinking-state';
 import { ToolChips, type ToolCall, type FileChange } from 'honestui/ai/tool-chips';
+import { StreamingText, StreamingCitation } from 'honestui/ai/streaming-text';
 import { Check, ChevronDown, Copy } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
 import type { Entry } from '@/lib/desktop-state';
 import { lineDiff } from '@/lib/line-diff';
 import { transcriptBlocks, toolLabel } from '@/lib/transcript-activity';
 import { bareGenuiSource } from '@/lib/genui-response';
+import { actionSubmission } from '@/lib/genui-action';
+import { replySources, sourceUrl } from '@/lib/reply-sources';
+
+function AssistantReply({ text, streaming, onSend }: { text: string; streaming: boolean; onSend: (text: string) => Promise<void> }) {
+  const { markdown, sources } = useMemo(() => replySources(text), [text]);
+  return <StreamingText status={streaming ? 'streaming' : 'complete'} sources={sources} announce={false} onClick={event => {
+    const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
+    const href = sourceUrl(anchor?.getAttribute('href') ?? undefined);
+    if (!href) return;
+    event.preventDefault();
+    window.open(href, '_blank', 'noopener,noreferrer');
+  }}>
+    <Markdown syntaxHighlighting syntaxPalette="violet" isStreaming={streaming} components={{
+      a: ({ children, href }) => {
+        const url = sourceUrl(href);
+        if (!url) return <span>{children}</span>;
+        const source = sources.find(item => item.href === url);
+        return <StreamingCitation href={url} title={source?.title || url} target="_blank" rel="noopener noreferrer">{source && source.title === source.domain ? source.domain : children}</StreamingCitation>;
+      },
+      img: ({ alt }) => <span>[Image: {alt || 'remote image not loaded'}]</span>,
+    }} blocks={{ honestai: source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} />, 'honestai-lang': source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} /> }}>{markdown}</Markdown>
+  </StreamingText>;
+}
 
 export function toolStep(entry: Entry): ToolCall {
   return {
@@ -73,17 +97,23 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit }: { 
       const streaming = busy && index === blocks.length - 1;
       if (block.kind === 'activity') return <ResponseActivity key={`activity-${block.entries[0].id}`} entries={block.entries} active={block.active} />;
       const entry = block.entry;
+      const submission = entry.kind === 'user' ? actionSubmission(entry.text) : null;
+      const userText = submission ? `${submission.message}\n\n${submission.fields.map(field => `${field.label}: ${field.value}`).join('\n')}` : entry.text;
       const generatedSource = entry.kind === 'assistant' ? bareGenuiSource(entry.text) : null;
       if (entry.kind === 'reasoning') return <ThinkingState key={entry.id} status={streaming ? 'running' : 'done'} label={streaming ? 'Thinking' : 'Thought'}><ThinkingText>{entry.text}</ThinkingText></ThinkingState>;
       return <div key={entry.id} data-slot="message" data-from={entry.kind === 'user' ? 'user' : 'assistant'}><ChatMessage role={entry.kind === 'user' ? 'user' : 'assistant'} author={entry.kind === 'user' ? 'You' : 'Handwork'} hideAuthor className={entry.kind === 'user' ? 'handwork-message handwork-editable-message' : 'handwork-message'}
-        editText={entry.kind === 'user' && !entry.attachments?.length && !busy ? entry.text : undefined}
+        editText={entry.kind === 'user' && !entry.attachments?.length && !busy ? userText : undefined}
         onEdit={entry.kind === 'user' && !entry.attachments?.length && !busy ? edited => onEdit(entry.id, edited) : undefined}
         labels={{ resend: 'Save & regenerate', editError: 'The message could not be regenerated. Your edit is preserved. Try again.' }}
-        footer={entry.kind === 'user' ? <MessageActions text={entry.text} user /> : undefined}
+        footer={entry.kind === 'user' ? <MessageActions text={userText} user /> : undefined}
         attachments={entry.attachments?.map(file => ({ name: file.name, meta: `${Math.max(1, Math.round(file.size / 1024))} KB` }))}>
-        {entry.kind === 'user' ? <div data-slot="message-content" className="handwork-user-text">{entry.text}</div> : <>
-          <div data-slot="message-content">{generatedSource ? <HandworkInteractiveView source={generatedSource} streaming={streaming} onSend={onSend} /> : <Markdown syntaxHighlighting syntaxPalette="violet" isStreaming={streaming} components={{ a: ({ children, href }) => <span title={href}>{children} {href && <small>({href})</small>}</span>, img: ({ alt }) => <span>[Image: {alt || 'remote image not loaded'}]</span> }}
-            blocks={{ honestai: source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} />, 'honestai-lang': source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} /> }}>{entry.text}</Markdown>}</div>
+        {entry.kind === 'user' ? <div data-slot="message-content" className="handwork-user-text">{submission ? <div className="handwork-submission">
+          <p>{submission.message}</p>
+          <dl className="handwork-submission-fields" aria-label="Submitted preferences">{submission.fields.map((field, index) => <div key={index}>
+            <dt>{field.label}</dt><dd>{field.value || <span className="handwork-submission-empty">Not specified</span>}</dd>
+          </div>)}</dl>
+        </div> : entry.text}</div> : <>
+          <div data-slot="message-content">{generatedSource ? <HandworkInteractiveView source={generatedSource} streaming={streaming} onSend={onSend} /> : <AssistantReply text={entry.text} streaming={streaming} onSend={onSend} />}</div>
           {!busy && entry.text && <MessageActions text={entry.text} />}
         </>}
       </ChatMessage></div>;
