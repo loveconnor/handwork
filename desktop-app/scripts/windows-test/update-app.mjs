@@ -49,7 +49,11 @@ let app;
 let cdp;
 let log = '';
 async function launch(port) {
-  app = spawn(executable, [`--remote-debugging-port=${port}`], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  // Keep CDP inspection in a dedicated test profile, as in installed-app.mjs.
+  // NSIS's ordinary relaunch is checked separately without debugging flags.
+  app = spawn(executable, [`--user-data-dir=${path.join(output, 'desktop-profile')}`, `--remote-debugging-port=${port}`], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  app.on('error', error => { log += error.stack; });
+  app.on('exit', (code, signal) => { log += `\nApp exited: code=${code} signal=${signal}\n`; });
   app.stdout.on('data', value => { log += value; });
   app.stderr.on('data', value => { log += value; });
   let page;
@@ -58,6 +62,7 @@ async function launch(port) {
     const pages = await fetch(`http://127.0.0.1:${port}/json/list`).then(response => response.json()).catch(() => []);
     page = pages.find(page => page.type === 'page' && page.url.startsWith('file:'));
     if (page) break;
+    assert.equal(app.exitCode, null, `Update test app exited before its renderer opened: ${log}`);
     await pause(200);
   }
   assert.ok(page, `No update test renderer: ${log}`);
@@ -101,8 +106,8 @@ try {
     const processes = spawnSync(path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'), ['-NoProfile', '-Command', "(Get-Process -Name Handwork -ErrorAction SilentlyContinue | Where-Object MainWindowHandle -ne 0 | Measure-Object).Count"], { encoding: 'utf8' });
     return Number(processes.stdout.trim()) > 0;
   }, 'Updated app did not relaunch automatically');
-  // Relaunch with a debugging port to inspect the installed new version. Normal
-  // installer relaunch correctly uses the user's default profile without CLI flags.
+  // Relaunch with the test profile and a debugging port to inspect the new
+  // version. The ordinary installer relaunch above has no debugging flags.
   spawnSync(path.join(process.env.SystemRoot, 'System32/taskkill.exe'), ['/IM', 'Handwork.exe', '/T', '/F']);
   await pause(1500);
   await pointToFixture();
