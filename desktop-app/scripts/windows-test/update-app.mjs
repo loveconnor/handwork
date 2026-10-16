@@ -93,7 +93,9 @@ try {
   await waitFor(async () => { try { return !!(await cdp.evaluate('window.handwork.connect()')).sessionId; } catch { return false; } }, 'Initial chat did not connect');
   await cdp.evaluate("document.querySelector('textarea').focus(); true");
   await cdp.request('Input.insertText', { text: 'Unsent draft preserved across the desktop update' });
-  await click('Check for updates');
+  // The sidebar stays hidden until an update exists. Use the same check action
+  // as the native menu, then exercise download and restart through the sidebar.
+  await cdp.evaluate('window.handwork.checkUpdates()');
   await waitFor(async () => (await cdp.evaluate('window.handwork.getUpdateState()')).status === 'available', 'Newer release was not discovered');
   await click('Download update');
   await waitFor(async () => (await cdp.evaluate('window.handwork.getUpdateState()')).status === 'downloaded', 'Update did not finish downloading');
@@ -116,6 +118,7 @@ try {
   assert.equal(info.appVersion, targetVersion);
   await cdp.evaluate('window.handwork.checkUpdates()');
   await waitFor(async () => (await cdp.evaluate('window.handwork.getUpdateState()')).status === 'idle', 'Updated app did not report up to date');
+  await waitFor(() => cdp.evaluate("!document.querySelector('.handwork-update')"), 'Up-to-date app still showed the sidebar update control');
   assert.ok(downloads > 0);
   await writeFile(path.join(output, 'update-result.json'), JSON.stringify({ initialVersion, installedVersion: info.appVersion, architecture: info.architecture, downloads, installerSha256: createHash('sha256').update(installer).digest('hex'), sidebarDownloadAndRestart: true, automaticRelaunch: true }, null, 2));
   console.log(`PASS sidebar update ${initialVersion} -> ${info.appVersion}, ${info.architecture}, automatic relaunch`);
