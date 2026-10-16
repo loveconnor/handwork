@@ -54,6 +54,28 @@
       "target": "dir",
       "artifactName": "Handwork-${version}-${arch}.${ext}"
     },
+    "dmg": {
+      "background": "electron/assets/dmg-background.png",
+      "window": {
+        "width": 540,
+        "height": 240
+      },
+      "iconSize": 80,
+      "iconTextSize": 14,
+      "contents": [
+        {
+          "x": 130,
+          "y": 110,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 110,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
     "win": {
       "icon": "electron/assets/handwork.png",
       "target": "nsis",
@@ -74,6 +96,7 @@
   "devDependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",
     "@base-ui/react": "^1.6.0",
+    "@electron/notarize": "2.5.0",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22",
     "@types/react": "^19",

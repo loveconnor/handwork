@@ -128,7 +128,7 @@ using the Handwork app icon. Packaging requires Xcode 26 or later to compile
 light, dark, clear, and tinted appearances. After editing the icon source, run
 `npm run desktop:icons` to regenerate the light/dark PNGs used by the development
 Dock icon. Packaged apps use the native catalog without a runtime PNG override.
-Local builds are unsigned by default. Signed macOS release builds are notarized by CI when release credentials are configured. Rebuild the desktop package
+Local builds use an ad-hoc signature for development and do not qualify for public distribution. Signed macOS release builds are notarized by CI when release credentials are configured. Rebuild the desktop package
 after changing the Zig engine so the bundled binary matches its protocol.
 
 ### Desktop updates
@@ -167,6 +167,30 @@ secrets to enable the macOS release job: `MAC_CSC_LINK` (base64 P12 certificate)
 `latest-mac.yml` only on success. Until those credentials exist, Windows releases
 continue and unsigned Mac builds explain that a signed release is required.
 Never disable the Mac signature requirement to work around missing credentials.
+
+For a signed release built on this Mac, create or import a **Developer ID
+Application** identity using Xcode Settings > Accounts > Manage Certificates.
+The certificate and its private key must appear in the login keychain. Configure
+notarization through the secure interactive prompt:
+
+```sh
+xcrun notarytool store-credentials handwork-notary
+```
+
+Supply your Apple ID, Team ID, and an app-specific password in that local prompt.
+Then build with the saved Keychain profile:
+
+```sh
+APPLE_KEYCHAIN_PROFILE=handwork-notary node scripts/desktop-package.mjs darwin arm64 --release
+```
+
+Packaging verifies the complete code signature. Public release builds must also
+pass Gatekeeper assessment and stapled notarization ticket validation before the
+packaging command succeeds. The DMG is signed, notarized, and stapled separately.
+Update manifests are hashed again after stapling so their checksums describe the
+final downloads. A local launch without quarantine is insufficient
+release evidence. The withdrawn macOS preview failed signature verification and
+must not be republished.
 
 The release workflow is at `../.github/workflows/desktop-release.yml` in the
 canonical repository. To test an actual upgrade on a Windows test machine:
