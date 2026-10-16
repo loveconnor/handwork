@@ -1,0 +1,110 @@
+{
+  "name": "handwork-desktop",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.mjs",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Handwork's native coding engine in the shared desktop harness",
+  "author": "Connor Love",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "registry": "node scripts/build-registry.mjs",
+    "build": "node scripts/build-genui-prompt.mjs && node scripts/build-registry.mjs && next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "desktop:dev": "node scripts/build-genui-prompt.mjs && node scripts/desktop-dev.mjs",
+    "desktop:build": "node scripts/desktop-build.mjs",
+    "desktop:icons": "node scripts/build-desktop-icons.mjs",
+    "desktop:package": "node scripts/desktop-package.mjs",
+    "desktop:package:win": "node scripts/desktop-package.mjs win32 x64",
+    "desktop:package:win:arm64": "node scripts/desktop-package.mjs win32 arm64",
+    "test:desktop": "node --test tests/desktop/*.test.mjs"
+  },
+  "overrides": {
+    "postcss": "^8.5.28",
+    "next": {
+      "sharp": "^0.35.4"
+    }
+  },
+  "build": {
+    "appId": "com.handwork.desktop",
+    "productName": "Handwork",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/${os}-${arch}/handwork",
+        "to": "handwork"
+      }
+    ],
+    "mac": {
+      "icon": "electron/assets/Handwork.icon",
+      "category": "public.app-category.developer-tools",
+      "target": "dir",
+      "artifactName": "Handwork-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "icon": "electron/assets/handwork.png",
+      "target": "nsis",
+      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Handwork",
+      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}",
+      "useZip": true,
+      "differentialPackage": false
+    }
+  },
+  "devDependencies": {
+    "@base-ui-components/react": "^1.0.0-rc.0",
+    "@base-ui/react": "^1.6.0",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@web-kits/audio": "^0.1.0",
+    "agentation": "^3.0.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dialkit": "^1.4.3",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "glimm": "^0.3.0",
+    "honestui": "^0.2.3",
+    "js-yaml": "4.3.2",
+    "liveline": "^0.0.7",
+    "motion": "^13.1.0",
+    "next": "^15.5.25",
+    "posthog-js": "^1.417.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "shadow-plugin": "^2.1.0",
+    "simple-icons": "^16.31.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.10"
+  }
+}

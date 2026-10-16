@@ -1,0 +1,37 @@
+# deps
+/node_modules
+
+# next
+/.next/
+/out/
+
+# desktop build products
+/dist/
+/release/
+/resources/
+/public/vendor/maplibre-gl/
+/desktop/public/vendor/maplibre-gl/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.env*
+!.env.example
+
+# private reference material (moved out of repo)
+/Refs
+
+# local agent / workspace tooling — never publish
+/.agents
+/.claude
+/.context
+/skills-lock.json
+
+# easter-egg video — kept on the deploy (via .vercelignore) but not published
+/public/subway-surfers.mp4

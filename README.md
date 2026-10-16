@@ -658,3 +658,12 @@ The provider checks above use synthetic keys, isolated profiles, and local mock 
 - Provider terms, model access, quotas, and organization policies still apply. The direct native Codex route has unverified authorization.
 
 For feedback, run `/feedback` or visit [connorlove.com](https://connorlove.com).
+
+## Desktop app
+
+The desktop source lives in [`desktop-app`](desktop-app/README.md). Pushes to
+`main` build and test Windows x64/ARM64 releases and publish them to the desktop
+update channel. Desktop users download and restart updates from the sidebar;
+the desktop engine is bundled and no npm installation is required. Desktop
+releases are separate from npm publishing. Signed macOS releases are enabled
+when the Apple signing/notarization secrets documented there are configured.

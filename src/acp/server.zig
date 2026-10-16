@@ -1680,7 +1680,7 @@ fn parseInitializeRequest(
             request.standalone_chat = standalone.bool;
         }
         if (handwork.object.get("responseInstructions")) |instructions| {
-            if (instructions != .string or instructions.string.len > 64 * 1024 or
+            if (instructions != .string or instructions.string.len > 128 * 1024 or
                 std.mem.indexOfScalar(u8, instructions.string, 0) != null)
                 return error.InvalidInitializeParams;
             request.host_instructions = try alloc.dupe(u8, instructions.string);
@@ -1730,7 +1730,16 @@ test "ACP desktop response instructions reject invalid capability values" {
 
 test "ACP desktop response instructions enforce the size limit and release error paths" {
     const alloc = std.testing.allocator;
-    const large = try alloc.alloc(u8, 64 * 1024 + 1);
+    const accepted = try alloc.alloc(u8, 128 * 1024);
+    defer alloc.free(accepted);
+    @memset(accepted, 'x');
+    const accepted_raw = try std.fmt.allocPrint(alloc, "{{\"protocolVersion\":1,\"clientCapabilities\":{{\"handwork\":{{\"responseInstructions\":\"{s}\"}}}}}}", .{accepted});
+    defer alloc.free(accepted_raw);
+    var request = try parseInitializeRequest(alloc, accepted_raw, false);
+    defer request.deinit(alloc);
+    try std.testing.expectEqual(accepted.len, request.host_instructions.len);
+
+    const large = try alloc.alloc(u8, 128 * 1024 + 1);
     defer alloc.free(large);
     @memset(large, 'x');
     const raw = try std.fmt.allocPrint(alloc, "{{\"protocolVersion\":1,\"clientCapabilities\":{{\"handwork\":{{\"responseInstructions\":\"{s}\"}}}}}}", .{large});

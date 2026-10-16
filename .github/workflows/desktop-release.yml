@@ -1,0 +1,192 @@
+name: Desktop release
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop-app/**'
+      - 'src/**'
+      - 'runtime/**'
+      - 'build.zig*'
+      - '.github/workflows/desktop-release.yml'
+  workflow_dispatch:
+concurrency:
+  group: desktop-release-main
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      mac: ${{ steps.signing.outputs.mac }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: version
+        run: node desktop-app/scripts/release-version.mjs
+      - id: signing
+        env:
+          CERTIFICATE: ${{ secrets.MAC_CSC_LINK }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        shell: bash
+        run: |
+          if [[ -n "$CERTIFICATE" && -n "$CERTIFICATE_PASSWORD" && -n "$APPLE_ID" && -n "$APPLE_APP_SPECIFIC_PASSWORD" && -n "$APPLE_TEAM_ID" ]]; then
+            echo 'mac=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'mac=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Windows releases are enabled. Signed macOS releases require MAC_CSC_LINK, MAC_CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID.'
+          fi
+  windows:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+          - arch: arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop-app
+    env:
+      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/win32-${{ matrix.arch }}/bin/handwork.exe
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop-app/package-lock.json
+      - run: npm ci
+      - run: npm run test:desktop
+      - run: npm run typecheck
+      - run: node scripts/install-zig.mjs
+      - name: Build the bundled native engine
+        working-directory: .
+        run: node scripts/package-native.mjs --target=win32-${{ matrix.arch }}
+      - run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
+      - name: Build the installer and architecture-specific update metadata
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --release
+      - name: Test the exact installer before publishing
+        shell: pwsh
+        run: ./scripts/windows-test/install.ps1 -Installer ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -Architecture ${{ matrix.arch }}
+      - name: Build an older updater-enabled version for an actual upgrade test
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        shell: pwsh
+        run: |
+          $version = '${{ needs.prepare.outputs.version }}'.Split('.')
+          $baseVersion = "$($version[0]).$($version[1]).$([int]$version[2] - 1)"
+          npm version $baseVersion --no-git-tag-version --ignore-scripts
+          node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --fixture
+          "DESKTOP_TEST_BASE=$baseVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
+      - name: Test sidebar download, real installation, and automatic relaunch
+        shell: pwsh
+        run: |
+          $baseInstaller = "./release-fixture/Handwork-Setup-$($env:DESKTOP_TEST_BASE)-${{ matrix.arch }}.exe"
+          ./scripts/windows-test/install.ps1 -Installer $baseInstaller -Architecture ${{ matrix.arch }} -UpdateInstaller ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -UpdateVersion ${{ needs.prepare.outputs.version }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-installer-windows-${{ matrix.arch }}
+          path: |
+            desktop-app/release/Handwork-Setup-${{ needs.prepare.outputs.version }}-*.exe
+            desktop-app/release/latest-*.yml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-windows-test-${{ matrix.arch }}
+          path: |
+            desktop-app/windows-test-results-*/*.json
+            desktop-app/windows-test-results-*/*.txt
+            desktop-app/windows-test-results-*/*.log
+            desktop-app/windows-test-results-*/*.png
+  mac:
+    needs: prepare
+    if: needs.prepare.outputs.mac == 'true'
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop-app
+    env:
+      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/darwin-arm64/bin/handwork
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop-app/package-lock.json
+      - run: npm ci
+      - run: npm run test:desktop
+      - run: npm run typecheck
+      - run: node scripts/install-zig.mjs
+      - working-directory: .
+        run: node scripts/package-native.mjs --target=darwin-arm64
+      - run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
+      - name: Build, sign and notarize the macOS release
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: node scripts/desktop-package.mjs darwin arm64 --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-mac
+          path: |
+            desktop-app/release/*.dmg
+            desktop-app/release/*.zip
+            desktop-app/release/*.blockmap
+            desktop-app/release/latest-mac.yml
+  publish:
+    needs: [prepare, windows, mac]
+    if: always() && github.ref == 'refs/heads/main' && needs.prepare.result == 'success' && needs.windows.result == 'success' && (needs.mac.result == 'success' || needs.mac.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-installer-windows-*
+          path: release-assets
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        if: needs.mac.result == 'success'
+        with:
+          name: desktop-mac
+          path: release-assets
+      - run: npm ci --ignore-scripts
+        working-directory: desktop-app
+      - name: Publish immutable installers, then promote the desktop update channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESKTOP_VERSION: ${{ needs.prepare.outputs.version }}
+        run: node desktop-app/scripts/publish-desktop.mjs release-assets
