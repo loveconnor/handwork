@@ -100,6 +100,7 @@ Background automatic updates and the `dev` channel still require `HANDWORK_RELEA
 - Read files with line numbers, find paths by glob, search file contents, and make targeted edits.
 - Run shell commands and tests. Long-running commands have managed sessions that the agent can observe, send input to, or stop.
 - Stream model output in the terminal and accept image attachments where the selected model and transport support them.
+- Draw images, SVG, and Mermaid diagrams inside the transcript with Kitty graphics, iTerm2 inline images, SIXEL, or colored half blocks, depending on the terminal. See [Inline images](docs/inline-images.md).
 - Save conversations, resume earlier work, recover supported damaged sessions, and compact long conversations into a shorter context.
 - Delegate bounded tasks to subagents, including persistent named conversations for follow-up work.
 - Apply permission rules to tool actions, ask for approval, or review unresolved actions in `auto` mode.
@@ -637,6 +638,7 @@ Use `-Dtest-filter` for a focused Zig test run. The CLI tests use Bun; the offic
 
 ```sh
 zig build test -Dtest-filter="public API"
+zig build test-images --test-timeout 60s --summary all
 bun test tests/e2e/cli.test.ts -t 'help (renders|documents)'
 python3 tests/e2e/api-providers.py
 python3 tests/e2e/api-key-entry.py
@@ -652,6 +654,7 @@ The provider checks above use synthetic keys, isolated profiles, and local mock 
 - Native and embedded provider support differ. Model-specific controls are not available on every transport.
 - Token and spend reports are local records, not authoritative billing totals.
 - Built-in updates require a configured release service.
+- Inline images use half blocks inside tmux and screen, and remote image URLs load only when `HANDWORK_REMOTE_IMAGES=1` is set. See [Inline images](docs/inline-images.md#limits).
 - Provider terms, model access, quotas, and organization policies still apply. The direct native Codex route has unverified authorization.
 
 For feedback, run `/feedback` or visit [connorlove.com](https://connorlove.com).

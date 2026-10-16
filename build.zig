@@ -176,6 +176,21 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_exe_tests.step);
 
+    const image_tests = b.addTest(.{
+        .name = "image-tests",
+        .root_module = test_module,
+        .filters = &.{
+            "core.images.codec",     "core.images.svg",       "core.images.vector",            "core.images.mermaid",
+            "ui.images.",            "ui.terminal.graphics",  "core.shared.image_placeholder", "image placeholder",
+            "image-only paragraphs", "image blocks render",   "standalone image rejection",    "APC graphics",
+            "drawn-pixel flags",     "attachment thumbnails",
+        },
+    });
+    const image_test_step = b.step("test-images", "Run inline image decoding, rendering, and integration tests");
+    image_test_step.dependOn(&b.addRunArtifact(image_tests).step);
+    const image_test_check = b.step("test-images-check", "Compile inline image tests for the selected target");
+    image_test_check.dependOn(&image_tests.step);
+
     if (wasm_surface != .none) {
         addWasmArtifact(b, wasm_surface, git_commit, app_version, update_channel);
     }

@@ -545,6 +545,20 @@ fn parseInlineLink(text: []const u8, start: usize) ?InlineLink {
     return parseInlineBracketDestination(text, start, false);
 }
 
+pub const StandaloneImageSyntax = struct {
+    alt: []const u8,
+    target: []const u8,
+};
+
+/// Recognizes a line holding exactly one inline image, ignoring
+/// surrounding spaces and tabs.
+pub fn parseStandaloneImage(line: []const u8) ?StandaloneImageSyntax {
+    const trimmed = std.mem.trim(u8, line, " \t\r");
+    const image = parseInlineImage(trimmed, 0) orelse return null;
+    if (image.end != trimmed.len) return null;
+    return .{ .alt = image.text, .target = image.url };
+}
+
 fn parseInlineImage(text: []const u8, start: usize) ?InlineLink {
     if (start + 1 >= text.len or text[start] != '!' or text[start + 1] != '[') return null;
     return parseInlineBracketDestination(text, start + 1, true);

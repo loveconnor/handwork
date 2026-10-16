@@ -4280,6 +4280,15 @@ test {
     _ = @import("core/hooks/runtime.zig");
     _ = @import("core/images/image_attachments.zig");
     _ = @import("core/images/image_commands.zig");
+    _ = @import("core/images/codecs.zig");
+    _ = @import("core/shared/image_placeholder.zig");
+    _ = @import("ui/images/inline_images.zig");
+    _ = @import("ui/images/image_targets.zig");
+    _ = @import("ui/terminal/graphics/detection.zig");
+    _ = @import("ui/terminal/graphics/kitty.zig");
+    _ = @import("ui/terminal/graphics/iterm2.zig");
+    _ = @import("ui/terminal/graphics/sixel.zig");
+    _ = @import("ui/terminal/graphics/blocks.zig");
     _ = @import("core/shared/io.zig");
     _ = @import("core/shared/message.zig");
     _ = @import("core/shared/token_estimate.zig");

@@ -202,7 +202,7 @@ const author_link = "\x1b]8;;" ++ author_url ++ "\x1b\\" ++ author_name ++ "\x1b
 
 // Five rows of the landing page's pixel-logo SVG (handwork-site/src/index.html).
 // Filled cells use terminal background color to avoid seams between glyphs.
-const welcome_logo_rows = [_][]const u8{
+pub const welcome_logo_rows = [_][]const u8{
     "##   ##  #####  ###    ## ######  ##     ##  ######  ######  ##   ##",
     "##   ## ##   ## ####   ## ##   ## ##     ## ##    ## ##   ## ##  ## ",
     "####### ####### ## ##  ## ##   ## ##  #  ## ##    ## ######  #####  ",

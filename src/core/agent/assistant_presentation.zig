@@ -19,10 +19,20 @@ pub const TableColumnAlign = payload.TableColumnAlign;
 pub const TableRow = payload.TableRow;
 pub const TablePayload = payload.TablePayload;
 pub const CodeBlockPayload = payload.CodeBlockPayload;
+pub const StandaloneImage = payload.StandaloneImage;
+pub const StandaloneImageAdmission = payload.StandaloneImageAdmission;
 pub const TableCompletion = payload.TableCompletion;
 pub const CodeBlockCompletion = payload.CodeBlockCompletion;
 pub const ThematicRuleCompletion = payload.ThematicRuleCompletion;
 pub const MarkdownCompletions = payload.MarkdownCompletions;
+
+var standalone_image_admission: ?payload.StandaloneImageAdmission = null;
+
+/// Installs (or clears) the policy that turns image-only paragraphs into
+/// image blocks. Set once by the interactive terminal before any stream.
+pub fn setStandaloneImageAdmission(admission: ?payload.StandaloneImageAdmission) void {
+    standalone_image_admission = admission;
+}
 
 /// Allocator-owned assistant output queued for root or child presentation.
 pub const Event = union(enum) {
@@ -399,6 +409,10 @@ pub const MarkdownProcessor = struct {
         }
         self.active_definition = false;
 
+        if (completions.code) |code_completion| {
+            if (try self.deliverStandaloneImage(alloc, line, line_has_lf, out, code_completion)) return;
+        }
+
         if (line_has_lf and completions.thematic_rule != null and bp.isSetextCandidate(line)) {
             try self.pending_top_level_line.appendSlice(alloc, line);
             return;
@@ -512,6 +526,44 @@ pub const MarkdownProcessor = struct {
             if (line_has_lf) try out.append(alloc, '\n');
             start = end + 1;
         }
+    }
+
+    /// Delivers an image-only paragraph as an image block when the installed
+    /// admission accepts its destination. The block carries the paragraph's
+    /// ordinary rendering so the transcript can fall back to it.
+    fn deliverStandaloneImage(
+        self: *MarkdownProcessor,
+        alloc: Allocator,
+        line: []const u8,
+        line_has_lf: bool,
+        out: *std.ArrayList(u8),
+        completion: *const payload.CodeBlockCompletion,
+    ) !bool {
+        const admits = standalone_image_admission orelse return false;
+        const syntax = inline_render.parseStandaloneImage(line) orelse return false;
+        if (!admits(syntax.target)) return false;
+
+        var fallback: std.ArrayList(u8) = .empty;
+        defer fallback.deinit(alloc);
+        try self.processLine(alloc, line, line_has_lf, &fallback);
+
+        const alt = try alloc.dupe(u8, syntax.alt);
+        errdefer alloc.free(alt);
+        const target = try alloc.dupe(u8, syntax.target);
+        errdefer alloc.free(target);
+        const fallback_text = try fallback.toOwnedSlice(alloc);
+        errdefer alloc.free(fallback_text);
+        const language = try alloc.dupe(u8, "");
+        errdefer alloc.free(language);
+        const code = try alloc.dupe(u8, "");
+        errdefer alloc.free(code);
+        const block = payload.CodeBlockPayload{
+            .language = language,
+            .code = code,
+            .image = .{ .alt = alt, .target = target, .fallback_text = fallback_text },
+        };
+        try completion.deliver(completion.ctx, block, out);
+        return true;
     }
 
     fn finalizeCodeBlock(
@@ -3850,4 +3902,74 @@ test "pipe table inside code block stays literal" {
 
     try std.testing.expect(std.mem.indexOf(u8, out.items, "| not | a |") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "| table | really |") != null);
+}
+
+test "image-only paragraphs become image blocks only when admitted" {
+    const alloc = std.testing.allocator;
+    const Capture = struct {
+        blocks: std.ArrayList(CodeBlockPayload) = .empty,
+
+        fn deliver(raw: *anyopaque, block: CodeBlockPayload, _: *std.ArrayList(u8)) anyerror!void {
+            const self: *@This() = @ptrCast(@alignCast(raw));
+            try self.blocks.append(std.testing.allocator, block);
+        }
+
+        fn admitPng(target: []const u8) bool {
+            return std.mem.endsWith(u8, target, ".png");
+        }
+    };
+    var capture = Capture{};
+    defer {
+        for (capture.blocks.items) |*block| block.deinit(alloc);
+        capture.blocks.deinit(alloc);
+    }
+    const completion = CodeBlockCompletion{ .ctx = &capture, .deliver = Capture.deliver };
+
+    setStandaloneImageAdmission(Capture.admitPng);
+    defer setStandaloneImageAdmission(null);
+
+    var processor = MarkdownProcessor{};
+    defer processor.deinit(alloc);
+    var out: std.ArrayList(u8) = .empty;
+    defer out.deinit(alloc);
+    try processor.pushWithCompletions(alloc, "Here:\n  ![plot](out/plot.png)\n![svg](a.svg)\nsee ![x](y.png) inline\n", &out, .{ .code = &completion });
+    try processor.flushWithCompletions(alloc, &out, .{ .code = &completion });
+
+    try std.testing.expectEqual(@as(usize, 1), capture.blocks.items.len);
+    const image = capture.blocks.items[0].image.?;
+    try std.testing.expectEqualStrings("plot", image.alt);
+    try std.testing.expectEqualStrings("out/plot.png", image.target);
+    try std.testing.expect(std.mem.indexOf(u8, image.fallback_text, "plot") != null);
+    // Rejected and inline images stay in the text stream.
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "svg") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "inline") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "out/plot.png") == null);
+}
+
+fn checkStandaloneImageDeliveryFailure(alloc: Allocator) !void {
+    const Reject = struct {
+        fn admit(_: []const u8) bool {
+            return true;
+        }
+        fn deliver(_: *anyopaque, _: CodeBlockPayload, _: *std.ArrayList(u8)) anyerror!void {
+            return error.ImageDeliveryRejected;
+        }
+    };
+    setStandaloneImageAdmission(Reject.admit);
+    defer setStandaloneImageAdmission(null);
+    var processor = MarkdownProcessor{};
+    defer processor.deinit(alloc);
+    var out: std.ArrayList(u8) = .empty;
+    defer out.deinit(alloc);
+    var context: u8 = 0;
+    const completion = CodeBlockCompletion{ .ctx = &context, .deliver = Reject.deliver };
+    _ = processor.deliverStandaloneImage(alloc, "![plot](plot.png)", true, &out, &completion) catch |err| switch (err) {
+        error.ImageDeliveryRejected => return,
+        else => return err,
+    };
+    return error.TestExpectedError;
+}
+
+test "standalone image rejection and allocation failures free each buffer once" {
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, checkStandaloneImageDeliveryFailure, .{});
 }

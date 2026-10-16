@@ -21,6 +21,10 @@ const shell_runtime = @import("../../ui/shell_runtime.zig");
 const ui_terminal = @import("../../ui/terminal/terminal.zig");
 const terminal_diff = @import("../../ui/render_engine/terminal_diff.zig");
 const transcript_runtime = @import("../../ui/transcript/runtime.zig");
+const inline_images = @import("../../ui/images/inline_images.zig");
+const graphics_probe = @import("../../ui/terminal/graphics_probe.zig");
+const image_targets = @import("../../ui/images/image_targets.zig");
+const assistant_presentation = @import("../agent/assistant_presentation.zig");
 
 const Allocator = std.mem.Allocator;
 const Metrics = types.Metrics;
@@ -610,6 +614,17 @@ pub fn bootstrapInteractiveApp(cfg: BootstrapConfig) !StartupState {
     const theme = ui_render.detectTheme(cfg.alloc, cfg.terminal);
     ui_render.initTheme(theme.light, theme.rgb);
     state.theme_monitor_enabled = ui_render.explicitThemeOverride() == null;
+    var image_capabilities = graphics_probe.detectCapabilities(
+        cfg.terminal,
+        cfg.shell.layout.cols,
+        cfg.shell.layout.rows,
+        ui_render.truecolorSupportedForValues(io_mod.getenv("COLORTERM"), io_mod.getenv("TERM_PROGRAM")),
+    );
+    image_capabilities.theme = if (theme.light) .light else .dark;
+    inline_images.startSession(cfg.alloc, image_capabilities);
+    if (inline_images.active() != null) {
+        assistant_presentation.setStandaloneImageAdmission(image_targets.admitStandaloneImage);
+    }
 
     const cursor = cfg.terminal.queryCursorPosition() catch blk: {
         break :blk CursorPosition{

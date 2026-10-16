@@ -1,9 +1,12 @@
 //! Bounded text-terminal engine shared by live terminal sessions, recovery,
 //! replay, and deterministic rendering tests. Graphical terminal protocols
-//! are intentionally outside this module's contract.
+//! are intentionally outside this module's contract: APC/PM/SOS strings
+//! (such as kitty graphics commands) are discarded, and kitty image
+//! placeholder cells are modeled as ordinary text.
 
 const std = @import("std");
 const display_width = @import("../shared/display_width.zig");
+const image_placeholder = @import("../shared/image_placeholder.zig");
 const contracts = @import("contracts.zig");
 
 const Allocator = std.mem.Allocator;
@@ -107,6 +110,11 @@ pub const Cell = struct {
     /// the current bg so a `\x1b[48;5;236m\x1b[K` clears into the
     /// configured background, matching real terminals.
     style: Style = .{},
+    /// Set by the image presenter after it draws pixels over this image
+    /// placeholder cell. Any write or erase replaces the cell and clears
+    /// the flag, exactly as it destroys pixels on a real terminal; scrolls
+    /// move it with the cell. Not part of cell equality.
+    image_pixels_drawn: bool = false,
 };
 
 pub const FeedStats = struct {
@@ -125,6 +133,9 @@ const State = enum {
     csi,
     osc,
     dcs,
+    /// APC, PM, or SOS payload (for example kitty graphics commands); the
+    /// bytes have no effect on the grid and are discarded until ST.
+    ignored_string,
 };
 
 const SavedCursor = struct {
@@ -290,6 +301,7 @@ pub const Grid = struct {
     osc_buffer: std.ArrayList(u8) = .empty,
     dcs_saw_esc: bool = false,
     dcs_buffer: std.ArrayList(u8) = .empty,
+    ignored_string_saw_esc: bool = false,
     utf8_buffer: [4]u8 = [_]u8{0} ** 4,
     utf8_len: u8 = 0,
     utf8_expected: u8 = 0,
@@ -681,6 +693,16 @@ pub const Grid = struct {
                     }
                     i += 1;
                 },
+                .ignored_string => {
+                    if (b == 0x1b) {
+                        self.ignored_string_saw_esc = true;
+                    } else if (self.ignored_string_saw_esc and b == '\\') {
+                        self.cancelControlSequence();
+                    } else {
+                        self.ignored_string_saw_esc = false;
+                    }
+                    i += 1;
+                },
                 .dcs => {
                     if (b == 0x1b) {
                         self.dcs_saw_esc = true;
@@ -715,6 +737,10 @@ pub const Grid = struct {
                 self.dcs_saw_esc = false;
                 self.dcs_buffer.clearRetainingCapacity();
                 self.state = .dcs;
+            },
+            '_', '^', 'X' => {
+                self.ignored_string_saw_esc = false;
+                self.state = .ignored_string;
             },
             '7' => {
                 self.saveCursor();
@@ -839,6 +865,7 @@ pub const Grid = struct {
         self.osc_buffer.clearRetainingCapacity();
         self.dcs_saw_esc = false;
         self.dcs_buffer.clearRetainingCapacity();
+        self.ignored_string_saw_esc = false;
     }
 
     fn dispatchOscAndFinish(self: *Grid) !void {
@@ -1057,7 +1084,7 @@ pub const Grid = struct {
         const consumed = unit.byte_len;
         const width: u8 = @intCast(unit.cell_width);
 
-        if (width == 0) {
+        if (width == 0 or self.continuesImagePlaceholder(codepoint)) {
             if (self.last_printable_idx) |idx| {
                 try self.appendCombiningSuffix(idx, bytes[start .. start + consumed]);
             }
@@ -1118,6 +1145,14 @@ pub const Grid = struct {
         }
 
         return consumed;
+    }
+
+    /// A placeholder diacritic split from its base by a feed boundary is
+    /// measured on its own; it still belongs to the preceding placeholder.
+    fn continuesImagePlaceholder(self: *const Grid, codepoint: u21) bool {
+        const idx = self.last_printable_idx orelse return false;
+        return self.cells[idx].codepoint == image_placeholder.codepoint and
+            image_placeholder.isDiacritic(codepoint);
     }
 
     fn advanceRowOrScroll(self: *Grid) void {
@@ -1837,6 +1872,16 @@ pub const Grid = struct {
         }
         saved.restoreTo(self);
         self.saved_normal_screen = null;
+    }
+
+    /// Records that image pixels now cover the placeholder cell at
+    /// (`row`, `col`). Returns false, changing nothing, for any other cell.
+    pub fn markImagePixelsDrawn(self: *Grid, row: u16, col: u16) bool {
+        if (row == 0 or row > self.rows or col == 0 or col > self.cols) return false;
+        const cell = &self.cells[self.cellIndex(row, col)];
+        if (cell.codepoint != image_placeholder.codepoint) return false;
+        cell.image_pixels_drawn = true;
+        return true;
     }
 
     /// Return a copy of the cell at 1-indexed (row, col), or null if
@@ -4508,4 +4553,41 @@ test "bounded deterministic corrupt checkpoint fuzz" {
         ) catch continue;
         restored.deinit();
     }
+}
+
+test "APC graphics commands leave the grid untouched" {
+    var grid = try Grid.init(std.testing.allocator, 8, 2);
+    defer grid.deinit();
+    try grid.feed("a\x1b_Ga=T,f=100;iVBORw0KGgo=\x1b\\b\x1b^private\x1b\\c");
+    try std.testing.expectEqual(@as(u21, 'a'), grid.cellAt(1, 1).?.codepoint);
+    try std.testing.expectEqual(@as(u21, 'b'), grid.cellAt(1, 2).?.codepoint);
+    try std.testing.expectEqual(@as(u21, 'c'), grid.cellAt(1, 3).?.codepoint);
+    try std.testing.expect(grid.atControlSequenceBoundary());
+}
+
+test "image placeholder clusters occupy one cell even when split across feeds" {
+    var grid = try Grid.init(std.testing.allocator, 8, 2);
+    defer grid.deinit();
+    // Row diacritic U+0483 is outside the generic combining ranges.
+    const cell = "\u{10EEEE}\u{0483}\u{0305}";
+    try grid.feed("\x1b[38;2;0;0;9m" ++ cell[0..5]);
+    try grid.feed(cell[5..] ++ "\u{10EEEE}x");
+    const first = grid.cellAt(1, 1).?;
+    try std.testing.expectEqual(image_placeholder.codepoint, first.codepoint);
+    try std.testing.expectEqualStrings("\u{0483}\u{0305}", grid.combiningSuffix(first.combining_suffix_id).?);
+    try std.testing.expectEqual(image_placeholder.codepoint, grid.cellAt(1, 2).?.codepoint);
+    try std.testing.expectEqual(@as(u21, 'x'), grid.cellAt(1, 3).?.codepoint);
+}
+
+test "drawn-pixel flags scroll with cells and clear when a cell is rewritten" {
+    var grid = try Grid.init(std.testing.allocator, 4, 3);
+    defer grid.deinit();
+    try grid.feed("\x1b[2;1H\x1b[38;2;0;0;1m\u{10EEEE}\u{0305}\u{0305}\u{10EEEE}");
+    grid.cells[grid.cellIndex(2, 1)].image_pixels_drawn = true;
+    grid.cells[grid.cellIndex(2, 2)].image_pixels_drawn = true;
+    try grid.feed("\x1b[3;1H\n");
+    try std.testing.expect(grid.cellAt(1, 1).?.image_pixels_drawn);
+    try grid.feed("\x1b[1;2H ");
+    try std.testing.expect(grid.cellAt(1, 1).?.image_pixels_drawn);
+    try std.testing.expect(!grid.cellAt(1, 2).?.image_pixels_drawn);
 }

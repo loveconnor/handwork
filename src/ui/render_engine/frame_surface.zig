@@ -5,6 +5,7 @@ const frame_layout = @import("frame_layout.zig");
 const io_mod = @import("../../core/shared/io.zig");
 const paint_plan = @import("paint_plan.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const image_placeholder = @import("../../core/shared/image_placeholder.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -351,6 +352,8 @@ pub const FrameSurface = struct {
     pub fn neutralizeHandworkOwnedPresentation(self: *FrameSurface) void {
         for (self.cells) |*cell| {
             if (cell.owner == .preserved_shell) continue;
+            // An image placeholder's foreground is its image id, not styling.
+            if (cell.codepoint == image_placeholder.codepoint) continue;
             cell.style = .{};
         }
     }

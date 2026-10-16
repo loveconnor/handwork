@@ -6,6 +6,7 @@ const types = @import("../../core/shared/types.zig");
 const image_attachments = @import("../../core/images/image_attachments.zig");
 const visual_layout = @import("../input/visual_layout.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const inline_images = @import("../images/inline_images.zig");
 
 pub const Rgb = struct { r: u8, g: u8, b: u8 };
 
@@ -257,12 +258,49 @@ fn buildUserPromptCardWithSkillTokensAndLinksInterruptible(
         checkpoint,
         max_rows,
     );
+    if (linked_images) try appendImageThumbnails(alloc, &rows, images, window, max_rows);
 
     for (rows.items) |content| {
         try emitRow(&out.writer, content);
     }
 
     return out.toOwnedSlice();
+}
+
+/// Rows an attachment thumbnail may occupy inside the card.
+const thumbnail_max_rows: u16 = 8;
+const thumbnail_max_cols: u16 = 48;
+
+/// Shows each attached image under the prompt text when the terminal can
+/// draw images; otherwise the badges in the text are the whole record.
+fn appendImageThumbnails(
+    alloc: std.mem.Allocator,
+    rows: *std.ArrayList([]const u8),
+    images: []const types.ImageAttachment,
+    window: usize,
+    max_rows: ?usize,
+) !void {
+    if (images.len == 0 or inline_images.active() == null) return;
+    var prefix: std.Io.Writer.Allocating = .init(alloc);
+    defer prefix.deinit();
+    try prefix.writer.writeAll(marker_style);
+    try prefix.writer.writeAll(user_turn_rail);
+    try prefix.writer.writeAll(reset_style);
+    try prefix.writer.writeByte(' ');
+
+    var image_rows: std.ArrayList(u8) = .empty;
+    defer image_rows.deinit(alloc);
+    for (images) |image| {
+        image_rows.clearRetainingCapacity();
+        const path = image.snapshot_path orelse image.path;
+        const box = inline_images.Box{
+            .max_cols = @intCast(@min(window, thumbnail_max_cols)),
+            .max_rows = thumbnail_max_rows,
+        };
+        _ = try inline_images.renderRows(alloc, .{ .file = path }, box, prefix.written(), &image_rows) orelse continue;
+        var lines = std.mem.splitScalar(u8, image_rows.items, '\n');
+        while (lines.next()) |line| try appendVisibleRow(alloc, rows, line, max_rows);
+    }
 }
 
 fn renderSkillTokensForCard(
@@ -837,4 +875,39 @@ test "pending terminal card keeps only the visible tail rows" {
     try std.testing.expect(std.mem.find(u8, card, "row2") == null);
     try std.testing.expect(std.mem.find(u8, card, "row3") != null);
     try std.testing.expect(std.mem.find(u8, card, "row4") != null);
+}
+
+test "attachment thumbnails use snapshots and retain badges when unavailable" {
+    const io_mod = @import("../../core/shared/io.zig");
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    try tmp.dir.writeFile(io_mod.getIo(), .{ .sub_path = "snapshot.png", .data = @embedFile("../../core/images/fixtures/rgba.png") });
+    const snapshot = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "snapshot.png");
+    defer alloc.free(snapshot);
+    var images = [_]types.ImageAttachment{.{
+        .id = 1,
+        .path = @constCast("missing-original.png"),
+        .snapshot_path = snapshot,
+        .media_type = @constCast("image/png"),
+    }};
+    const plain = try buildUserPromptCardWithSkillTokensForTerminalPresentation(alloc, "[Image #1]", &images, 12, &.{});
+    defer alloc.free(plain);
+    try std.testing.expect(std.mem.indexOf(u8, plain, "[Image 1]") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plain, "\u{2580}") == null);
+    var service = inline_images.Service.init(alloc, .{ .protocol = .blocks, .cell = .{ .width_px = 10, .height_px = 20 } });
+    defer service.deinit();
+    inline_images.install(&service);
+    defer inline_images.uninstall();
+    const drawn = try buildUserPromptCardWithSkillTokensForTerminalPresentation(alloc, "[Image #1]", &images, 12, &.{});
+    defer alloc.free(drawn);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "[Image 1]") != null);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "\u{2580}") != null);
+    var lines = std.mem.splitScalar(u8, drawn, '\n');
+    while (lines.next()) |line| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(line) <= 12);
+    images[0].snapshot_path = null;
+    const missing = try buildUserPromptCardWithSkillTokensForTerminalPresentation(alloc, "[Image #1]", &images, 12, &.{});
+    defer alloc.free(missing);
+    try std.testing.expect(std.mem.indexOf(u8, missing, "[Image 1]") != null);
+    try std.testing.expect(std.mem.indexOf(u8, missing, "\u{2580}") == null);
 }

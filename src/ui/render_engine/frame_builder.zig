@@ -11,6 +11,7 @@ const transcript_blocks = @import("transcript_blocks.zig");
 const ui_observer = @import("ui_observer.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
 const activity_runtime = @import("../../core/output/activity_runtime.zig");
+const inline_images = @import("../images/inline_images.zig");
 
 const Allocator = std.mem.Allocator;
 const Metrics = types.Metrics;
@@ -130,6 +131,13 @@ pub fn buildAndFlushFrame(
     if (options.trace_counters) |counters| counters.frame_commits += 1;
 
     logFrameCommitResult(plan, result);
+    if (inline_images.active()) |service| {
+        if (result.shadow_state.is_committed()) {
+            service.afterCommit(shadow, shell.frameSink(), metrics);
+        } else {
+            service.finishFrame(shell.frameSink(), metrics);
+        }
+    }
     observeCommittedFrame(alloc, &surface, &plan, result, &options);
     try record_retry_invalidation(shell, result);
     return result;

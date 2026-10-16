@@ -52,25 +52,64 @@ pub const TablePayload = struct {
     }
 };
 
+/// A Markdown paragraph that consists of one image and nothing else.
+pub const StandaloneImage = struct {
+    alt: []u8,
+    /// The image destination exactly as written (path, file:, data:, or URL).
+    target: []u8,
+    /// The paragraph as ordinary assistant text (the linked image label),
+    /// shown whenever the image itself cannot be drawn.
+    fallback_text: []u8,
+
+    pub fn deinit(self: *StandaloneImage, alloc: Allocator) void {
+        alloc.free(self.alt);
+        alloc.free(self.target);
+        alloc.free(self.fallback_text);
+        self.* = undefined;
+    }
+
+    pub fn clone(self: StandaloneImage, alloc: Allocator) !StandaloneImage {
+        const alt = try alloc.dupe(u8, self.alt);
+        errdefer alloc.free(alt);
+        const target = try alloc.dupe(u8, self.target);
+        errdefer alloc.free(target);
+        return .{ .alt = alt, .target = target, .fallback_text = try alloc.dupe(u8, self.fallback_text) };
+    }
+};
+
+/// One completed block retained as source so it can be re-laid out at the
+/// active terminal width: a fenced or indented code block, or (when `image`
+/// is set) a standalone image paragraph, in which case `language` and
+/// `code` are empty.
 pub const CodeBlockPayload = struct {
     language: []u8,
     code: []u8,
+    image: ?StandaloneImage = null,
 
     pub fn deinit(self: *CodeBlockPayload, alloc: Allocator) void {
         alloc.free(self.language);
         alloc.free(self.code);
+        if (self.image) |*image| image.deinit(alloc);
         self.* = undefined;
     }
 
     pub fn clone(self: CodeBlockPayload, alloc: Allocator) !CodeBlockPayload {
         const language = try alloc.dupe(u8, self.language);
         errdefer alloc.free(language);
+        const code = try alloc.dupe(u8, self.code);
+        errdefer alloc.free(code);
         return .{
             .language = language,
-            .code = try alloc.dupe(u8, self.code),
+            .code = code,
+            .image = if (self.image) |image| try image.clone(alloc) else null,
         };
     }
 };
+
+/// Decides whether a standalone image paragraph becomes an image block.
+/// Installed by the interactive terminal; absent everywhere else, so the
+/// paragraph stays ordinary text.
+pub const StandaloneImageAdmission = *const fn (target: []const u8) bool;
 
 pub const TableCompletion = struct {
     ctx: *anyopaque,

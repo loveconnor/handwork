@@ -1,6 +1,8 @@
 const std = @import("std");
 const activity_runtime = @import("../core/output/activity_runtime.zig");
 const builtin = @import("builtin");
+const inline_images = @import("images/inline_images.zig");
+const graphics_probe = @import("terminal/graphics_probe.zig");
 const debug_trace = @import("../core/shared/debug_trace.zig");
 const io_mod = @import("../core/shared/io.zig");
 const types = @import("../core/shared/types.zig");
@@ -191,12 +193,15 @@ pub const TerminalState = struct {
     }
 
     pub fn queryLayout(self: TerminalState, footer_rows: u16) !Layout {
-        return if (comptime builtin.os.tag == .wasi)
+        const layout = try if (comptime builtin.os.tag == .wasi)
             wasm_terminal.queryLayout(footer_rows)
         else if (comptime builtin.os.tag == .windows)
             ui_terminal.queryLayout(std.Io.File.stdout().handle, footer_rows)
         else
             ui_terminal.queryLayout(self.stdin_fd, footer_rows);
+        // Font size changes arrive as resizes; image layout follows them.
+        inline_images.setCellSize(graphics_probe.refreshCellSize(inline_images.cellSize(), layout.cols, layout.rows));
+        return layout;
     }
 
     pub fn queryCursorPosition(self: TerminalState) !CursorPosition {

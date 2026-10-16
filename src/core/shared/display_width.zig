@@ -1,5 +1,6 @@
 const std = @import("std");
 const unicode_data = @import("unicode_display_data.zig");
+const image_placeholder = @import("image_placeholder.zig");
 
 const RgiNode = packed struct(u32) {
     edge_start: u13,
@@ -210,6 +211,11 @@ pub noinline fn displayUnitAt(text: []const u8, index: usize) DisplayUnit {
 
     const rgi_len = matchRgiSequence(text, index);
     if (rgi_len != 0) return .{ .byte_len = rgi_len, .cell_width = 2 };
+
+    // Several placeholder diacritics fall outside the generic combining
+    // ranges, so the whole cluster is measured as the one cell it draws.
+    const placeholder_len = image_placeholder.clusterLenAt(text, index);
+    if (placeholder_len != 0) return .{ .byte_len = placeholder_len, .cell_width = 1 };
 
     const first = decodeNextRune(text, index);
     const next_index = index + first.len;
@@ -774,4 +780,13 @@ fn isDisplayUnitBoundary(text: []const u8, target: usize) bool {
         index += unit.byte_len;
     }
     return index == target;
+}
+
+test "image placeholder clusters measure as one cell" {
+    const row = "\u{10EEEE}\u{0483}\u{0305}\u{10EEEE}\u{10EEEE}";
+    try std.testing.expectEqual(@as(usize, 3), visibleWidth(row));
+    try std.testing.expectEqual(@as(usize, 3), visibleWidthIgnoringAnsi("\x1b[38;2;0;0;1m" ++ row ++ "\x1b[39m"));
+    const unit = displayUnitAt(row, 0);
+    try std.testing.expectEqual(@as(usize, 1), unit.cell_width);
+    try std.testing.expectEqual(@as(usize, 8), unit.byte_len);
 }

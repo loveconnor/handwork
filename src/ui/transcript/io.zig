@@ -12,6 +12,7 @@ const record_tape = @import("../../core/workspace/record_tape.zig");
 const types = @import("../../core/shared/types.zig");
 const terminal_diff = @import("../render_engine/terminal_diff.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const inline_images = @import("../images/inline_images.zig");
 
 const Allocator = std.mem.Allocator;
 const Metrics = types.Metrics;
@@ -40,6 +41,18 @@ pub fn disableShadowVt(shell: anytype) void {
 }
 
 pub fn writeFrameBytes(shell: anytype, metrics: *Metrics, bytes: []const u8) terminal_diff.FrameSinkWriteResult {
+    const service = inline_images.active() orelse return writeRawFrameBytes(shell, metrics, bytes);
+    const Shell = @TypeOf(shell);
+    const Raw = struct {
+        fn write(ctx: *anyopaque, raw_metrics: *Metrics, raw_bytes: []const u8) terminal_diff.FrameSinkWriteResult {
+            const raw_shell: Shell = @ptrCast(@alignCast(ctx));
+            return writeRawFrameBytes(raw_shell, raw_metrics, raw_bytes);
+        }
+    };
+    return service.writeFrame(.{ .ctx = @ptrCast(shell), .write_frame = Raw.write }, metrics, bytes);
+}
+
+fn writeRawFrameBytes(shell: anytype, metrics: *Metrics, bytes: []const u8) terminal_diff.FrameSinkWriteResult {
     var accepted_bytes: usize = 0;
     while (accepted_bytes < bytes.len) {
         const written = shell.outputFile().writeStreaming(

@@ -13,6 +13,8 @@ const assistant_presentation = @import("../../core/agent/assistant_presentation.
 const code_highlight = @import("code_highlight.zig");
 const code_highlight_languages = @import("code_highlight_languages.zig");
 
+const inline_images = @import("../images/inline_images.zig");
+const image_targets = @import("../images/image_targets.zig");
 const Allocator = std.mem.Allocator;
 
 pub const WalkResult = transcript_measure.WalkResult;
@@ -1633,6 +1635,13 @@ fn renderEntryToBlockForPresentationInterruptible(
         },
         .assistant_code_block => |e| blk: {
             const gutter = assistant_wrap.gutterWidth(cols);
+            if (try renderCodeBlockAsImage(alloc, e.block, cols, gutter)) |image_rows| {
+                break :blk try normalizeOwnedRenderedBlock(alloc, kind, image_rows);
+            }
+            if (e.block.image) |image| {
+                const fallback = try assistant_wrap.wrapTranscriptAssistantTextInterruptible(alloc, image.fallback_text, cols, checkpoint);
+                break :blk try normalizeOwnedRenderedBlock(alloc, kind, fallback);
+            }
             const rendered = try renderCodeBlockForTranscriptWithTheme(
                 alloc,
                 e.block,
@@ -1654,6 +1663,42 @@ fn renderEntryToBlockForPresentationInterruptible(
             };
         },
     };
+}
+
+/// Rows an assistant image or diagram may occupy.
+const assistant_image_max_rows: u16 = 24;
+
+/// Draws a standalone image paragraph or an `svg`/`mermaid` fence as an
+/// image when the terminal supports it. Returns null to keep the text form.
+fn renderCodeBlockAsImage(
+    alloc: Allocator,
+    block: assistant_presentation.CodeBlockPayload,
+    cols: u16,
+    gutter: u16,
+) !?[]u8 {
+    if (inline_images.active() == null or cols <= gutter) return null;
+    var resolved: ?image_targets.Target = null;
+    defer if (resolved) |*target| target.deinit(alloc);
+    const source: inline_images.Source = if (block.image) |image| src: {
+        resolved = try image_targets.resolve(alloc, image.target, image_targets.workspaceDir() orelse return null) orelse return null;
+        break :src resolved.?.source();
+    } else if (std.ascii.eqlIgnoreCase(block.language, "svg"))
+        .{ .svg = block.code }
+    else if (std.ascii.eqlIgnoreCase(block.language, "mermaid"))
+        .{ .mermaid = block.code }
+    else
+        return null;
+
+    var prefix: [2]u8 = @splat(' ');
+    var rows: std.ArrayList(u8) = .empty;
+    errdefer rows.deinit(alloc);
+    const box = inline_images.Box{ .max_cols = cols - gutter, .max_rows = assistant_image_max_rows };
+    _ = try inline_images.renderRows(alloc, source, box, prefix[0..gutter], &rows) orelse {
+        rows.deinit(alloc);
+        return null;
+    };
+    try rows.append(alloc, '\n');
+    return try rows.toOwnedSlice(alloc);
 }
 
 fn normalizeOwnedRenderedBlock(
@@ -4509,4 +4554,54 @@ test "current compact rendering reflows user prompts without card background" {
     try std.testing.expect(std.mem.startsWith(u8, out, "\x1b[38;5;255m┃\x1b[0m \x1b[1mminimal prompt"));
     try std.testing.expect(std.mem.find(u8, out, "\x1b[48;") == null);
     try std.testing.expect(std.mem.find(u8, out, "\x1b[K") == null);
+}
+
+test "image blocks render as rows when a service is installed and as text otherwise" {
+    const alloc = std.testing.allocator;
+    const codecs = @import("../../core/images/codecs.zig");
+
+    var tiny = try codecs.Raster.init(alloc, 20, 20);
+    defer tiny.deinit(alloc);
+    @memset(tiny.pixels, 255);
+    const png = try codecs.png.encode(alloc, tiny);
+    defer alloc.free(png);
+    const encoder = std.base64.standard.Encoder;
+    const encoded = try alloc.alloc(u8, encoder.calcSize(png.len));
+    defer alloc.free(encoded);
+    const data_uri = try std.fmt.allocPrint(alloc, "data:image/png;base64,{s}", .{encoder.encode(encoded, png)});
+    defer alloc.free(data_uri);
+
+    var entries: std.ArrayList(TranscriptEntry) = .empty;
+    defer deinitTestEntries(&entries, alloc);
+    try entries.append(alloc, .{ .assistant_code_block = .{ .id = 1, .block = .{
+        .language = try alloc.dupe(u8, "mermaid"),
+        .code = try alloc.dupe(u8, "graph TD\nA-->B\n"),
+    } } });
+    try entries.append(alloc, .{ .assistant_code_block = .{ .id = 2, .block = .{
+        .language = try alloc.dupe(u8, ""),
+        .code = try alloc.dupe(u8, ""),
+        .image = .{
+            .alt = try alloc.dupe(u8, "white square"),
+            .target = try alloc.dupe(u8, data_uri),
+            .fallback_text = try alloc.dupe(u8, "FALLBACK LABEL\n"),
+        },
+    } } });
+
+    // No service: the fence stays a code panel and the image keeps its label.
+    const plain = try renderEntriesToBytes(alloc, entries.items, 60, .{});
+    defer alloc.free(plain);
+    try std.testing.expect(std.mem.indexOf(u8, plain, "A-->B") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plain, "FALLBACK LABEL") != null);
+
+    var service = inline_images.Service.init(alloc, .{ .protocol = .blocks, .cell = .{ .width_px = 10, .height_px = 20 } });
+    defer service.deinit();
+    inline_images.install(&service);
+    defer inline_images.uninstall();
+    const drawn = try renderEntriesToBytes(alloc, entries.items, 60, .{});
+    defer alloc.free(drawn);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "A-->B") == null);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "FALLBACK LABEL") == null);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "\u{2580}") != null);
+    var lines = std.mem.splitScalar(u8, drawn, '\n');
+    while (lines.next()) |line| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(line) <= 60);
 }
