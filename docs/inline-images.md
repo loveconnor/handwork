@@ -46,6 +46,12 @@ Terminals that are not recognized by their environment variables are asked direc
 
 Inside tmux or screen, Handwork always uses half blocks. Passing graphics through a multiplexer is not supported.
 
+### VS Code
+
+VS Code disables terminal images by default. This repository's `.vscode/settings.json` enables `terminal.integrated.enableImages` for the workspace. Start a new integrated terminal after applying the setting, then restart Handwork so it can detect pixel graphics. Image support also requires VS Code's terminal GPU acceleration; keep `terminal.integrated.gpuAcceleration` set to `auto` or `on`.
+
+When image support is disabled, diagrams use half blocks: just two colored pixels per text cell. Small labels cannot remain readable at that resolution. `HANDWORK_IMAGES=off` keeps diagram source and image labels as text instead. See [VS Code's terminal documentation](https://code.visualstudio.com/docs/terminal/advanced#_images).
+
 ## Controlling images
 
 Set `HANDWORK_IMAGES` before starting Handwork to override detection:

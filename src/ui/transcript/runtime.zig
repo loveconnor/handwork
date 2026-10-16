@@ -1313,6 +1313,45 @@ test "cancelled full transcript page completion is never installed" {
     try std.testing.expect(runtime.full_transcript_installed_page == null);
 }
 
+test "compact transcript page completion installs before the viewer opens" {
+    const alloc = std.testing.allocator;
+    const page_alloc = std.heap.c_allocator;
+    var runtime = TranscriptRuntime{ .layout = testLayoutWithRows(24) };
+    defer runtime.deinit(alloc);
+    const request = full_transcript_page.Request{
+        .content_revision = runtime.full_transcript_content_revision,
+        .cols = runtime.layout.cols,
+        .anchor = .tail,
+        .compact = true,
+    };
+    runtime.full_transcript_open_request = request;
+    const task = try page_alloc.create(full_transcript_worker.Task);
+    task.* = .{
+        .source = .{ .request = request, .range = .{ .start = 0, .end = 0 }, .styles = .{} },
+        .projection = .{ .styles = .{} },
+    };
+    runtime.full_transcript_page_load.task = task;
+    task.prepared_window = .{
+        .source = try source_preparation.prepareIndexedFullTranscriptWindowSourceInterruptible(
+            page_alloc,
+            try page_alloc.dupe(u8, "compact page\n"),
+            runtime.layout.cols,
+            null,
+        ),
+        .start_row = 0,
+    };
+    task.done.store(true, .release);
+
+    try std.testing.expect(!runtime.fullTranscriptActive());
+    try std.testing.expect(try runtime.pollFullTranscriptPageLoad());
+    try std.testing.expect(runtime.full_transcript_installed_page.?.source.request.compact);
+    try std.testing.expect(runtime.fullTranscriptPreparedForOpen());
+    try std.testing.expect(runtime.takeReadyFullTranscriptOpen());
+    _ = try runtime.setTranscriptPresentationDepth(alloc, .compact);
+    try runtime.prewarmFullTranscriptPage(null, null);
+    try std.testing.expect(!runtime.full_transcript_page_load.busy());
+}
+
 test "full transcript page boundaries preserve monotonic navigation" {
     const alloc = std.testing.allocator;
     var runtime = TranscriptRuntime{
@@ -10371,7 +10410,12 @@ pub const TranscriptRuntime = struct {
             .content_revision = self.full_transcript_content_revision,
             .cols = self.layout.cols,
             .anchor = self.full_transcript_page_anchor,
-            .compact = self.full_transcript.depth == .compact,
+            // A wheel-opened viewer is still inline while its compact page
+            // loads. Accept that page using the requested presentation.
+            .compact = if (self.full_transcript_open_request) |pending|
+                pending.compact
+            else
+                self.full_transcript.depth == .compact,
         };
     }
 

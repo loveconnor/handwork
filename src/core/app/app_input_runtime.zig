@@ -825,6 +825,9 @@ pub fn Runtime(comptime App: type) type {
                 .action => |decoded| switch (decoded.action) {
                     .toggle_full_transcript, .page_up => false,
                     .mouse_wheel => |direction| direction != .up,
+                    // Trackpad motion can interleave hover reports with the
+                    // wheel events that opened the asynchronously loaded view.
+                    .mouse_pointer => |pointer| pointer.kind != .hover,
                     else => true,
                 },
             };
@@ -10355,6 +10358,25 @@ test "app_input_runtime repeated upward scroll preserves a pending transcript op
     try std.testing.expect(!app.terminal.fullTranscriptScreenActive());
     try std.testing.expect(app.shell.fullTranscriptOpenPending());
     try std.testing.expect(app.shell.pendingTranscriptOpenIsCompact());
+}
+
+test "app_input_runtime trackpad scrolling survives pointer hover while the transcript loads" {
+    const alloc = std.testing.allocator;
+    var app = try RoutingFakeApp.init(alloc);
+    defer app.deinit();
+    app.shell.repaintRestoredPrimaryTranscriptAfterResize();
+    try app.input_runtime.edit_state.input.appendSlice(alloc, "draft stays here");
+
+    try feedRoutingBytes(&app, "\x1b[<64;10;4M");
+    try std.testing.expect(app.shell.fullTranscriptOpenPending());
+    try feedRoutingBytes(&app, "\x1b[<35;10;4M\x1b[<64;10;4M\x1b[<35;11;4M");
+    try std.testing.expect(app.shell.fullTranscriptOpenPending());
+    try std.testing.expect(app.shell.pendingTranscriptOpenIsCompact());
+    try std.testing.expectEqualStrings("draft stays here", app.input_runtime.edit_state.input.items);
+
+    // An intentional click still cancels opening the viewer.
+    try feedRoutingBytes(&app, "\x1b[<0;10;4M");
+    try std.testing.expect(!app.shell.fullTranscriptOpenPending());
 }
 
 test "app_input_runtime ctrl-o toggles full transcript while arrows preserve detail" {
