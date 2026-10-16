@@ -1,10 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { access, copyFile, chmod, mkdir, stat } from 'node:fs/promises';
+import { access, copyFile, chmod, mkdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const engine = path.resolve(process.argv[2] || path.join(root, '../handwork'));
+if (path.join(engine, 'desktop-app') === root) throw new Error('Source and release destination must be different checkouts.');
 await access(path.join(engine, 'build.zig'));
 const git = args => execFileSync('git', args, { cwd: engine, encoding: 'utf8' }).trim();
 if (git(['status', '--porcelain'])) throw new Error('The engine checkout has uncommitted changes. Commit or stash them before syncing.');
@@ -13,6 +14,11 @@ if (!/^https:\/\/github\.com\/loveconnor\/handwork(?:\.git)?$|^git@github\.com:l
   throw new Error('The release checkout must point to loveconnor/handwork.');
 }
 const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(file => file && !file.startsWith('.github/'));
+const sourceFiles = new Set(files);
+const previous = git(['ls-files', '-z', '--', 'desktop-app']).split('\0').filter(Boolean);
+for (const file of previous) {
+  if (!sourceFiles.has(file.slice('desktop-app/'.length))) await rm(path.join(engine, file));
+}
 for (const file of files) {
   const source = path.join(root, file);
   const destination = path.join(engine, 'desktop-app', file);
@@ -20,4 +26,4 @@ for (const file of files) {
   await copyFile(source, destination);
   await chmod(destination, (await stat(source)).mode);
 }
-console.log(`Synced ${files.length} tracked source files to ${engine}/desktop-app. Review and commit the changes, then push to start the signed release pipeline.`);
+console.log(`Synced ${files.length} tracked source files to ${engine}/desktop-app. Commit and push the changes to start the signed release pipeline.`);

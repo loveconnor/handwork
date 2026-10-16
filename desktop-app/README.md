@@ -133,18 +133,26 @@ after changing the Zig engine so the bundled binary matches its protocol.
 
 ### Desktop updates
 
-Pushes to this standalone repository run desktop tests and typechecking. They do
-not publish an app update. To release the current desktop source through the
-existing signing credentials and public update feed, sync it into a clean engine
-checkout:
+Every push to `main` in this repository runs desktop tests and typechecking, then
+automatically syncs the desktop source to `loveconnor/handwork` and pushes a
+release commit there. Its existing pipeline builds, signs, tests, and publishes
+the app update to the same public feed used by installed apps. Pull requests run
+checks without publishing. No manual sync is required.
+
+The handoff uses the `HANDWORK_RELEASE_DEPLOY_KEY` Actions secret, a dedicated
+write deploy key for `loveconnor/handwork`. Apple signing credentials remain in
+the release repository. Build and publication progress appears in that repo's
+Desktop release workflow, linked from this repo's release job summary.
+
+For local recovery, source can also be synchronized manually:
 
 ```sh
 node scripts/sync-release-source.mjs ../handwork
 ```
 
-Review, commit, and push the resulting `desktop-app/` changes in that checkout.
-The sync copies only tracked source files and excludes repository workflows;
-local dependencies, credentials, and build outputs are never copied.
+The sync copies tracked source files, removes deleted source files from the
+release copy, and excludes repository workflows. Local dependencies,
+credentials, and build outputs are never copied.
 
 Pushes to `main` in `loveconnor/handwork` automatically build and test desktop
 releases after every push to main. The workflow assigns a newer
