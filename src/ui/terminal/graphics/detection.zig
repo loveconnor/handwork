@@ -82,6 +82,13 @@ pub fn decideFromEnvironment(env: Environment) EnvironmentDecision {
     if (env.tmux != null) return .{ .decided = .blocks };
     if (env.term) |term| {
         if (std.mem.startsWith(u8, term, "screen")) return .{ .decided = .blocks };
+    }
+    // VS Code can inherit KITTY_WINDOW_ID from the shell that launched it.
+    // Its own terminal identity takes precedence, including on Windows.
+    if (env.term_program) |program| {
+        if (std.ascii.eqlIgnoreCase(program, "vscode")) return .{ .probe = .{ .fallback = .blocks } };
+    }
+    if (env.term) |term| {
         if (std.mem.eql(u8, term, "xterm-kitty") or std.mem.eql(u8, term, "xterm-ghostty")) return .{ .decided = .kitty };
     }
     if (env.kitty_window_id != null) return .{ .decided = .kitty };
@@ -224,6 +231,15 @@ test "known terminals are recognized from their environment" {
     try std.testing.expectEqual(EnvironmentDecision{ .decided = .blocks }, decideFromEnvironment(.{ .term = "xterm-kitty", .tmux = "/tmp/tmux" }));
     try std.testing.expectEqual(EnvironmentDecision{ .decided = .blocks }, decideFromEnvironment(.{ .is_windows = true }));
     try std.testing.expectEqual(EnvironmentDecision{ .probe = .{ .fallback = .blocks } }, decideFromEnvironment(.{ .is_windows = true, .wt_session = "x" }));
+}
+
+test "VS Code probes on Windows and overrides inherited terminal identities" {
+    const expected = EnvironmentDecision{ .probe = .{ .fallback = .blocks } };
+    try std.testing.expectEqual(expected, decideFromEnvironment(.{ .term_program = "vscode", .is_windows = true }));
+    try std.testing.expectEqual(expected, decideFromEnvironment(.{ .term_program = "vscode", .kitty_window_id = "1", .term = "xterm-kitty" }));
+    try std.testing.expectEqual(EnvironmentDecision{ .decided = .blocks }, decideFromEnvironment(.{ .term_program = "vscode", .tmux = "/tmp/tmux" }));
+    try std.testing.expectEqual(EnvironmentDecision{ .decided = .blocks }, decideFromEnvironment(.{ .term_program = "vscode", .term = "screen-256color" }));
+    try std.testing.expectEqual(EnvironmentDecision{ .decided = .none }, decideFromEnvironment(.{ .term_program = "vscode", .handwork_images = "off" }));
 }
 
 test "probe replies are parsed in any order alongside unrelated bytes" {
