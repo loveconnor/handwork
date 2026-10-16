@@ -80,6 +80,8 @@ pub const Capabilities = struct {
     color_depth: blocks.ColorDepth = .truecolor,
     /// Diagram colors follow the terminal background.
     theme: vector.Theme = .dark,
+    /// Matte for antialiased edges in SIXEL, which has no fractional alpha.
+    background: [3]u8 = .{ 0, 0, 0 },
 };
 
 var installed: ?*Service = null;
@@ -114,6 +116,24 @@ pub fn cellSize() CellSize {
 
 pub fn active() ?*Service {
     return installed;
+}
+
+pub fn setBackground(background: [3]u8) void {
+    const service = installed orelse return;
+    service.lock();
+    defer service.unlock();
+    if (std.mem.eql(u8, &service.caps.background, &background)) return;
+    service.caps.background = background;
+    // Pixel sources stay unchanged; only SIXEL's composited payload depends
+    // on the terminal background.
+    if (service.caps.protocol != .sixel) return;
+    for (service.instances.items) |*instance| {
+        if (instance.overlay) |overlay| {
+            service.cached_bytes -= overlay.bytes.len;
+            service.gpa.free(overlay.bytes);
+            instance.overlay = null;
+        }
+    }
 }
 
 pub fn protocol() Protocol {
@@ -569,7 +589,10 @@ pub const Service = struct {
         var out: std.Io.Writer.Allocating = .init(self.gpa);
         defer out.deinit();
         switch (self.caps.protocol) {
-            .sixel => try sixel.encode(self.gpa, crop, &out.writer),
+            .sixel => {
+                crop.flattenEdgesOnto(self.caps.background);
+                try sixel.encode(self.gpa, crop, &out.writer);
+            },
             .iterm2 => {
                 const png = try codecs.png.encode(self.gpa, crop);
                 defer self.gpa.free(png);
@@ -876,6 +899,37 @@ test "kitty frames transmit each shown image once, before the frame" {
     try std.testing.expect(service.writeFrame(capture.sink(), &metrics, reset_frame.items) == .complete);
     const reset_out = capture.bytes.items;
     try std.testing.expect(std.mem.indexOf(u8, reset_out, "\x1bc").? < std.mem.indexOf(u8, reset_out, "\x1b_Ga=T").?);
+}
+
+test "sixel preserves faint antialiased strokes and recomposites after background changes" {
+    const alloc = std.testing.allocator;
+    var service = Service.init(alloc, .{ .protocol = .sixel, .cell = .{ .width_px = 1, .height_px = 6 }, .background = .{ 20, 40, 60 } });
+    defer service.deinit();
+    install(&service);
+    defer uninstall();
+    var image = try Raster.init(alloc, 3, 1);
+    defer image.deinit(alloc);
+    image.pixel(1, 0).* = .{ 255, 255, 255, 64 };
+    const png = try codecs.png.encode(alloc, image);
+    defer alloc.free(png);
+    var rows: std.ArrayList(u8) = .empty;
+    defer rows.deinit(alloc);
+    _ = try service.renderRows(alloc, .{ .encoded = png }, .{ .max_cols = 3, .max_rows = 1 }, "", &rows);
+    const instance = &service.instances.items[0];
+    const before = try alloc.dupe(u8, try service.overlayPayload(instance, 0, 1));
+    defer alloc.free(before);
+    // The center column's faint stroke used to be discarded entirely.
+    try std.testing.expect(std.mem.indexOf(u8, before, "#0?@\x1b\\") != null);
+    try std.testing.expectEqual(@as(u8, 64), service.entries.items[0].ready.image.pixel(1, 0)[3]);
+    try std.testing.expectEqual(@as(u8, 64), instance.box.?.pixel(1, 0)[3]);
+    const cached = service.cached_bytes;
+    setBackground(.{ 255, 255, 255 });
+    try std.testing.expect(instance.overlay == null);
+    try std.testing.expectEqual(cached - before.len, service.cached_bytes);
+    const after = try service.overlayPayload(instance, 0, 1);
+    try std.testing.expect(std.mem.indexOf(u8, after, "#0?@\x1b\\") != null);
+    try std.testing.expect(std.mem.indexOf(u8, after, ";2;100;100;100") != null);
+    try std.testing.expect(!std.mem.eql(u8, before, after));
 }
 
 test "sixel overlays draw once per exposure and redraw after cells are rewritten" {

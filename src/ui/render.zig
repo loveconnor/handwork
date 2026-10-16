@@ -6,6 +6,7 @@ const display_width = @import("../core/shared/display_width.zig");
 const text_utils = @import("../core/shared/text_utils.zig");
 const types = @import("../core/shared/types.zig");
 const image_attachments = @import("../core/images/image_attachments.zig");
+const inline_images = @import("images/inline_images.zig");
 const assistant_presentation = @import("../core/agent/assistant_presentation.zig");
 const main = @import("../main.zig");
 const theme_detection = @import("terminal/theme_detection.zig");
@@ -67,6 +68,7 @@ pub fn setTruecolorSupport(enabled: bool) void {
 pub fn initTheme(light: bool, terminal_bg: ?TerminalRgb) void {
     is_light = light;
     active_terminal_background = terminal_bg;
+    inline_images.setBackground(if (terminal_bg) |rgb| .{ rgb.r, rgb.g, rgb.b } else if (light) .{ 255, 255, 255 } else .{ 0, 0, 0 });
     assistant_presentation.setInlineCodeTheme(light);
     if (light) {
         divider_style = "\x1b[38;5;250m";

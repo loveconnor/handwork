@@ -183,7 +183,7 @@ pub fn build(b: *std.Build) void {
             "core.images.codec",     "core.images.svg",       "core.images.vector",            "core.images.mermaid",
             "ui.images.",            "ui.terminal.graphics",  "core.shared.image_placeholder", "image placeholder",
             "image-only paragraphs", "image blocks render",   "standalone image rejection",    "APC graphics",
-            "drawn-pixel flags",     "attachment thumbnails",
+            "drawn-pixel flags",     "attachment thumbnails", "core.images.raster",
         },
     });
     const image_test_step = b.step("test-images", "Run inline image decoding, rendering, and integration tests");

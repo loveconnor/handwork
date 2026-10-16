@@ -25,6 +25,8 @@ Images inside a sentence (`see ![x](x.png) here`) stay text. Relative paths reso
 
 SVG text is drawn with the Hershey Simplex stroke font, so it looks like a clean single-line technical font rather than the font the drawing names. SVG files are shown on a white background because most are drawn for light pages. Clipping paths, masks, filters, patterns, and images embedded inside an SVG are not drawn.
 
+SIXEL cannot carry fractional opacity. Handwork blends antialiased edges against the detected terminal background before encoding, so thin diagram labels retain their strokes instead of losing pixels below a transparency threshold. Completely empty pixels remain transparent. Changing the terminal background invalidates the composited payloads so their edge colors are rebuilt.
+
 ### Mermaid diagrams
 
 Supported: `flowchart`/`graph` (all four directions, the common node shapes, solid, dotted, and thick edges, edge labels, `&` groups, and subgraphs), `stateDiagram`/`stateDiagram-v2`, `sequenceDiagram` (participants, all message arrow types, notes, `loop`/`alt`/`opt`/`par`/`critical`/`break` blocks, `autonumber`), and `pie`.

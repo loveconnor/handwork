@@ -621,6 +621,7 @@ pub fn bootstrapInteractiveApp(cfg: BootstrapConfig) !StartupState {
         ui_render.truecolorSupportedForValues(io_mod.getenv("COLORTERM"), io_mod.getenv("TERM_PROGRAM")),
     );
     image_capabilities.theme = if (theme.light) .light else .dark;
+    image_capabilities.background = if (theme.rgb) |rgb| .{ rgb.r, rgb.g, rgb.b } else if (theme.light) .{ 255, 255, 255 } else .{ 0, 0, 0 };
     inline_images.startSession(cfg.alloc, image_capabilities);
     if (inline_images.active() != null) {
         assistant_presentation.setStandaloneImageAdmission(image_targets.admitStandaloneImage);

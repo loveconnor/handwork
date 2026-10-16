@@ -162,9 +162,20 @@ pub const Raster = struct {
 
     /// Blends every pixel over an opaque background color.
     pub fn flattenOnto(self: *Raster, background: [3]u8) void {
+        self.compositeOnto(background, false);
+    }
+
+    /// Resolves partial coverage for protocols without alpha, leaving empty
+    /// pixels unset so transparent padding does not become a colored rectangle.
+    pub fn flattenEdgesOnto(self: *Raster, background: [3]u8) void {
+        self.compositeOnto(background, true);
+    }
+
+    fn compositeOnto(self: *Raster, background: [3]u8, preserve_empty: bool) void {
         var i: usize = 0;
         while (i < self.pixels.len) : (i += 4) {
             const a: u32 = self.pixels[i + 3];
+            if (preserve_empty and a == 0) continue;
             inline for (0..3) |c| {
                 const fg: u32 = self.pixels[i + c];
                 self.pixels[i + c] = @intCast((fg * a + @as(u32, background[c]) * (255 - a) + 127) / 255);
@@ -242,6 +253,22 @@ test "fitWithin preserves aspect ratio and refuses to upscale by default" {
     try std.testing.expectEqual(@as(u32, 100), fit.height);
     const small = fitWithin(10, 10, 200, 100, false);
     try std.testing.expectEqual(@as(u32, 10), small.width);
+}
+
+test "flattenEdgesOnto preserves empty pixels and blends subpixel coverage" {
+    const alloc = std.testing.allocator;
+    for ([_][3]u8{ .{ 20, 40, 60 }, .{ 255, 255, 255 } }) |background| {
+        var image = try Raster.init(alloc, 7, 1);
+        defer image.deinit(alloc);
+        const alphas = [_]u8{ 0, 1, 64, 127, 128, 254, 255 };
+        for (alphas, 0..) |alpha, x| image.pixel(@intCast(x), 0).* = .{ 200, 160, 120, alpha };
+        image.flattenEdgesOnto(background);
+        try std.testing.expectEqual([4]u8{ 200, 160, 120, 0 }, image.pixel(0, 0).*);
+        try std.testing.expectEqual([4]u8{ 200, 160, 120, 255 }, image.pixel(6, 0).*);
+        try std.testing.expectEqual(@as(u8, 255), image.pixel(2, 0)[3]);
+        if (background[0] == 20) try std.testing.expectEqual([4]u8{ 65, 70, 75, 255 }, image.pixel(2, 0).*);
+        if (background[0] == 255) try std.testing.expectEqual([4]u8{ 241, 231, 221, 255 }, image.pixel(2, 0).*);
+    }
 }
 
 test "flattenOnto composites over the background" {
