@@ -15,6 +15,7 @@ const code_highlight_languages = @import("code_highlight_languages.zig");
 
 const inline_images = @import("../images/inline_images.zig");
 const image_targets = @import("../images/image_targets.zig");
+const mermaid = @import("../../core/images/mermaid.zig");
 const Allocator = std.mem.Allocator;
 
 pub const WalkResult = transcript_measure.WalkResult;
@@ -1642,9 +1643,24 @@ fn renderEntryToBlockForPresentationInterruptible(
                 const fallback = try assistant_wrap.wrapTranscriptAssistantTextInterruptible(alloc, image.fallback_text, cols, checkpoint);
                 break :blk try normalizeOwnedRenderedBlock(alloc, kind, fallback);
             }
+            const text_diagram = if (inline_images.protocol() == .blocks and
+                std.ascii.eqlIgnoreCase(e.block.language, "mermaid"))
+                mermaid.toText(alloc, e.block.code) catch |err| switch (err) {
+                    error.OutOfMemory => return error.OutOfMemory,
+                    else => null,
+                }
+            else
+                null;
+            defer if (text_diagram) |text| alloc.free(text);
+            var display_block = e.block;
+            var diagram_language = "diagram".*;
+            if (text_diagram) |text| {
+                display_block.code = text;
+                display_block.language = &diagram_language;
+            }
             const rendered = try renderCodeBlockForTranscriptWithTheme(
                 alloc,
-                e.block,
+                display_block,
                 cols -| gutter,
                 styles.code_highlight_theme,
             );
@@ -1677,6 +1693,10 @@ fn renderCodeBlockAsImage(
     gutter: u16,
 ) !?[]u8 {
     if (inline_images.active() == null or cols <= gutter) return null;
+    // Diagrams contain text that cannot survive a two-pixels-per-cell raster.
+    // Mermaid uses native text below; SVG keeps its readable source panel.
+    if (inline_images.protocol() == .blocks and block.image == null and
+        (std.ascii.eqlIgnoreCase(block.language, "mermaid") or std.ascii.eqlIgnoreCase(block.language, "svg"))) return null;
     var resolved: ?image_targets.Target = null;
     defer if (resolved) |*target| target.deinit(alloc);
     const source: inline_images.Source = if (block.image) |image| src: {
@@ -4600,8 +4620,40 @@ test "image blocks render as rows when a service is installed and as text otherw
     const drawn = try renderEntriesToBytes(alloc, entries.items, 60, .{});
     defer alloc.free(drawn);
     try std.testing.expect(std.mem.indexOf(u8, drawn, "A-->B") == null);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "A: A") != null);
+    try std.testing.expect(std.mem.indexOf(u8, drawn, "A --> B") != null);
     try std.testing.expect(std.mem.indexOf(u8, drawn, "FALLBACK LABEL") == null);
     try std.testing.expect(std.mem.indexOf(u8, drawn, "\u{2580}") != null);
     var lines = std.mem.splitScalar(u8, drawn, '\n');
     while (lines.next()) |line| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(line) <= 60);
+}
+
+test "image blocks render readable text diagrams at narrow widths without graphics" {
+    const alloc = std.testing.allocator;
+    var service = inline_images.Service.init(alloc, .{ .protocol = .blocks });
+    defer service.deinit();
+    inline_images.install(&service);
+    defer inline_images.uninstall();
+    var entries: std.ArrayList(TranscriptEntry) = .empty;
+    defer deinitTestEntries(&entries, alloc);
+    try entries.append(alloc, .{ .assistant_code_block = .{ .id = 1, .block = .{
+        .language = try alloc.dupe(u8, "mermaid"),
+        .code = try alloc.dupe(u8, "pie title Work\n\"Completed 注文\": 3\n\"Remaining\": 1"),
+    } } });
+    for ([_]u16{ 4, 20, 60 }) |cols| {
+        const text = try renderEntriesToBytes(alloc, entries.items, cols, .{});
+        defer alloc.free(text);
+        try std.testing.expect(std.mem.indexOf(u8, text, "▀") == null);
+        var lines = std.mem.splitScalar(u8, text, '\n');
+        while (lines.next()) |line| try std.testing.expect(display_width.visibleWidthIgnoringAnsi(line) <= cols);
+        if (cols == 60) {
+            try std.testing.expect(std.mem.indexOf(u8, text, "Completed 注文") != null);
+            try std.testing.expect(std.mem.indexOf(u8, text, "75.0%") != null);
+        }
+    }
+    service.caps.protocol = .kitty;
+    const graphical = try renderEntriesToBytes(alloc, entries.items, 60, .{});
+    defer alloc.free(graphical);
+    try std.testing.expect(std.mem.indexOf(u8, graphical, "Completed") == null);
+    try std.testing.expect(std.mem.indexOf(u8, graphical, "\u{10eeee}") != null);
 }

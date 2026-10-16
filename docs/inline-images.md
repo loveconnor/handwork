@@ -1,6 +1,6 @@
 # Inline images
 
-Handwork can draw images, SVG drawings, and Mermaid diagrams inside the interactive transcript. It decodes and rasterizes everything itself and sends the result to your terminal with the best graphics protocol the terminal supports. Terminals without graphics get a colored half-block approximation; the text transcript stays unchanged either way.
+Handwork can draw images, SVG drawings, and Mermaid diagrams inside the interactive transcript. It decodes and rasterizes everything itself and sends the result to your terminal with the best graphics protocol the terminal supports. Terminals without graphics get readable text diagrams and colored half-block image previews; the stored transcript stays unchanged either way.
 
 ## What appears as an image
 
@@ -46,11 +46,17 @@ Terminals that are not recognized by their environment variables are asked direc
 
 Inside tmux or screen, Handwork always uses half blocks. Passing graphics through a multiplexer is not supported.
 
+### Apple Terminal and other terminals without pixel graphics
+
+Mermaid diagrams use native terminal text: flowcharts and state diagrams show node labels and their connections, sequences show participants and ordered messages, and pie charts show labeled values, percentages, and proportional bars. These are text equivalents rather than the graphical layout. Unsupported diagram types and SVG fences keep their source panels. Raster images still use half-block previews; high-resolution inline pixels require a terminal with a supported graphics protocol.
+
+The conversation viewer receives wheel reports directly in Apple Terminal and VS Code rather than relying on alternate-screen arrow-key translation. In Apple Terminal, **View > Allow Mouse Reporting** must be checked (the default for new windows). Otherwise Terminal blocks the events even when Handwork requests them. See [Apple's mouse-reporting guide](https://support.apple.com/guide/terminal/trmlc69728a5/mac). Arrow keys and Page Up/Page Down also scroll the viewer. Mouse reporting returns to the normal composer mode when the viewer closes.
+
 ### VS Code
 
 VS Code disables terminal images by default. This repository's `.vscode/settings.json` enables `terminal.integrated.enableImages` for the workspace. Start a new integrated terminal after applying the setting, then restart Handwork so it can detect pixel graphics. Image support also requires VS Code's terminal GPU acceleration; keep `terminal.integrated.gpuAcceleration` set to `auto` or `on`.
 
-When image support is disabled, diagrams use half blocks: just two colored pixels per text cell. Small labels cannot remain readable at that resolution. `HANDWORK_IMAGES=off` keeps diagram source and image labels as text instead. See [VS Code's terminal documentation](https://code.visualstudio.com/docs/terminal/advanced#_images).
+When terminal image support is disabled, Mermaid diagrams use native text and raster images use half blocks. `HANDWORK_IMAGES=off` keeps diagram source and image labels as text instead. See [VS Code's terminal documentation](https://code.visualstudio.com/docs/terminal/advanced#_images).
 
 ## Controlling images
 

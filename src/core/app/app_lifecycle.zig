@@ -1082,6 +1082,12 @@ fn setFullTranscriptProjection(
 
 fn enterFullTranscriptScreen(terminal: *TerminalState, shell: *TranscriptRuntime, metrics: *Metrics) !void {
     try enterAlternateScreen(terminal, shell, metrics, .full_transcript);
+    // These terminals reuse the session buffer rather than entering another
+    // alternate screen. Receive wheel events explicitly: alternate-scroll
+    // translation can otherwise scroll the terminal's own saved viewport.
+    if (terminal.session_alternate_screen) {
+        try setFullTranscriptScreenMouseTracking(terminal, shell, metrics, true);
+    }
 }
 
 fn leaveFullTranscriptScreen(terminal: *TerminalState, shell: *TranscriptRuntime, metrics: *Metrics) !void {
@@ -1564,6 +1570,35 @@ test "full transcript alternate screen preserves native selection and restores t
     try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1006l"));
     try std.testing.expect(!terminal.fullTranscriptScreenActive());
     try std.testing.expect(!terminal.alternate_mouse_tracking_active);
+}
+
+test "session transcript viewer receives wheel events and restores hover reporting" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const file = try tmp.dir.createFile(io_mod.getIo(), "session-viewer.out", .{ .truncate = true });
+    var shell = TranscriptRuntime{
+        .stdout_file = file,
+        .layout = .{ .rows = 8, .cols = 40, .content_bottom = 3, .divider_top_row = 4, .input_row = 5, .divider_bottom_row = 7, .hint_row = 8 },
+    };
+    defer shell.deinit(alloc);
+    var metrics = Metrics{};
+    var terminal = TerminalState{ .session_alternate_screen = true };
+    try openCompactTranscript(alloc, &terminal, &shell, &metrics);
+    try std.testing.expect(terminal.alternate_mouse_tracking_active);
+    try openFullTranscript(alloc, &terminal, &shell, &metrics);
+    try std.testing.expect(terminal.alternate_mouse_tracking_active);
+    try closeFullTranscript(alloc, &terminal, &shell, &metrics);
+    try std.testing.expect(!terminal.alternate_mouse_tracking_active);
+    file.close(io_mod.getIo());
+    var reader = try tmp.dir.openFile(io_mod.getIo(), "session-viewer.out", .{});
+    defer reader.close(io_mod.getIo());
+    const bytes = try io_mod.readFileToEnd(alloc, &reader, 1024);
+    defer alloc.free(bytes);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, bytes, "\x1b[?1000h"));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, bytes, "\x1b[?1000l"));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, bytes, "\x1b[?1003h"));
+    try std.testing.expectEqual(@as(usize, 0), std.mem.count(u8, bytes, "\x1b[?1049"));
 }
 
 test "skills menu alternate screen lifecycle restores the shadow terminal once" {

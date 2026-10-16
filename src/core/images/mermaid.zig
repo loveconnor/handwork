@@ -98,6 +98,107 @@ pub fn toSvg(alloc: Allocator, source: []const u8, theme: Theme) Error![]u8 {
     return out.toOwnedSlice();
 }
 
+/// A native-text equivalent for terminals without a pixel graphics protocol.
+/// Keep labels, endpoints, branches and values readable instead of shrinking
+/// their rasterized glyphs into colored terminal cells. Callers wrap and
+/// display this text using the normal code-panel renderer.
+pub fn toText(alloc: Allocator, source: []const u8) ![]u8 {
+    return renderText(alloc, source) catch |err| switch (err) {
+        // This writer only writes into allocated memory.
+        error.WriteFailed => error.OutOfMemory,
+        else => err,
+    };
+}
+
+fn renderText(alloc: Allocator, source: []const u8) ![]u8 {
+    if (source.len > 4 * 1024 * 1024) return error.ImageTooLarge;
+    var arena_state = std.heap.ArenaAllocator.init(alloc);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+    const lines = try splitStatements(arena, source);
+    if (lines.len == 0) return error.InvalidImage;
+    const keyword = firstWord(lines[0]);
+    var out: std.Io.Writer.Allocating = .init(alloc);
+    errdefer out.deinit();
+    const w = &out.writer;
+    if (std.mem.eql(u8, keyword, "graph") or std.mem.eql(u8, keyword, "flowchart") or
+        std.mem.eql(u8, keyword, "stateDiagram") or std.mem.eql(u8, keyword, "stateDiagram-v2"))
+    {
+        const graph = if (std.mem.startsWith(u8, keyword, "stateDiagram"))
+            try parseStateDiagram(arena, lines[1..])
+        else
+            try parseFlowchart(arena, lines[0], lines[1..]);
+        for (graph.nodes.items) |node| {
+            if (node.cluster) |cluster| try w.print("{s} / ", .{graph.clusters.items[cluster].title});
+            try w.print("{s}: {s}\n", .{ node.id, node.label });
+        }
+        for (graph.edges.items) |edge| {
+            const line = switch (edge.style) {
+                .solid => "--",
+                .dotted => "..",
+                .thick => "==",
+            };
+            const tail = switch (edge.tail) {
+                .none => "",
+                .arrow => "<",
+                .circle => "o",
+                .cross => "x",
+            };
+            const head = switch (edge.head) {
+                .none => "",
+                .arrow => ">",
+                .circle => "o",
+                .cross => "x",
+            };
+            try w.print("{s} {s}{s}{s} {s}", .{ graph.nodes.items[edge.from].id, tail, line, head, graph.nodes.items[edge.to].id });
+            if (edge.label.len > 0) try w.print(" : {s}", .{edge.label});
+            try w.writeByte('\n');
+        }
+    } else if (std.mem.eql(u8, keyword, "sequenceDiagram")) {
+        const seq = try parseSequence(arena, lines[1..]);
+        for (seq.participants.items) |p| try w.print("{s}: {s}\n", .{ p.id, p.label });
+        var number: usize = 0;
+        for (seq.items.items) |item| switch (item) {
+            .message => |message| {
+                number += 1;
+                if (seq.autonumber) try w.print("{d}. ", .{number});
+                const line = if (message.arrow.dotted) ".." else "--";
+                const head = switch (message.arrow.head) {
+                    .none => "",
+                    .arrow => ">",
+                    .cross => "x",
+                    .open => ")",
+                };
+                try w.print("{s} {s}{s} {s}: {s}\n", .{ seq.participants.items[message.from].id, line, head, seq.participants.items[message.to].id, message.label });
+            },
+            .note => |note| try w.print("Note {s} {s}, {s}: {s}\n", .{ @tagName(note.side), seq.participants.items[note.first].id, seq.participants.items[note.last].id, note.label }),
+            .block_start => |block| try w.print("[{s} {s}]\n", .{ block.kind, block.label }),
+            .block_divider => |block| try w.print("[branch {s}]\n", .{block.label}),
+            .block_end => try w.writeAll("[end]\n"),
+        };
+    } else if (std.mem.eql(u8, keyword, "pie")) {
+        const pie = try parsePie(arena, lines[0], lines[1..]);
+        if (pie.title.len > 0) try w.print("{s}\n", .{pie.title});
+        // Normalize first so even several near-f64-max values cannot overflow.
+        var largest: f64 = 0;
+        for (pie.slices.items) |slice| largest = @max(largest, slice.value);
+        var total: f64 = 0;
+        for (pie.slices.items) |slice| total += slice.value / largest;
+        for (pie.slices.items) |slice| {
+            const fraction = (slice.value / largest) / total;
+            const bars: usize = @intFromFloat(@round(fraction * 20));
+            try w.print("{s}: {d} ({d:.1}%) ", .{ slice.label, slice.value, fraction * 100 });
+            try w.splatByteAll('#', bars);
+            try w.writeByte('\n');
+        }
+    } else return error.UnsupportedImage;
+    const result = try out.toOwnedSlice();
+    for (result) |*byte| {
+        if ((byte.* < 0x20 and byte.* != '\n' and byte.* != '\t') or byte.* == 0x7f) byte.* = '?';
+    }
+    return result;
+}
+
 /// Splits source into trimmed, comment-free, non-empty statements. Front
 /// matter (---) and %%{init} directives are dropped.
 fn splitStatements(arena: Allocator, source: []const u8) ![][]const u8 {
@@ -1685,6 +1786,48 @@ test "every supported diagram type renders to parseable SVG" {
         }
     }
     try std.testing.expectError(error.UnsupportedImage, toSvg(alloc, "gantt\ntitle X", .light));
+}
+
+test "text diagrams preserve graph branches clusters and Unicode labels" {
+    const alloc = std.testing.allocator;
+    const text = try toText(alloc, "flowchart LR\nsubgraph group [Orders]\nA[Start 注文] -->|yes| B[Done]\nA -.->|retry| A\nend\nC[Isolated]");
+    defer alloc.free(text);
+    for ([_][]const u8{ "Orders / A: Start 注文", "B: Done", "C: Isolated", "A --> B : yes", "A ..> A : retry" }) |expected|
+        try std.testing.expect(std.mem.indexOf(u8, text, expected) != null);
+    const state = try toText(alloc, "stateDiagram-v2\nReady --> Running : start\nRunning --> Ready : stop");
+    defer alloc.free(state);
+    try std.testing.expect(std.mem.indexOf(u8, state, "Running --> Ready : stop") != null);
+}
+
+test "text diagrams retain sequence aliases message order notes and branches" {
+    const alloc = std.testing.allocator;
+    const text = try toText(alloc, "sequenceDiagram\nparticipant A as Alice\nautonumber\nA->>B: Request\nalt success\nB-->>A: Reply\nelse failure\nB-xA: Error\nend\nNote over A,B: Review");
+    defer alloc.free(text);
+    for ([_][]const u8{ "A: Alice", "1. A --> B: Request", "[alt success]", "2. B ..> A: Reply", "[branch failure]", "3. B --x A: Error", "[end]", "Note over A, B: Review" }) |expected|
+        try std.testing.expect(std.mem.indexOf(u8, text, expected) != null);
+}
+
+test "text pie charts preserve labels values and proportions without pixel glyphs" {
+    const alloc = std.testing.allocator;
+    const text = try toText(alloc, "pie title Pets\n\"Dogs\": 3\n\"Cats\": 1");
+    defer alloc.free(text);
+    try std.testing.expectEqualStrings("Pets\nDogs: 3 (75.0%) ###############\nCats: 1 (25.0%) #####\n", text);
+    const large = try toText(alloc, "pie\n\"A\": 1e308\n\"B\": 1e308");
+    defer alloc.free(large);
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, large, "(50.0%)"));
+    try std.testing.expectError(error.UnsupportedImage, toText(alloc, "classDiagram\nclass Order"));
+    const controls = try toText(alloc, "graph TD\nA[unsafe\x1b[2Jlabel] --> B[ok]");
+    defer alloc.free(controls);
+    try std.testing.expect(std.mem.indexOfScalar(u8, controls, 0x1b) == null);
+}
+
+fn textDiagramAllocationCheck(alloc: Allocator) !void {
+    const text = try toText(alloc, "flowchart LR\nA[Start] -->|go| B[Finish]");
+    defer alloc.free(text);
+}
+
+test "text diagram allocation failures release partial output" {
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, textDiagramAllocationCheck, .{});
 }
 
 test "layout puts edge targets on later ranks and keeps nodes apart" {
