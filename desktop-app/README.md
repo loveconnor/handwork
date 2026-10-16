@@ -167,6 +167,9 @@ secrets to enable the macOS release job: `MAC_CSC_LINK` (base64 P12 certificate)
 `latest-mac.yml` only on success. Until those credentials exist, Windows releases
 continue and unsigned Mac builds explain that a signed release is required.
 Never disable the Mac signature requirement to work around missing credentials.
+CI imports the selected signing identity into a disposable runner keychain before
+building. The encrypted certificate file is removed immediately after import,
+and the keychain and its search-list entry are removed after the job.
 
 For a signed release built on this Mac, create or import a **Developer ID
 Application** identity using Xcode Settings > Accounts > Manage Certificates.

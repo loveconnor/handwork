@@ -181,6 +181,11 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:desktop
       - run: npm run typecheck
+      - name: Import Mac signing identity into a temporary runner keychain
+        env:
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: node scripts/ci-macos-keychain.mjs
       - uses: actions/cache@v4
         with:
           path: |
@@ -195,8 +200,6 @@ jobs:
       - run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
       - name: Build, sign and notarize the macOS release
         env:
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -209,6 +212,9 @@ jobs:
             desktop-app/release/*.zip
             desktop-app/release/*.blockmap
             desktop-app/release/latest-mac.yml
+      - name: Remove the temporary Mac signing keychain
+        if: always()
+        run: node scripts/ci-macos-keychain.mjs --cleanup
   publish:
     needs: [prepare, windows-test, mac]
     if: always() && github.ref == 'refs/heads/main' && needs.prepare.result == 'success' && needs.windows-test.result == 'success' && (needs.mac.result == 'success' || needs.mac.result == 'skipped')
