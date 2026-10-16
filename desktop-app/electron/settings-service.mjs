@@ -20,7 +20,7 @@ export class SettingsService {
       attachments.bytes += usage.bytes;
     }
     const preferences = await enginePreferences(this.home, workspace);
-    return { appVersion: this.version, engineVersion, platform: process.platform, architecture: process.arch, attachments, historyPath: path.join(this.home, '.handwork', 'sessions'), enginePreferences: preferences, updatesConfigured: !!this.host.checkUpdates };
+    return { appVersion: this.version, engineVersion, platform: process.platform, architecture: process.arch, attachments, historyPath: path.join(this.home, '.handwork', 'sessions'), enginePreferences: preferences, updatesConfigured: this.host.getUpdateState ? this.host.getUpdateState().status !== 'unavailable' : !!this.host.checkUpdates };
   }
   instructions(workspace, scope) { return readInstructions(this.home, workspace, scope); }
   saveInstructions(workspace, scope, text, revision) { return saveInstructions(this.home, workspace, scope, text, revision); }

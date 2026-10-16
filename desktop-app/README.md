@@ -134,7 +134,7 @@ after changing the Zig engine so the bundled binary matches its protocol.
 ### Desktop updates
 
 Pushes to `main` in `loveconnor/handwork` automatically build and test desktop
-releases when desktop or engine source changes. The workflow assigns a newer
+releases after every push to main. The workflow assigns a newer
 version from the base desktop version and GitHub run number, builds Windows x64
 and ARM64 installers with their matching engines, and tests installation, chat,
 and an actual older-to-newer upgrade before publishing. The npm package has a

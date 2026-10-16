@@ -2,12 +2,6 @@ name: Desktop release
 on:
   push:
     branches: [main]
-    paths:
-      - 'desktop-app/**'
-      - 'src/**'
-      - 'runtime/**'
-      - 'build.zig*'
-      - '.github/workflows/desktop-release.yml'
   workflow_dispatch:
 concurrency:
   group: desktop-release-main
