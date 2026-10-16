@@ -1,7 +1,8 @@
 param([string]$Installer, [string]$Architecture, [string]$UpdateInstaller, [string]$UpdateVersion)
 $ErrorActionPreference = 'Stop'
 $install = Join-Path $env:RUNNER_TEMP "Handwork install 日本語 $Architecture"
-$output = Join-Path $PWD "windows-test-results-$Architecture"
+$outputName = if ($UpdateInstaller) { "windows-test-results-$Architecture-update" } else { "windows-test-results-$Architecture" }
+$output = Join-Path $PWD $outputName
 New-Item -ItemType Directory -Force $output | Out-Null
 Get-FileHash $Installer -Algorithm SHA256 | Format-List | Out-File "$output/installer-sha256.txt"
 $process = Start-Process -FilePath (Resolve-Path $Installer) -ArgumentList @('/S', "/D=$install") -PassThru

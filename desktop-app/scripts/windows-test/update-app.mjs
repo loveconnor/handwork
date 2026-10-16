@@ -5,8 +5,10 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import path from 'node:path';
-import { extractFile, uncache } from '@electron/asar';
-import yaml from 'js-yaml';
+import { createRequire } from 'node:module';
+const require = createRequire(process.env.HANDWORK_TEST_MODULES ? path.join(process.env.HANDWORK_TEST_MODULES, 'package.json') : import.meta.url);
+const { extractFile, uncache } = require('@electron/asar');
+const yaml = require('js-yaml');
 import { Cdp, pause } from './cdp.mjs';
 
 const [executable, targetInstaller, targetVersion, output] = process.argv.slice(2);

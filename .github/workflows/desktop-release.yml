@@ -43,12 +43,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - arch: x64
-            runner: windows-latest
-          - arch: arm64
-            runner: windows-11-arm
-    runs-on: ${{ matrix.runner }}
+        arch: [x64, arm64]
+    runs-on: windows-latest
     timeout-minutes: 30
     defaults:
       run:
@@ -73,9 +69,9 @@ jobs:
           path: |
             .zig-cache
             .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
           restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-
+            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - name: Build the bundled native engine
         working-directory: .
@@ -86,9 +82,6 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --release
-      - name: Test the exact installer before publishing
-        shell: pwsh
-        run: ./scripts/windows-test/install.ps1 -Installer ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -Architecture ${{ matrix.arch }}
       - name: Build an older updater-enabled version for an actual upgrade test
         env:
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
@@ -101,10 +94,54 @@ jobs:
           node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --fixture
           "DESKTOP_TEST_BASE=$baseVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-build-windows-${{ matrix.arch }}
+          path: |
+            desktop-app/release/Handwork-Setup-${{ needs.prepare.outputs.version }}-*.exe
+            desktop-app/release/latest-*.yml
+            desktop-app/release-fixture/Handwork-Setup-*.exe
+  windows-test:
+    needs: [prepare, windows]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+          - arch: arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: desktop-app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-build-windows-${{ matrix.arch }}
+          path: desktop-app
+      - name: Install only the small test-driver dependencies
+        shell: pwsh
+        run: |
+          $tools = Join-Path $env:RUNNER_TEMP 'handwork-test-tools'
+          npm install --prefix $tools --ignore-scripts --no-audit --no-fund --package-lock=false js-yaml@4.3.2 @electron/asar@3.4.1
+          "HANDWORK_TEST_MODULES=$tools" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Test the exact release installer on its native architecture
+        shell: pwsh
+        run: ./scripts/windows-test/install.ps1 -Installer ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -Architecture ${{ matrix.arch }}
       - name: Test sidebar download, real installation, and automatic relaunch
         shell: pwsh
         run: |
-          $baseInstaller = "./release-fixture/Handwork-Setup-$($env:DESKTOP_TEST_BASE)-${{ matrix.arch }}.exe"
+          $version = '${{ needs.prepare.outputs.version }}'.Split('.')
+          $baseVersion = "$($version[0]).$($version[1]).$([int]$version[2] - 1)"
+          $baseInstaller = "./release-fixture/Handwork-Setup-$baseVersion-${{ matrix.arch }}.exe"
           ./scripts/windows-test/install.ps1 -Installer $baseInstaller -Architecture ${{ matrix.arch }} -UpdateInstaller ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -UpdateVersion ${{ needs.prepare.outputs.version }}
       - uses: actions/upload-artifact@v4
         with:
@@ -149,9 +186,9 @@ jobs:
           path: |
             .zig-cache
             .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
           restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.zig.zon') }}-
+            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - working-directory: .
         run: node scripts/package-native.mjs --target=darwin-arm64
@@ -173,8 +210,8 @@ jobs:
             desktop-app/release/*.blockmap
             desktop-app/release/latest-mac.yml
   publish:
-    needs: [prepare, windows, mac]
-    if: always() && github.ref == 'refs/heads/main' && needs.prepare.result == 'success' && needs.windows.result == 'success' && (needs.mac.result == 'success' || needs.mac.result == 'skipped')
+    needs: [prepare, windows-test, mac]
+    if: always() && github.ref == 'refs/heads/main' && needs.prepare.result == 'success' && needs.windows-test.result == 'success' && (needs.mac.result == 'success' || needs.mac.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
