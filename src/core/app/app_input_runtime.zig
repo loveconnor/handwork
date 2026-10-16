@@ -823,6 +823,7 @@ pub fn Runtime(comptime App: type) type {
             return switch (event) {
                 .paste_byte, .raw => true,
                 .action => |decoded| switch (decoded.action) {
+                    .terminal_cell_size => false,
                     .toggle_full_transcript, .page_up => false,
                     .mouse_wheel => |direction| direction != .up,
                     // Trackpad motion can interleave hover reports with the
@@ -1042,6 +1043,18 @@ pub fn Runtime(comptime App: type) type {
             was_cancel_pending: bool,
             max_input_len: usize,
         ) !ResolvedEscapeRoute {
+            if (resolved == .terminal_cell_size) {
+                if (comptime !@hasField(App, "terminal")) return .done;
+                const images = @import("../../ui/images/inline_images.zig");
+                if (images.active() == null) return .done;
+                const size = resolved.terminal_cell_size;
+                const previous = images.cellSize();
+                if (previous.width_px != size.width_px or previous.height_px != size.height_px) {
+                    images.setCellSize(.{ .width_px = size.width_px, .height_px = size.height_px });
+                    try shell_runtime.requestRedraw(&app.shell, &app.metrics, .replay_viewport);
+                }
+                return .done;
+            }
             if (resolved != .mouse_pointer) app.input_runtime.pointer_selection_anchor = null;
             switch (resolved) {
                 .remapped_byte, .paste_start, .paste_end, .clipboard_image_paste, .clipboard_text_paste, .ignore => {},
@@ -1270,6 +1283,7 @@ pub fn Runtime(comptime App: type) type {
                 .remapped_byte => unreachable,
                 .escape => unreachable,
                 .ignore, .focus_in, .focus_out => {},
+                .terminal_cell_size => unreachable,
             }
             return .done;
         }
@@ -15801,5 +15815,38 @@ test "reasoning command cancellation preserves preferences" {
     try Runtime(RoutingFakeApp).handleByte(&app, '\t', 4096, 100);
     try std.testing.expect(try input_completion_runtime.CompletionRuntime(RoutingFakeApp).stepBackModelPicker(&app));
     try std.testing.expectEqual(@as(usize, 0), app.preference_commit_count);
+    try std.testing.expectEqualStrings("", app.input_runtime.edit_state.input.items);
+}
+
+test "app_input_runtime cell size reports refresh images without editing or cancelling approval" {
+    const alloc = std.testing.allocator;
+    const images = @import("../../ui/images/inline_images.zig");
+    var service = images.Service.init(alloc, .{ .protocol = .sixel, .cell = .{ .width_px = 8, .height_px = 16 } });
+    defer service.deinit();
+    images.install(&service);
+    defer images.uninstall();
+    var app = try RoutingFakeApp.init(alloc);
+    defer app.deinit();
+    try feedRoutingBytes(&app, "keep this draft");
+    app.stream.active = true;
+    try std.testing.expect(try app.approval_prompt.syncRequest(alloc, .{ .label = "shell.run npm test" }));
+    try feedRoutingBytes(&app, "\x1b[6;24;12t");
+    try std.testing.expectEqual(@as(u16, 12), images.cellSize().width_px);
+    try std.testing.expectEqual(@as(u16, 24), images.cellSize().height_px);
+    try std.testing.expectEqualStrings("keep this draft", app.input_runtime.edit_state.input.items);
+    try std.testing.expect(app.approval_prompt.isActive());
+    try std.testing.expect(!app.worker.cancel_requested);
+    try std.testing.expect(app.shell.transcript_band_dirty);
+    try std.testing.expect(app.shell.viewport_clear_pending);
+}
+
+test "app_input_runtime cell size reports preserve a pending transcript open" {
+    const alloc = std.testing.allocator;
+    var app = try RoutingFakeApp.init(alloc);
+    defer app.deinit();
+    _ = try app.shell.appendRawTranscriptEntryClassified(alloc, "pending transcript\n", .unknown_raw);
+    try std.testing.expect(!app.shell.requestFullTranscriptOpen());
+    try feedRoutingBytes(&app, "\x1b[6;24;12t");
+    try std.testing.expect(app.shell.cancelPendingFullTranscriptOpen());
     try std.testing.expectEqualStrings("", app.input_runtime.edit_state.input.items);
 }

@@ -83,6 +83,7 @@ pub const Action = union(enum) {
     page_down,
     mouse_wheel: MouseWheel,
     mouse_pointer: MousePointer,
+    terminal_cell_size: struct { width_px: u16, height_px: u16 },
     delete_next,
     delete_word_left,
     delete_word_right,

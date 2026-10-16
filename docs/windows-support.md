@@ -10,6 +10,10 @@ release step; the implementation does not publish automatically.
 - Startup reads the original Unicode Windows command line and environment.
   `USERPROFILE` supplies `HOME` when `HOME` is absent. Console input, UTF-8 / VT
   output, dimensions, raw mode and restoration use Windows APIs.
+- Interactive input uses UTF-16 console events consistently, preserving
+  terminal reports, key repeats and Unicode across partial UTF-8 reads.
+  SIXEL cell dimensions refresh asynchronously after a resize or font zoom;
+  geometry queries wait while bracketed paste owns input.
 - Settings, session logs, managed session files, history, usage, credentials and
   private artifacts use protected ACLs. Creation grants access to the current
   user and SYSTEM before content is written. Verification rejects foreign

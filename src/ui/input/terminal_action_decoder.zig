@@ -473,3 +473,42 @@ test "incomplete CSI expires without producing Escape" {
     try std.testing.expect(ingress.event == null);
     try std.testing.expect(!decoder.hasPending());
 }
+
+test "cell size reports decode between mouse input and ordinary typing" {
+    var decoder = Decoder{};
+    const context: input_action.TerminalDecodeContext = .{
+        .now_ms = 1,
+        .paste_active = false,
+        .cancel_pending = false,
+    };
+    const report = "\x1b[6;24;12t";
+    for (report, 0..) |byte, i| {
+        const ingress = decoder.feed(byte, context);
+        if (i + 1 < report.len) {
+            try std.testing.expect(ingress.event == null);
+        } else {
+            const size = ingress.event.?.action.action.terminal_cell_size;
+            try std.testing.expectEqual(@as(u16, 12), size.width_px);
+            try std.testing.expectEqual(@as(u16, 24), size.height_px);
+        }
+    }
+    const mouse_report = "\x1b[<35;20;56M";
+    for (mouse_report, 0..) |byte, i| {
+        const ingress = decoder.feed(byte, context);
+        if (i + 1 == mouse_report.len) try std.testing.expect(ingress.event.?.action.action == .mouse_pointer);
+    }
+    try std.testing.expectEqual(@as(u8, 'x'), decoder.feed('x', context).event.?.raw.byte);
+}
+
+test "invalid cell size reports are consumed without changing image geometry" {
+    for ([_][]const u8{ "\x1b[6;0;12t", "\x1b[6;24;0t", "\x1b[6;24;12;1t", "\x1b[6;24;12u" }) |report| {
+        var decoder = Decoder{};
+        const context: input_action.TerminalDecodeContext = .{ .now_ms = 1, .paste_active = false, .cancel_pending = false };
+        for (report) |byte| {
+            const ingress = decoder.feed(byte, context);
+            if (ingress.event) |event| try std.testing.expect(event == .action and event.action.action == .ignore);
+        }
+        try std.testing.expect(!decoder.hasPending());
+        try std.testing.expectEqual(@as(u8, 'x'), decoder.feed('x', context).event.?.raw.byte);
+    }
+}

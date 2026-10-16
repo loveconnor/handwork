@@ -39,6 +39,10 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: zig build test-images -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Test terminal geometry replies and input routing
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: pwsh
+        run: zig build test -Dtest-filter="cell size report" -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Test settings, sessions and commands
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:

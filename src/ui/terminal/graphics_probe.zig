@@ -14,7 +14,7 @@ const probe_deadline_ms: i64 = 250;
 const probe_retry_ms: i64 = 80;
 
 pub fn detectCapabilities(
-    terminal_state: *const shell_runtime.TerminalState,
+    terminal_state: *shell_runtime.TerminalState,
     cols: u16,
     rows: u16,
     truecolor: bool,
@@ -61,7 +61,8 @@ pub fn detectCapabilities(
 
 /// Re-reads the cell size after a resize. Keeps the previous value when
 /// the kernel cannot report pixels, since probing mid-session would race
-/// with user input.
+/// with user input. Windows refreshes through an asynchronous CSI 16t query
+/// owned by TerminalState and the ordinary input decoder instead.
 pub fn refreshCellSize(previous: detection.CellSize, cols: u16, rows: u16) detection.CellSize {
     const winsize_px = windowPixels();
     const resolved = detection.resolveCellSize(winsize_px, cols, rows, .{});
@@ -76,7 +77,7 @@ fn windowPixels() detection.CellSize {
     return .{ .width_px = ws.xpixel, .height_px = ws.ypixel };
 }
 
-fn probe(terminal_state: *const shell_runtime.TerminalState, env: detection.Environment, kernel_pixels_known: bool) detection.ProbeFacts {
+fn probe(terminal_state: *shell_runtime.TerminalState, env: detection.Environment, kernel_pixels_known: bool) detection.ProbeFacts {
     var stdout_file = std.Io.File.stdout();
     stdout_file.writeStreamingAll(io_mod.getIo(), detection.probe_query) catch return .{};
 

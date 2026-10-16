@@ -68,6 +68,9 @@ pub const TerminalState = struct {
     stdin_fd: if (builtin.os.tag == .windows) ?std.posix.fd_t else std.posix.fd_t = if (builtin.os.tag == .windows) null else std.posix.STDIN_FILENO,
     original_termios: if (builtin.os.tag == .windows) void else std.posix.termios = undefined,
     windows_state: if (builtin.os.tag == .windows) ?windows_console.State else void = if (builtin.os.tag == .windows) null else {},
+    windows_input: if (builtin.os.tag == .windows) windows_console.InputReader else void = if (builtin.os.tag == .windows) .{} else {},
+    image_layout: ?struct { rows: u16, cols: u16 } = null,
+    image_cell_query_pending: bool = false,
     raw_enabled: bool = false,
     session_alternate_screen: bool = false,
     alternate_screen_owner: AlternateScreenOwner = .none,
@@ -192,7 +195,7 @@ pub const TerminalState = struct {
         self.signal_handler_installed = false;
     }
 
-    pub fn queryLayout(self: TerminalState, footer_rows: u16) !Layout {
+    pub fn queryLayout(self: *TerminalState, footer_rows: u16) !Layout {
         const layout = try if (comptime builtin.os.tag == .wasi)
             wasm_terminal.queryLayout(footer_rows)
         else if (comptime builtin.os.tag == .windows)
@@ -201,10 +204,27 @@ pub const TerminalState = struct {
             ui_terminal.queryLayout(self.stdin_fd, footer_rows);
         // Font size changes arrive as resizes; image layout follows them.
         inline_images.setCellSize(graphics_probe.refreshCellSize(inline_images.cellSize(), layout.cols, layout.rows));
+        if (comptime builtin.os.tag == .windows) {
+            if (self.image_layout) |previous| {
+                if ((previous.rows != layout.rows or previous.cols != layout.cols) and inline_images.protocol() == .sixel) {
+                    self.image_cell_query_pending = true;
+                }
+            }
+            self.image_layout = .{ .rows = layout.rows, .cols = layout.cols };
+        }
         return layout;
     }
 
-    pub fn queryCursorPosition(self: TerminalState) !CursorPosition {
+    /// Replies enter through the ordinary decoder; never read stdin here.
+    pub fn refreshPendingImageCellSize(self: *TerminalState, allow_query: bool) !void {
+        if (!self.image_cell_query_pending or !allow_query) return;
+        var stdout_file = std.Io.File.stdout();
+        try stdout_file.writeStreamingAll(io_mod.getIo(), "\x1b[16t");
+        self.image_cell_query_pending = false;
+        debug_trace.logf("images", "cell_size_refresh_requested", .{});
+    }
+
+    pub fn queryCursorPosition(self: *TerminalState) !CursorPosition {
         if (comptime builtin.os.tag == .wasi) {
             // JavaScript hosts provide a fresh terminal surface rather than an
             // existing shell viewport, so there are no launch rows to preserve.
@@ -276,18 +296,18 @@ pub const TerminalState = struct {
         try stdout_file.writeStreamingAll(io_mod.getIo(), ui_terminal.theme_background_query_with_fence);
     }
 
-    pub fn read(self: TerminalState, out: []u8) !usize {
+    pub fn read(self: *TerminalState, out: []u8) !usize {
         if (comptime builtin.os.tag == .wasi) {
             return std.Io.File.stdin().readStreaming(io_mod.getIo(), &.{out});
         }
         if (comptime builtin.os.tag == .windows) {
-            return windows_console.read(self.inputHandle(), out);
+            return self.windows_input.read(self.inputHandle(), out);
         }
         return std.posix.read(self.stdin_fd, out);
     }
 
-    pub fn pollInput(self: TerminalState, timeout_ms: i32) !PollResult {
-        if (comptime builtin.os.tag == .windows) return .{ .readable = try windows_console.pollInput(self.inputHandle(), timeout_ms) };
+    pub fn pollInput(self: *TerminalState, timeout_ms: i32) !PollResult {
+        if (comptime builtin.os.tag == .windows) return .{ .readable = try self.windows_input.poll(self.inputHandle(), timeout_ms) };
         if (comptime builtin.os.tag == .wasi) {
             return switch (wasm_terminal.pollInput(timeout_ms)) {
                 1 => .{ .readable = true },
@@ -472,7 +492,7 @@ pub fn requestRedraw(
 }
 
 pub fn collectResizeFacts(
-    terminal: TerminalState,
+    terminal: *TerminalState,
     shell: *TranscriptRuntime,
     metrics: *Metrics,
     probe: *cursor_probe.Parser,

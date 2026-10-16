@@ -35,6 +35,7 @@ const discarded_x10_mouse_stage: u8 = 14;
 const control_sequence_discard_stage: u8 = 15;
 const kitty_escape_event_type_stage: u8 = 16;
 const clipboard_paste_event_type_stage: u8 = 17;
+const cell_size_width_stage: u8 = 18;
 const sgr_mouse_max_bytes: u8 = 18;
 const control_sequence_discard_max_bytes: u16 = 32;
 const kitty_up_key: u16 = 57352;
@@ -624,6 +625,13 @@ pub fn consumeInputEscapeByteWithMouse(
             }
 
             if (byte == ';') {
+                if (param2.* == 6 and !hasMetaPrefix(stage.*)) {
+                    // CSI 6 ; height ; width t is the response to CSI 16 t.
+                    param2.* = param.*;
+                    param.* = 0;
+                    setBaseEscapeStage(stage, cell_size_width_stage);
+                    return null;
+                }
                 // Reuse the two accumulators for `ESC[27;modifier;keycode~`.
                 param2.* = param.*;
                 param.* = 0;
@@ -765,6 +773,19 @@ pub fn consumeInputEscapeByteWithMouse(
                     .{ .remapped_byte = shortcuts.clipboard_paste_byte }
                 else
                     .ignore;
+            }
+            return beginControlSequenceDiscard(stage, param, param2, mouse, byte);
+        },
+        cell_size_width_stage => {
+            if (byte >= '0' and byte <= '9') {
+                appendCsiDigitSaturating(param, byte);
+                return null;
+            }
+            const width = param.*;
+            const height = param2.*;
+            resetMouseEscapeDecode(stage, param, param2, mouse);
+            if (byte == 't' and width > 0 and height > 0) {
+                return .{ .terminal_cell_size = .{ .width_px = width, .height_px = height } };
             }
             return beginControlSequenceDiscard(stage, param, param2, mouse, byte);
         },

@@ -469,7 +469,7 @@ const App = struct {
     pub fn cooperativeTransportPulse(self: *Self) !void {
         if (comptime !host_target.is_wasm) return;
         if (try event_loop.pump_ready_input(
-            self.terminal,
+            &self.terminal,
             &self.should_exit,
             RenderAppRuntime.eventLoopCallbacks(self),
         )) |exit_cause| {
@@ -1013,7 +1013,7 @@ const App = struct {
         const callbacks = RenderAppRuntime.eventLoopCallbacks(self);
         while (true) {
             const exit_cause = try event_loop.run(
-                self.terminal,
+                &self.terminal,
                 &self.should_exit,
                 active_poll_timeout_ms,
                 callbacks,
@@ -2928,7 +2928,7 @@ const App = struct {
             try self.collectNativeClearProbeFacts();
         } else {
             shell_runtime.collectResizeFacts(
-                self.terminal,
+                &self.terminal,
                 &self.shell,
                 &self.metrics,
                 &self.terminal_input_runtime.terminal_cursor_probe,
@@ -2942,6 +2942,10 @@ const App = struct {
                 }
             };
         }
+        try self.terminal.refreshPendingImageCellSize(
+            !InputAppRuntime.terminalPasteActive(self) and
+                !self.terminal_input_runtime.hasPendingTerminalAction(),
+        );
         // Terminal width changed with the modal open, so the footer
         // panel needs to re-wrap labels and descriptions.
         if (self.question_prompt.isActive() and cols_before_resize != self.shell.layout.cols) {

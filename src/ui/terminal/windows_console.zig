@@ -57,6 +57,84 @@ pub fn read(input: Handle, out: []u8) !usize {
     return count;
 }
 
+/// Interactive reads stay in the console's event mode. Mixing ReadFile with
+/// PeekConsoleInputW switches Windows' read mode and discards cached text,
+/// including partial UTF-8 characters and terminal responses.
+pub const InputReader = struct {
+    high_surrogate: ?u16 = null,
+    bytes: [4]u8 = undefined,
+    len: u3 = 0,
+    offset: u3 = 0,
+    repeats: u16 = 0,
+
+    pub fn poll(self: *InputReader, input: Handle, timeout_ms: i32) !bool {
+        if (self.repeats > 0) return true;
+        const started = win.GetTickCount64();
+        while (true) {
+            const remaining = remainingTimeout(started, win.GetTickCount64(), timeout_ms) orelse 0;
+            if (!try pollInput(input, if (timeout_ms < 0) -1 else @intCast(remaining))) return false;
+            var record: win.INPUT_RECORD = undefined;
+            var count: u32 = 0;
+            if (win.ReadConsoleInputW(input, &record, 1, &count) == 0) return error.ConsoleInputFailed;
+            if (count != 0 and record.EventType == win.KEY_EVENT and record.Event.KeyEvent.bKeyDown != 0) {
+                const key = record.Event.KeyEvent;
+                // With VT input enabled, navigation and function keys arrive as
+                // synthesized Unicode records containing their escape sequence.
+                if (key.uChar.UnicodeChar != 0 or isControlSpace(key.wVirtualKeyCode, key.dwControlKeyState)) {
+                    self.pushCodeUnit(key.uChar.UnicodeChar, key.wRepeatCount);
+                    if (self.repeats > 0) return true;
+                }
+            }
+            if (remainingTimeout(started, win.GetTickCount64(), timeout_ms) == null) return false;
+        }
+    }
+
+    pub fn read(self: *InputReader, input: Handle, out: []u8) !usize {
+        if (out.len == 0) return 0;
+        _ = try self.poll(input, -1);
+        var written: usize = 0;
+        while (true) {
+            written += self.readPending(out[written..]);
+            if (written == out.len or !try self.poll(input, 0)) return written;
+        }
+    }
+
+    fn pushCodeUnit(self: *InputReader, unit: u16, repeats: u16) void {
+        std.debug.assert(self.repeats == 0);
+        if (unit >= 0xd800 and unit <= 0xdbff) {
+            self.high_surrogate = unit;
+            return;
+        }
+        const scalar: u21 = if (unit >= 0xdc00 and unit <= 0xdfff) blk: {
+            const high = self.high_surrogate orelse break :blk 0xfffd;
+            break :blk 0x10000 + (@as(u21, high - 0xd800) << 10) + (unit - 0xdc00);
+        } else unit;
+        self.high_surrogate = null;
+        self.len = std.unicode.utf8Encode(scalar, &self.bytes) catch unreachable;
+        self.offset = 0;
+        self.repeats = @max(1, repeats);
+    }
+
+    fn readPending(self: *InputReader, out: []u8) usize {
+        var written: usize = 0;
+        while (self.repeats > 0 and written < out.len) {
+            const n = @min(out.len - written, self.len - self.offset);
+            @memcpy(out[written..][0..n], self.bytes[self.offset..][0..n]);
+            written += n;
+            self.offset += @intCast(n);
+            if (self.offset == self.len) {
+                self.offset = 0;
+                self.repeats -= 1;
+            }
+        }
+        return written;
+    }
+};
+
+fn isControlSpace(key: u16, modifiers: u32) bool {
+    return key == 0x20 and (modifiers & 0x000c) != 0;
+}
+
 /// Nonblocking input for an authentication line. Reading console events avoids
 /// a cooked ReadFile call blocking the OAuth cancellation loop until Enter.
 pub fn pollLineBytes(input: Handle, out: []u8, high_surrogate: *?u16) !?usize {
@@ -161,7 +239,7 @@ pub fn pollInput(input: Handle, timeout_ms: i32) !bool {
         if (count != 0) {
             if (record.EventType == win.KEY_EVENT and record.Event.KeyEvent.bKeyDown != 0) {
                 const key = record.Event.KeyEvent;
-                if (key.uChar.UnicodeChar != 0 or streamKey(key.wVirtualKeyCode)) return true;
+                if (key.uChar.UnicodeChar != 0 or streamKey(key.wVirtualKeyCode) or isControlSpace(key.wVirtualKeyCode, key.dwControlKeyState)) return true;
             }
             if (win.ReadConsoleInputW(input, &record, 1, &count) == 0) return error.ConsoleInputFailed;
         }
@@ -244,6 +322,49 @@ test "Windows input polling honors timeout and ignores modifier-only keys" {
     try std.testing.expect(!streamKey(0x12)); // Alt.
 }
 
+test "Windows input preserves UTF-8 and repeats across one-byte reads" {
+    var reader = InputReader{};
+    var byte: [1]u8 = undefined;
+    for ([_]struct { unit: u16, repeats: u16, expected: []const u8 }{
+        .{ .unit = '日', .repeats = 2, .expected = "日日" },
+        .{ .unit = 0xd83d, .repeats = 1, .expected = "" },
+        .{ .unit = 0xde00, .repeats = 1, .expected = "😀" },
+        .{ .unit = 3, .repeats = 1, .expected = "\x03" },
+        .{ .unit = 0, .repeats = 1, .expected = "\x00" },
+        .{ .unit = 'x', .repeats = 0, .expected = "x" },
+    }) |case| {
+        reader.pushCodeUnit(case.unit, case.repeats);
+        for (case.expected) |expected| {
+            try std.testing.expectEqual(@as(usize, 1), reader.readPending(&byte));
+            try std.testing.expectEqual(expected, byte[0]);
+        }
+        try std.testing.expectEqual(@as(usize, 0), reader.readPending(&byte));
+    }
+}
+
+test "Windows input preserves fragmented mouse and keyboard reports exactly" {
+    const reports = "\x1b[<35;20;56M\x1b[<51;19;56M\x1b[A\x1b[200~hello\x1b[201~";
+    var reader = InputReader{};
+    var received: [reports.len]u8 = undefined;
+    for (reports, 0..) |unit, i| {
+        reader.pushCodeUnit(unit, 1);
+        try std.testing.expectEqual(@as(usize, 1), reader.readPending(received[i..][0..1]));
+    }
+    try std.testing.expectEqualStrings(reports, &received);
+}
+
+test "Windows input recovers from unpaired UTF-16 without losing the next report" {
+    var reader = InputReader{};
+    var bytes: [4]u8 = undefined;
+    reader.pushCodeUnit(0xd83d, 1);
+    reader.pushCodeUnit(0x1b, 1);
+    try std.testing.expectEqual(@as(usize, 1), reader.readPending(&bytes));
+    try std.testing.expectEqual(@as(u8, 0x1b), bytes[0]);
+    reader.pushCodeUnit(0xde00, 1);
+    const n = reader.readPending(&bytes);
+    try std.testing.expectEqualStrings("�", bytes[0..n]);
+}
+
 test "Windows console enables and restores modes and UTF-8 code pages" {
     if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
     const saved_stdin = win.GetStdHandle(win.STD_INPUT_HANDLE);
@@ -312,15 +433,36 @@ test "Windows console enables and restores modes and UTF-8 code pages" {
         var written: u32 = 0;
         if (win.WriteConsoleInputW(input, &events, events.len, &written) == 0 or written != events.len) return error.ConsoleInputFailed;
         try std.testing.expect(try pollInput(input.?, 100));
+        var reader = InputReader{};
         var bytes: [64]u8 = undefined;
         var count: usize = 0;
         while (count < "日\x03".len) {
-            try std.testing.expect(try pollInput(input.?, 100));
-            const received = try read(input.?, bytes[count..]);
+            try std.testing.expect(try reader.poll(input.?, 100));
+            // Poll between every byte, including inside a UTF-8 scalar.
+            try std.testing.expect(try reader.poll(input.?, 0));
+            const received = try reader.read(input.?, bytes[count..][0..1]);
             try std.testing.expect(received > 0);
             count += received;
         }
         try std.testing.expectEqualStrings("日\x03", bytes[0..count]);
+        const reports = "\x1b[<35;20;56M\x1b[<51;19;56M\x1b[A\x1b[200~日😀\x1b[201~";
+        const report_units = std.unicode.utf8ToUtf16LeStringLiteral(reports);
+        var report_events: [report_units.len]win.INPUT_RECORD = undefined;
+        for (&report_events, report_units) |*event, unit| {
+            event.* = std.mem.zeroes(win.INPUT_RECORD);
+            event.EventType = win.KEY_EVENT;
+            event.Event.KeyEvent.bKeyDown = 1;
+            event.Event.KeyEvent.wRepeatCount = 1;
+            event.Event.KeyEvent.uChar.UnicodeChar = unit;
+        }
+        if (win.WriteConsoleInputW(input, &report_events, report_events.len, &written) == 0 or written != report_events.len) return error.ConsoleInputFailed;
+        for (reports) |expected| {
+            try std.testing.expect(try reader.poll(input.?, 100));
+            try std.testing.expect(try reader.poll(input.?, 0));
+            try std.testing.expectEqual(@as(usize, 1), try reader.read(input.?, bytes[0..1]));
+            try std.testing.expectEqual(expected, bytes[0]);
+        }
+        try std.testing.expect(!try reader.poll(input.?, 0));
         events[0] = std.mem.zeroes(win.INPUT_RECORD);
         events[0].EventType = win.KEY_EVENT;
         events[0].Event.KeyEvent.bKeyDown = 1;

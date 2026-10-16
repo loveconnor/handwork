@@ -19,7 +19,7 @@ pub fn explicitThemeOverride() ?bool {
     return null;
 }
 
-pub fn detectTheme(_: std.mem.Allocator, terminal_state: *const shell_runtime.TerminalState) Detection {
+pub fn detectTheme(_: std.mem.Allocator, terminal_state: *shell_runtime.TerminalState) Detection {
     if (explicitThemeOverride()) |light| return .{ .light = light, .rgb = null };
     if (comptime builtin.os.tag == .wasi) return .{ .light = false, .rgb = null };
 
@@ -36,7 +36,7 @@ pub fn detectTheme(_: std.mem.Allocator, terminal_state: *const shell_runtime.Te
     return .{ .light = false, .rgb = null };
 }
 
-fn queryTerminalBackground(terminal_state: *const shell_runtime.TerminalState) ?TerminalBackground {
+fn queryTerminalBackground(terminal_state: *shell_runtime.TerminalState) ?TerminalBackground {
     var stdout_file = std.Io.File.stdout();
     stdout_file.writeStreamingAll(io_mod.getIo(), terminal_sequences.theme_background_query) catch return null;
 
