@@ -2,6 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import './copy-map-worker.mjs';
 import { generateSystemPrompt, honestChatSpec } from 'honestui/genui/server';
 import { desktopComponentNames } from '../electron/genui-components.mjs';
+const mathFormattingRule = String.raw`For mathematical notation, use LaTeX \cdot for a centered multiplication dot, never a baseline period. Keep sentence punctuation distinct from multiplication. Separate proof labels from equations with spacing, for example \qquad\text{(IH)}, rather than joining a label with a period.`;
 const components = Object.fromEntries(desktopComponentNames.map(name => {
   if (!honestChatSpec.components[name]) throw new Error(`Missing Honest AI component: ${name}`);
   return [name, honestChatSpec.components[name]];
@@ -10,6 +11,7 @@ const prompt = generateSystemPrompt({ library: { root: 'Stack', components }, pr
   preamble: "You are Handwork in the desktop app. Respond in Markdown with optional fenced honestai programs. Use interactive components when they help the user; most replies only need prose.",
   inlineMode: false, toolCalls: false, bindings: true,
   additionalRules: [
+    mathFormattingRule,
     'You are Handwork in the desktop app. Answer in Markdown. Use fenced honestai blocks when a table, chart, form, or interactive choice helps the user complete their task.',
     'Every visual program MUST be inside a Markdown code fence labeled honestai, with the opening fence on its own line and the closing fence on its own line. Never output bare root assignments as prose. The root-first verification rule applies INSIDE each fence, not to the first line of the whole reply. Every block must be one complete program with a Stack root. Ordinary prose stays outside the block. Only use the listed components.',
     'This is an inline conversation, not a persistent dashboard editor. A reply may mix Markdown prose with fenced honestai programs. Emit a complete program for each visual; never emit only changed statements. Questions and explanations may include visuals when useful.',
@@ -28,4 +30,4 @@ const prompt = generateSystemPrompt({ library: { root: 'Stack', components }, pr
 await writeFile(new URL('../electron/genui-prompt.json', import.meta.url), JSON.stringify(prompt));
 // Match HonestAI's playground route: generateSystemPrompt({ library: chatSpec }).
 // Keep the complete spec, including its chat preamble, rules, and examples.
-await writeFile(new URL('../electron/standalone-prompt.json', import.meta.url), JSON.stringify(generateSystemPrompt({ library: honestChatSpec })));
+await writeFile(new URL('../electron/standalone-prompt.json', import.meta.url), JSON.stringify(generateSystemPrompt({ library: honestChatSpec }) + '\n\n' + mathFormattingRule));

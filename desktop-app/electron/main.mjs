@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, Notification, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, session, shell, Tray } from 'electron';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -15,6 +15,11 @@ import { existsSync } from 'node:fs';
 import electronUpdater from 'electron-updater';
 import { DesktopUpdater } from './updater.mjs';
 import { UpdateDraftStore } from './update-drafts.mjs';
+import { SavedPrompts } from './saved-prompts.mjs';
+import { captureScreen } from './screen-capture.mjs';
+import { QuickEntry } from './quick-entry.mjs';
+import { DraftStore } from './draft-store.mjs';
+import { TrustedFiles } from './file-access.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appIcon = path.join(root, 'electron', 'assets', 'handwork.png');
@@ -24,14 +29,53 @@ const binary = enginePath({ packaged: app.isPackaged, resourcesPath: process.res
 let window;
 let backend;
 let quitting = false;
+// Set once the person asks to quit, so closing windows then really closes them.
+let quitRequested = false;
+let tray;
+let trayHintShown = false;
 let desktopUpdater;
 let updateDrafts;
+let quickEntry;
+const liveNotifications = new Set();
+const shortcutLabels = { 'Alt+Space': process.platform === 'darwin' ? '⌥ Space' : 'Alt+Space', 'Control+Alt+Space': process.platform === 'darwin' ? '⌃⌥ Space' : 'Ctrl+Alt+Space', 'CommandOrControl+Shift+Space': process.platform === 'darwin' ? '⇧⌘ Space' : 'Ctrl+Shift+Space' };
 const cleanups = new Set();
 function cleanup(currentBackend) {
   if (!currentBackend) return;
   const pending = currentBackend.dispose();
   cleanups.add(pending);
   pending.finally(() => cleanups.delete(pending));
+}
+
+/** Registers the quick entry shortcut and tells the main window when another app owns it. */
+function applyQuickEntryShortcut(accelerator, webContents) {
+  if (quickEntry?.register(accelerator) !== false) return;
+  if (webContents && !webContents.isDestroyed()) webContents.send(EVENT_CHANNEL, { method: 'desktop/notice', params: { message: `Another app is using ${shortcutLabels[accelerator] ?? accelerator}. Choose a different quick entry shortcut in Settings › General.` } });
+}
+
+/** Every caller is an explicit request to see Handwork, so it comes to the front. */
+function showMainWindow() {
+  if (!window || window.isDestroyed()) { createWindow(); return; }
+  if (window.isMinimized()) window.restore();
+  window.show();
+  // macOS keeps a background app behind others unless it is asked to take focus.
+  if (process.platform === 'darwin') app.focus({ steal: true });
+  window.focus();
+}
+
+/** Windows has no Dock, so a hidden Handwork stays reachable from the notification area. */
+function syncTray(enabled) {
+  if (process.platform !== 'win32') return;
+  if (!enabled) { tray?.destroy(); tray = undefined; return; }
+  if (tray) return;
+  tray = new Tray(nativeImage.createFromPath(appIcon).resize({ width: 16, height: 16 }));
+  tray.setToolTip('Handwork');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Open Handwork', click: showMainWindow },
+    { label: 'Quick entry', click: () => quickEntry?.show() },
+    { type: 'separator' },
+    { label: 'Quit Handwork', click: () => app.quit() },
+  ]));
+  tray.on('click', showMainWindow);
 }
 
 function createWindow() {
@@ -47,7 +91,11 @@ function createWindow() {
   const settings = new DesktopSettings(path.join(app.getPath('userData'), 'desktop-settings.json'));
   const settingsService = new SettingsService({ settings, version: app.getVersion(), host: {
     chooseFolder: async () => { const result = await dialog.showOpenDialog(window, { title: 'Allow an additional project folder', properties: ['openDirectory'] }); return result.canceled ? null : result.filePaths[0]; },
-    saveExport: async () => { const result = await dialog.showSaveDialog(window, { title: 'Export chat text', defaultPath: 'handwork-chats.json', filters: [{ name: 'JSON', extensions: ['json'] }] }); return result.canceled ? null : result.filePath; },
+    saveExport: async ({ format = 'json', defaultName = 'handwork-chats.json' } = {}) => {
+      const filters = format === 'markdown' ? [{ name: 'Markdown', extensions: ['md'] }] : [{ name: 'JSON', extensions: ['json'] }];
+      const result = await dialog.showSaveDialog(window, { title: format === 'markdown' ? 'Export chat as Markdown' : 'Export chat as JSON', defaultPath: path.join(app.getPath('documents'), defaultName), filters });
+      return result.canceled ? null : result.filePath;
+    },
     openFile: async (file, editor) => {
       const applications = { vscode: 'Visual Studio Code', cursor: 'Cursor', zed: 'Zed' };
       if (editor !== 'system' && process.platform === 'darwin') { await promisify(execFile)('/usr/bin/open', ['-a', applications[editor], file], { timeout: 5000 }); return; }
@@ -61,18 +109,28 @@ function createWindow() {
     downloadUpdate: () => desktopUpdater.download(),
     installUpdate: drafts => desktopUpdater.install(drafts),
     getUpdateDrafts: () => updateDrafts.take(),
+    captureScreen: () => captureScreen(),
   } });
-  const notify = kind => {
+  const notify = (kind, sessionId) => {
     try {
     const preferences = settings.snapshot().app;
     if (kind !== 'test' && (!preferences[{ complete: 'notifyComplete', approval: 'notifyApproval', error: 'notifyError' }[kind]] || (preferences.notificationsBackgroundOnly && window?.isFocused()))) return;
     if (!Notification.isSupported()) { if (kind === 'test') throw new Error('Desktop notifications are unavailable on this system'); return; }
     const notification = new Notification({ title: 'Handwork', body: { complete: 'Your response is ready.', approval: 'Handwork needs your approval.', error: 'A response could not finish. Open Handwork for details.', test: 'Desktop notifications are ready. If this does not appear, allow Handwork notifications in system settings.' }[kind], silent: !preferences.notificationSound });
-    notification.on('click', () => { if (window && !window.isDestroyed()) { window.show(); window.focus(); } });
+    notification.on('click', () => {
+      if (!window || window.isDestroyed()) return;
+      if (window.isMinimized()) window.restore();
+      window.show(); window.focus();
+      // Take the person to the chat that finished or is waiting for approval.
+      if (typeof sessionId === 'string' && sessionId) window.webContents.send(EVENT_CHANNEL, { method: 'desktop/open-chat', params: { sessionId, reason: kind } });
+    });
+    // Keep a reference so the click handler survives garbage collection.
+    liveNotifications.add(notification);
+    for (const done of ['close', 'click', 'failed']) notification.on(done, () => liveNotifications.delete(notification));
     notification.show();
     } catch (error) { if (kind === 'test') throw error; }
   };
-  backend = new DesktopBackend({ binary, settingsService, notify, chatPreferences: new ChatPreferences(path.join(app.getPath('userData'), 'chat-preferences.json')), projects: new ProjectStore(path.join(app.getPath('userData'), 'projects.json')), voice, attachmentDirectory: path.join(app.getPath('userData'), 'attachments'), chatDirectory: path.join(app.getPath('userData'), 'chats') });
+  backend = new DesktopBackend({ binary, settingsService, notify, chatPreferences: new ChatPreferences(path.join(app.getPath('userData'), 'chat-preferences.json')), projects: new ProjectStore(path.join(app.getPath('userData'), 'projects.json')), voice, attachmentDirectory: path.join(app.getPath('userData'), 'attachments'), chatDirectory: path.join(app.getPath('userData'), 'chats'), savedPrompts: new SavedPrompts(path.join(app.getPath('userData'), 'saved-prompts.json')), drafts: new DraftStore(path.join(app.getPath('userData'), 'drafts')), trustedFiles: new TrustedFiles(path.join(app.getPath('userData'), 'picked-files.json')), shell });
   const currentBackend = backend;
   window = new BrowserWindow({
     icon: appIcon,
@@ -120,12 +178,39 @@ function createWindow() {
   const sendUpdateState = state => { if (!wc.isDestroyed()) wc.send(EVENT_CHANNEL, { method: 'desktop/update', params: state }); };
   desktopUpdater.on('state', sendUpdateState);
   wc.on('did-finish-load', () => sendUpdateState(desktopUpdater.snapshot()));
-  currentWindow.on('close', () => cleanup(currentBackend));
+  currentBackend.on('event', event => {
+    if (event.method !== 'desktop/settings') return;
+    applyQuickEntryShortcut(event.params?.app?.quickEntryShortcut, wc);
+    syncTray(event.params?.app?.keepRunning === true);
+  });
+  wc.once('did-finish-load', () => {
+    try { const preferences = settings.snapshot().app; applyQuickEntryShortcut(preferences.quickEntryShortcut, wc); syncTray(preferences.keepRunning === true); }
+    catch { /* Unreadable settings are reported by the renderer. */ }
+  });
+  const keepRunning = () => { try { return settings.snapshot().app.keepRunning === true; } catch { return false; } };
+  currentWindow.on('close', event => {
+    // In background mode, closing hides the window: replies, queued messages, and
+    // quick entry keep working until the person quits.
+    if (!quitRequested && keepRunning()) {
+      event.preventDefault();
+      if (currentWindow.isFullScreen()) { currentWindow.once('leave-full-screen', () => currentWindow.hide()); currentWindow.setFullScreen(false); }
+      else currentWindow.hide();
+      if (tray && !trayHintShown) {
+        trayHintShown = true;
+        tray.displayBalloon({ title: 'Handwork is still running', content: 'Open it from here, or use your quick entry shortcut. Quit from this icon to stop it.', iconType: 'info' });
+      }
+      return;
+    }
+    cleanup(currentBackend);
+  });
   currentWindow.on('closed', () => {
     desktopUpdater.removeListener('state', sendUpdateState);
     unregister();
     cleanup(currentBackend);
     if (window === currentWindow) window = null;
+    // A hidden quick entry window must not keep the app alive after its main window closes.
+    quickEntry?.hide();
+    if (quickEntry?.window && !quickEntry.window.isDestroyed()) quickEntry.window.destroy();
   });
   const load = app.isPackaged ? currentWindow.loadFile(rendererFile) : currentWindow.loadURL(rendererURL);
   load.catch((error) => {
@@ -140,7 +225,7 @@ function createWindow() {
 app.setName('Handwork');
 if (process.platform === 'win32') app.setAppUserModelId('com.handwork.desktop');
 const ownsInstance = app.requestSingleInstanceLock();
-app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.show(); window.focus(); } });
+app.on('second-instance', () => { if (window) showMainWindow(); });
 if (ownsInstance) app.whenReady().then(async () => {
 updateDrafts = new UpdateDraftStore(path.join(app.getPath('userData'), 'update-drafts.json'));
 let signedMac = process.platform !== 'darwin';
@@ -157,7 +242,8 @@ desktopUpdater = new DesktopUpdater({
   available: app.isPackaged && signedMac && existsSync(path.join(process.resourcesPath, 'app-update.yml')),
   unavailableReason: app.isPackaged && !signedMac ? 'Install a signed Handwork release to enable updates on this Mac.' : 'Install a release build to enable updates.',
   isBusy: () => !!(backend?.prompting || backend?.running),
-  beforeInstall: async drafts => { updateDrafts.save(drafts); },
+  // Installing restarts the app, so its windows must really close.
+  beforeInstall: async drafts => { updateDrafts.save(drafts); quitRequested = true; },
 });
 desktopUpdater.start();
 // Packaged macOS apps use the native asset catalog, including clear and tinted icons.
@@ -208,11 +294,23 @@ session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
   const csp = rendererPolicy(app.isPackaged);
   callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [csp] } });
 });
+quickEntry = new QuickEntry({
+  ipcMain, rendererURL, preload: path.join(root, 'electron', 'preload.cjs'),
+  load: quick => app.isPackaged ? quick.loadFile(rendererFile, { hash: 'quick' }) : quick.loadURL(`${rendererURL}#quick`),
+  capture: () => captureScreen(),
+  onSubmit: prompt => {
+    if (!window || window.isDestroyed()) return;
+    showMainWindow();
+    window.webContents.send(EVENT_CHANNEL, { method: 'desktop/quick-prompt', params: prompt });
+  },
+});
 createWindow();
 }).catch(error => { console.error(`Handwork startup failed: ${error.message}`); app.quit(); });
 if (!ownsInstance) app.quit();
-app.on('activate', () => { if (ownsInstance && !window) createWindow(); });
+// Clicking the Dock icon brings back a window hidden in background mode.
+app.on('activate', () => { if (ownsInstance) showMainWindow(); });
 app.on('before-quit', (event) => {
+  quitRequested = true;
   desktopUpdater?.stop();
   if (quitting) return;
   event.preventDefault();
@@ -221,5 +319,6 @@ app.on('before-quit', (event) => {
   void Promise.allSettled([...cleanups]).then(() => { quitting = true; app.quit(); });
 });
 app.on('window-all-closed', () => app.quit());
+app.on('will-quit', () => { quickEntry?.dispose(); tray?.destroy(); globalShortcut.unregisterAll(); });
 process.once('SIGTERM', () => app.quit());
 process.once('SIGINT', () => app.quit());

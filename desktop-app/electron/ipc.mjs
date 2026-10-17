@@ -1,4 +1,5 @@
 import { validSettingsPatch } from './desktop-settings.mjs';
+import { validPromptInput } from './saved-prompts.mjs';
 export const CHANNEL_PREFIX = 'handwork:';
 export const EVENT_CHANNEL = 'handwork:event';
 const text = (value, max = 4096) => typeof value === 'string' && value.length > 0 && Buffer.byteLength(value) <= max && !value.includes('\0');
@@ -14,6 +15,8 @@ export const attachments = (value) => Array.isArray(value) && value.length <= MA
    (typeof item.text === 'string' && item.data === undefined && Buffer.byteLength(item.text) <= MAX_ATTACHMENT_BYTES && !item.text.includes('\0'))),
 ) && value.reduce((total, item) => total + (item.data?.length ?? Buffer.byteLength(item.text ?? '')), 0) <= MAX_PROMPT_BYTES;
 const scope = value => ['app', 'project'].includes(value);
+const draftKey = value => text(value, 512) && /^[a-zA-Z0-9_.:-]+$/.test(value);
+const fileTarget = value => text(value, 4096) && !/[\x00-\x1f]/.test(value);
 export const validUpdateDrafts = value => Array.isArray(value) && value.length <= 30 && value.every(draft =>
   draft && typeof draft.id === 'string' && draft.id.length <= 512 && typeof draft.text === 'string' &&
   Buffer.byteLength(draft.text) <= 1024 * 1024 && !draft.text.includes('\0') && attachments(draft.files),
@@ -30,7 +33,11 @@ const signatures = {
   setToolPermission: [scope, value => ['read', 'edit', 'bash', 'web_fetch', 'web_search'].includes(value), value => ['inherit', 'ask', 'allow', 'deny'].includes(value)],
   removeProjectFolder: [value => text(value)],
   providerModels: [value => text(value, 64)], testProvider: [value => text(value, 64)],
-  exportChats: [value => ['current', 'all'].includes(value)],
+  exportChats: [value => ['current', 'all'].includes(value), value => ['json', 'markdown'].includes(value)],
+  saveDraft: [draftKey, value => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0'), value => value === null || attachments(value)],
+  listDrafts: [], removeDrafts: [value => Array.isArray(value) && value.length <= 200 && value.every(draftKey)],
+  previewFile: [fileTarget], openFile: [fileTarget], revealFile: [fileTarget],
+  searchChats: [value => text(value, 800) && value.length <= 200], listPrompts: [], savePrompt: [validPromptInput], deletePrompt: [value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value)], captureScreen: [],
   updateChat: [(value) => text(value), (value) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0 && Object.keys(value).every(key => key === 'title' ? text(value.title, 800) && value.title.trim().length > 0 && value.title.trim().length <= 200 && !/[\r\n]/.test(value.title) : key === 'pinned' && typeof value.pinned === 'boolean')],
   projectSuggestions: [], projectChanges: [], projectFileDiff: [value => text(value), value => text(value), value => Number.isSafeInteger(value) && value >= 0 && value <= 1000000], listProjects: [], selectProject: [(value) => text(value)], selectChat: [], newChat: [],
   chooseWorkspace: [], chooseFiles: [], voiceStatus: [], startVoice: [], stopVoice: [], connect: [], cancel: [], newSession: [], listSessions: [],

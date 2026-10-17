@@ -34,6 +34,8 @@ function Row({ title, detail, children }: { title: string; detail?: string; chil
   return <div className="handwork-setting-row"><div><span className="handwork-setting-title">{title}</span>{detail && <p>{detail}</p>}</div><div className="handwork-setting-control">{children}</div></div>;
 }
 const modes = [{ value: 'ask', label: 'Ask' }, { value: 'code', label: 'Code' }];
+const mac = typeof navigator !== 'undefined' && /Macintosh/.test(navigator.userAgent);
+const quickEntryShortcuts = [{ value: 'Alt+Space', label: mac ? '⌥ Space' : 'Alt + Space' }, { value: 'Control+Alt+Space', label: mac ? '⌃⌥ Space' : 'Ctrl + Alt + Space' }, { value: 'CommandOrControl+Shift+Space', label: mac ? '⇧⌘ Space' : 'Ctrl + Shift + Space' }, { value: 'off', label: 'Off' }];
 const sizes = Array.from({ length: 10 }, (_, index) => ({ value: String(index + 11), label: `${index + 11} px` }));
 export default function SettingsModal(props: SettingsModalProps) {
   const { open, onClose, providers, providersReady, busyProvider, error, onConnect, onSignIn, onDisconnect, onUse, currentProvider, api, preferences, onPreferences, workspace, busy, hasMessages, onReconnect } = props;
@@ -47,6 +49,7 @@ export default function SettingsModal(props: SettingsModalProps) {
   const [catalogue, setCatalogue] = useState<{ provider: string; options: { value: string; label: string }[] }>();
   const [catalogueError, setCatalogueError] = useState('');
   const [reconnect, setReconnect] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'markdown' | 'json'>('markdown');
   const [confirmation, setConfirmation] = useState<'attachments' | 'discard' | 'reset' | { folder: string }>();
   const effective = scope === 'project' ? preferences?.effective : preferences?.app;
   const dirty = !!instructions && instructionText !== instructions.text;
@@ -115,6 +118,8 @@ export default function SettingsModal(props: SettingsModalProps) {
             <Row title="Code text size"><Choice label="Code text size" value={String(preferences?.app.codeFontSize || 13)} items={sizes} disabled={disabled} onChange={value => save({ codeFontSize: Number(value) })} /></Row>
             <Row title="Send messages with" detail="Shift + Enter always adds a new line."><Choice label="Send messages with" value={preferences?.app.sendKey || 'enter'} items={[{ value: 'enter', label: 'Enter' }, { value: 'modifier-enter', label: '⌘ / Ctrl + Enter' }]} disabled={disabled} onChange={value => save({ sendKey: value as DesktopPreferences['sendKey'] })} /></Row>
             {toggle('restoreChats', 'Restore open chats', 'Reopen your tabs when Handwork starts.')}
+            <Row title="Quick entry shortcut" detail="Open a small composer from any app. What you send starts a new chat."><Choice label="Quick entry shortcut" value={preferences?.app.quickEntryShortcut || 'off'} items={quickEntryShortcuts} disabled={disabled} onChange={value => save({ quickEntryShortcut: value as DesktopPreferences['quickEntryShortcut'] })} /></Row>
+            {toggle('keepRunning', 'Keep running when the window is closed', mac ? 'Closing hides Handwork, so replies, queued messages, and quick entry keep working. Quit with ⌘Q. Reopen it from the Dock.' : 'Closing hides Handwork, so replies, queued messages, and quick entry keep working. Reopen or quit it from the notification area.')}
             <Row title="Preferred editor" detail="Used when opening instruction and settings files."><Choice label="Preferred editor" value={preferences?.app.preferredEditor || 'system'} items={[{ value: 'system', label: 'System default' }, { value: 'vscode', label: 'VS Code' }, { value: 'cursor', label: 'Cursor' }, { value: 'zed', label: 'Zed' }]} disabled={disabled} onChange={value => save({ preferredEditor: value as DesktopPreferences['preferredEditor'] })} /></Row>
           </>}
           {section === 'models' && <>
@@ -137,7 +142,7 @@ export default function SettingsModal(props: SettingsModalProps) {
           </>}
           {section === 'agent' && <>
             {scopeControl}
-            <Row title="Default session mode" detail="Ask requests approval for actions. Code uses the engine’s automatic permission policy."><Choice label="Default session mode" value={effective?.defaultMode || 'ask'} items={modes} disabled={disabled || busy} onChange={value => save({ defaultMode: value as 'ask' | 'code' }, scope)} /></Row>
+            <Row title="Default session mode" detail="Ask requests approval for actions. Code uses the engine’s automatic permission policy."><Choice label="Default session mode" value={effective?.defaultMode || 'code'} items={modes} disabled={disabled || busy} onChange={value => save({ defaultMode: value as 'ask' | 'code' }, scope)} /></Row>
             <h3>Tool permissions</h3><p className="handwork-settings-note">These rules apply to all paths for each tool category. More specific rules and project configuration still apply. Reconnect after changing permissions.</p>
             {(['read', 'edit', 'bash', 'web_fetch', 'web_search'] as const).map(category => {
               const rules = (scope === 'project' ? info?.enginePreferences.project : info?.enginePreferences.global)?.[category];
@@ -169,8 +174,9 @@ export default function SettingsModal(props: SettingsModalProps) {
             <Button size="sm" variant="outline" disabled={disabled} onClick={() => void run(() => api!.testNotification(), 'Test notification sent. Check your system notification settings if it does not appear.')}>Send test notification</Button>
           </>}
           {section === 'data' && <>
-            <h3>Chat history</h3><p className="handwork-settings-note">History stays in your local Handwork profile. Exports contain user and assistant text as JSON; they do not include tool outputs or attachment bytes.</p>
-            <div className="handwork-settings-buttons">{(['current', 'all'] as const).map(value => <Button key={value} variant="outline" size="sm" disabled={disabled || busy || !workspace || (value === 'current' && !hasMessages)} onClick={() => void run(async () => { const result = await api!.exportChats(value); if (!result.cancelled) setMessage(`Exported ${result.count} chats`); })}>{value === 'current' ? 'Export this chat' : 'Export all chats'}</Button>)}</div>
+            <h3>Chat history</h3><p className="handwork-settings-note">History stays in your local Handwork profile. Exports contain your messages and Handwork’s replies, with the names of attached files. They leave out tool output and attachment contents.</p>
+            <Row title="Export format" detail={exportFormat === 'markdown' ? 'Readable in any editor, and easy to share.' : 'Structured data for scripts and other tools.'}><Choice label="Export format" value={exportFormat} items={[{ value: 'markdown', label: 'Markdown' }, { value: 'json', label: 'JSON' }]} disabled={disabled} onChange={value => setExportFormat(value as 'markdown' | 'json')} /></Row>
+            <div className="handwork-settings-buttons">{(['current', 'all'] as const).map(value => <Button key={value} variant="outline" size="sm" disabled={disabled || (value === 'current' && !hasMessages)} onClick={() => void run(async () => { const result = await api!.exportChats(value, exportFormat); if (!result.cancelled) setMessage(`Exported ${result.count} chat${result.count === 1 ? '' : 's'} to ${result.path?.split(/[\\/]/).pop() ?? 'a file'}`); })}>{value === 'current' ? 'Export this chat' : 'Export all chats'}</Button>)}</div>
             <Row title="History location" detail={info?.historyPath}><Button size="sm" variant="ghost" disabled={disabled} onClick={() => void run(() => api!.openSettingsTarget('history'))}>Open folder</Button></Row>
             <h3>Saved attachments</h3><p className="handwork-settings-note">{info ? `${info.attachments.count} files · ${(info.attachments.bytes / 1024 / 1024).toFixed(1)} MB` : 'Loading storage…'}</p><p className="handwork-settings-path">{info?.attachments.path}</p>
             <div className="handwork-settings-buttons"><Button size="sm" variant="outline" disabled={disabled} onClick={() => void run(() => api!.openSettingsTarget('attachments'))}>Open folder</Button><Button size="sm" variant="ghost" disabled={disabled || busy || !info?.attachments.count} onClick={() => setConfirmation('attachments')}>Remove saved attachments…</Button></div>

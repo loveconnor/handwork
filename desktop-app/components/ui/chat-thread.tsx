@@ -331,6 +331,7 @@ function ChatMessage({
         </form>
       ) : (
         <div
+          data-slot="chat-message-body"
           className={cn(
             "min-w-0 max-w-full break-words [font-size:var(--hui-font-size-regular)] [letter-spacing:var(--hui-letter-spacing-regular)] [line-height:1.55]",
             isUser &&

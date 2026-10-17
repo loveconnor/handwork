@@ -9,8 +9,14 @@ import { DesktopBackend } from '../../electron/backend.mjs';
 
 const desktopPrompt = JSON.parse(readFileSync(new URL('../../electron/genui-prompt.json', import.meta.url)));
 const playgroundPrompt = generateSystemPrompt({ library: honestChatSpec });
+const standalonePrompt = JSON.parse(readFileSync(new URL('../../electron/standalone-prompt.json', import.meta.url)));
 
-test('standalone chats use the playground prompt, including when reopened; project chats keep the desktop prompt', async () => {
+test('standalone chats keep the playground prompt with math formatting guidance, including when reopened', async () => {
+  assert.ok(standalonePrompt.startsWith(playgroundPrompt + '\n\n'));
+  for (const prompt of [standalonePrompt, desktopPrompt]) {
+    assert.ok(prompt.includes(String.raw`\cdot`));
+    assert.ok(prompt.includes(String.raw`\qquad\text{(IH)}`));
+  }
   const directory = mkdtempSync(path.join(tmpdir(), 'handwork-prompt-'));
   const requests = [];
   const backend = new DesktopBackend({
@@ -31,8 +37,8 @@ test('standalone chats use the playground prompt, including when reopened; proje
     await backend.openEngine(fresh.directory);
     await backend.openEngine('/project');
     const capabilities = requests.map(({ params }) => params.clientCapabilities.handwork);
-    assert.equal(capabilities[0].responseInstructions, playgroundPrompt);
-    assert.equal(capabilities[1].responseInstructions, playgroundPrompt);
+    assert.equal(capabilities[0].responseInstructions, standalonePrompt);
+    assert.equal(capabilities[1].responseInstructions, standalonePrompt);
     assert.equal(capabilities[0].standaloneChat, true);
     assert.equal(capabilities[1].standaloneChat, true);
     assert.equal(capabilities[2].responseInstructions, desktopPrompt);

@@ -2,8 +2,10 @@ import React from "react";
 import { applyAppearance, savedAppearance } from "@/lib/appearance";
 import { createRoot } from "react-dom/client";
 import HandworkHarness from "@/components/site/HandworkHarness";
+import HandworkQuickEntry from "@/components/site/HandworkQuickEntry";
 import { ThemeSync } from "@/components/site/ThemeSync";
 
+import "katex/dist/katex.min.css";
 import "./desktop.css";
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren, { error: string }> {
@@ -16,4 +18,6 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, { error: st
 }
 applyAppearance(savedAppearance());
 // This is the same /harness component as the web route, without the marketing layout.
-createRoot(document.getElementById("root")!).render(<ErrorBoundary><ThemeSync /><HandworkHarness /></ErrorBoundary>);
+// The global shortcut opens the same renderer in a compact window.
+const quick = window.location.hash === "#quick";
+createRoot(document.getElementById("root")!).render(<ErrorBoundary><ThemeSync />{quick ? <HandworkQuickEntry /> : <HandworkHarness />}</ErrorBoundary>);

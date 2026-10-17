@@ -3,7 +3,16 @@ export type DesktopPreferences = {
   sendKey: 'enter' | 'modifier-enter'; restoreChats: boolean; preferredEditor: 'system' | 'vscode' | 'cursor' | 'zed';
   defaultProvider: string; defaultModel: string; defaultMode: 'ask' | 'code'; suggestions: boolean;
   notifyComplete: boolean; notifyApproval: boolean; notifyError: boolean; notificationSound: boolean; notificationsBackgroundOnly: boolean;
+  quickEntryShortcut: QuickEntryShortcut;
+  /** Closing the window hides it; only Quit stops Handwork. */
+  keepRunning: boolean;
 };
+export type QuickEntryShortcut = 'off' | 'Alt+Space' | 'Control+Alt+Space' | 'CommandOrControl+Shift+Space';
+export type SavedPrompt = { id: string; title: string; folder: string; text: string; createdAt: number; updatedAt: number };
+export type SavedPromptInput = { id?: string; title: string; folder?: string; text: string };
+export type SavedDraft = { id: string; text: string; files: Attachment[]; updatedAt: number };
+export type FilePreview = { name: string; path: string; size: number; kind: 'image' | 'text' | 'other'; mimeType?: string; data?: string; text?: string; truncated?: boolean; allowed: boolean; canOpen: boolean; canReveal: boolean };
+export type ChatSearchResult = { sessionId: string; title: string; role: 'user' | 'assistant'; messageIndex: number; matches: number; updatedAt: number; snippet: string };
 export type SettingsScope = 'app' | 'project';
 export type UpdateState = { status: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'error' | 'unavailable'; message: string; version?: string; progress?: number };
 export type UpdateDraft = { id: string; text: string; files: Attachment[] };
@@ -46,7 +55,24 @@ export interface DesktopAPI {
   removeProjectFolder(folder: string): Promise<SettingsInfo>;
   providerModels(provider: string): Promise<{ configOptions: unknown }>;
   testProvider(provider: string): Promise<{ message: string }>;
-  exportChats(scope: 'current' | 'all'): Promise<{ cancelled?: boolean; count?: number; path?: string }>;
+  exportChats(scope: 'current' | 'all', format: 'markdown' | 'json'): Promise<{ cancelled?: boolean; count?: number; path?: string }>;
+  /** `files` of null keeps the attachments already saved for this chat. */
+  saveDraft(id: string, text: string, files: Attachment[] | null): Promise<{ saved: boolean; skipped: number }>;
+  listDrafts(): Promise<SavedDraft[]>;
+  removeDrafts(ids: string[]): Promise<{ removed: number }>;
+  previewFile(target: string): Promise<FilePreview>;
+  openFile(target: string): Promise<void>;
+  revealFile(target: string): Promise<void>;
+  searchChats(query: string): Promise<{ terms: string[]; results: ChatSearchResult[] }>;
+  listPrompts(): Promise<SavedPrompt[]>;
+  savePrompt(prompt: SavedPromptInput): Promise<SavedPrompt>;
+  deletePrompt(id: string): Promise<{ removed: boolean }>;
+  /** Resolves to null when the person cancels the capture. */
+  captureScreen(): Promise<Attachment | null>;
+  quickSubmit(text: string, attachments: Attachment[]): Promise<void>;
+  quickDismiss(): Promise<void>;
+  quickCapture(): Promise<Attachment | null>;
+  quickResize(height: number): Promise<void>;
 
   updateChat(id: string, changes: ChatPreference): Promise<ChatPreference>;
   projectSuggestions(): Promise<ProjectSuggestion[]>;

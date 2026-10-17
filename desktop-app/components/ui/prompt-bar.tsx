@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   ArrowUp as ArrowUpIcon,
+  ListPlus as ListPlusIcon,
   ChevronDown as ChevronDownIcon,
   File as FileIcon,
   Paperclip as PaperclipIcon,
@@ -48,6 +49,7 @@ export type PromptBarLabels = {
   prompt: string
   send: string
   stop: string
+  queue: string
   attach: string
   attachments: string
   removeAttachment: (name: string) => string
@@ -62,6 +64,7 @@ export const defaultPromptBarLabels: PromptBarLabels = {
   prompt: "Prompt",
   send: "Send",
   stop: "Stop",
+  queue: "Queue message",
   attach: "Attach files",
   attachments: "Attachments",
   removeAttachment: (name) => `Remove ${name}`,
@@ -135,6 +138,8 @@ export type PromptBarProps = Omit<
   disabled?: boolean
   /** Pass it only while a reply is in progress. Stop then takes the place of Send. */
   onStop?: () => void
+  /** While a reply is in progress, Enter hands the prompt here instead of sending it. */
+  onQueue?: (submission: PromptBarSubmission) => void
   /** Offered after the person types `@`. */
   mentions?: PromptBarItem[]
   /** Offered after the person types `/`. */
@@ -177,6 +182,7 @@ function PromptBar({
   placeholder,
   disabled = false,
   onStop,
+  onQueue,
   mentions,
   commands,
   onItemSelect,
@@ -289,6 +295,7 @@ function PromptBar({
   const text = value.trim()
   const isStoppable = onStop !== undefined
   const canSend = !disabled && !isStoppable && (text !== "" || attachments.length > 0 || hasExternalAttachments)
+  const canQueue = !disabled && isStoppable && onQueue !== undefined && (text !== "" || attachments.length > 0 || hasExternalAttachments)
 
   // Stop becomes Send again, often a disabled one. Hand focus to the field once
   // it can take it, unless the person has already moved somewhere else.
@@ -299,6 +306,12 @@ function PromptBar({
   }, [isStoppable, disabled])
 
   const send = () => {
+    if (canQueue) {
+      onQueue({ text, attachments, model: models?.length ? model : undefined })
+      changeValue("", 0)
+      setAttachments([])
+      return
+    }
     if (!canSend) return
     onSubmit({ text, attachments, model: models?.length ? model : undefined })
     changeValue("", 0)
@@ -558,6 +571,19 @@ function PromptBar({
             className="ms-auto flex shrink-0 items-center gap-[var(--hui-space-2)]"
           >
             {actions}
+            {canQueue && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                data-slot="prompt-bar-queue"
+                aria-label={labels.queue}
+                title={`${labels.queue} (↵)`}
+                onClick={send}
+              >
+                <ListPlusIcon aria-hidden="true" />
+              </Button>
+            )}
             {/* One button for both, so focus stays put when a reply starts. */}
             <Button
               ref={sendButtonRef}

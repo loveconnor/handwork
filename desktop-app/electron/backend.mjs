@@ -15,6 +15,11 @@ import { readFile, stat, readdir, lstat } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { fileAttachment, isPromptImage, prepareAttachmentFiles } from './attachment-files.mjs';
 import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS } from './ipc.mjs';
+import { ChatSearchIndex } from './chat-search.mjs';
+import { SavedPrompts } from './saved-prompts.mjs';
+import { DraftStore } from './draft-store.mjs';
+import { FileAccess, TrustedFiles } from './file-access.mjs';
+import { chatsToMarkdown, describeChat, exportFileName } from './chat-export.mjs';
 
 /** Accept every extension; preserve binary bytes instead of decoding them as text. */
 export async function readAttachments(paths) {
@@ -57,7 +62,7 @@ export async function localProviderRunning(baseUrl) {
 }
 
 export class DesktopBackend extends EventEmitter {
-  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new AcpClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats') }) {
+  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new AcpClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats'), savedPrompts = new SavedPrompts(), chatSearch = new ChatSearchIndex(path.join(settingsService.home || homedir(), '.handwork', 'sessions')), drafts = new DraftStore(), trustedFiles = new TrustedFiles(), shell = null }) {
     super();
     this.binary = binary;
     this.settingsService = settingsService;
@@ -87,6 +92,11 @@ export class DesktopBackend extends EventEmitter {
     this.historyClient = null;
     this.disposed = false;
     this.changesReader = new ProjectChangesReader();
+    this.savedPrompts = savedPrompts;
+    this.chatSearch = chatSearch;
+    this.drafts = drafts;
+    this.trustedFiles = trustedFiles;
+    this.files = new FileAccess({ roots: () => [...this.projects.list(), this.attachmentDirectory, this.chatDirectory], trusted: trustedFiles, shell });
   }
 
   get prompting() { return [...this.engines].some(engine => engine.prompting || engine.running); }
@@ -128,7 +138,10 @@ export class DesktopBackend extends EventEmitter {
   async chooseFiles(picker) {
     const paths = await picker();
     if (!paths?.length) return [];
-    return readAttachments(paths);
+    const items = await readAttachments(paths);
+    // Files picked here stay openable from the message later.
+    try { this.trustedFiles.add(paths); } catch { /* Opening later is optional. */ }
+    return items;
   }
 
   // Voice comes from a system dictation app the host detected; the renderer only sees availability.
@@ -219,7 +232,7 @@ export class DesktopBackend extends EventEmitter {
         client.respondPermission(event.id, null);
         return;
       }
-      if (event.method === 'session/request_permission') this.notify('approval');
+      if (event.method === 'session/request_permission') this.notify('approval', event.params?.sessionId ?? sessionId);
       this.emit('event', { ...event, params: { ...event.params, sessionId: event.params?.sessionId ?? sessionId } });
       if (event.method === 'engine/error') {
         engine.session = null;
@@ -292,9 +305,9 @@ export class DesktopBackend extends EventEmitter {
       engine.cancelling = false;
       try {
         const result = await client.request('session/prompt', { sessionId: engine.session.sessionId, prompt: blocks }, { timeout: 0 });
-        if (result.stopReason === 'end_turn') this.notify('complete');
+        if (result.stopReason === 'end_turn') this.notify('complete', engine.session?.sessionId);
         return result;
-      } catch (error) { this.notify('error'); throw error;
+      } catch (error) { this.notify('error', engine.session?.sessionId); throw error;
       } finally {
         engine.prompting = false;
         engine.cancelling = false;
@@ -452,40 +465,61 @@ export class DesktopBackend extends EventEmitter {
     if (!count) throw new Error('The provider returned no available models');
     return { message: `Connection verified. ${count} models available.`, models: count };
   }
-  exportChats(scope) {
+  /** Exports the open chat or every chat, as JSON for tools or Markdown for people. */
+  exportChats(scope, format = 'json') {
     return this.exclusive(async () => {
       this.readyClient();
-      const destination = await this.settingsService.host.saveExport?.();
-      if (!destination) return { cancelled: true };
       await this.collectSessions();
-      const sessions = scope === 'current' ? [{ sessionId: this.session?.sessionId, cwd: this.engineFor().directory, title: this.chatPreferences.list()[this.session?.sessionId]?.title ?? 'Chat' }] : this.recentSessions.filter(item => item.turns !== 0);
+      const current = this.session?.sessionId;
+      const saved = this.recentSessions.find(item => item.sessionId === current);
+      const title = (current && this.chatPreferences.list()[current]?.title) || saved?.title || 'Chat';
+      const destination = await this.settingsService.host.saveExport?.({ format, defaultName: exportFileName(scope, format, title) });
+      if (!destination) return { cancelled: true };
+      // Standalone chats run in a private folder; the engine directory works for both kinds.
+      const sessions = scope === 'current' ? [{ sessionId: current, cwd: this.engineFor().directory, title }] : this.recentSessions.filter(item => item.turns !== 0);
       const chats = []; let bytes = 0;
       for (const session of sessions) {
-        const client = this.clientFactory({ binary: this.binary, cwd: session.cwd });
-        this.settingsClients.add(client);
-        this.children.add(client.exited); client.exited.then(() => this.children.delete(client.exited));
+        // The read-only history path works even while the chat is open in its own engine.
+        const { updates } = await this.readSession(session.sessionId);
         const messages = [];
-        client.on('event', event => {
-          const update = event.params?.update;
-          if (['user_message_chunk', 'agent_message_chunk'].includes(update?.sessionUpdate) && update.content?.type === 'text') {
-            bytes += Buffer.byteLength(update.content.text);
-            if (bytes > 100 * 1024 * 1024) { client.dispose(new Error('Export exceeds 100 MB. Export individual chats instead.')); return; }
-            const role = update.sessionUpdate === 'user_message_chunk' ? 'user' : 'assistant';
-            const last = messages.at(-1);
-            if (last?.role === role && last.id === update.messageId) last.text += update.content.text;
-            else messages.push({ role, id: update.messageId, text: update.content.text });
-          }
-        });
-        try { await client.request('initialize', { protocolVersion: 1, clientCapabilities: {} }); await client.request('session/load', { sessionId: session.sessionId, cwd: session.cwd, mcpServers: [] }); }
-        finally { this.settingsClients.delete(client); client.dispose(); }
-        chats.push({ id: session.sessionId, title: session.title, workspace: session.cwd, messages });
+        for (const update of updates) {
+          if (!['user_message_chunk', 'agent_message_chunk'].includes(update?.sessionUpdate) || update.content?.type !== 'text') continue;
+          bytes += Buffer.byteLength(update.content.text);
+          if (bytes > 100 * 1024 * 1024) throw new Error('Export exceeds 100 MB. Export individual chats instead.');
+          const role = update.sessionUpdate === 'user_message_chunk' ? 'user' : 'assistant';
+          const last = messages.at(-1);
+          // Progress notes and the final answer of one turn read as consecutive paragraphs.
+          if (last?.role === role && last.id === update.messageId) last.text += update.content.text;
+          else if (last?.role === 'assistant' && role === 'assistant') { last.text = `${last.text.trimEnd()}\n\n${update.content.text}`; last.id = update.messageId; }
+          else messages.push({ role, id: update.messageId, text: update.content.text });
+        }
+        chats.push({ id: session.sessionId, title: (this.chatPreferences.list()[session.sessionId]?.title) || session.title, workspace: session.cwd, messages });
       }
       const { writeFile, rename, unlink } = await import('node:fs/promises');
       const temporary = destination + '.handwork-' + randomUUID() + '.tmp';
-      try { await writeFile(temporary, JSON.stringify({ version: 1, chats }, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, destination); }
+      const body = format === 'markdown'
+        ? chatsToMarkdown(chats.map(chat => describeChat(chat, directory => this.isStandaloneDirectory(directory))))
+        : JSON.stringify({ version: 1, chats }, null, 2);
+      try { await writeFile(temporary, body, { mode: 0o600, flag: 'wx' }); await rename(temporary, destination); }
       finally { await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
       return { path: destination, count: chats.length };
     });
+  }
+
+  saveDraft(key, text, files) { return this.drafts.save(key, text, files); }
+  listDrafts() { return this.drafts.list(); }
+  removeDrafts(keys) { this.drafts.remove(keys); return { removed: keys.length }; }
+  previewFile(target) { return this.files.preview(target, this.workspace); }
+  openFile(target) { return this.files.open(target, this.workspace); }
+  revealFile(target) { return this.files.reveal(target, this.workspace); }
+  // Search reads saved history directly, so it never waits behind a running prompt.
+  searchChats(query) { return this.chatSearch.search(query); }
+  listPrompts() { return this.savedPrompts.list(); }
+  savePrompt(prompt) { return this.savedPrompts.save(prompt); }
+  deletePrompt(id) { return this.savedPrompts.remove(id); }
+  async captureScreen() {
+    if (!this.settingsService.host.captureScreen) throw new Error('Screen capture is unavailable in this preview');
+    return this.settingsService.host.captureScreen();
   }
 
   updateChat(sessionId, changes) {

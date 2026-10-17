@@ -3,8 +3,10 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { MessageScroller } from 'honestui/ai/message-scroller';
 
-export function HandworkConversation({ landing, sessionKey, busy, footer, children }: {
+export function HandworkConversation({ landing, sessionKey, busy, footer, overlay, children }: {
   landing: boolean; sessionKey: string; busy: boolean; footer: ReactNode; children: ReactNode;
+  /** Floats over the transcript, such as the find bar. */
+  overlay?: ReactNode;
 }) {
   const footerRef = useRef<HTMLDivElement>(null);
   const [composerHeight, setComposerHeight] = useState(0);
@@ -29,6 +31,7 @@ export function HandworkConversation({ landing, sessionKey, busy, footer, childr
       viewportClassName="handwork-message-viewport"
       contentClassName="handwork-message-content"
     >{children}</MessageScroller>}
+    {overlay}
     <div ref={footerRef} data-slot="chat-thread-footer">{footer}</div>
   </div>;
 }

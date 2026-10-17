@@ -81,6 +81,13 @@ export function ComposerOptions({ options, disabled, syncing = false, onChange }
   </>;
 }
 
+export async function chooseTheme(next: 'system' | 'light' | 'dark') {
+  if (window.handwork?.updateSettings) {
+    try { const result = await window.handwork.updateSettings('app', { theme: next }); applyAppearance(result.app); }
+    catch (error) { window.dispatchEvent(new CustomEvent('handwork:settings-error', { detail: String(error) })); }
+  } else applyAppearance({ ...savedAppearance(), theme: next });
+}
+
 export function HandworkTheme({ compact = true }: { compact?: boolean }) {
   const readTheme = () => typeof document !== 'undefined' ? savedAppearance().theme : 'system';
   const [theme, setTheme] = useState(readTheme);
@@ -89,12 +96,7 @@ export function HandworkTheme({ compact = true }: { compact?: boolean }) {
     window.addEventListener('handwork:theme', sync);
     return () => window.removeEventListener('handwork:theme', sync);
   }, []);
-  const choose = async (next: 'system' | 'light' | 'dark') => {
-    if (window.handwork?.updateSettings) {
-      try { const result = await window.handwork.updateSettings('app', { theme: next }); applyAppearance(result.app); }
-      catch (error) { window.dispatchEvent(new CustomEvent('handwork:settings-error', { detail: String(error) })); }
-    } else applyAppearance({ ...savedAppearance(), theme: next });
-  };
+  const choose = chooseTheme;
   return <div className="handwork-theme-switcher" role="group" aria-label="Color theme">
     {[{ id: 'system' as const, label: 'System theme', Icon: Monitor }, { id: 'light' as const, label: 'Light theme', Icon: Sun }, { id: 'dark' as const, label: 'Dark theme', Icon: Moon }].map(({ id, label, Icon }) =>
       <Button key={id} type="button" variant={theme === id ? 'secondary' : 'ghost'} size={compact ? 'icon-sm' : 'sm'} aria-label={label} title={label} aria-pressed={theme === id} onClick={() => choose(id)}>

@@ -357,7 +357,7 @@ function CommandDialogContent({
       <DialogPrimitive.Backdrop data-slot="command-dialog-backdrop" className="fixed inset-0 z-[var(--hui-z-index-portal)] bg-black/20" />
       <DialogPrimitive.Viewport
         data-slot="command-dialog-viewport"
-        className="pointer-events-none fixed inset-0 z-[var(--hui-z-index-portal)]"
+        className="fixed inset-0 z-[var(--hui-z-index-portal)]"
       >
         <DialogPrimitive.Popup
           data-slot="command-dialog-content"

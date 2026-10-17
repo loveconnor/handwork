@@ -3,8 +3,10 @@ export type RecordValue = Record<string, unknown>;
 export const record = (value: unknown): RecordValue => value !== null && typeof value === "object" && !Array.isArray(value) ? value as RecordValue : {};
 export const text = (value: unknown): string => typeof value === "string" ? value : "";
 export type EntryDiff = { path: string; oldText: string; newText: string };
-export type EntryAttachment = { name: string; mimeType: string; size: number; data?: string };
-export type Entry = { id: string; kind: "user" | "assistant" | "reasoning" | "tool"; text: string; title?: string; status?: string; input?: string; diffs?: EntryDiff[]; toolKind?: string; attachments?: EntryAttachment[] };
+/** A file sent with a message: image bytes, or a local file the engine received by URI. */
+export type EntryAttachment = { name: string; mimeType: string; size?: number; data?: string; uri?: string };
+/** `rawText` is the prompt exactly as the engine stored it, which rewinding must match. */
+export type Entry = { id: string; kind: "user" | "assistant" | "reasoning" | "tool"; text: string; rawText?: string; title?: string; status?: string; input?: string; diffs?: EntryDiff[]; toolKind?: string; attachments?: EntryAttachment[] };
 export type Conversation = { entries: Entry[]; title: string; used?: number; capacity?: number; recovery?: string };
 export const emptyConversation = (): Conversation => ({ entries: [], title: "New chat" });
 
@@ -20,6 +22,28 @@ function contentDiffs(value: unknown): EntryDiff[] {
   if (!Array.isArray(value)) return [];
   return value.map(item => record(item)).filter(block => block.type === "diff" && text(block.path))
     .map(block => ({ path: text(block.path), oldText: text(block.oldText), newText: text(block.newText) }));
+}
+const FILE_HEADER = /(?:^|\n)File: ((?:file|attachment):\/\/[^\n]*)\n/g;
+const IMAGE_PLACEHOLDER = /\n?\[Image #\d+\]/g;
+function fileName(uri: string, content: string): string {
+  const attached = /^Attached file: ([^\n]+)/.exec(content)?.[1];
+  if (attached) return attached;
+  try { return decodeURIComponent(new URL(uri).pathname.split("/").filter(Boolean).pop() || uri); } catch { return uri; }
+}
+/**
+ * The engine stores a prompt's files inside its text as `File: <uri>` blocks after
+ * the message. Replayed history splits them back into the message and its files.
+ */
+export function splitUserText(raw: string): { text: string; files: EntryAttachment[] } {
+  const headers = [...raw.matchAll(FILE_HEADER)];
+  if (!headers.length) return { text: raw, files: [] };
+  const files = headers.map((match, index) => {
+    const start = match.index + match[0].length;
+    const content = raw.slice(start, headers[index + 1]?.index ?? raw.length);
+    const uri = match[1];
+    return { name: fileName(uri, content), mimeType: "application/octet-stream", ...(uri.startsWith("file:") ? { uri } : {}) };
+  });
+  return { text: raw.slice(0, headers[0].index).trimEnd(), files };
 }
 export function applyUpdate(state: Conversation, update: RecordValue): Conversation {
   const type = update.sessionUpdate;
@@ -48,7 +72,16 @@ export function applyUpdate(state: Conversation, update: RecordValue): Conversat
   const kind = type === "agent_message_chunk" ? "assistant" : type === "user_message_chunk" ? "user" : type === "agent_thought_chunk" ? "reasoning" : null;
   if (!kind) return state;
   const content = record(update.content);
-  const delta = content.type === "image" ? "[Image attachment in saved session]" : text(content.text);
+  if (kind === "user" && content.type === "image") {
+    const data = text(content.data);
+    const target = state.entries.findLast(entry => entry.kind === "user" && (!text(update.messageId) || entry.id === text(update.messageId)));
+    if (!data || !target) return state;
+    if (target.attachments?.some(file => file.data === data)) return state;
+    const images = (target.attachments ?? []).filter(file => file.mimeType.startsWith("image/")).length;
+    const image = { name: `Image ${images + 1}`, mimeType: text(content.mimeType) || "image/png", size: Math.floor(data.length * 3 / 4), data };
+    return { ...state, entries: state.entries.map(entry => entry === target ? { ...entry, text: entry.text.replace(IMAGE_PLACEHOLDER, "").trim(), attachments: [...(entry.attachments ?? []), image] } : entry) };
+  }
+  const delta = content.type === "image" ? "[Image]" : text(content.text);
   if (!delta) return state;
   // ACP emits this operational notice as assistant text, including during history replay.
   if (kind === "assistant" && delta.trim() === "cancelled") return state;
@@ -59,6 +92,13 @@ export function applyUpdate(state: Conversation, update: RecordValue): Conversat
   // Live prompts are shown optimistically; ACP may echo them with an ID, adding image placeholders after the text.
   if (kind === "user" && last?.kind === "user" && last.id.startsWith("local-") && (delta === last.text || (last.attachments?.length && delta.startsWith(last.text)))) {
     return { ...state, entries: [...state.entries.slice(0, -1), { ...last, id }] };
+  }
+  if (kind === "user") {
+    const rawText = (previous?.rawText ?? previous?.text ?? "") + delta;
+    const { text: shown, files } = splitUserText(rawText);
+    const images = previous?.attachments?.filter(file => file.data) ?? [];
+    const next: Entry = { id, kind, rawText, text: images.length ? shown.replace(IMAGE_PLACEHOLDER, "").trim() : shown, ...(images.length || files.length ? { attachments: [...files, ...images] } : {}) };
+    return { ...state, entries: previous ? state.entries.map(e => e === previous ? next : e) : [...state.entries, next] };
   }
   return { ...state, entries: previous ? state.entries.map(e => e === previous ? { ...e, text: e.text + delta } : e) : [...state.entries, { id, kind, text: delta }] };
 }
