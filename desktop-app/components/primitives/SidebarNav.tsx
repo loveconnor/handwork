@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -445,11 +446,11 @@ export default function SidebarNav({
             {visibleRecents.map((item) => {
               const active = activeRecentId !== undefined ? item.id === activeRecentId : item.label === selectedTitle;
               return (
-                <button
-                  key={item.id}
+                <HoverTooltip key={item.id} content={item.label}><button
+
                   data-row
                   type="button"
-                  title={item.label}
+
                   disabled={disabled}
                   aria-current={active ? "page" : undefined}
                   onClick={() => {
@@ -465,7 +466,7 @@ export default function SidebarNav({
                   <span className={`sidebar-copy min-w-0 flex-1 truncate text-[14px] font-medium ${active ? "text-ink" : "text-ink-2"}`}>
                     {item.label}
                   </span>
-                </button>
+                </button></HoverTooltip>
               );
             })}
             {query && visibleRecents.length === 0 && (

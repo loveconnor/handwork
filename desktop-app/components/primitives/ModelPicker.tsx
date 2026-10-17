@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import GlideMenu from "@/components/primitives/GlideMenu";
 import { ProviderLogo } from "@/components/atoms/ProviderLogo";
@@ -84,19 +85,19 @@ export default function ModelPicker({ models, modelValue, onSelectModel, provide
           {providers.map((item) => {
             const selected = item.value === providerValue;
             return (
-              <button key={item.value} type="button" role="tab" aria-selected={selected} aria-label={item.name} title={item.name}
+              <HoverTooltip key={item.value} content={item.name}><button  type="button" role="tab" aria-selected={selected} aria-label={item.name}
                 onClick={() => { if (!selected) onSelectProvider?.(item.value); setQuery(""); searchRef.current?.focus(); }}
                 className={`relative flex size-9 items-center justify-center rounded-[9px] transition-colors duration-150 ${selected ? "bg-hover-2 text-ink" : "text-ink-3 hover:bg-hover hover:text-ink-2"}`}>
                 {selected && <span aria-hidden className="absolute -left-1.5 top-2 h-5 w-0.5 rounded-full bg-accent" />}
                 <ProviderLogo provider={item.value} name={item.name} size={16} />
-              </button>
+              </button></HoverTooltip>
             );
           })}
           {onManageProviders && (
-            <button type="button" aria-label="Manage providers" title="Connect providers" onClick={() => { onClose(); onManageProviders(); }}
+            <HoverTooltip content="Connect providers"><button type="button" aria-label="Manage providers"  onClick={() => { onClose(); onManageProviders(); }}
               className="mt-auto flex size-9 shrink-0 items-center justify-center rounded-[9px] text-ink-3 transition-colors duration-150 hover:bg-hover hover:text-ink">
               <IconPlus size={15} strokeWidth={2} />
-            </button>
+            </button></HoverTooltip>
           )}
         </div>
       )}
@@ -133,12 +134,12 @@ export default function ModelPicker({ models, modelValue, onSelectModel, provide
         {(efforts.length > 0 || onToggleFastMode) && (
           <div className="border-t border-line px-3 pb-3 pt-2.5">
             <div className="flex items-center gap-2">
-              <button type="button" aria-label="Fast mode" aria-pressed={fastMode} disabled={disabled || !onToggleFastMode}
-                title={onToggleFastMode ? `Fast mode ${fastMode ? "on" : "off"} · Additional usage costs may apply` : "Fast mode unavailable for this model"}
+              <HoverTooltip content={onToggleFastMode ? `Fast mode ${fastMode ? "on" : "off"} · Additional usage costs may apply` : "Fast mode unavailable for this model"}><button type="button" aria-label="Fast mode" aria-pressed={fastMode} disabled={disabled || !onToggleFastMode}
+
                 onClick={onToggleFastMode}
                 className={`flex size-7 items-center justify-center rounded-[7px] transition-colors duration-150 disabled:opacity-40 ${fastMode ? "bg-accent/15 text-accent" : "text-ink-3 hover:bg-hover hover:text-ink"}`}>
                 <IconZap size={15} />
-              </button>
+              </button></HoverTooltip>
               <div className="min-w-0 flex-1 text-center">
                 <p className="truncate text-[13px] font-medium text-ink">{current?.name ?? "Reasoning effort"}</p>
                 <p className="text-[11.5px] text-ink-3">{efforts.length > 0 ? "How much the model thinks before answering" : "Use faster service for this model"}</p>

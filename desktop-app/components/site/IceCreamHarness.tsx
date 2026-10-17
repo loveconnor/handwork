@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useDialKit, type DialConfig } from "dialkit";
 import posthog from "posthog-js";
@@ -878,9 +879,9 @@ export default function IceCreamHarness() {
             c.id === activeId ? "bg-hover-2 text-ink" : "text-ink-2 hover:bg-hover hover:text-ink"
           }`}
         >
-          <button type="button" aria-pressed={c.id === activeId} onClick={() => setActiveId(c.id)} title={c.title ?? "New chat"} className="min-w-0 flex-1 text-left">
+          <HoverTooltip content={c.title ?? "New chat"}><button type="button" aria-pressed={c.id === activeId} onClick={() => setActiveId(c.id)}  className="min-w-0 flex-1 text-left">
             <span className="block truncate">{c.title ?? "New chat"}</span>
-          </button>
+          </button></HoverTooltip>
           <button
             type="button"
             aria-label="Close tab"

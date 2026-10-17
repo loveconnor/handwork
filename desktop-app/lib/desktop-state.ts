@@ -7,7 +7,13 @@ export type EntryDiff = { path: string; oldText: string; newText: string };
 export type EntryAttachment = { name: string; mimeType: string; size?: number; data?: string; uri?: string };
 /** `rawText` is the prompt exactly as the engine stored it, which rewinding must match. */
 export type Entry = { id: string; kind: "user" | "assistant" | "reasoning" | "tool"; text: string; rawText?: string; title?: string; status?: string; input?: string; diffs?: EntryDiff[]; toolKind?: string; attachments?: EntryAttachment[] };
-export type Conversation = { entries: Entry[]; title: string; used?: number; capacity?: number; recovery?: string };
+export type Conversation = { entries: Entry[]; title: string; used?: number; capacity?: number; recovery?: string; canContinue?: boolean };
+
+/** A reopened chat shows the context usage saved from its last reply until the engine reports again. */
+export function withSavedUsage(conversation: Conversation, saved?: { used: number; size?: number }): Conversation {
+  if (conversation.used !== undefined || !saved || !Number.isFinite(saved.used)) return conversation;
+  return { ...conversation, used: saved.used, capacity: saved.size };
+}
 export const emptyConversation = (): Conversation => ({ entries: [], title: "New chat" });
 
 function contentText(value: unknown): string {
@@ -48,8 +54,13 @@ export function splitUserText(raw: string): { text: string; files: EntryAttachme
 export function applyUpdate(state: Conversation, update: RecordValue): Conversation {
   const type = update.sessionUpdate;
   if (type === "session_info_update") {
-    const recovery = record(record(record(update._meta).handwork).modelResponseRecovery);
-    return { ...state, title: text(update.title) || state.title, ...(recovery.message ? { recovery: text(recovery.message) } : {}) };
+    const meta = record(record(update._meta).handwork);
+    const recovery = record(meta.modelResponseRecovery);
+    const cleared = meta.modelResponseRecovery === null || recovery.state === 'recovered';
+    return { ...state, title: text(update.title) || state.title, ...(Object.hasOwn(meta, 'modelResponseRecovery') ? {
+      recovery: cleared ? undefined : text(recovery.message) || undefined,
+      canContinue: !cleared && recovery.state === 'paused' && recovery.durable === true && recovery.requiredAction === 'continue_later',
+    } : {}) };
   }
   if (type === "usage_update") return { ...state, used: typeof update.used === "number" ? update.used : undefined, capacity: typeof update.size === "number" ? update.size : undefined };
   if (type === "tool_call" || type === "tool_call_update") {
@@ -102,7 +113,7 @@ export function applyUpdate(state: Conversation, update: RecordValue): Conversat
   }
   return { ...state, entries: previous ? state.entries.map(e => e === previous ? { ...e, text: e.text + delta } : e) : [...state.entries, { id, kind, text: delta }] };
 }
-export type ConfigChoice = { value: string; name: string; description?: string };
+export type ConfigChoice = { value: string; name: string; description?: string; permissionMode?: string };
 export type ConfigOption = { id: string; name: string; currentValue: string; options: ConfigChoice[] };
 export function configOptions(value: unknown): ConfigOption[] {
   if (!Array.isArray(value)) return [];
@@ -110,7 +121,7 @@ export function configOptions(value: unknown): ConfigOption[] {
     const option = record(item);
     if (typeof option.value !== "string") return flatten(option.options);
     const description = text(option.description);
-    return [{ value: option.value, name: text(option.name) || option.value, ...(description ? { description } : {}) }];
+    return [{ value: option.value, name: text(option.name) || option.value, ...(description ? { description } : {}), ...(typeof option.permissionMode === 'string' ? { permissionMode: option.permissionMode } : {}) }];
   });
   return value.map(item => {
     const option = record(item);

@@ -224,6 +224,8 @@ button:disabled { cursor: not-allowed; }
 .handwork-recents-heading[aria-expanded="true"] .handwork-section-chevron { transform: rotate(0deg); }
 .handwork-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; padding-left: 8px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
 .handwork-project-heading { display: flex; align-items: center; gap: 2px; }
+.handwork-project-menu-trigger { flex-shrink: 0; width: 32px; height: 32px; }
+.handwork-project-menu-trigger[data-popup-open] { background: var(--hui-color-background-neutral-secondary); }
 .handwork-project-name { flex: 1; min-width: 0; justify-content: flex-start; padding-inline: 8px; gap: 8px; font-weight: 500; min-height: 32px; }
 .handwork-project-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .handwork-project-chats { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
@@ -244,6 +246,15 @@ button:disabled { cursor: not-allowed; }
 .handwork-chat-dialog [data-slot="dialog-description"] { overflow-wrap: anywhere; }
 .handwork-chat-dialog label { display: block; margin-bottom: 8px; font-size: 13px; }
 .handwork-chat-dialog [data-slot="dialog-footer"] { gap: 8px; }
+/* Restore preview: one checkable row per part of the backup. */
+.handwork-restore-dialog { width: 480px; }
+.handwork-restore-options { display: grid; gap: 4px; }
+.handwork-chat-dialog label.handwork-restore-option { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 8px; border-radius: 10px; cursor: pointer; }
+.handwork-restore-option:not([data-disabled]):hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-restore-option[data-disabled] { cursor: default; }
+.handwork-restore-option[data-disabled] .handwork-setting-title { color: var(--hui-color-foreground-base-secondary); }
+.handwork-restore-option [data-slot="checkbox"] { margin-top: 2px; }
+.handwork-restore-option p { margin: 2px 0 0; font-size: 12px; line-height: 18px; color: var(--hui-color-foreground-base-secondary); }
 .handwork-chat-action-error { padding: 0 24px; font-size: 13px; color: var(--hui-color-foreground-danger-primary); }
 @media (hover: none) {
   .handwork-chat-menu-trigger { opacity: 1; pointer-events: auto; }
@@ -253,6 +264,9 @@ button:disabled { cursor: not-allowed; }
 .handwork-recents-heading .handwork-section-chevron { margin-inline: 4px; }
 .handwork-show-more, .handwork-sidebar-empty { justify-content: flex-start; font-size: 12px; color: var(--hui-color-foreground-base-secondary); padding-inline: 8px; }
 .handwork-chat-running { display: flex; align-items: center; width: 14px; height: 14px; flex-shrink: 0; }
+/* Messages waiting to send in a chat, shown in the sidebar while it runs in the background. */
+.handwork-chat-queued { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.handwork-chat-queued svg { width: 12px; height: 12px; }
 .handwork-chat-unread { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--hui-color-foreground-base-primary); }
 .handwork-message[data-role="assistant"] [data-slot="reply-actions"] { opacity: 0; transition: opacity 120ms ease; }
 .handwork-message[data-role="assistant"]:hover [data-slot="reply-actions"], .handwork-message[data-role="assistant"]:has(:focus-visible) [data-slot="reply-actions"] { opacity: 1; }
@@ -307,7 +321,9 @@ button:disabled { cursor: not-allowed; }
 .handwork-about-brand span { display: block; font-size: 12px; font-weight: 400; color: var(--hui-color-foreground-base-secondary); margin-top: 6px; }
 .handwork-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .handwork-transcript .honest-prose { font-size: var(--handwork-ui-font-size, 14px); }
-.handwork-transcript :is(pre,code), .handwork-transcript .honest-syntax { font-size: var(--handwork-code-font-size, 13px); }
+.handwork-transcript .handwork-thought-prose { --prose-color: var(--hui-color-foreground-base-secondary); font-size: inherit; line-height: inherit; letter-spacing: inherit; }
+.handwork-thought-prose > :first-child { margin-block-start: 0; }
+.handwork-transcript :is(pre, pre code), .handwork-transcript .honest-syntax { font-size: var(--handwork-code-font-size, 13px); }
 .handwork-app .handwork-composer [data-slot="prompt-bar-input"] { font-size: var(--handwork-ui-font-size, 14px); }
 @media (max-width: 700px) {
   .handwork-settings-v2 { width: calc(100vw - 24px); max-width: calc(100vw - 24px); height: 90dvh; max-height: 90dvh; }
@@ -338,7 +354,7 @@ button:disabled { cursor: not-allowed; }
 .handwork-resize-handle[data-orientation="horizontal"] { cursor: row-resize; }
 .handwork-review-resize { position: absolute; top: 0; bottom: 0; left: -4px; width: 8px; }
 .handwork-review-resize::after { top: 0; bottom: 0; left: 3px; width: 2px; }
-.handwork-files-resize { height: 7px; margin-block: -3px -4px; }
+.handwork-files-resize { height: 7px; margin-block: -3px -4px; background: var(--hui-color-background-base-primary); }
 .handwork-files-resize::after { left: 0; right: 0; top: 3px; height: 2px; }
 :root[data-resizing] { user-select: none; }
 :root[data-resizing="vertical"], :root[data-resizing="vertical"] * { cursor: col-resize !important; }
@@ -433,6 +449,174 @@ button:disabled { cursor: not-allowed; }
 .handwork-diff-expand:hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
 .handwork-diff-expand:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
 .handwork-diff-more { margin: 4px 12px 12px; }
+/* Git: repository, sync, commit composer, staged and unstaged groups, branch picker and history. */
+.handwork-repo { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-repo-row { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 24px; }
+.handwork-repo-icon { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-name { flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 18px; font-weight: 500; }
+.handwork-repo-scope { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-repo-row > .handwork-repo-terminal { width: 24px; height: 24px; margin-inline-start: auto; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-row > .handwork-repo-terminal:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+:is(.handwork-repo-row, .handwork-repo-context) > .handwork-branch-trigger { flex-shrink: 1; min-width: 0; max-width: 62%; height: 24px; gap: 5px; margin-inline-start: -6px; padding: 0 6px; border: 0; border-radius: 6px; box-shadow: none; font-size: 12px; line-height: 18px; font-weight: 500; }
+.handwork-branch-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-branch-trigger > svg { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-trigger[data-popup-open] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-repo-sync { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-note { display: flex; gap: 6px; margin: 2px 4px 0 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-note > svg { flex-shrink: 0; margin-top: 1.5px; }
+.handwork-repo-note strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; overflow-wrap: anywhere; }
+.handwork-repo-note[data-tone="warning"], .handwork-repo-note[data-tone="warning"] > svg { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+
+.handwork-sync { flex-shrink: 0; display: flex; flex-direction: column; padding: 4px 8px 6px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-repo .handwork-sync { padding: 0; border: 0; }
+.handwork-repo-context { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.handwork-repo-context > .handwork-branch-trigger { margin-inline-start: -6px; }
+.handwork-repo-context > .handwork-sync-inline { flex: 1; min-width: 0; }
+.handwork-repo-context > .handwork-sync:not(.handwork-sync-inline) { flex-basis: 100%; }
+.handwork-sync-inline .handwork-sync-row { flex-wrap: wrap; }
+.handwork-sync-inline .handwork-sync-text { font-size: 10.5px; }
+.handwork-repo .handwork-sync-row { min-height: 24px; font-size: 11px; }
+.handwork-sync-row { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 28px; color: var(--hui-color-foreground-base-secondary); font-size: 11.5px; line-height: 16px; }
+.handwork-sync-row > button { flex-shrink: 0; height: 22px; padding-block: 0; font-size: 11px; }
+.handwork-sync-icon { flex-shrink: 0; }
+.handwork-sync-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.handwork-sync-text strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; }
+.handwork-sync-text code { padding: 1px 5px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; white-space: nowrap; }
+.handwork-sync-text .handwork-sync-destination { font-weight: 600; }
+.handwork-sync-row[data-tone="warning"] { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-sync-row[data-tone="warning"] strong { color: inherit; }
+.handwork-sync-row[data-progress] { color: var(--hui-color-foreground-base-primary); }
+.handwork-sync-meter { flex-shrink: 0; width: 64px; height: 4px; overflow: hidden; border-radius: 2px; background: var(--hui-color-background-neutral-secondary); }
+.handwork-sync-meter > span { display: block; width: var(--handwork-progress); height: 100%; border-radius: inherit; background: var(--hui-color-foreground-info-primary, #6b9eea); transition: width 150ms ease; }
+.handwork-git-spinner { flex-shrink: 0; }
+.handwork-publish-remote { display: flex; flex-direction: column; min-width: 0; }
+.handwork-publish-remote > span:last-child { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+
+.handwork-changes > .handwork-git-success { display: flex; flex-shrink: 0; align-items: center; gap: 6px; margin: 8px 12px 0; color: var(--hui-color-foreground-success-primary); font-size: 11.5px; line-height: 16px; }
+.handwork-changes > .handwork-git-stale { flex-shrink: 0; margin: 8px 12px 0; color: var(--hui-color-foreground-warning-primary, #d2a54a); font-size: 11.5px; }
+.handwork-git-error { display: flex; flex-shrink: 0; gap: 8px; margin: 8px 12px 0; padding: 8px 6px 8px 10px; border: 1px solid color-mix(in oklab, var(--hui-color-foreground-danger-primary) 35%, transparent); border-radius: 8px; background: color-mix(in oklab, var(--hui-color-foreground-danger-primary) 6%, transparent); font-size: 12px; line-height: 17px; }
+.handwork-git-error-icon { flex-shrink: 0; margin-top: 1.5px; color: var(--hui-color-foreground-danger-primary); }
+.handwork-git-error-body { flex: 1; min-width: 0; }
+.handwork-git-error-body > strong { display: block; font-weight: 500; }
+.handwork-git-error-body > p { margin: 2px 0 0; color: var(--hui-color-foreground-base-secondary); overflow-wrap: anywhere; }
+.handwork-git-error-body details { margin-top: 6px; }
+.handwork-git-error-body summary { width: fit-content; color: var(--hui-color-foreground-base-secondary); font-size: 11px; cursor: pointer; }
+.handwork-git-error-body summary:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-git-error-body pre { max-height: 160px; margin: 4px 0 0; padding: 6px 8px; overflow: auto; border-radius: 6px; background: var(--hui-color-background-neutral-secondary); font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; scrollbar-width: thin; }
+.handwork-git-error-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.handwork-git-error > .handwork-git-error-close { flex-shrink: 0; width: 22px; height: 22px; margin: -3px 0 0; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+
+.handwork-changes-tabs { display: flex; flex-shrink: 0; gap: 2px; padding: 4px 8px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-changes-tabs > button { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 7px; border: 0; background: transparent; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: 12px; line-height: 16px; cursor: pointer; }
+.handwork-changes-tabs > button:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-changes-tabs > button[aria-selected="true"] { color: var(--hui-color-foreground-base-primary); font-weight: 500; }
+.handwork-changes-tabs > button[aria-selected="true"]::after { content: ""; position: absolute; right: 6px; bottom: -1px; left: 6px; height: 2px; border-radius: 1px; background: var(--hui-color-foreground-base-primary); }
+.handwork-changes-tabs > button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; border-radius: 4px; }
+.handwork-changes-tab-count, .handwork-change-group-count { min-width: 16px; padding: 0 5px; border-radius: 8px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 10.5px; line-height: 16px; font-weight: 400; text-align: center; font-variant-numeric: tabular-nums; }
+.handwork-changes-tab-count[data-kind="outgoing"] { color: var(--hui-color-foreground-info-primary, #6b9eea); }
+.handwork-changes-view, .handwork-working, .handwork-history { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+:is(.handwork-working, .handwork-history)[data-sized] .handwork-changed-files { flex: 0 0 auto; height: var(--handwork-files-height); max-height: calc(100% - 160px); }
+
+.handwork-commit { position: relative; z-index: 2; background: var(--hui-color-background-base-primary); display: flex; flex-shrink: 0; flex-direction: column; gap: 8px; padding: 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-commit-editor { overflow: hidden; border: 1px solid var(--hui-color-border-base-secondary); border-radius: 10px; background: var(--hui-color-background-base-primary); transition: border-color 150ms ease; }
+.handwork-commit-editor:focus-within { border-color: var(--hui-color-border-base-focus); }
+.handwork-commit-summary { position: relative; }
+.handwork-commit-summary > input { box-sizing: border-box; width: 100%; min-width: 0; height: 38px; padding: 10px 48px 8px 12px; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.handwork-commit-summary > input::placeholder, .handwork-commit-description::placeholder { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-commit-length { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: var(--hui-color-foreground-base-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.handwork-commit-summary[data-long] .handwork-commit-length { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit textarea.handwork-commit-description { display: block; box-sizing: border-box; width: 100%; min-height: 50px; max-height: 140px; margin: 0; padding: 0 12px 8px; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); field-sizing: content; resize: vertical; font: inherit; font-size: 12px; line-height: 18px; }
+.handwork-commit-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 30px; padding: 0 6px 6px; }
+.handwork-commit-tools > button { height: 24px; min-width: 0; padding: 0 6px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-commit-tools > .handwork-commit-generate { margin-inline-start: auto; }
+.handwork-commit-model { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-tertiary); font-size: 10px; }
+.handwork-commit-hint { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-commit-hint > button { flex-shrink: 0; height: 20px; margin-inline-start: auto; padding: 0 6px; border: 0; font-size: 11px; }
+.handwork-commit-hint[data-tone="warning"], .handwork-commit-hint > svg { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit-hint[data-tone="error"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-commit-footer { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.handwork-commit-footer > button { flex-shrink: 0; height: 28px; padding: 0 10px; font-size: 11.5px; }
+.handwork-commit-staging { flex: 1; min-width: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-row > .handwork-branch-trigger { margin-inline-start: auto; max-width: 40%; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-row > .handwork-repo-terminal { flex-shrink: 0; margin-inline-start: 0; }
+.handwork-sync-row > button { border: 0; box-shadow: none; }
+.handwork-sync-row > .handwork-sync-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.handwork-change-groups { padding-top: 0; isolation: isolate; }
+.handwork-working > .handwork-change-groups { flex: 0 1 38%; min-height: 112px; max-height: min(38dvh, 360px); }
+.handwork-commit-collapsed { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; padding: 7px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-commit-collapsed > button { height: 24px; padding: 0 6px; font-size: 11px; }
+.handwork-repo-name { flex: 1; max-width: none; min-width: 0; }
+.handwork-change-groups > .handwork-changes-note { margin: 6px; }
+.handwork-change-group + .handwork-change-group { margin-top: 4px; }
+.handwork-change-group-header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; background: var(--hui-color-background-base-primary); }
+.handwork-change-group-header > button:not(.handwork-change-group-toggle) { flex-shrink: 0; height: 22px; padding: 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-change-group-header > button:not(.handwork-change-group-toggle):not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-group-toggle { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 0; padding: 3px 6px; border: 0; border-radius: 4px; background: transparent; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: 11px; line-height: 16px; font-weight: 500; text-align: start; cursor: pointer; }
+.handwork-change-group-toggle:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-group-toggle:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-change-group-toggle[aria-expanded="false"] .handwork-changes-chevron { transform: rotate(-90deg); }
+.handwork-change-group-empty { margin: 0 6px 6px 24px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-change-list { margin: 0; padding: 0; list-style: none; }
+.handwork-change-row { position: relative; display: flex; align-items: center; border-radius: 5px; }
+.handwork-change-row:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-change-row[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-change-select { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; height: 28px; padding: 0 32px 0 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; text-align: start; cursor: pointer; }
+.handwork-change-select:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-change-select .handwork-change-counts { gap: 5px; font-size: 11px; }
+.handwork-change-row[aria-current] .handwork-change-filename { font-weight: 500; }
+.handwork-change-select[aria-label*=", Deleted,"] .handwork-change-filename { text-decoration: line-through; text-decoration-color: color-mix(in oklab, currentColor 50%, transparent); color: var(--hui-color-foreground-base-secondary); }
+.handwork-change-row > .handwork-change-action { position: absolute; right: 3px; width: 24px; height: 24px; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); opacity: 0; transition: opacity 100ms ease; }
+.handwork-change-row:hover > .handwork-change-action, .handwork-change-row:focus-within > .handwork-change-action, .handwork-change-row[aria-current] > .handwork-change-action { opacity: 1; }
+.handwork-change-row > .handwork-change-action:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-tag { flex-shrink: 0; padding: 0 5px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 10px; line-height: 15px; }
+.handwork-change-tag[data-kind="outside"] { background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 12%, transparent); color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-file-review-actions > button.handwork-file-review-stage { width: auto; height: 24px; margin-inline-end: 4px; padding: 0 8px; border: 0.5px solid var(--hui-color-border-base-tertiary); font-size: 11px; color: var(--hui-color-foreground-base-primary); }
+
+[data-slot="popover-content"].handwork-branch-popup { width: 300px; max-width: min(340px, calc(100vw - 24px)); padding: 0; border-radius: 10px; }
+.handwork-branch-search { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-search > input { flex: 1; min-width: 0; padding: 0; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12.5px; line-height: 18px; }
+.handwork-branch-search > input::placeholder { color: var(--hui-color-foreground-base-tertiary, var(--hui-color-foreground-base-secondary)); }
+.handwork-branch-list { max-height: 280px; padding: 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.handwork-branch-list > p { margin: 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-branch-option { display: flex; align-items: flex-start; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
+.handwork-branch-option[aria-selected="true"] { background: var(--hui-color-background-base-primary-hover); }
+.handwork-branch-check { display: flex; flex-shrink: 0; width: 14px; padding-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-text { display: flex; flex-direction: column; min-width: 0; }
+.handwork-branch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 18px; }
+.handwork-branch-option[aria-current] .handwork-branch-name, .handwork-branch-name strong { font-weight: 500; }
+.handwork-branch-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+.handwork-branch-note { margin: 0; padding: 8px 10px; border-top: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+
+.handwork-commit-list { padding-top: 0; }
+.handwork-history .handwork-change-group-title { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 6px; margin: 0; padding: 8px 6px 4px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
+.handwork-change-group-title > span { min-width: 16px; padding: 0 5px; border-radius: 8px; background: var(--hui-color-background-neutral-secondary); font-size: 10.5px; font-weight: 400; text-align: center; }
+.handwork-changed-files > .handwork-commit-row { display: flex; height: auto; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 5px 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; text-align: start; cursor: pointer; }
+.handwork-changed-files > .handwork-commit-row:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-changed-files > .handwork-commit-row[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-commit-row:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-commit-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--hui-color-foreground-base-secondary); opacity: 0.6; }
+.handwork-commit-dot[data-kind="local"] { border-color: var(--hui-color-foreground-info-primary, #6b9eea); background: var(--hui-color-foreground-info-primary, #6b9eea); opacity: 1; }
+.handwork-commit-dot[data-kind="incoming"] { border-color: var(--hui-color-foreground-warning-primary, #d2a54a); opacity: 1; }
+.handwork-commit-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.handwork-commit-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 17px; }
+.handwork-commit-row[aria-current] .handwork-commit-subject { font-weight: 500; }
+:is(.handwork-commit-text, .handwork-commit-details) .handwork-commit-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+.handwork-commit-meta code, .handwork-commit-details code { font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 10.5px; }
+.handwork-commit-badge { flex-shrink: 0; padding: 0 5px; border-radius: 4px; background: color-mix(in oklab, var(--hui-color-foreground-info-primary, #6b9eea) 14%, transparent); color: var(--hui-color-foreground-info-primary, #6b9eea); font-size: 10px; line-height: 15px; }
+.handwork-commit-badge[data-kind="incoming"] { background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 14%, transparent); color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit-details { padding: 10px 12px 8px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-history .handwork-commit-details > h3 { margin: 0; font-size: 13px; line-height: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.handwork-commit-body { max-height: 200px; margin: 6px 0 0; overflow: auto; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+.handwork-commit-details > .handwork-commit-meta { margin: 6px 0 0; white-space: normal; }
+.handwork-commit-files { margin: 8px -6px 0; padding: 0; list-style: none; }
+.handwork-commit-files button { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; text-align: start; cursor: pointer; }
+.handwork-commit-files button:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-commit-files button[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-commit-files button[aria-current] .handwork-change-filename { font-weight: 500; }
+.handwork-commit-files button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-commit-files .handwork-change-counts { gap: 5px; font-size: 11px; }
+.handwork-commit-details > .handwork-changes-empty { margin: 8px 0 0; }
 .handwork-review-panel[data-panel="activity"] > .handwork-panel-content { padding: 0; }
 .handwork-activity { display: flex; flex-direction: column; min-width: 0; padding-bottom: 12px; font-size: 12px; }
 .handwork-activity-summary { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
@@ -440,14 +624,19 @@ button:disabled { cursor: not-allowed; }
 .handwork-activity-stats strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
 .handwork-activity-stats [data-tone="failed"] strong { color: var(--hui-color-foreground-danger-primary); }
 .handwork-activity-stats [data-tone="running"] strong { color: var(--hui-color-foreground-info-primary, #6b9eea); }
-.handwork-activity-context { display: flex; flex-direction: column; gap: 6px; }
-.handwork-activity-context-label { display: flex; justify-content: space-between; gap: 12px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
-.handwork-activity-context-label > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.handwork-activity-context-label > span:last-child { flex-shrink: 0; }
-.handwork-activity-meter { height: 4px; overflow: hidden; border-radius: 999px; background: var(--hui-color-background-neutral-secondary); }
-.handwork-activity-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--hui-color-foreground-base-secondary); transition: width 200ms ease; }
-.handwork-activity-meter[data-level="medium"] > span { background: var(--hui-color-foreground-warning-primary, #d2a54a); }
-.handwork-activity-meter[data-level="high"] > span { background: var(--hui-color-foreground-danger-primary); }
+.handwork-activity-context { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.handwork-activity-context-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-activity-context-tokens { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
+/* ContextMeter portals outside the activity panel, so scope its popup by its details slot. */
+[data-slot="popover-content"]:has(> [data-slot="context-meter-details"]) { width: 280px; max-width: calc(100vw - 32px); padding: 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-primary); box-shadow: var(--hui-shadow-lifted); color: var(--hui-color-foreground-base-primary); font-size: 12px; line-height: 18px; }
+[data-slot="context-meter-details"] { display: flex; flex-direction: column; gap: 12px; min-width: 0; font-variant-numeric: tabular-nums; }
+[data-slot="context-meter-details"] > p:first-child { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
+[data-slot="context-meter-details"] > div { display: flex; flex-direction: column; gap: 8px; }
+[data-slot="context-meter-details"] [role="meter"] { width: 100%; height: 6px; overflow: hidden; border-radius: 3px; background: var(--hui-color-background-neutral-secondary); }
+[data-slot="context-meter-details"] [role="meter"] > div { height: 100%; border-radius: inherit; }
+[data-slot="context-meter-details"] [role="meter"] + p { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin: 0; }
+[data-slot="context-meter-details"] [role="meter"] + p > span:first-child { font-size: 14px; line-height: 20px; font-weight: 500; }
+[data-slot="context-meter-details"] [role="meter"] + p > span:last-child { color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
 .handwork-activity-turn { padding: 10px 6px 0; }
 .handwork-activity-turn + .handwork-activity-turn { margin-top: 6px; border-top: 1px solid var(--hui-color-border-base-primary); }
 .handwork-activity-prompt { margin: 0 8px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
@@ -481,7 +670,7 @@ details[open] > summary .handwork-activity-chevron { transform: none; }
   .handwork-review-panel { order: -1; flex: 0 1 auto; width: 100%; max-height: min(36dvh, 320px); border-inline-start: 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
   .handwork-panel-header { padding-block: 6px; }
   .handwork-review-panel[data-panel="changes"] { flex: 0 0 min(60dvh, 560px); max-height: min(60dvh, 560px); }
-  .handwork-review-panel[data-panel="changes"] .handwork-changed-files { max-height: min(20dvh, 144px); }
+  .handwork-review-panel[data-panel="changes"] .handwork-changed-files { max-height: min(25dvh, 200px); }
 }
 @media (max-width: 700px) {
   .handwork-header-actions { margin-left: auto; max-width: 100%; }
@@ -568,9 +757,9 @@ details[open] > summary .handwork-activity-chevron { transform: none; }
 .handwork-prompt-editor { display: flex; flex-direction: column; gap: 10px; }
 .handwork-prompt-editor h2 { margin-bottom: 6px !important; }
 .handwork-prompt-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
-.handwork-prompt-fields label, .handwork-prompt-body-label, .handwork-prompt-fill-fields label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-fields label, .handwork-prompt-body-label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
 .handwork-prompt-body-label { margin-top: 4px; }
-.handwork-prompt-editor [data-slot="textarea"] { margin-top: 0 !important; min-height: 200px; font-size: 13px; line-height: 20px; }
+.handwork-prompt-editor > [data-slot="textarea"] { margin-top: 0 !important; min-height: 200px; font-size: 13px; line-height: 20px; }
 .handwork-prompt-editor .handwork-settings-note svg { vertical-align: -1px; }
 .handwork-settings-v2 code { padding: 1px 4px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 0.92em; }
 .handwork-prompt-variable { display: inline-block; margin: 2px 4px 0 0; padding: 0 6px; border-radius: 999px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); font-size: 11px; line-height: 18px; }
@@ -580,12 +769,41 @@ details[open] > summary .handwork-activity-chevron { transform: none; }
 .handwork-prompt-detail-actions { display: flex; gap: 2px; flex-shrink: 0; }
 .handwork-prompt-detail-actions button { width: 28px; height: 28px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
 .handwork-prompt-preview { padding: 12px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; scrollbar-width: thin; }
-.handwork-prompt-blank { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; color: var(--hui-color-foreground-base-secondary); }
-.handwork-prompt-blank > svg { margin-bottom: 6px; color: var(--hui-color-foreground-base-tertiary); }
-.handwork-prompt-blank p { margin: 0; color: var(--hui-color-foreground-base-primary); font-size: 14px; font-weight: 500; }
-.handwork-prompt-blank span { max-width: 340px; margin-bottom: 10px; font-size: 12px; line-height: 18px; }
-.handwork-prompt-fill { width: 460px; }
-.handwork-prompt-fill-fields { display: flex; flex-direction: column; gap: 14px; padding-block: 20px; max-height: 50dvh; overflow-y: auto; }
+/* An empty library is a compact, single-column introduction rather than an empty two-pane view. */
+.handwork-prompts[data-empty] { width: min(560px, calc(100vw - 48px)); height: auto; }
+/* Writing the first prompt has no list beside it, so the dialog fits the editor. */
+.handwork-prompts:not([data-empty]):not(:has(.handwork-prompt-sidebar)) { height: auto; }
+.handwork-prompt-blank > p { text-wrap: pretty; }
+.handwork-prompts[data-empty] .handwork-prompt-panel { padding: 8px 28px 28px; }
+.handwork-prompt-blank { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px 0 0; text-align: center; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-blank-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-blank h2 { margin: 0 !important; color: var(--hui-color-foreground-base-primary); font-size: 15px !important; font-weight: 500; }
+.handwork-prompt-blank > p { max-width: 380px; margin: 0 0 8px; font-size: 13px; line-height: 20px; }
+.handwork-prompt-blank kbd, .handwork-prompt-blank code { padding: 0 5px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 5px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-primary); font-size: 12px; }
+.handwork-prompt-starters { display: grid; gap: 8px; width: 100%; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--hui-color-border-base-primary); text-align: start; }
+.handwork-prompt-starters > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-prompt-starters ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.handwork-prompt-starter { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; text-align: start; cursor: pointer; transition: background-color var(--hui-duration-fast, 120ms) var(--hui-ease-out, ease-out), border-color var(--hui-duration-fast, 120ms) var(--hui-ease-out, ease-out); }
+.handwork-prompt-starter:hover:not(:disabled) { border-color: var(--hui-color-border-base-secondary); background: var(--hui-color-background-base-primary-hover); }
+.handwork-prompt-starter:focus-visible { outline: var(--hui-focus-ring); outline-offset: 1px; }
+.handwork-prompt-starter:disabled { cursor: not-allowed; opacity: 0.6; }
+.handwork-prompt-starter > svg { flex-shrink: 0; margin-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-starter > span { display: grid; gap: 2px; min-width: 0; }
+/* Prompt fields use the Honest AI form controls that generated replies use. */
+.handwork-prompt-form { text-align: start; }
+/* Dialog label rules must not restyle the Honest AI form's own labels. */
+/* Settings textarea sizing is for instruction files, not form fields. */
+.handwork-settings-panel .handwork-prompt-form [data-slot="textarea"] { margin-top: 0; min-height: 0; }
+.handwork-chat-dialog .handwork-prompt-form label, .handwork-prompt-form-preview label { display: inline-flex; margin: 0; font-size: 13px; font-weight: 500; }
+.handwork-prompt-form [data-slot="form"], .handwork-prompt-form form { margin: 0; }
+.handwork-prompt-form-preview { display: grid; gap: 8px; padding: 14px 16px; border: 1px dashed var(--hui-color-border-base-secondary); border-radius: 12px; background: var(--hui-color-background-base-secondary); }
+.handwork-prompt-form-preview > span, .handwork-prompt-fill-preview > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-prompt-fill { width: min(560px, calc(100vw - 32px)); }
+.handwork-prompt-fill-fields { display: flex; flex-direction: column; gap: 16px; padding-block: 20px; max-height: 60dvh; overflow-y: auto; }
+.handwork-prompt-fill-preview { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); }
+.handwork-prompt-fill-preview p { margin: 0; max-height: 160px; overflow-y: auto; font-size: 12.5px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--hui-color-foreground-base-secondary); scrollbar-width: thin; }
+.handwork-prompt-filled { padding: 1px 4px; border-radius: 4px; background: var(--hui-color-background-accent-primary, var(--hui-color-background-neutral-secondary)); color: var(--hui-color-foreground-base-primary); }
+.handwork-prompt-fill-count { margin: 0 auto 0 0 !important; }
 .handwork-prompt-fill [data-slot="dialog-footer"] { border-top: 1px solid var(--hui-color-border-base-primary); }
 @media (max-width: 700px) {
   .handwork-prompt-sidebar { flex: 0 0 auto; max-height: 34dvh; border-right: 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
@@ -653,6 +871,20 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-response-files-more { justify-self: start; color: var(--hui-color-foreground-base-secondary); box-shadow: none; }
 @media (hover: none) { .handwork-response-file > button:last-child { opacity: 1; } }
 
+/* Native presentation for read-only terminal command reports. */
+.handwork-command-report { width: min(640px, calc(100vw - 48px)); max-height: 86dvh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-command-report [data-slot="dialog-body"] { min-height: 0; overflow: auto; font-size: 12px; line-height: 18px; }
+.handwork-report-fields { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.handwork-report-fields > div { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 2fr); gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-report-fields dt { color: var(--hui-color-foreground-base-secondary); text-transform: capitalize; }
+.handwork-report-fields dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.handwork-report-fields .handwork-report-fields > div { display: flex; flex-direction: column; gap: 4px; }
+.handwork-report-list { margin: 0; padding-left: 16px; }
+.handwork-report-list > li + li { margin-top: 12px; }
+.handwork-report-muted { color: var(--hui-color-foreground-base-secondary); }
+.handwork-report-number { font-variant-numeric: tabular-nums; }
+.handwork-report-warning { color: var(--hui-color-foreground-warning-primary); }
+
 /* File viewer. */
 .handwork-file-viewer { width: min(720px, calc(100vw - 48px)); max-width: calc(100vw - 48px); max-height: 86dvh; top: 50%; transform: translate(-50%, -50%); translate: none; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
 .handwork-file-viewer.is-image { width: auto; min-width: min(420px, calc(100vw - 48px)); }
@@ -661,11 +893,10 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-file-location { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .handwork-file-size { flex-shrink: 0; }
 .handwork-file-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
-.handwork-file-markdown :is(h1, h2, h3) { font-family: inherit; font-size: 1.15em; font-weight: 600; line-height: 1.4; margin-block: 1em 0.4em; }
-.handwork-file-markdown > :first-child > :first-child { margin-top: 0; }
+.handwork-file-markdown > :first-child { margin-top: 0; }
 .handwork-file-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; background: var(--hui-color-background-base-secondary); scrollbar-width: thin; }
 .handwork-file-body > img { display: block; max-width: 100%; max-height: calc(86dvh - 150px); margin: auto; object-fit: contain; }
-.handwork-file-text { margin: 0; padding: 16px 20px; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-code-font-size, 12px); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
+.handwork-file-text { margin: 0; padding: 16px 20px; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-code-font-size, 12px); line-height: 1.6; white-space: pre; overflow: auto; tab-size: 2; }
 .handwork-file-markdown { padding: 16px 24px; background: var(--hui-color-background-base-primary); font-size: var(--handwork-ui-font-size, 14px); }
 .handwork-file-note { margin: 0; padding: 8px 20px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
 .handwork-file-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 180px; padding: 32px; text-align: center; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
@@ -680,6 +911,7 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-queue { margin: 0 8px 8px; padding: 6px 6px 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; background: var(--hui-color-background-base-secondary); }
 .handwork-queue header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; padding: 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
 .handwork-queue header button { height: 22px; box-shadow: none; }
+.handwork-queue-actions { display: inline-flex; align-items: center; gap: 2px; }
 .handwork-queue ol { margin: 0; padding: 0; list-style: none; }
 .handwork-queue li { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 2px 0 6px; border-radius: 8px; font-size: 13px; }
 .handwork-queue li:hover { background: var(--hui-color-background-base-primary-hover); }
@@ -729,3 +961,135 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-mermaid-note { margin: 0; padding: 8px 12px 10px; border-top: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
 /* Diagrams share the app's flat surfaces instead of Mermaid's default shadows. */
 .handwork-mermaid-diagram svg :is(.node, .cluster, .label-container, rect, polygon, path) { filter: none !important; }
+
+/* Archive: a quiet section at the end of the sidebar, and a banner on an archived chat. */
+.handwork-archived-heading { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.handwork-archived-heading svg { width: 13px; height: 13px; }
+.handwork-archived-count { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.handwork-archived-banner { display: flex; align-items: center; gap: 8px; margin: 0 8px 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-archived-banner > svg { flex-shrink: 0; }
+.handwork-archived-banner > span { flex: 1; min-width: 0; }
+.handwork-archived-banner button { flex-shrink: 0; gap: 5px; box-shadow: none; }
+
+/* Versions of an edited or retried message. The switcher stays visible so other versions are discoverable. */
+.handwork-versions { display: inline-flex; align-items: center; margin-inline-end: 2px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.handwork-versions > span { min-width: 34px; text-align: center; }
+.handwork-message-actions .handwork-versions button:disabled { opacity: 0.4; }
+.handwork-editable-message:has(.handwork-versions) > [data-slot="chat-message-footer"] { opacity: 1; }
+
+/* Model shortcuts. */
+.handwork-favorite-star { fill: currentColor; color: var(--hui-color-foreground-warning-primary, #c99a2e); }
+/* The check sits on the right, matching the model list; it only renders while checked. */
+.handwork-favorite-option { grid-template-columns: 1fr 16px; }
+.handwork-favorite-option > :first-child { grid-column: 2; grid-row: 1; }
+.handwork-favorite-option > :last-child { grid-column: 1; grid-row: 1; min-width: 0; }
+.handwork-favorite-label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.handwork-favorite-label svg { width: 14px; height: 14px; }
+
+/* Keyboard shortcut reference. */
+.handwork-shortcuts { width: 680px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-shortcuts kbd { display: inline-flex; min-width: 20px; height: 20px; align-items: center; justify-content: center; padding: 0 5px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 5px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font: 500 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-sizing: border-box; }
+.handwork-shortcuts [data-slot="dialog-description"] kbd { margin-inline: 1px; }
+.handwork-shortcut-filter { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+.handwork-shortcut-filter > svg { position: absolute; z-index: 1; left: 10px; color: var(--hui-color-foreground-base-tertiary); pointer-events: none; }
+.handwork-shortcut-filter input { padding-left: 30px; }
+.handwork-shortcut-groups { columns: 2 280px; column-gap: 28px; }
+.handwork-shortcut-groups section { break-inside: avoid; margin-bottom: 20px; }
+.handwork-shortcut-groups h3 { margin: 0 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; font-weight: 500; }
+.handwork-shortcut-groups dl { margin: 0; }
+.handwork-shortcut-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); font-size: 13px; line-height: 20px; }
+.handwork-shortcut-row:last-child { border-bottom: 0; }
+.handwork-shortcut-row dt { min-width: 0; }
+.handwork-shortcut-row dt span { display: block; color: var(--hui-color-foreground-base-tertiary); font-size: 12px; line-height: 17px; }
+.handwork-shortcut-row dd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 0; flex-shrink: 0; }
+.handwork-shortcut-choice, .handwork-shortcut-keys { display: inline-flex; align-items: center; gap: 3px; }
+.handwork-shortcut-or { margin-inline-end: 1px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+
+/* Chats that need the person, then chats that are working, above the chat lists. */
+.handwork-attention { display: grid; gap: 2px; }
+.handwork-attention ul { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.handwork-attention-heading { display: flex; align-items: center; gap: 6px; min-height: 24px; padding-inline: 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-attention-heading kbd { margin-left: auto; padding: 0 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 4px; color: var(--hui-color-foreground-base-tertiary); font: 500 10px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.handwork-attention-item { position: relative; display: flex; align-items: center; border-radius: 8px; }
+.handwork-attention-item[data-active] { background: var(--hui-color-background-base-primary-hover); }
+.handwork-attention-row { flex: 1; min-width: 0; height: auto; min-height: 40px; justify-content: flex-start; align-items: flex-start; gap: 8px; padding: 6px 8px; border: 0; box-shadow: none; text-align: left; }
+.handwork-attention-icon { display: flex; flex-shrink: 0; margin-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-attention-item[data-kind="approval"] .handwork-attention-icon { color: var(--hui-color-foreground-accent-primary); }
+.handwork-attention-item[data-kind="failed"] .handwork-attention-icon { color: var(--hui-color-foreground-danger-primary); }
+.handwork-attention-item[data-kind="interrupted"] .handwork-attention-icon, .handwork-attention-item[data-kind="queue"] .handwork-attention-icon { color: var(--hui-color-foreground-warning-primary); }
+.handwork-attention-text { display: grid; min-width: 0; line-height: 17px; }
+.handwork-attention-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-attention-text span:last-child { color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-attention-dismiss { position: absolute; top: 6px; right: 4px; width: 22px; height: 22px; border: 0; box-shadow: none; opacity: 0; }
+.handwork-attention-item:is(:hover, :focus-within) .handwork-attention-dismiss { opacity: 1; }
+@media (hover: none) { .handwork-attention-dismiss { opacity: 1; } }
+.handwork-chat-flag { display: flex; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-flag[data-kind="approval"] { color: var(--hui-color-foreground-accent-primary); }
+.handwork-chat-flag[data-kind="failed"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-chat-flag[data-kind="interrupted"] { color: var(--hui-color-foreground-warning-primary); }
+
+/* Staged attachments: room left, and files that could not be added with their reasons. */
+.handwork-attachment-tray { display: grid; gap: 4px; }
+.handwork-attachment-allowance { margin: 0; padding: 0 8px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-attachment-rejected { margin: 0 4px; padding: 6px 8px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); font-size: 12px; }
+.handwork-attachment-rejected-heading { display: flex; align-items: center; gap: 6px; color: var(--hui-color-foreground-base-primary); }
+.handwork-attachment-rejected-heading svg { flex-shrink: 0; color: var(--hui-color-foreground-danger-primary); }
+.handwork-attachment-rejected-heading span { flex: 1; }
+.handwork-attachment-rejected-heading button { width: 22px; height: 22px; border: 0; box-shadow: none; }
+.handwork-attachment-rejected ul { display: grid; gap: 2px; margin: 4px 0 0; padding: 0 0 0 19px; list-style: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-attachment-rejected li { display: flex; gap: 8px; min-width: 0; }
+.handwork-attachment-rejected-name { flex-shrink: 1; min-width: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-primary); }
+
+/* Chat details: what shapes the open chat's replies, as a stack of cards. */
+.handwork-details-trigger { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-details { width: min(560px, calc(100vw - 32px)); max-height: min(780px, 90dvh); display: flex; flex-direction: column; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-details-subtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-details-body { display: grid; gap: 10px; min-height: 0; overflow-y: auto; padding-block: 16px; scrollbar-width: thin; }
+.handwork-details-hero { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); }
+.handwork-details-model { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.handwork-details-logo { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); }
+.handwork-details-model-text { display: grid; gap: 1px; min-width: 0; }
+.handwork-details-model-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; line-height: 20px; }
+.handwork-details-model-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.handwork-details-badges:empty { display: none; }
+.handwork-details-context { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-context > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-details-meter { display: flex; align-items: center; gap: 10px; }
+.handwork-details-meter [data-slot] { flex-shrink: 0; }
+.handwork-details-context p { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-alert { margin: 0; padding: 10px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-details-card { display: grid; gap: 10px; padding: 12px 14px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; }
+.handwork-details-card > header { display: flex; align-items: center; gap: 8px; }
+.handwork-details-card h3 { flex: 1; margin: 0; font-size: 12px; font-weight: 600; color: var(--hui-color-foreground-base-primary); }
+.handwork-details-card-icon { display: flex; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-details-count { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 18px; text-align: center; }
+.handwork-details-note, .handwork-details-footnote { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-details-footnote { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-details-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.handwork-details-rows li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 0; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-rows li:first-child { border-top: 0; padding-top: 2px; }
+.handwork-details-rows li > svg { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-details-row-text { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.handwork-details-row-text > span { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.handwork-details-row-text code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-tertiary); font-family: var(--hui-font-mono, ui-monospace, monospace); font-size: 11px; }
+.handwork-details-meta { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-details-reveal { flex-shrink: 0; width: 26px; height: 26px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-details-reveal:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-details-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; margin: 0; }
+.handwork-details-tools div { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+.handwork-details-tools dt { color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-tools dd { margin: 0; }
+.handwork-details-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.handwork-details-thumbs button { display: block; width: 100%; aspect-ratio: 1; padding: 0; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-secondary); cursor: zoom-in; }
+.handwork-details-thumbs button:hover { border-color: var(--hui-color-border-base-secondary); }
+.handwork-details-thumbs button:focus-visible { outline: var(--hui-focus-ring); outline-offset: 1px; }
+.handwork-details-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.handwork-details-more { justify-self: start; box-shadow: none; }
+.handwork-details-skeleton { display: grid; gap: 8px; padding: 2px 0; }
+.handwork-details-skeleton span { height: 10px; border-radius: 5px; background: var(--hui-color-background-neutral-secondary); }
+@media (prefers-reduced-motion: no-preference) { .handwork-details-skeleton span { animation: handwork-details-pulse 1.2s ease-in-out infinite; } }
+@keyframes handwork-details-pulse { 50% { opacity: 0.5; } }
+.handwork-details-footer { flex-direction: row; justify-content: space-between; gap: 8px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-footer button:only-child { margin-left: auto; }
+@media (max-width: 520px) { .handwork-details-tools { grid-template-columns: minmax(0, 1fr); } }

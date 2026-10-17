@@ -4,6 +4,7 @@ import { useRender } from "@base-ui-components/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { HoverTooltip } from "@/components/ui/tooltip"
 
 const buttonVariants = cva(
   "relative inline-flex w-fit shrink-0 cursor-pointer items-center justify-center gap-[var(--hui-space-3)] whitespace-nowrap rounded-[var(--hui-radius-2)] border-0 bg-transparent px-[var(--hui-density-control-padding-inline,var(--hui-space-4))] py-[var(--hui-density-control-padding-block,var(--hui-space-3))] [font-size:var(--hui-font-size-control,13px)] [font-weight:var(--hui-font-weight-medium)] [letter-spacing:var(--hui-letter-spacing-control,-0.003em)] [line-height:var(--hui-line-height-control,16px)] outline-none motion-safe:[transition:var(--hui-transition-interactive)] motion-safe:active:[transition:var(--hui-transition-pressed)] focus-visible:[outline:var(--hui-focus-ring)] focus-visible:outline-offset-[var(--hui-focus-ring-offset-accent)] not-disabled:active:scale-[var(--hui-scale-pressed)] disabled:pointer-events-auto disabled:cursor-not-allowed disabled:text-[var(--hui-color-foreground-base-tertiary)] disabled:shadow-none pointer-coarse:after:pointer-events-none pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -69,6 +70,7 @@ function Button({
   render,
   asChild = false,
   children,
+  title,
   ...props
 }: ButtonProps) {
   const renderValue = asChild
@@ -86,7 +88,7 @@ function Button({
     type: typeValue,
   }
 
-  return useRender({
+  const element = useRender({
     defaultTagName: "button",
     render: renderValue,
     props: mergeProps<"button">(
@@ -94,6 +96,7 @@ function Button({
       asChild ? props : { ...props, children }
     ),
   })
+  return <HoverTooltip content={title}>{element}</HoverTooltip>
 }
 
 export { Button, buttonVariants }

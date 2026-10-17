@@ -45,6 +45,17 @@ export class SavedPrompts {
     this.write(existing ? prompts.map(item => item.id === prompt.id ? prompt : item) : [...prompts, prompt]);
     return prompt;
   }
+  /** Adds prompts from a backup that are not saved here yet. Returns how many were added. */
+  merge(incoming) {
+    const prompts = this.list();
+    const known = new Set(prompts.map(prompt => prompt.id));
+    const now = Date.now();
+    const added = incoming.filter(prompt => prompt && validPromptInput({ id: prompt.id, title: prompt.title, folder: prompt.folder || undefined, text: prompt.text }) && !known.has(prompt.id) && known.add(prompt.id))
+      .slice(0, Math.max(0, MAX_PROMPTS - prompts.length))
+      .map(prompt => ({ id: prompt.id, title: prompt.title.trim(), folder: prompt.folder?.trim() ?? '', text: prompt.text, createdAt: Number(prompt.createdAt) || now, updatedAt: Number(prompt.updatedAt) || now }));
+    if (added.length) this.write([...prompts, ...added]);
+    return added.length;
+  }
   remove(id) {
     const prompts = this.list();
     if (!prompts.some(prompt => prompt.id === id)) throw new Error('This prompt was already deleted.');

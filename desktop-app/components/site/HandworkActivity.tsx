@@ -1,6 +1,8 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { ArrowRightLeft, Brain, ChevronDown, CircleAlert, FileText, Globe, LoaderCircle, PencilLine, Search, SquareTerminal, Trash2, Wrench } from 'honestui/icons';
+import { ContextMeter } from 'honestui/ai/context-meter';
 import type { Entry } from '@/lib/desktop-state';
 import { lineDiff } from '@/lib/line-diff';
 import { toolLabel } from '@/lib/transcript-activity';
@@ -26,7 +28,7 @@ function ActivityRow({ entry }: { entry: Entry }) {
   const label = toolLabel(entry);
   const head = <>
     <Icon className="handwork-activity-icon" aria-hidden strokeWidth={1.75} />
-    <span className="handwork-activity-label" title={label}>{label}</span>
+    <HoverTooltip content={label}><span className="handwork-activity-label" >{label}</span></HoverTooltip>
     {state === 'failed' && <span className="handwork-activity-state">Failed</span>}
     {state === 'running' && <span className="handwork-activity-state">Running</span>}
     {hasDetail && <ChevronDown className="handwork-activity-chevron" aria-hidden strokeWidth={1.75} />}
@@ -37,7 +39,7 @@ function ActivityRow({ entry }: { entry: Entry }) {
       <summary className="handwork-activity-head">{head}</summary>
       <div className="handwork-activity-detail">
         {changes.length > 0 && <ul className="handwork-activity-files">{changes.map(change => <li key={change.path}>
-          <span title={change.path}>{change.path.split('/').at(-1)}</span><ChangeCounts added={change.add} removed={change.del} />
+          <HoverTooltip content={change.path}><span >{change.path.split('/').at(-1)}</span></HoverTooltip><ChangeCounts added={change.add} removed={change.del} />
         </li>)}</ul>}
         {input && <><div className="handwork-activity-caption">Input</div><pre>{input}</pre></>}
         {entry.text && <><div className="handwork-activity-caption">Output</div><pre>{entry.text}</pre></>}
@@ -62,7 +64,6 @@ export default function HandworkActivity({ entries, workspaceName, used, capacit
   const failed = tools.filter(entry => entry.status === 'failed').length;
   const running = tools.filter(entry => !isDone(entry)).length;
   const edited = new Set(tools.flatMap(entry => (entry.diffs ?? []).map(diff => diff.path))).size;
-  const share = used !== undefined && capacity ? Math.min(1, used / capacity) : undefined;
 
   return <div className="handwork-activity">
     <div className="handwork-activity-summary">
@@ -73,12 +74,14 @@ export default function HandworkActivity({ entries, workspaceName, used, capacit
         {edited > 0 && <span><strong>{edited}</strong> {edited === 1 ? 'file' : 'files'} edited</span>}
       </div>
       {used !== undefined && <div className="handwork-activity-context">
-        <div className="handwork-activity-context-label"><span>Context{workspaceName ? ` · ${workspaceName}` : ''}</span><span>{used.toLocaleString()}{capacity ? ` / ${capacity.toLocaleString()}` : ''} tokens</span></div>
-        {share !== undefined && <div className="handwork-activity-meter" role="meter" aria-label="Context used" aria-valuemin={0} aria-valuemax={capacity} aria-valuenow={used} data-level={share > 0.85 ? 'high' : share > 0.6 ? 'medium' : undefined}><span style={{ width: `${share * 100}%` }} /></div>}
+        <HoverTooltip content={workspaceName || undefined}><span className="handwork-activity-context-label" >Context{workspaceName ? ` · ${workspaceName}` : ''}</span></HoverTooltip>
+        {capacity !== undefined && capacity > 0
+          ? <ContextMeter used={used} limit={capacity} />
+          : <span className="handwork-activity-context-tokens">{used.toLocaleString()} tokens</span>}
       </div>}
     </div>
     {shown.map((turn, index) => <section key={turn.prompt?.id ?? `turn-${index}`} className="handwork-activity-turn" aria-label={turn.prompt ? `Activity for: ${turn.prompt.text.slice(0, 80)}` : 'Activity'}>
-      {turn.prompt && <h3 className="handwork-activity-prompt" title={turn.prompt.text}>{turn.prompt.text.split('\n')[0] || 'Message'}</h3>}
+      {turn.prompt && <HoverTooltip content={turn.prompt.text}><h3 className="handwork-activity-prompt" >{turn.prompt.text.split('\n')[0] || 'Message'}</h3></HoverTooltip>}
       <ol className="handwork-activity-list">{turn.tools.map(entry => <ActivityRow key={entry.id} entry={entry} />)}</ol>
     </section>)}
   </div>;

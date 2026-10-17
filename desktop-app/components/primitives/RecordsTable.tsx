@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import GlideMenu from "@/components/primitives/GlideMenu";
 import { IconArrowDown, IconArrowLeftRight, IconArrowUpRight, IconBraces, IconCalendar, IconCheck, IconChevronRight, IconCircleCheck, IconClose, IconCopy, IconDatabase, IconEllipsis, IconEyeOff, IconFile, IconGlobe, IconInfo, IconLink, IconListChecks, IconPin, IconPlus, IconRetry, IconSettings, IconSparklesFilled, IconTextLines, IconUndo, IconUser, type IconComponent } from "@/components/atoms/Icons";
@@ -196,12 +197,12 @@ const INPUT_OPTIONS = ["Company", "Categories", "Last interaction", "Connection 
 
 function Checkbox({ checked, mixed = false, onChange, label }: { checked: boolean; mixed?: boolean; onChange: () => void; label: string }) {
   return (
-    <label className="records-checkbox" title={label} onClick={(event) => event.stopPropagation()}>
+    <HoverTooltip content={label}><label className="records-checkbox"  onClick={(event) => event.stopPropagation()}>
       <input type="checkbox" checked={checked} onChange={onChange} aria-label={label} />
       <span className={`records-checkbox-box ${checked || mixed ? "is-active" : ""}`}>
         {mixed ? <span className="records-checkbox-dash" /> : checked ? <IconCheck size={12} /> : null}
       </span>
-    </label>
+    </label></HoverTooltip>
   );
 }
 
@@ -255,14 +256,14 @@ function TagList({ tags }: { tags: string[] }) {
   const hiddenCount = tags.length - visibleCount;
 
   return (
-    <div ref={containerRef} className="records-tags" title={tags.join(", ")} aria-label={`Categories: ${tags.join(", ")}`}>
+    <HoverTooltip content={tags.join(", ")}><div ref={containerRef} className="records-tags"  aria-label={`Categories: ${tags.join(", ")}`}>
       <div ref={measureRef} className="records-tags-measure" aria-hidden>
         {tags.map((tag) => <span key={tag} data-tag-measure><Tag name={tag} /></span>)}
         <span data-more-measure className="records-more-tag">+{tags.length}</span>
       </div>
       {tags.slice(0, visibleCount).map((tag) => <Tag key={tag} name={tag} />)}
       {hiddenCount > 0 && <span className="records-more-tag">+{hiddenCount}</span>}
-    </div>
+    </div></HoverTooltip>
   );
 }
 
@@ -707,11 +708,11 @@ export default function RecordsTable({ rows = INITIAL_ROWS, fill = false }: { ro
               const selectedRow = selected.has(row.id);
               const strength = STRENGTH[row.strength];
               return <tr key={row.id} className={`records-row ${selectedRow ? "is-selected" : ""}`}>
-                <td className={`records-cell records-sticky-cell records-company-cell ${prop?.col === "Company" ? "is-colsel" : ""}`}><span className="records-rownum">{index + 1}</span><Checkbox checked={selectedRow} onChange={() => toggleRow(row.id)} label={`Select ${row.name}`} /><span className="records-company-mark">{row.name.slice(0, 1).toUpperCase()}</span><a href={row.website ? `https://${row.website}` : "#"} onClick={(event) => !row.website && event.preventDefault()} title={row.name} className={`records-company-name ${row.website ? "has-link" : ""}`}>{row.name}</a></td>
+                <td className={`records-cell records-sticky-cell records-company-cell ${prop?.col === "Company" ? "is-colsel" : ""}`}><span className="records-rownum">{index + 1}</span><Checkbox checked={selectedRow} onChange={() => toggleRow(row.id)} label={`Select ${row.name}`} /><span className="records-company-mark">{row.name.slice(0, 1).toUpperCase()}</span><HoverTooltip content={row.name}><a href={row.website ? `https://${row.website}` : "#"} onClick={(event) => !row.website && event.preventDefault()}  className={`records-company-name ${row.website ? "has-link" : ""}`}>{row.name}</a></HoverTooltip></td>
                 <td className={`records-cell ${prop?.col === "Categories" ? "is-colsel" : ""}`}>{isCalc("Categories", index) ? <CalcCell /> : <TagList tags={row.tags} />}</td>
                 <td className={`records-cell ${row.last === "No contact" ? "records-muted" : ""} ${prop?.col === "Last interaction" ? "is-colsel" : ""}`}>{isCalc("Last interaction", index) ? <CalcCell /> : row.last}</td>
                 <td className={`records-cell ${prop?.col === "Connection strength" ? "is-colsel" : ""}`}>{isCalc("Connection strength", index) ? <CalcCell /> : <span className="records-strength"><span className="records-strength-dot" style={{ background: strength.color }} />{strength.label}</span>}</td>
-                <td className={`records-cell ${prop?.col === "Links" ? "is-colsel" : ""}`}>{isCalc("Links", index) ? <CalcCell /> : row.website ? <a className="records-link" href={`https://${row.website}`} title={row.website} target="_blank" rel="noreferrer"><span className="records-link-label">{row.website}</span><IconArrowUpRight size={12} /></a> : <span className="records-muted">—</span>}</td>
+                <td className={`records-cell ${prop?.col === "Links" ? "is-colsel" : ""}`}>{isCalc("Links", index) ? <CalcCell /> : row.website ? <HoverTooltip content={row.website}><a className="records-link" href={`https://${row.website}`}  target="_blank" rel="noreferrer"><span className="records-link-label">{row.website}</span><IconArrowUpRight size={12} /></a></HoverTooltip> : <span className="records-muted">—</span>}</td>
                 {aiAdded && (
                   <td className={`records-cell ${prop?.col === AI_LABEL ? "is-colsel" : ""}`}>
                     {calc?.col === AI_LABEL ? (index < calc.resolved ? competitorsFor(index) : <CalcCell />) : aiDone ? competitorsFor(index) : <span className="records-muted">—</span>}

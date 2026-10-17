@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useMemo, useState } from 'react';
 import HandworkInteractiveView from './HandworkInteractiveView';
 import { ChatMessage } from '@/components/ui/chat-thread';
@@ -10,7 +11,7 @@ import { HandworkMermaid } from '@/components/site/HandworkMermaid';
 import { ThinkingState, ThinkingText } from 'honestui/ai/thinking-state';
 import { ToolChips, type ToolCall, type FileChange } from 'honestui/ai/tool-chips';
 import { StreamingText, StreamingCitation } from 'honestui/ai/streaming-text';
-import { Check, ChevronDown, Copy, RotateCcw, FileText, FileImage, FileCode, FolderOpen } from 'honestui/icons';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, RotateCcw, FileText, FileImage, FileCode, FolderOpen } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
 import type { Entry, EntryAttachment } from '@/lib/desktop-state';
 import type { FileTarget } from '@/components/site/HandworkFileViewer';
@@ -44,10 +45,10 @@ function AssistantReply({ text, streaming, onSend, onOpenFile }: { text: string;
       a: ({ children, href }) => {
         const url = sourceUrl(href);
         const local = url ? undefined : localFileTarget(href);
-        if (local) return <button type="button" className="handwork-file-link" title={local} onClick={() => onOpenFile({ name: fileName(local), target: local })}>{children}</button>;
+        if (local) return <HoverTooltip content={local}><button type="button" className="handwork-file-link"  onClick={() => onOpenFile({ name: fileName(local), target: local })}>{children}</button></HoverTooltip>;
         if (!url) return <span>{children}</span>;
         const source = sources.find(item => item.href === url);
-        return <StreamingCitation href={url} title={source?.title || url} target="_blank" rel="noopener noreferrer">{source && source.title === source.domain ? source.domain : children}</StreamingCitation>;
+        return <HoverTooltip content={source?.title || url}><StreamingCitation href={url}  target="_blank" rel="noopener noreferrer">{source && source.title === source.domain ? source.domain : children}</StreamingCitation></HoverTooltip>;
       },
       img: ({ alt }) => <span>[Image: {alt || 'remote image not loaded'}]</span>,
     }} blocks={{ honestai: source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} />, 'honestai-lang': source => <HandworkInteractiveView source={source} streaming={streaming} onSend={onSend} />, mermaid: source => <HandworkMermaid source={source} streaming={streaming} /> }}>{prepared}</Markdown>
@@ -63,11 +64,23 @@ export function toolStep(entry: Entry): ToolCall {
   };
 }
 
-function MessageActions({ text, user = false, onRetry }: { text: string; user?: boolean; onRetry?: () => void }) {
+/** Where a message sits among the saved versions of its turn. */
+export type MessageVersion = { index: number; total: number; onPrevious?: () => void; onNext?: () => void };
+
+function VersionSwitcher({ version }: { version: MessageVersion }) {
+  return <div className="handwork-versions" role="group" aria-label={`Version ${version.index + 1} of ${version.total}`}>
+    <Button variant="link" size="icon-sm" aria-label="Previous version" title="Previous version" disabled={!version.onPrevious} onClick={version.onPrevious}><ChevronLeft aria-hidden /></Button>
+    <span aria-hidden>{version.index + 1} / {version.total}</span>
+    <Button variant="link" size="icon-sm" aria-label="Newer version" title="Newer version" disabled={!version.onNext} onClick={version.onNext}><ChevronRight aria-hidden /></Button>
+  </div>;
+}
+
+function MessageActions({ text, user = false, onRetry, version }: { text: string; user?: boolean; onRetry?: () => void; version?: MessageVersion }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   useEffect(() => { if (state === 'idle') return; const timer = setTimeout(() => setState('idle'), 2000); return () => clearTimeout(timer); }, [state]);
   const label = user ? 'Copy message' : 'Copy reply';
   return <div data-slot="reply-actions" className="handwork-message-actions">
+    {version && <VersionSwitcher version={version} />}
     <Button variant="link" size="icon-sm" aria-label={label} title={label} onClick={() => {
       void navigator.clipboard.writeText(text).then(() => setState('copied')).catch(() => setState('failed'));
     }}>{state === 'copied' ? <Check aria-hidden /> : <Copy aria-hidden />}</Button>
@@ -88,9 +101,9 @@ function MessageAttachments({ files, onOpenFile }: { files: EntryAttachment[]; o
       const openable = !!(file.data && file.mimeType.startsWith('image/')) || !!file.uri;
       if (file.data && file.mimeType.startsWith('image/')) return <li key={index}><button type="button" className="handwork-message-image" aria-label={`Open ${file.name}`} onClick={() => onOpenFile(target)}><img src={`data:${file.mimeType};base64,${file.data}`} alt="" /></button></li>;
       const Icon = fileIcon(file.name, file.mimeType);
-      return <li key={index}><button type="button" className="handwork-file-chip" disabled={!openable} title={openable ? `Open ${file.name}` : `${file.name} is not available on this computer`} onClick={() => onOpenFile(target)}>
+      return <li key={index}><HoverTooltip content={openable ? `Open ${file.name}` : `${file.name} is not available on this computer`}><button type="button" className="handwork-file-chip" disabled={!openable}  onClick={() => onOpenFile(target)}>
         <Icon aria-hidden /><span>{file.name}</span>{fileSize(file.size) && <span className="handwork-file-chip-meta">{fileSize(file.size)}</span>}
-      </button></li>;
+      </button></HoverTooltip></li>;
     })}
   </ul>;
 }
@@ -108,14 +121,18 @@ function ResponseFiles({ paths, workspace, onOpenFile, onRevealFile }: { paths: 
       const root = workspace?.replace(/[\\/]$/, '');
       const folder = root && (absoluteFolder === root || absoluteFolder.startsWith(`${root}/`) || absoluteFolder.startsWith(`${root}\\`)) ? absoluteFolder.slice(root.length + 1) : absoluteFolder;
       return <div key={path} className="handwork-response-file">
-        <button type="button" className="handwork-response-file-open" title={path} onClick={() => onOpenFile({ name, target: path })}>
+        <HoverTooltip content={path}><button type="button" className="handwork-response-file-open"  onClick={() => onOpenFile({ name, target: path })}>
           <Icon aria-hidden /><span className="handwork-response-file-name">{name}</span>{folder && <span className="handwork-response-file-folder">{folder}</span>}
-        </button>
+        </button></HoverTooltip>
         <Button variant="ghost" size="icon-sm" aria-label={`${revealLabel}: ${name}`} title={revealLabel} onClick={() => onRevealFile(path)}><FolderOpen aria-hidden /></Button>
       </div>;
     })}
     {paths.length > 4 && <Button variant="ghost" size="sm" className="handwork-response-files-more" onClick={() => setExpanded(value => !value)}>{expanded ? 'Show fewer' : `Show ${paths.length - 4} more`}</Button>}
   </div>;
+}
+
+export function ThoughtText({ text, streaming = false }: { text: string; streaming?: boolean }) {
+  return <ThinkingText><Markdown className="handwork-thought-prose" syntaxHighlighting syntaxPalette="violet" isStreaming={streaming} remarkPlugins={mathPlugins.remarkPlugins} rehypePlugins={mathPlugins.rehypePlugins}>{prepareMath(text, streaming)}</Markdown></ThinkingText>;
 }
 
 function ResponseActivity({ entries, active }: { entries: Entry[]; active: boolean }) {
@@ -143,17 +160,19 @@ function ResponseActivity({ entries, active }: { entries: Entry[]; active: boole
           return <ToolChips key={group.entries[0].id} summary={`${group.entries.length} tool call${group.entries.length === 1 ? '' : 's'}`} calls={group.entries.map(toolStep)} changes={changes} />;
         }
         const entry = group.entry;
-        if (entry.kind === 'reasoning') return <ThinkingState key={entry.id} status="done" label="Thought"><ThinkingText>{entry.text}</ThinkingText></ThinkingState>;
+        if (entry.kind === 'reasoning') return <ThinkingState key={entry.id} status="done" label="Thought"><ThoughtText text={entry.text} streaming={active && entry === entries.at(-1)} /></ThinkingState>;
         return <div key={entry.id} className="handwork-activity-note">{entry.text}</div>;
       })}
     </div>
   </details>;
 }
 
-export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRetry, onOpenFile, onRevealFile, workspace }: {
+export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRetry, versionFor, onOpenFile, onRevealFile, workspace }: {
   entries: Entry[]; busy: boolean; onSend: (text: string) => Promise<void>; onEdit: (id: string, text: string) => Promise<void>;
   /** Offered on the latest reply when it can be regenerated. */
   onRetry?: () => void;
+  /** Other saved versions of a user turn, made by editing or retrying it. Turns count user messages from 0. */
+  versionFor?: (turn: number) => MessageVersion | undefined;
   onOpenFile: (file: FileTarget) => void; onRevealFile: (target: string) => void;
   /** The project folder, so file paths can read relative to it. */
   workspace?: string;
@@ -161,6 +180,7 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRe
   const blocks = transcriptBlocks(entries, busy);
   const lastReply = blocks.findLastIndex(block => block.kind === 'entry' && block.entry.kind === 'assistant');
   const lastUser = blocks.findLastIndex(block => block.kind === 'entry' && block.entry.kind === 'user');
+  const turns = new Map(entries.filter(entry => entry.kind === 'user').map((entry, turn) => [entry.id, turn]));
   return <div className="handwork-transcript">
     {blocks.map((block, index) => {
       const streaming = busy && index === blocks.length - 1;
@@ -175,7 +195,7 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRe
       const submission = entry.kind === 'user' ? actionSubmission(entry.text) : null;
       const userText = submission ? `${submission.message}\n\n${submission.fields.map(field => `${field.label}: ${field.value}`).join('\n')}` : entry.text;
       const generatedSource = entry.kind === 'assistant' ? bareGenuiSource(entry.text) : null;
-      if (entry.kind === 'reasoning') return <ThinkingState key={entry.id} status={streaming ? 'running' : 'done'} label={streaming ? 'Thinking' : 'Thought'}><ThinkingText>{entry.text}</ThinkingText></ThinkingState>;
+      if (entry.kind === 'reasoning') return <ThinkingState key={entry.id} status={streaming ? 'running' : 'done'} label={streaming ? 'Thinking' : 'Thought'}><ThoughtText text={entry.text} streaming={streaming} /></ThinkingState>;
       return <div key={entry.id} data-slot="message" data-from={entry.kind === 'user' ? 'user' : 'assistant'}>
         {/* Files sit above the bubble, so the bubble only wraps the words. */}
         {entry.attachments?.length ? <MessageAttachments files={entry.attachments} onOpenFile={onOpenFile} /> : null}
@@ -183,7 +203,7 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRe
         editText={entry.kind === 'user' && !entry.attachments?.length && !busy ? userText : undefined}
         onEdit={entry.kind === 'user' && !entry.attachments?.length && !busy ? edited => onEdit(entry.id, edited) : undefined}
         labels={{ resend: 'Save & regenerate', editError: 'The message could not be regenerated. Your edit is preserved. Try again.' }}
-        footer={entry.kind === 'user' ? <MessageActions text={userText} user /> : undefined}
+        footer={entry.kind === 'user' ? <MessageActions text={userText} user version={versionFor?.(turns.get(entry.id) ?? -1)} /> : undefined}
 >
         {entry.kind === 'user' ? <div data-slot="message-content" className="handwork-user-text">{submission ? <div className="handwork-submission">
           <p>{submission.message}</p>

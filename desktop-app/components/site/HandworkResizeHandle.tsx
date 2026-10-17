@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useCallback, useState, type KeyboardEvent, type PointerEvent } from 'react';
 
 function readSize(key: string) {
@@ -62,8 +63,8 @@ export function ResizeHandle({ orientation, direction, label, min, max, measure,
   };
 
   const current = measure();
-  return <div role="separator" tabIndex={0} aria-orientation={orientation} aria-label={label} title={`${label} (double-click to reset)`}
+  return <HoverTooltip content={`${label} (double-click to reset)`}><div role="separator" tabIndex={0} aria-orientation={orientation} aria-label={label}
     aria-valuemin={min} aria-valuemax={Math.round(max())} aria-valuenow={current === undefined ? undefined : Math.round(current)}
     className={`handwork-resize-handle${className ? ` ${className}` : ''}`} data-orientation={orientation} data-dragging={dragging ? '' : undefined}
-    onPointerDown={start} onDoubleClick={() => onResize(undefined)} onKeyDown={key} />;
+    onPointerDown={start} onDoubleClick={() => onResize(undefined)} onKeyDown={key} /></HoverTooltip>;
 }

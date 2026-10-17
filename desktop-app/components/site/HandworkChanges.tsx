@@ -1,34 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { ResizeHandle, useStoredSize } from '@/components/site/HandworkResizeHandle';
-import { SyntaxLine, useSyntax } from 'honestui/syntax/react';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, ArrowUp, ChevronDown, FileDiff, FoldVertical, TextWrap, UnfoldVertical } from 'honestui/icons';
-import type { DesktopAPI, ProjectChangeFile, ProjectChangesSnapshot, ProjectFileDiff } from '@/lib/desktop-api';
+import { ChevronDown, FileDiff, Minus, Plus } from 'honestui/icons';
+import { ChangeCounts, DEFAULT_CONTEXT, DiffControls, DiffSections, StatusBadge, splitPath } from '@/components/site/HandworkDiff';
+import { CommitComposer, GitHistory, GitNoticeView, RepositoryHeader, type CommitWriting } from '@/components/site/HandworkGit';
+import type { DesktopAPI, GitAction, GitChange, GitRepositoryState, ProjectChangesSnapshot, ProjectFileDiff } from '@/lib/desktop-api';
+import { changeStatus, plural } from '@/lib/git-format';
+import { errorText, useGitRepository, type GitRepository } from '@/lib/use-git-repository';
 
-type ReviewLine =
-  | { kind: 'context' | 'added' | 'removed'; text: string; oldLine?: number; newLine?: number }
-  | { kind: 'hunk'; text: string; context: string; hiddenAbove: boolean };
+export { ChangeCounts };
 
-const DEFAULT_CONTEXT = 3, EXPAND_STEP = 20, FULL_FILE = 1000000;
-type FileStatus = 'Conflict' | 'Deleted' | 'Renamed' | 'Added' | 'Modified';
+type Area = 'conflict' | 'staged' | 'unstaged';
+type Repository = Extract<GitRepositoryState, { kind: 'repository' }>;
+const GROUPS: { area: Area; title: string }[] = [{ area: 'conflict', title: 'Merge conflicts' }, { area: 'staged', title: 'Staged changes' }, { area: 'unstaged', title: 'Unstaged' }];
+const changesIn = (state: Repository, area: Area) => area === 'staged' ? state.staged : area === 'unstaged' ? state.unstaged : state.conflicts;
+const diffArea = (area: Area) => area === 'staged' ? 'staged' : 'unstaged';
 
-function fileStatus(item: ProjectChangeFile): FileStatus {
-  return item.status.includes('U') ? 'Conflict' : item.status.includes('D') ? 'Deleted' : item.status.includes('R') ? 'Renamed' : item.untracked || item.status.includes('A') ? 'Added' : 'Modified';
-}
-
-function StatusBadge({ status }: { status: FileStatus }) {
-  return <span className="handwork-file-status" data-status={status} title={status} aria-hidden />;
-}
-
-function splitPath(path: string) {
-  const slash = path.lastIndexOf('/');
-  return { name: path.slice(slash + 1), directory: path.slice(0, Math.max(0, slash)) };
-}
-
-export function ChangeCounts({ added, removed }: { added: number; removed: number }) {
-  return <span className="handwork-change-counts" aria-label={`${added} added lines, ${removed} removed lines`}><span className="handwork-added">+{added.toLocaleString()}</span><span className="handwork-removed">−{removed.toLocaleString()}</span></span>;
+function areaDescription(change: GitChange, area: Area) {
+  if (area === 'conflict') return 'Merge conflict';
+  if (change.untracked) return 'Untracked';
+  if (change.partial) return area === 'staged' ? 'Staged · partial' : 'Unstaged · partial';
+  return area === 'staged' ? 'Staged' : 'Unstaged';
 }
 
 export function ChangesTrigger({ open, fileCount, added, removed, onClick }: {
@@ -43,142 +38,174 @@ export function ChangesTrigger({ open, fileCount, added, removed, onClick }: {
   </Button>;
 }
 
-function DiffBody({ lines, path, wrap, onExpand }: { lines: ReviewLine[]; path: string; wrap: boolean; onExpand?: () => void }) {
-  const [visible, setVisible] = useState(400);
-  const shown = lines.slice(0, visible);
-  const extension = path.split('.').at(-1);
-  const code = shown.filter(line => line.kind !== 'hunk');
-  const syntax = useSyntax(code.map(line => line.text).join('\n'), extension === 'mjs' || extension === 'cjs' ? 'js' : extension);
-  let codeIndex = 0;
-  return <>
-    <div className="handwork-diff honest-syntax" data-syntax-palette="violet" data-wrap={wrap ? '' : undefined} role="table" aria-label={`Diff of ${path}`}>
-      {shown.map((line, index) => {
-        if (line.kind === 'hunk') {
-          const label = <>{line.text}{line.context && <span className="handwork-diff-hunk-context"> {line.context}</span>}</>;
-          return <div key={index} className="handwork-diff-hunk" role="row"><span role="cell">{onExpand && line.hiddenAbove
-            ? <button type="button" className="handwork-diff-expand" title={`Show ${EXPAND_STEP} more lines around each change`} onClick={onExpand}><UnfoldVertical aria-hidden size={12} strokeWidth={1.75} /><span className="handwork-diff-hunk-label">{label}</span></button>
-            : <span className="handwork-diff-hunk-label">{label}</span>}</span></div>;
-        }
-        const tokens = syntax?.lines[codeIndex++];
-        const sign = line.kind === 'added' ? '+' : line.kind === 'removed' ? '−' : '';
-        return <div key={index} className="handwork-diff-line" data-kind={line.kind} role="row">
-          <span className="handwork-diff-number" role="cell" aria-hidden>{line.oldLine ?? ''}</span>
-          <span className="handwork-diff-number" role="cell" aria-hidden>{line.newLine ?? ''}</span>
-          <span className="handwork-diff-sign" role="cell" aria-label={line.kind === 'context' ? undefined : line.kind}>{sign}</span>
-          <span className="handwork-diff-code" role="cell">{tokens ? <SyntaxLine tokens={tokens} /> : line.text}{'\n'}</span>
-        </div>;
-      })}
-    </div>
-    {visible < lines.length && <Button className="handwork-diff-more" variant="ghost" size="sm" onClick={() => setVisible(count => count + 400)}>Show {Math.min(400, lines.length - visible).toLocaleString()} more lines</Button>}
-  </>;
-}
-
-function sectionLines(section: ProjectFileDiff['sections'][number]): ReviewLine[] {
-  if (section.text !== undefined) {
-    if (!section.text) return [];
-    const text = section.text.endsWith('\n') ? section.text.slice(0, -1) : section.text;
-    return text.split('\n').map((text, index) => ({ text, kind: 'added', newLine: index + 1 }));
-  }
-  const result: ReviewLine[] = [];
-  let oldLine = 0, newLine = 0;
-  const raw = (section.patch ?? '').split('\n');
-  for (const [index, line] of raw.entries()) {
-    if (index === raw.length - 1 && !line) continue;
-    if (/^(diff --git |index |--- |\+\+\+ |new file mode|deleted file mode|similarity index|rename (from|to) |old mode|new mode)/.test(line)) continue;
-    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@ ?(.*)$/.exec(line);
-    if (hunk) { oldLine = Number(hunk[1]); newLine = Number(hunk[2]); result.push({ kind: 'hunk', text: line.slice(0, line.indexOf('@@', 2) + 2), context: hunk[3], hiddenAbove: oldLine > 1 || newLine > 1 }); continue; }
-    if (line.startsWith('\\')) continue;
-    if (line.startsWith('+')) result.push({ kind: 'added', text: line.slice(1), newLine: newLine++ });
-    else if (line.startsWith('-')) result.push({ kind: 'removed', text: line.slice(1), oldLine: oldLine++ });
-    else result.push({ kind: 'context', text: line.startsWith(' ') ? line.slice(1) : line, oldLine: oldLine++, newLine: newLine++ });
-  }
-  return result;
-}
-
-export default function HandworkChanges({ api, workspace, snapshot, loading, error }: {
-  api?: DesktopAPI; workspace: string; snapshot?: ProjectChangesSnapshot; loading: boolean; error?: string;
+function ChangeRow({ change, area, scoped, selected, busy, onSelect, onToggle }: {
+  change: GitChange; area: Area; scoped: boolean; selected: boolean; busy: boolean; onSelect: () => void; onToggle: () => void;
 }) {
-  const [selected, setSelected] = useState('');
+  const { name, directory } = splitPath(change.path);
+  const status = changeStatus(change);
+  const action = area === 'staged' ? 'Unstage' : area === 'conflict' ? 'Mark resolved' : 'Stage';
+  return <li className="handwork-change-row" aria-current={selected ? 'true' : undefined}>
+    <HoverTooltip content={change.path}><button type="button" className="handwork-change-select" aria-label={`${change.path}, ${status}, ${areaDescription(change, area)}`} aria-controls="handwork-file-diff" aria-current={selected ? 'true' : undefined} onClick={onSelect}>
+      <StatusBadge status={status} />
+      <span className="handwork-change-path"><span className="handwork-change-filename">{name}</span>{directory && <span className="handwork-change-directory">{directory}</span>}</span>
+      {change.partial && <span className="handwork-change-tag">Partial</span>}
+      {scoped && !change.inProject && <span className="handwork-change-tag" data-kind="outside">Outside project</span>}
+      {change.binary ? <span className="handwork-change-meta">Binary</span> : change.complete ? <ChangeCounts added={change.added} removed={change.removed} /> : <span className="handwork-change-meta" aria-label="Line counts unavailable">—</span>}
+    </button></HoverTooltip>
+    <HoverTooltip content={area === 'conflict' ? 'Stage this file once its conflicts are resolved' : action}><Button className="handwork-change-action" size="icon-sm" variant="ghost" aria-label={`${action} ${change.path}`} disabled={busy} onClick={onToggle}>
+      {area === 'staged' ? <Minus size={13} aria-hidden /> : <Plus size={13} aria-hidden />}
+    </Button></HoverTooltip>
+  </li>;
+}
+
+function WorkingChanges({ api, workspace, state, git, ...writing }: { api: DesktopAPI; workspace: string; state: Repository; git: GitRepository } & CommitWriting) {
+  const [selected, setSelected] = useState<{ area: Area; path: string }>();
   const [detail, setDetail] = useState<ProjectFileDiff>();
   const [diffError, setDiffError] = useState('');
-  const [listOpen, setListOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState<Partial<Record<Area, boolean>>>({});
   const [wrap, setWrap] = useState(false);
-  const [listHeight, setListHeight] = useStoredSize('handwork.changedFilesHeight');
+  const [contexts, setContexts] = useState<Record<string, number>>({});
+  const [listHeight, setListHeight] = useStoredSize('handwork.changedFilesHeight.v2');
   const container = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLElement>(null);
-  const [contexts, setContexts] = useState<Record<string, number>>({});
-  const file = snapshot?.files.find(file => file.path === selected) ?? snapshot?.files[0];
-  const selectedPath = file?.path;
-  const context = (selectedPath ? contexts[selectedPath] : undefined) ?? DEFAULT_CONTEXT;
-  const setContext = (value: number) => { if (selectedPath) setContexts(current => ({ ...current, [selectedPath]: value })); };
+  const items = GROUPS.flatMap(({ area }) => changesIn(state, area).map(change => ({ area, change })));
+  // A staged or unstaged file keeps its selection as it moves between groups.
+  const current = items.find(item => item.area === selected?.area && item.change.path === selected.path) ?? items.find(item => item.change.path === selected?.path) ?? items[0];
+  const key = current ? `${current.area}:${current.change.path}` : '';
+  const context = contexts[key] ?? DEFAULT_CONTEXT;
+  const setContext = (value: number) => { if (key) setContexts(values => ({ ...values, [key]: value })); };
   useEffect(() => {
     let cancelled = false;
-    if (!api || !workspace || !selectedPath) { setDetail(undefined); return; }
+    if (!current) { setDetail(undefined); return; }
     setDiffError('');
-    void api.projectFileDiff(workspace, selectedPath, context).then(value => {
-      if (!cancelled && value.workspace === workspace && value.path === selectedPath) setDetail(value);
-    }).catch(cause => { if (!cancelled) setDiffError(cause instanceof Error ? cause.message : String(cause)); });
+    api.gitFileDiff(workspace, current.change.path, diffArea(current.area), context)
+      .then(value => { if (!cancelled) setDetail(value); })
+      .catch(cause => { if (!cancelled) setDiffError(errorText(cause)); });
     return () => { cancelled = true; };
-  }, [api, workspace, selectedPath, context, snapshot?.checkedAt]);
+    // The diff follows every status refresh, so it never trails what will be committed.
+  }, [api, workspace, key, context, state.checkedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const container = list.current;
+    if (!container) return;
+    const revealSelection = () => {
+      const row = container.querySelector<HTMLElement>('.handwork-change-row[aria-current="true"]');
+      if (!row) return;
+      const viewport = container.getBoundingClientRect();
+      const bounds = row.getBoundingClientRect();
+      const header = row.closest('section')?.querySelector('.handwork-change-group-header')?.getBoundingClientRect().height ?? 0;
+      if (bounds.top < viewport.top + header) container.scrollTop -= viewport.top + header - bounds.top;
+      else if (bounds.bottom > viewport.bottom) container.scrollTop += bounds.bottom - viewport.bottom;
+    };
+    revealSelection();
+    const observer = new ResizeObserver(revealSelection);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [key, listHeight]);
+  const busy = !!git.busy;
+  const stage = (paths: string[]) => void git.run('stage', () => api.gitStage(workspace, paths));
+  const unstage = (paths: string[]) => void git.run('unstage', () => api.gitUnstage(workspace, paths));
+  const composer = <CommitComposer {...writing} key={state.repository} api={api} workspace={workspace} state={state} git={git} />;
+  if (!current) return <>
+    {state.operation === 'merge' && composer}
+    <div className="handwork-changes-clean"><FileDiff aria-hidden strokeWidth={1.5} /><p>No uncommitted changes</p><span>{(state.push?.outgoing || state.publish?.outgoing) ? 'Your commits are ready to push.' : `Edits to ${state.name} will show up here.`}</span></div>
+  </>;
+  const currentDetail = detail?.path === current.change.path && detail.area === diffArea(current.area) ? detail : undefined;
+  const { name, directory } = splitPath(current.change.path);
+  const index = items.indexOf(current);
+  const status = changeStatus(current.change);
+  return <div ref={container} className="handwork-working" data-sized={listHeight ? '' : undefined} style={listHeight ? { '--handwork-files-height': `${listHeight}px` } as CSSProperties : undefined}>
+    {composer}
+    <nav ref={list} id="handwork-changed-files" aria-label="Changed files" className="handwork-changed-files handwork-change-groups">
+      {state.truncated && <p className="handwork-changes-note">Showing the first 1,000 of {state.totalFiles.toLocaleString()} changed files.</p>}
+      {GROUPS.map(({ area, title }) => {
+        const changes = changesIn(state, area);
+        if (!changes.length) return null;
+        const open = !collapsed[area];
+        return <section key={area} className="handwork-change-group" data-area={area} aria-label={title}>
+          <div className="handwork-change-group-header">
+            <button type="button" className="handwork-change-group-toggle" aria-expanded={open} onClick={() => setCollapsed(value => ({ ...value, [area]: open }))}>
+              <ChevronDown className="handwork-changes-chevron" aria-hidden strokeWidth={1.75} />
+              <span>{title}</span><span className="handwork-change-group-count">{changes.length.toLocaleString()}</span>
+            </button>
+            {area === 'staged' && changes.length > 0 && <Button size="xs" variant="ghost" disabled={busy} onClick={() => void git.run('unstage', () => api.gitUnstageAll(workspace))}>Unstage all</Button>}
+            {area === 'unstaged' && <HoverTooltip content={state.scope ? `Stages every change in ${state.name}, including outside ${state.scope}` : undefined}><Button size="xs" variant="ghost" disabled={busy} onClick={() => void git.run('stage', () => api.gitStageAll(workspace))}>Stage all</Button></HoverTooltip>}
+          </div>
+          {open && (changes.length
+            ? <ul className="handwork-change-list">{changes.map(change => <ChangeRow key={change.path} change={change} area={area} scoped={!!state.scope} busy={busy}
+              selected={current.area === area && current.change.path === change.path}
+              onSelect={() => setSelected({ area, path: change.path })}
+              onToggle={() => area === 'staged' ? unstage([change.path]) : stage([change.path])} />)}</ul>
+            : <p className="handwork-change-group-empty">Stage files to include them in the next commit.</p>)}
+        </section>;
+      })}
+    </nav>
+    <ResizeHandle className="handwork-files-resize" orientation="horizontal" direction={1} label="Resize file list" min={56}
+      max={() => (container.current?.clientHeight ?? 600) - 160}
+      measure={() => list.current?.getBoundingClientRect().height} onResize={setListHeight} />
+    <div key={key} id="handwork-file-diff" className="handwork-file-review" role="region" aria-label={`Changes to ${current.change.path}`} tabIndex={0}>
+      <header className="handwork-file-review-header">
+        <div className="handwork-file-review-title">
+          <HoverTooltip content={current.change.path}><h3>{name}</h3></HoverTooltip>
+          <p><span className="handwork-file-review-status" data-status={status}>{status}</span>{directory && <> · {directory}</>} · {areaDescription(current.change, current.area)}</p>
+        </div>
+        {current.change.complete && !current.change.binary && <ChangeCounts added={current.change.added} removed={current.change.removed} />}
+        <div className="handwork-file-review-actions">
+          <Button className="handwork-file-review-stage" size="xs" variant="outline" disabled={busy}
+            onClick={() => current.area === 'staged' ? unstage([current.change.path]) : stage([current.change.path])}>{current.area === 'staged' ? 'Unstage' : current.area === 'conflict' ? 'Mark resolved' : 'Stage'}</Button>
+          <DiffControls context={context} onContext={setContext} wrap={wrap} onWrap={() => setWrap(value => !value)} canFold={!current.change.untracked && !current.change.binary}
+            index={index} count={items.length} onStep={offset => { const next = items[index + offset]; if (next) setSelected({ area: next.area, path: next.change.path }); }} />
+        </div>
+      </header>
+      <DiffSections detail={currentDetail} error={diffError} path={current.change.path} wrap={wrap} context={context} onContext={setContext} />
+    </div>
+  </div>;
+}
 
+export default function HandworkChanges({ api, workspace, snapshot, loading, error, onChanged, ...writing }: {
+  api?: DesktopAPI; workspace: string; snapshot?: ProjectChangesSnapshot; loading: boolean; error?: string; onChanged?: () => void;
+} & CommitWriting) {
+  const git = useGitRepository(api, workspace, snapshot?.checkedAt, onChanged);
+  const [view, setView] = useState<'changes' | 'history'>('changes');
+  const [pickerOpen, setPickerOpen] = useState(false);
   if (!workspace) return <p className="handwork-changes-empty">Select a project to see its changes.</p>;
   if (!api) return <p className="handwork-changes-empty">Open the desktop app to review project changes.</p>;
-  if (!snapshot && !error) return <p role="status" className="handwork-changes-empty">{loading ? 'Reading project changes…' : 'Waiting for the project…'}</p>;
-  const currentDetail = detail?.workspace === workspace && detail.path === selectedPath ? detail : undefined;
-  const files = snapshot?.files ?? [];
-  const fileIndex = file ? files.indexOf(file) : -1;
-  const totals = files.reduce((sum, item) => ({ added: sum.added + item.added, removed: sum.removed + item.removed }), { added: 0, removed: 0 });
-  const step = (offset: number) => { const next = files[fileIndex + offset]; if (next) setSelected(next.path); };
-  const fileName = file && splitPath(file.path);
-  const singleSection = currentDetail?.sections.length === 1;
-  return <div ref={container} className="handwork-changes" data-sized={listHeight ? '' : undefined} style={listHeight ? { '--handwork-files-height': `${listHeight}px` } as CSSProperties : undefined}>
-    {error && <p role="alert">{error}{snapshot ? ' The list may be out of date.' : ''}</p>}
-    {snapshot?.kind === 'not-repository' && <p className="handwork-changes-empty">This project is not a Git repository.</p>}
-    {snapshot?.kind === 'repository' && !file && <div className="handwork-changes-clean"><FileDiff aria-hidden strokeWidth={1.5} /><p>No uncommitted changes</p><span>Edits to this project will show up here.</span></div>}
-    {file && fileName && <>
-      <button type="button" className="handwork-changes-summary" aria-expanded={listOpen} aria-controls="handwork-changed-files" onClick={() => setListOpen(open => !open)}>
-        <ChevronDown className="handwork-changes-chevron" aria-hidden strokeWidth={1.75} />
-        <span>{snapshot?.truncated ? `${files.length} of ${snapshot.totalFiles}` : files.length} {(snapshot?.totalFiles ?? files.length) === 1 ? 'file' : 'files'} changed</span>
-        <ChangeCounts added={totals.added} removed={totals.removed} />
+  const state = git.state;
+  if (!state) return (git.loadError || error)
+    ? <p role="alert" className="handwork-changes-empty">{git.loadError || error}</p>
+    : <p role="status" className="handwork-changes-empty">{loading ? 'Reading project changes…' : 'Reading the repository…'}</p>;
+  if (state.kind !== 'repository') return <p className="handwork-changes-empty">{state.kind === 'not-repository' ? 'This project is not a Git repository.' : 'Select a project to see its changes.'}</p>;
+  const terminal = () => void api.gitOpenTerminal(workspace).catch(cause => git.setNotice({ kind: 'error', operation: 'commit', failure: { code: 'terminal', title: 'Couldn’t open a terminal', message: errorText(cause), actions: [] } }));
+  const onAction = (action: GitAction) => {
+    const notice = git.notice;
+    if (action === 'retry' && notice?.kind === 'error') notice.retry?.();
+    else if (action === 'terminal') terminal();
+    else if (action === 'refresh') { git.setNotice(undefined); void git.refresh(); }
+    else if (action === 'fetch') void git.run('fetch', () => api.gitFetch(workspace), () => 'Fetched the latest remote changes.');
+    else if (action === 'pull') void git.run('pull', () => api.gitPull(workspace), () => `Pulled from ${state.upstream?.name}.`);
+    else if (action === 'branch') setPickerOpen(true);
+    else if (action === 'publish') {
+      if (state.remotes.length === 1) void git.run('publish', () => api.gitPublish(workspace, state.remotes[0].name), result => `Published ${result.destination} and set it as upstream.`);
+      else document.getElementById('handwork-publish')?.focus();
+    }
+  };
+  const outgoing = state.push?.outgoing ?? state.publish?.outgoing ?? 0;
+  const total = new Set([...state.staged, ...state.unstaged, ...state.conflicts].map(change => change.path)).size;
+  return <div className="handwork-changes handwork-git">
+    <RepositoryHeader api={api} workspace={workspace} state={state} git={git} pickerOpen={pickerOpen} onPickerOpen={setPickerOpen} onTerminal={terminal} />
+    {git.loadError && <p role="alert" className="handwork-git-stale">{git.loadError} The status may be out of date.</p>}
+    {git.notice && <GitNoticeView notice={git.notice} onAction={onAction} onDismiss={() => git.setNotice(undefined)} />}
+    <div role="tablist" aria-label="Repository views" className="handwork-changes-tabs">
+      <button type="button" role="tab" id="handwork-changes-tab" aria-selected={view === 'changes'} aria-controls="handwork-changes-view" onClick={() => setView('changes')}>
+        Files{total > 0 && <span className="handwork-changes-tab-count" aria-label={plural(total, 'changed file')}>{total.toLocaleString()}</span>}
       </button>
-      {listOpen && <nav ref={list} id="handwork-changed-files" aria-label="Changed files" className="handwork-changed-files">{files.map(item => {
-        const { name, directory } = splitPath(item.path);
-        const status = fileStatus(item);
-        return <Button key={item.path} variant="link" size="sm" aria-label={`${item.path}, ${status}`} title={item.path} aria-controls="handwork-file-diff" aria-current={item.path === file.path ? 'true' : undefined} onClick={() => setSelected(item.path)}>
-          <StatusBadge status={status} />
-          <span className="handwork-change-path"><span className="handwork-change-filename">{name}</span>{directory && <span className="handwork-change-directory">{directory}</span>}</span>
-          {item.binary ? <span className="handwork-change-meta">Binary</span> : item.complete ? <ChangeCounts added={item.added} removed={item.removed} /> : <span className="handwork-change-meta" title="Line counts unavailable">—</span>}
-        </Button>;
-      })}</nav>}
-      {listOpen && <ResizeHandle className="handwork-files-resize" orientation="horizontal" direction={1} label="Resize file list" min={56}
-        max={() => (container.current?.clientHeight ?? 600) - 160}
-        measure={() => list.current?.getBoundingClientRect().height} onResize={setListHeight} />}
-      <div key={file.path} id="handwork-file-diff" className="handwork-file-review" role="region" aria-label={`Changes to ${file.path}`} tabIndex={0}>
-        <header className="handwork-file-review-header">
-          <div className="handwork-file-review-title">
-            <h3 title={file.path}>{fileName.name}</h3>
-            <p><span className="handwork-file-review-status" data-status={fileStatus(file)}>{fileStatus(file)}</span>{fileName.directory && <> · {fileName.directory}</>} · {file.untracked ? 'Untracked' : file.status.includes('U') ? 'Merge conflict' : file.status.includes('D') ? 'Deleted' : file.staged && file.unstaged ? 'Staged and unstaged' : file.staged ? 'Staged' : 'Unstaged'}</p>
-          </div>
-          {file.complete && !file.binary && <ChangeCounts added={file.added} removed={file.removed} />}
-          <div className="handwork-file-review-actions">
-            {!file.untracked && !file.binary && (context > DEFAULT_CONTEXT
-              ? <Button size="icon-sm" variant="ghost" aria-label="Collapse unchanged lines" title="Collapse unchanged lines" onClick={() => setContext(DEFAULT_CONTEXT)}><FoldVertical size={14} aria-hidden /></Button>
-              : <Button size="icon-sm" variant="ghost" aria-label="Show full file" title="Show full file" onClick={() => setContext(FULL_FILE)}><UnfoldVertical size={14} aria-hidden /></Button>)}
-            <Button size="icon-sm" variant="ghost" aria-label="Wrap long lines" title="Wrap long lines" aria-pressed={wrap} onClick={() => setWrap(value => !value)}><TextWrap size={14} aria-hidden /></Button>
-            {files.length > 1 && <>
-              <Button size="icon-sm" variant="ghost" aria-label="Previous file" title="Previous file" disabled={fileIndex <= 0} onClick={() => step(-1)}><ArrowUp size={14} aria-hidden /></Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Next file" title="Next file" disabled={fileIndex >= files.length - 1} onClick={() => step(1)}><ArrowDown size={14} aria-hidden /></Button>
-            </>}
-          </div>
-        </header>
-        {diffError && <p role="alert">{diffError}{currentDetail ? ' The preview may be out of date.' : ''}</p>}
-        {!currentDetail && !diffError && <p role="status" className="handwork-changes-empty">Loading diff…</p>}
-        {currentDetail?.sections.map(section => <section key={section.label} className="handwork-recorded-edit" aria-label={section.label}>
-          {!singleSection && <h4>{section.label}</h4>}{section.note && <p>{section.note}</p>}
-          {section.text === '' && <p>Empty file.</p>}
-          <DiffBody path={file.path} wrap={wrap} lines={sectionLines(section)} onExpand={context < FULL_FILE ? () => setContext(Math.min(FULL_FILE, context + EXPAND_STEP)) : undefined} />
-        </section>)}
-      </div>
-    </>}
+      <button type="button" role="tab" id="handwork-history-tab" aria-selected={view === 'history'} aria-controls="handwork-changes-view" onClick={() => setView('history')}>
+        History{outgoing > 0 && <span className="handwork-changes-tab-count" data-kind="outgoing" aria-label={`${plural(outgoing, 'commit')} not pushed`}>↑{outgoing.toLocaleString()}</span>}
+      </button>
+    </div>
+    <div id="handwork-changes-view" role="tabpanel" aria-labelledby={view === 'changes' ? 'handwork-changes-tab' : 'handwork-history-tab'} className="handwork-changes-view">
+      {view === 'changes'
+        ? <WorkingChanges {...writing} key={state.repository} api={api} workspace={workspace} state={state} git={git} />
+        : <GitHistory key={state.repository} api={api} workspace={workspace} state={state} />}
+    </div>
   </div>;
 }

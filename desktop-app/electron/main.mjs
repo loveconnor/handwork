@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, session, shell, Tray } from 'electron';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DesktopSettings } from './desktop-settings.mjs';
 import { SettingsService } from './settings-service.mjs';
@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DesktopBackend } from './backend.mjs';
 import { EVENT_CHANNEL, registerIpc, allowsDesktopPermission } from './ipc.mjs';
 import { ChatPreferences } from './chat-preferences.mjs';
+import { ModelPreferences } from './model-preferences.mjs';
 import { ProjectStore } from './project-store.mjs';
 import { rendererPolicy } from './renderer-policy.mjs';
 import { enginePath } from './engine-path.mjs';
@@ -19,6 +20,8 @@ import { SavedPrompts } from './saved-prompts.mjs';
 import { captureScreen } from './screen-capture.mjs';
 import { QuickEntry } from './quick-entry.mjs';
 import { DraftStore } from './draft-store.mjs';
+import { QueueStore } from './queue-store.mjs';
+import { BACKUP_EXTENSION } from './backup.mjs';
 import { TrustedFiles } from './file-access.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -96,11 +99,28 @@ function createWindow() {
       const result = await dialog.showSaveDialog(window, { title: format === 'markdown' ? 'Export chat as Markdown' : 'Export chat as JSON', defaultPath: path.join(app.getPath('documents'), defaultName), filters });
       return result.canceled ? null : result.filePath;
     },
+    saveBackup: async ({ defaultName }) => {
+      const result = await dialog.showSaveDialog(window, { title: 'Back up Handwork', defaultPath: path.join(app.getPath('documents'), defaultName), filters: [{ name: 'Handwork backup', extensions: [BACKUP_EXTENSION] }] });
+      return result.canceled ? null : result.filePath;
+    },
+    chooseBackup: async () => {
+      const result = await dialog.showOpenDialog(window, { title: 'Restore from a Handwork backup', properties: ['openFile'], filters: [{ name: 'Handwork backup', extensions: [BACKUP_EXTENSION] }] });
+      return result.canceled ? null : result.filePaths[0];
+    },
     openFile: async (file, editor) => {
       const applications = { vscode: 'Visual Studio Code', cursor: 'Cursor', zed: 'Zed' };
       if (editor !== 'system' && process.platform === 'darwin') { await promisify(execFile)('/usr/bin/open', ['-a', applications[editor], file], { timeout: 5000 }); return; }
       if (editor !== 'system') { await promisify(execFile)({ vscode: 'code', cursor: 'cursor', zed: 'zed' }[editor], [file], { timeout: 5000 }); return; }
       const error = await shell.openPath(file); if (error) throw new Error(error);
+    },
+    openTerminal: directory => {
+      if (process.platform === 'darwin') return promisify(execFile)('/usr/bin/open', ['-a', 'Terminal', directory], { timeout: 5000 }).then(() => {});
+      const [command, args] = process.platform === 'win32' ? ['cmd.exe', ['/c', 'start', '', '/D', directory, 'cmd.exe']] : ['x-terminal-emulator', []];
+      return new Promise((resolve, reject) => {
+        const child = spawn(command, args, { cwd: directory, detached: true, stdio: 'ignore', windowsHide: false });
+        child.once('error', () => reject(new Error('Could not open a terminal. Open one in this folder yourself.')));
+        child.once('spawn', () => { child.unref(); resolve(); });
+      });
     },
     openReleases: () => shell.openExternal('https://github.com/loveconnor/handwork/releases'),
     openHelp: () => shell.openExternal('https://github.com/loveconnor/handwork#readme'),
@@ -130,7 +150,7 @@ function createWindow() {
     notification.show();
     } catch (error) { if (kind === 'test') throw error; }
   };
-  backend = new DesktopBackend({ binary, settingsService, notify, chatPreferences: new ChatPreferences(path.join(app.getPath('userData'), 'chat-preferences.json')), projects: new ProjectStore(path.join(app.getPath('userData'), 'projects.json')), voice, attachmentDirectory: path.join(app.getPath('userData'), 'attachments'), chatDirectory: path.join(app.getPath('userData'), 'chats'), savedPrompts: new SavedPrompts(path.join(app.getPath('userData'), 'saved-prompts.json')), drafts: new DraftStore(path.join(app.getPath('userData'), 'drafts')), trustedFiles: new TrustedFiles(path.join(app.getPath('userData'), 'picked-files.json')), shell });
+  backend = new DesktopBackend({ binary, settingsService, notify, chatPreferences: new ChatPreferences(path.join(app.getPath('userData'), 'chat-preferences.json')), projects: new ProjectStore(path.join(app.getPath('userData'), 'projects.json')), voice, attachmentDirectory: path.join(app.getPath('userData'), 'attachments'), chatDirectory: path.join(app.getPath('userData'), 'chats'), savedPrompts: new SavedPrompts(path.join(app.getPath('userData'), 'saved-prompts.json')), drafts: new DraftStore(path.join(app.getPath('userData'), 'drafts')), queues: new QueueStore(path.join(app.getPath('userData'), 'queues')), trustedFiles: new TrustedFiles(path.join(app.getPath('userData'), 'picked-files.json')), modelPreferences: new ModelPreferences(path.join(app.getPath('userData'), 'model-preferences.json')), shell });
   const currentBackend = backend;
   window = new BrowserWindow({
     icon: appIcon,
@@ -255,6 +275,13 @@ if (process.platform === 'darwin' && !app.isPackaged) {
   updateDockIcon();
   nativeTheme.on('updated', updateDockIcon);
 }
+// Tab and chat actions from the menu run in the main window; quick entry ignores them.
+function sendTabAction(action) {
+  if (!window || window.isDestroyed()) return;
+  const focused = BrowserWindow.getFocusedWindow();
+  if (focused && focused !== window) { if (action === 'close') focused.close(); return; }
+  window.webContents.send(EVENT_CHANNEL, { method: 'desktop/tab', params: { action } });
+}
 const updateMenuIcon = process.platform === 'darwin'
   ? nativeImage.createFromNamedImage('arrow.triangle.2.circlepath').resize({ width: 12, height: 12 })
   : undefined;
@@ -288,7 +315,28 @@ Menu.setApplicationMenu(Menu.buildFromTemplate([
     { type: 'separator' }, { role: 'togglefullscreen' },
     ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),
   ] },
-  { role: 'windowMenu' },
+  // Close Tab and Close Window are separate: ⌘W closes the chat tab, ⇧⌘W the window.
+  { label: 'Chat', submenu: [
+    { label: 'New Chat', accelerator: 'CmdOrCtrl+N', click: () => sendTabAction('new') },
+    { type: 'separator' },
+    { label: 'Next Tab', accelerator: 'Ctrl+Tab', click: () => sendTabAction('next') },
+    { label: 'Previous Tab', accelerator: 'Ctrl+Shift+Tab', click: () => sendTabAction('previous') },
+    { label: 'Reopen Closed Tab', accelerator: 'CmdOrCtrl+Shift+T', click: () => sendTabAction('reopen') },
+    { type: 'separator' },
+    { label: 'Next Chat Needing Attention', accelerator: 'CmdOrCtrl+Shift+A', click: () => sendTabAction('attention') },
+    { label: 'Chat Details', accelerator: 'CmdOrCtrl+I', click: () => sendTabAction('details') },
+    { type: 'separator' },
+    { label: 'Close Tab', accelerator: 'CmdOrCtrl+W', click: () => sendTabAction('close') },
+    { label: 'Close Window', accelerator: 'CmdOrCtrl+Shift+W', click: () => { const focused = BrowserWindow.getFocusedWindow(); if (focused && !focused.isDestroyed()) focused.close(); } },
+  ] },
+  { label: 'Window', submenu: [
+    { role: 'minimize' }, { role: 'zoom' },
+    ...(process.platform === 'darwin' ? [{ type: 'separator' }, { role: 'front' }] : []),
+  ] },
+  { role: 'help', submenu: [
+    { label: 'Keyboard Shortcuts', accelerator: 'CmdOrCtrl+/', click: () => { if (!window || window.isDestroyed()) return; showMainWindow(); window.webContents.send(EVENT_CHANNEL, { method: 'desktop/open-shortcuts' }); } },
+    { label: 'Handwork Help', click: () => void shell.openExternal('https://github.com/loveconnor/handwork#readme') },
+  ] },
 ]));
 session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) => callback(allowsDesktopPermission(wc, window?.webContents, rendererURL, permission, details)));
 session.defaultSession.setPermissionCheckHandler((wc, permission, _origin, details) => allowsDesktopPermission(wc, window?.webContents, rendererURL, permission, details));

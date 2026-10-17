@@ -46,6 +46,20 @@ export class DesktopSettings {
     this.write(data);
     return this.snapshot(workspace);
   }
+  /** Applies preferences from a backup. Invalid values are ignored; startup tabs stay local. */
+  importPreferences({ app, projects }) {
+    const data = this.read();
+    const valid = (scope, value) => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([key, item]) => validSettingsPatch(scope, { [key]: item }))) : {};
+    const incoming = valid('app', app);
+    const overrides = projects && typeof projects === 'object' && !Array.isArray(projects)
+      ? Object.fromEntries(Object.entries(projects).filter(([workspace]) => path.isAbsolute(workspace) && !workspace.includes('\0')).map(([workspace, value]) => [workspace, valid('project', value)]).filter(([, value]) => Object.keys(value).length))
+      : {};
+    if (!Object.keys(incoming).length && !Object.keys(overrides).length) return false;
+    data.app = { ...data.app, ...incoming };
+    data.projects = { ...data.projects, ...Object.fromEntries(Object.entries(overrides).map(([workspace, value]) => [workspace, { ...(Object.hasOwn(data.projects, workspace) ? data.projects[workspace] : {}), ...value }])) };
+    this.write(data);
+    return true;
+  }
   resetProject(workspace) { const data = this.read(); delete data.projects[workspace]; this.write(data); return this.snapshot(workspace); }
   saveStartup(startup) { const data = this.read(); data.startup = startup; this.write(data); }
   startup() { return this.read().startup ?? { tabs: [], active: '' }; }

@@ -25,7 +25,7 @@ function numstats(output) {
   }));
 }
 
-async function untrackedText(project, file, budget = MAX_FILE_BYTES) {
+export async function untrackedText(project, file, budget = MAX_FILE_BYTES) {
   const parent = await realpath(path.dirname(file));
   if (!inside(project, parent)) throw new Error('This file is outside the selected project.');
   const info = await lstat(file);

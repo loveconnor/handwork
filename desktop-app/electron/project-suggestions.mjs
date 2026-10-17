@@ -56,30 +56,37 @@ export function parseSuggestions(output) {
   });
 }
 
-/** An ephemeral ACP client with no tools, persistence, or events in the user's chat. */
-export async function generateSuggestions(client, config, context) {
+/**
+ * Runs one prompt on an ephemeral ACP client with no tools, persistence, or events in the
+ * user's chat, on the chat's provider and model. Resolves to the reply text.
+ */
+export async function runBackgroundTask(client, config, { name, label, instructions, prompt, maxOutput = 24000, timeout = 60000 }) {
   let output = '';
   const listener = event => {
     if (event.method === 'session/request_permission') { client.respondPermission(event.id, null); return; }
     const update = event.params?.update;
     if (update?.sessionUpdate === 'agent_message_chunk' && update.content?.type === 'text') {
       output += update.content.text;
-      if (output.length > 24000) client.dispose(new Error('Project suggestions exceeded the output limit'));
+      if (output.length > maxOutput) client.dispose(new Error(`${label} exceeded the output limit`));
     }
   };
   client.on('event', listener);
-  const deadline = setTimeout(() => client.dispose(new Error('Project suggestions timed out')), 60000);
+  const deadline = setTimeout(() => client.dispose(new Error(`${label} timed out`)), timeout);
   deadline.unref();
   try {
-    const initialized = await client.request('initialize', { protocolVersion: 1, clientInfo: { name: 'handwork-suggestions', version: '0.1.0' }, clientCapabilities: { handwork: { backgroundTask: true, responseInstructions: suggestionInstructions } } });
-    if (initialized?.agentCapabilities?.handwork?.backgroundTask !== true) throw new Error('This engine does not support background suggestions');
+    const initialized = await client.request('initialize', { protocolVersion: 1, clientInfo: { name, version: '0.1.0' }, clientCapabilities: { handwork: { backgroundTask: true, responseInstructions: instructions } } });
+    if (initialized?.agentCapabilities?.handwork?.backgroundTask !== true) throw new Error(`This engine does not support background ${label.toLowerCase()}`);
     const { sessionId } = await client.request('session/new', { mcpServers: [] });
     for (const id of ['provider', 'model', 'effort', 'fast_mode']) {
       const option = config.find(item => item.id === id);
       if (option?.currentValue) await client.request('session/set_config_option', { sessionId, configId: id, value: option.currentValue });
     }
-    const result = await client.request('session/prompt', { sessionId, prompt: [{ type: 'text', text: `Suggest next tasks from this project snapshot:\n${context}` }] }, { timeout: 45000 });
-    if (result?.stopReason !== 'end_turn') throw new Error('Project suggestions did not finish');
-    return parseSuggestions(output);
+    const result = await client.request('session/prompt', { sessionId, prompt: [{ type: 'text', text: prompt }] }, { timeout: timeout - 15000 });
+    if (result?.stopReason !== 'end_turn') throw new Error(`${label} did not finish`);
+    return output;
   } finally { clearTimeout(deadline); client.off('event', listener); client.dispose(); }
+}
+
+export async function generateSuggestions(client, config, context) {
+  return parseSuggestions(await runBackgroundTask(client, config, { name: 'handwork-suggestions', label: 'Project suggestions', instructions: suggestionInstructions, prompt: `Suggest next tasks from this project snapshot:\n${context}` }));
 }

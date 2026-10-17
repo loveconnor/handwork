@@ -1,5 +1,6 @@
 "use client"
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import * as React from "react"
 import {
   ArrowUp as ArrowUpIcon,
@@ -26,6 +27,8 @@ export type PromptBarItem = {
   /** The text inserted after the trigger character, and matched against what is typed. */
   label: string
   description?: string
+  hint?: string
+  disabled?: boolean
   icon?: React.ReactNode
 }
 
@@ -244,7 +247,8 @@ function PromptBar({
     })
   }, [suggestion, source])
   const isMenuOpen = Boolean(suggestion && source?.length)
-  const activeItem = matches[Math.min(activeIndex, matches.length - 1)]
+  const enabledMatches = matches.filter(item => !item.disabled)
+  const activeItem = enabledMatches[Math.min(activeIndex, enabledMatches.length - 1)]
 
   React.useLayoutEffect(() => {
     const input = inputRef.current
@@ -281,7 +285,7 @@ function PromptBar({
   }
 
   const insertItem = (item: PromptBarItem) => {
-    if (!suggestion) return
+    if (!suggestion || item.disabled) return
 
     const trigger = suggestion.kind === "mention" ? "@" : "/"
     const inserted = `${trigger}${item.label} `
@@ -328,11 +332,11 @@ function PromptBar({
         setDismissedAt(value)
         return
       }
-      if (matches.length > 0) {
+      if (enabledMatches.length > 0) {
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault()
-          const step = event.key === "ArrowDown" ? 1 : matches.length - 1
-          setActiveIndex((current) => (Math.min(current, matches.length - 1) + step) % matches.length)
+          const step = event.key === "ArrowDown" ? 1 : enabledMatches.length - 1
+          setActiveIndex((current) => (Math.min(current, enabledMatches.length - 1) + step) % enabledMatches.length)
           return
         }
         if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") {
@@ -380,17 +384,19 @@ function PromptBar({
               {matches.map((item) => {
                 const isActive = item === activeItem
                 return (
-                  <div
-                    key={item.id}
+                  <HoverTooltip key={item.id} content={item.disabled ? item.hint : undefined}><div
+
                     id={optionId(item)}
                     role="option"
                     aria-selected={isActive}
+                    aria-disabled={item.disabled || undefined}
+
                     data-active={isActive ? "" : undefined}
                     // Keep focus in the field, so typing continues after a pick.
                     onMouseDown={(event) => event.preventDefault()}
-                    onMouseMove={() => setActiveIndex(matches.indexOf(item))}
+                    onMouseMove={() => { if (!item.disabled) setActiveIndex(enabledMatches.indexOf(item)) }}
                     onClick={() => insertItem(item)}
-                    className="flex min-w-0 cursor-pointer items-center gap-[var(--hui-space-3)] rounded-[var(--hui-radius-2)] px-[var(--hui-space-3)] py-[var(--hui-space-3)] data-active:bg-[var(--hui-color-background-base-primary-hover)]"
+                    className="flex min-w-0 cursor-pointer items-center gap-[var(--hui-space-3)] rounded-[var(--hui-radius-2)] px-[var(--hui-space-3)] py-[var(--hui-space-3)] data-active:bg-[var(--hui-color-background-base-primary-hover)] aria-disabled:cursor-default aria-disabled:opacity-50"
                   >
                     {item.icon && (
                       <span
@@ -404,11 +410,12 @@ function PromptBar({
                       {suggestion?.kind === "command" ? `/${item.label}` : item.label}
                     </span>
                     {item.description && (
-                      <span className="min-w-0 truncate text-[var(--hui-color-foreground-base-secondary)]">
+                      <span className="min-w-0 flex-1 truncate text-[var(--hui-color-foreground-base-secondary)]">
                         {item.description}
                       </span>
                     )}
-                  </div>
+                    {item.hint && <span className="shrink-0 text-[var(--hui-color-foreground-base-tertiary)] [font-size:var(--hui-font-size-mini)]">{item.hint}</span>}
+                  </div></HoverTooltip>
                 )
               })}
             </div>

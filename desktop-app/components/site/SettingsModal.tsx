@@ -9,20 +9,24 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Monitor, Plug, Shield, UserRound, Bell, Database, Info } from 'honestui/icons';
 import { ProviderLogo } from './ProviderLogo';
 import { HandworkTheme } from './HandworkControls';
+import { HandworkBackup } from './HandworkBackup';
 import { configOptions, type ProviderInfo } from '@/lib/desktop-state';
 import { modelDisplayName } from '@/lib/model-presentation';
-import type { DesktopAPI, DesktopPreferences, InstructionsFile, SettingsInfo, SettingsScope, SettingsSnapshot } from '@/lib/desktop-api';
+import { shortcutLabel } from '@/lib/saved-prompts';
+import type { DesktopAPI, DesktopPreferences, InstructionsFile, RestoreResult, SettingsInfo, SettingsScope, SettingsSnapshot } from '@/lib/desktop-api';
 
 const sections = [{ id: 'general', label: 'General', icon: Monitor }, { id: 'models', label: 'Models & providers', icon: Plug }, { id: 'agent', label: 'Agent & projects', icon: Shield }, { id: 'personalization', label: 'Personalization', icon: UserRound }, { id: 'notifications', label: 'Notifications', icon: Bell }, { id: 'data', label: 'Data & privacy', icon: Database }, { id: 'about', label: 'About', icon: Info }] as const;
 type Section = typeof sections[number]['id'];
 export type SettingsModalProps = {
-  open: boolean; onClose: () => void; providers: ProviderInfo[]; providersReady: boolean;
+  open: boolean; initialSection?: Section; onClose: () => void; providers: ProviderInfo[]; providersReady: boolean;
   busyProvider?: string; error?: string; api?: DesktopAPI; preferences?: SettingsSnapshot; onPreferences: (value: SettingsSnapshot) => void;
   workspace: string; busy: boolean; hasMessages: boolean; onReconnect: () => Promise<void>;
   onConnect: (provider: string, apiKey: string) => Promise<void> | void;
   onSignIn: (provider: string) => Promise<void> | void;
   onDisconnect: (provider: string) => Promise<void> | void;
   onUse?: (provider: string) => void; currentProvider?: string;
+  onShowShortcuts?: () => void;
+  onRestored?: (result: RestoreResult) => void;
 };
 function Choice({ label, value, items, disabled, onChange }: { label: string; value: string; items: { value: string; label: string }[]; disabled?: boolean; onChange: (value: string) => void }) {
   return <Select value={value || '__default'} onValueChange={next => { if (next) onChange(next === '__default' ? '' : next); }} disabled={disabled}>
@@ -39,11 +43,12 @@ const quickEntryShortcuts = [{ value: 'Alt+Space', label: mac ? '⌥ Space' : 'A
 const sizes = Array.from({ length: 10 }, (_, index) => ({ value: String(index + 11), label: `${index + 11} px` }));
 export default function SettingsModal(props: SettingsModalProps) {
   const { open, onClose, providers, providersReady, busyProvider, error, onConnect, onSignIn, onDisconnect, onUse, currentProvider, api, preferences, onPreferences, workspace, busy, hasMessages, onReconnect } = props;
-  const [section, setSection] = useState<Section>('general');
+  const [section, setSection] = useState<Section>(props.initialSection || 'general');
+  useEffect(() => { if (open && props.initialSection) setSection(props.initialSection); }, [open, props.initialSection]);
   const [scope, setScope] = useState<SettingsScope>('app');
   const [editing, setEditing] = useState(''); const [key, setKey] = useState('');
   const [info, setInfo] = useState<SettingsInfo>();
-  const [pending, setPending] = useState(false); const actionLock = useRef(false);
+  const [pending, setPending] = useState(false); const actionLock = useRef(false); const [pendingLabel, setPendingLabel] = useState('');
   const [message, setMessage] = useState(''); const [failure, setFailure] = useState('');
   const [instructions, setInstructions] = useState<InstructionsFile>(); const [instructionText, setInstructionText] = useState('');
   const [catalogue, setCatalogue] = useState<{ provider: string; options: { value: string; label: string }[] }>();
@@ -60,7 +65,7 @@ export default function SettingsModal(props: SettingsModalProps) {
     actionLock.current = true; setPending(true); setFailure(''); setMessage('');
     try { const result = await task(); if (success) setMessage(success); return result; }
     catch (cause) { setFailure(cause instanceof Error ? cause.message : String(cause)); }
-    finally { actionLock.current = false; setPending(false); }
+    finally { actionLock.current = false; setPending(false); setPendingLabel(''); }
   }
   function save(patch: Partial<DesktopPreferences>, target: SettingsScope = 'app') {
     void run(async () => { onPreferences(await api!.updateSettings(target, patch)); }, 'Saved');
@@ -110,7 +115,7 @@ export default function SettingsModal(props: SettingsModalProps) {
         <nav className="handwork-settings-nav" aria-label="Settings sections">{sections.map(item => <Button key={item.id} variant={section === item.id ? 'secondary' : 'ghost'} size="sm" aria-current={section === item.id ? 'page' : undefined} onClick={() => { setSection(item.id); setMessage(''); }}><item.icon width={16} height={16} aria-hidden />{item.label}</Button>)}</nav>
         <DialogBody className="handwork-settings-panel">
           <h2>{sections.find(item => item.id === section)?.label}</h2>
-          <div className="handwork-settings-status" aria-live="polite">{failure ? <span role="alert">{failure}</span> : pending ? 'Saving…' : message}</div>
+          <div className="handwork-settings-status" aria-live="polite">{failure ? <span role="alert">{failure}</span> : pending ? pendingLabel || 'Saving…' : message}</div>
           {!api && <p>Open the desktop app to manage settings.</p>}
           {section === 'general' && <>
             <Row title="Appearance" detail="System follows your device’s color theme."><HandworkTheme compact={false} /></Row>
@@ -120,6 +125,7 @@ export default function SettingsModal(props: SettingsModalProps) {
             {toggle('restoreChats', 'Restore open chats', 'Reopen your tabs when Handwork starts.')}
             <Row title="Quick entry shortcut" detail="Open a small composer from any app. What you send starts a new chat."><Choice label="Quick entry shortcut" value={preferences?.app.quickEntryShortcut || 'off'} items={quickEntryShortcuts} disabled={disabled} onChange={value => save({ quickEntryShortcut: value as DesktopPreferences['quickEntryShortcut'] })} /></Row>
             {toggle('keepRunning', 'Keep running when the window is closed', mac ? 'Closing hides Handwork, so replies, queued messages, and quick entry keep working. Quit with ⌘Q. Reopen it from the Dock.' : 'Closing hides Handwork, so replies, queued messages, and quick entry keep working. Reopen or quit it from the notification area.')}
+            {props.onShowShortcuts && <Row title="Keyboard shortcuts" detail={`Every shortcut in one list. Also open it with ${shortcutLabel('Mod+/')} or from ${shortcutLabel('Mod+K')}.`}><Button size="sm" variant="outline" onClick={props.onShowShortcuts}>View shortcuts</Button></Row>}
             <Row title="Preferred editor" detail="Used when opening instruction and settings files."><Choice label="Preferred editor" value={preferences?.app.preferredEditor || 'system'} items={[{ value: 'system', label: 'System default' }, { value: 'vscode', label: 'VS Code' }, { value: 'cursor', label: 'Cursor' }, { value: 'zed', label: 'Zed' }]} disabled={disabled} onChange={value => save({ preferredEditor: value as DesktopPreferences['preferredEditor'] })} /></Row>
           </>}
           {section === 'models' && <>
@@ -177,6 +183,7 @@ export default function SettingsModal(props: SettingsModalProps) {
             <h3>Chat history</h3><p className="handwork-settings-note">History stays in your local Handwork profile. Exports contain your messages and Handwork’s replies, with the names of attached files. They leave out tool output and attachment contents.</p>
             <Row title="Export format" detail={exportFormat === 'markdown' ? 'Readable in any editor, and easy to share.' : 'Structured data for scripts and other tools.'}><Choice label="Export format" value={exportFormat} items={[{ value: 'markdown', label: 'Markdown' }, { value: 'json', label: 'JSON' }]} disabled={disabled} onChange={value => setExportFormat(value as 'markdown' | 'json')} /></Row>
             <div className="handwork-settings-buttons">{(['current', 'all'] as const).map(value => <Button key={value} variant="outline" size="sm" disabled={disabled || (value === 'current' && !hasMessages)} onClick={() => void run(async () => { const result = await api!.exportChats(value, exportFormat); if (!result.cancelled) setMessage(`Exported ${result.count} chat${result.count === 1 ? '' : 's'} to ${result.path?.split(/[\\/]/).pop() ?? 'a file'}`); })}>{value === 'current' ? 'Export this chat' : 'Export all chats'}</Button>)}</div>
+            <HandworkBackup api={api} disabled={disabled} busy={busy} run={(task, label) => { if (actionLock.current) return Promise.resolve(undefined); setPendingLabel(label); return run(task); }} onMessage={setMessage} onRestored={result => { props.onRestored?.(result); if (api) void api.settingsInfo().then(setInfo).catch(() => {}); }} />
             <Row title="History location" detail={info?.historyPath}><Button size="sm" variant="ghost" disabled={disabled} onClick={() => void run(() => api!.openSettingsTarget('history'))}>Open folder</Button></Row>
             <h3>Saved attachments</h3><p className="handwork-settings-note">{info ? `${info.attachments.count} files · ${(info.attachments.bytes / 1024 / 1024).toFixed(1)} MB` : 'Loading storage…'}</p><p className="handwork-settings-path">{info?.attachments.path}</p>
             <div className="handwork-settings-buttons"><Button size="sm" variant="outline" disabled={disabled} onClick={() => void run(() => api!.openSettingsTarget('attachments'))}>Open folder</Button><Button size="sm" variant="ghost" disabled={disabled || busy || !info?.attachments.count} onClick={() => setConfirmation('attachments')}>Remove saved attachments…</Button></div>

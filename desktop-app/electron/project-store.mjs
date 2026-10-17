@@ -33,6 +33,19 @@ export class ProjectStore {
         ...registry.projects.filter(project => project.path !== folder),
       ],
     };
+    this.save(saved, paths);
+  }
+  remove(folder) {
+    const registry = this.read();
+    const paths = this.projectPaths(registry).filter(value => value !== folder);
+    const saved = Array.isArray(registry) ? paths : {
+      ...registry,
+      projects: registry.projects.filter(project => project.path !== folder),
+    };
+    this.save(saved, paths);
+    return paths;
+  }
+  save(saved, paths) {
     if (this.file) {
       mkdirSync(path.dirname(this.file), { recursive: true });
       const temporary = this.file + '.tmp';

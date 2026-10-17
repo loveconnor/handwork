@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import HandworkHarness from "@/components/site/HandworkHarness";
 import HandworkQuickEntry from "@/components/site/HandworkQuickEntry";
 import { ThemeSync } from "@/components/site/ThemeSync";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "katex/dist/katex.min.css";
 import "./desktop.css";
@@ -20,4 +21,4 @@ applyAppearance(savedAppearance());
 // This is the same /harness component as the web route, without the marketing layout.
 // The global shortcut opens the same renderer in a compact window.
 const quick = window.location.hash === "#quick";
-createRoot(document.getElementById("root")!).render(<ErrorBoundary><ThemeSync />{quick ? <HandworkQuickEntry /> : <HandworkHarness />}</ErrorBoundary>);
+createRoot(document.getElementById("root")!).render(<ErrorBoundary><TooltipProvider><ThemeSync />{quick ? <HandworkQuickEntry /> : <HandworkHarness />}</TooltipProvider></ErrorBoundary>);

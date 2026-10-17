@@ -1,5 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import './copy-map-worker.mjs';
+import { buildSlashCommands } from './build-slash-commands.mjs';
+await buildSlashCommands();
 import { generateSystemPrompt, honestChatSpec } from 'honestui/genui/server';
 import { desktopComponentNames } from '../electron/genui-components.mjs';
 const mathFormattingRule = String.raw`For mathematical notation, use LaTeX \cdot for a centered multiplication dot, never a baseline period. Keep sentence punctuation distinct from multiplication. Separate proof labels from equations with spacing, for example \qquad\text{(IH)}, rather than joining a label with a period.`;

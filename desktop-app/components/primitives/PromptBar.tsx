@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createShader, playSweep, accentChain, ACCENTS } from "glimm";
 import { IconArrowUp, IconChart, IconCheck, IconChevronDown, IconClose, IconFile, IconGlobe, IconLayers, IconLock, IconLockOpen, IconMic, IconPaperclip, IconPlus, IconStopFilled, type IconComponent } from "@/components/atoms/Icons";
@@ -718,13 +719,13 @@ export default function PromptBar({
         {staged.length > 0 && (
           <div className={`flex flex-wrap gap-1.5 pt-0.5 ${pill ? "px-1" : "px-0.5"}`}>
             {staged.map((file, i) => (
-              <span
-                key={`${file.name}-${i}`}
+              <HoverTooltip key={`${file.name}-${i}`} content={file.size ? `${file.mimeType} · ${Math.max(1, Math.round(file.size / 1024))} KB` : undefined}><span
+
                 className={`flex h-6.5 items-center gap-1.5 bg-field py-1 pr-1 pl-1.5 text-[11.5px] text-ink-2 shadow-hairline ${
                   pill ? "rounded-full" : "rounded-chip"
                 }`}
                 style={{ animation: "pop-in 200ms cubic-bezier(0.23,1,0.32,1) both" }}
-                title={file.size ? `${file.mimeType} · ${Math.max(1, Math.round(file.size / 1024))} KB` : undefined}
+
               >
                 <IconFile size={12} />
                 <span className="max-w-36 truncate">{file.name}</span>
@@ -738,7 +739,7 @@ export default function PromptBar({
                 >
                   <IconClose size={10} strokeWidth={2.5} />
                 </button>
-              </span>
+              </span></HoverTooltip>
             ))}
           </div>
         )}
@@ -845,9 +846,9 @@ export default function PromptBar({
           {runtime?.efforts?.length && runtime.effortValue ? (
             <>
               <span aria-hidden className="h-4 w-px bg-line" />
-              <span aria-label="Reasoning effort" title="Reasoning effort · change it in the model picker" className="flex h-7 shrink-0 items-center px-1.5 text-[12px] font-medium capitalize text-ink-3">
+              <HoverTooltip content="Reasoning effort · change it in the model picker"><span aria-label="Reasoning effort"  className="flex h-7 shrink-0 items-center px-1.5 text-[12px] font-medium capitalize text-ink-3">
                 {runtime.efforts.find((item) => item.value === runtime.effortValue)?.name ?? runtime.effortValue}
-              </span>
+              </span></HoverTooltip>
             </>
           ) : null}
           {runtime?.modes?.length && runtime.modeValue ? (

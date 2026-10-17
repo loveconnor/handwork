@@ -2,38 +2,55 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, renameSync, realpathSync } from 'node:fs';
 import { projectSnapshot, generateSuggestions } from './project-suggestions.mjs';
 import { SettingsService } from './settings-service.mjs';
+import { enginePreferences } from './settings-files.mjs';
 import { EventEmitter } from 'node:events';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { AcpClient } from './acp-client.mjs';
+import { canContinueRecovery, continuationParams, requestWithRecovery } from './response-recovery.mjs';
 import { ChatPreferences } from './chat-preferences.mjs';
+import { ModelPreferences } from './model-preferences.mjs';
 import { ProjectStore } from './project-store.mjs';
 import { ProjectChangesReader } from './project-changes.mjs';
+import { GitService } from './git-service.mjs';
+import { generateCommitMessage } from './commit-message.mjs';
 import { geocodePlace } from './map-services.mjs';
 import { readFile, stat, readdir, lstat } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { fileAttachment, isPromptImage, prepareAttachmentFiles } from './attachment-files.mjs';
 import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS } from './ipc.mjs';
 import { ChatSearchIndex } from './chat-search.mjs';
+import { chatTitle, isPlaceholderTitle } from './chat-title.mjs';
+import { commandReport } from './command-reports.mjs';
 import { SavedPrompts } from './saved-prompts.mjs';
 import { DraftStore } from './draft-store.mjs';
+import { QueueStore } from './queue-store.mjs';
+import { BACKUP_EXTENSION, BackupService } from './backup.mjs';
 import { FileAccess, TrustedFiles } from './file-access.mjs';
 import { chatsToMarkdown, describeChat, exportFileName } from './chat-export.mjs';
 
-/** Accept every extension; preserve binary bytes instead of decoding them as text. */
-export async function readAttachments(paths) {
-  const items = [];
-  for (const filePath of paths.slice(0, MAX_ATTACHMENTS)) {
-    const info = await stat(filePath);
-    if (!info.isFile()) continue;
+const sizeLabel = bytes => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+/**
+ * Reads picked files that fit in `room` more attachments. Accept every extension and
+ * preserve binary bytes. A file that cannot be attached is reported with its reason
+ * and never stops the others.
+ */
+export async function readAttachments(paths, room = MAX_ATTACHMENTS) {
+  const files = [];
+  const rejected = [];
+  for (const filePath of paths) {
     const name = path.basename(filePath);
-    if (info.size > MAX_ATTACHMENT_BYTES) throw new Error(`${name} is larger than 5 MB`);
-    const bytes = await readFile(filePath);
-    const uri = pathToFileURL(filePath).href;
-    items.push(fileAttachment(name, bytes, uri));
+    let info;
+    try { info = await stat(filePath); } catch { rejected.push({ name, reason: 'Could not be read' }); continue; }
+    if (!info.isFile()) { rejected.push({ name, reason: info.isDirectory() ? 'Folders cannot be attached' : 'Not a regular file' }); continue; }
+    if (info.size > MAX_ATTACHMENT_BYTES) { rejected.push({ name, reason: `${sizeLabel(info.size)} is over the 5 MB limit per file` }); continue; }
+    if (files.length >= room) { rejected.push({ name, reason: `A message can carry ${MAX_ATTACHMENTS} files` }); continue; }
+    try { files.push(fileAttachment(name, await readFile(filePath), pathToFileURL(filePath).href)); }
+    catch (error) { rejected.push({ name, reason: error instanceof Error && /larger than/.test(error.message) ? 'Over the 5 MB limit per file' : 'Could not be read' }); }
   }
-  return items;
+  return { files, rejected };
 }
 
 /** ACP prompt blocks for a message and its attachments. */
@@ -62,7 +79,7 @@ export async function localProviderRunning(baseUrl) {
 }
 
 export class DesktopBackend extends EventEmitter {
-  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new AcpClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats'), savedPrompts = new SavedPrompts(), chatSearch = new ChatSearchIndex(path.join(settingsService.home || homedir(), '.handwork', 'sessions')), drafts = new DraftStore(), trustedFiles = new TrustedFiles(), shell = null }) {
+  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new AcpClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats'), savedPrompts = new SavedPrompts(), chatSearch = new ChatSearchIndex(path.join(settingsService.home || homedir(), '.handwork', 'sessions')), drafts = new DraftStore(), queues = new QueueStore(), trustedFiles = new TrustedFiles(), modelPreferences = new ModelPreferences(), shell = null }) {
     super();
     this.binary = binary;
     this.settingsService = settingsService;
@@ -92,10 +109,18 @@ export class DesktopBackend extends EventEmitter {
     this.historyClient = null;
     this.disposed = false;
     this.changesReader = new ProjectChangesReader();
+    this.git = new GitService({ emit: event => this.emit('event', event), openTerminal: directory => {
+      if (!this.settingsService.host?.openTerminal) throw new Error('Opening a terminal is not available in this build.');
+      return this.settingsService.host.openTerminal(directory);
+    } });
+    this.commitMessageClient = null;
     this.savedPrompts = savedPrompts;
     this.chatSearch = chatSearch;
     this.drafts = drafts;
+    this.queues = queues;
+    this.backups = new BackupService({ sessionDirectory: chatSearch.directory, chatDirectory, attachmentDirectory, home: settingsService.home, chatPreferences, savedPrompts, settings: settingsService.settings, modelPreferences, projects, drafts, queues, appVersion: settingsService.version });
     this.trustedFiles = trustedFiles;
+    this.modelPreferences = modelPreferences;
     this.files = new FileAccess({ roots: () => [...this.projects.list(), this.attachmentDirectory, this.chatDirectory], trusted: trustedFiles, shell });
   }
 
@@ -126,6 +151,7 @@ export class DesktopBackend extends EventEmitter {
   }
 
   listProjects() { return this.projects.list(); }
+  removeProject(folder) { return this.projects.remove(folder); }
 
   projectChanges() { return this.changesReader.snapshot(this.workspace || ''); }
   geocodePlace(query) { return geocodePlace(query); }
@@ -135,13 +161,82 @@ export class DesktopBackend extends EventEmitter {
   }
 
   // Picking files never touches the engine, so it must not wait behind a running prompt.
-  async chooseFiles(picker) {
+  /** Git reads and writes act on the selected project's repository only. */
+  gitProject(workspace) {
+    if (!workspace || workspace !== this.workspace) throw new Error('The selected project changed. Refresh its changes.');
+    return workspace;
+  }
+  gitState(workspace) { return this.git.state(this.gitProject(workspace)); }
+  gitFileDiff(workspace, file, area, context) { return this.git.fileDiff(this.gitProject(workspace), file, area, context); }
+  gitStage(workspace, paths) { return this.git.stage(this.gitProject(workspace), paths); }
+  gitUnstage(workspace, paths) { return this.git.unstage(this.gitProject(workspace), paths); }
+  gitStageAll(workspace) { return this.git.stageAll(this.gitProject(workspace)); }
+  gitUnstageAll(workspace) { return this.git.unstageAll(this.gitProject(workspace)); }
+  gitCommit(workspace, message, expected) { return this.git.commit(this.gitProject(workspace), message, expected); }
+  gitPush(workspace, expected) { return this.git.push(this.gitProject(workspace), expected); }
+  gitPublish(workspace, remote) { return this.git.publish(this.gitProject(workspace), remote); }
+  gitFetch(workspace) { return this.git.fetch(this.gitProject(workspace)); }
+  gitPull(workspace) { return this.git.pull(this.gitProject(workspace)); }
+  gitBranches(workspace) { return this.git.branches(this.gitProject(workspace)); }
+  gitSwitchBranch(workspace, name) { return this.git.switchBranch(this.gitProject(workspace), name); }
+  gitCreateBranch(workspace, name) { return this.git.createBranch(this.gitProject(workspace), name); }
+  gitLog(workspace, limit) { return this.git.log(this.gitProject(workspace), limit); }
+  gitCommitDetails(workspace, oid) { return this.git.commitDetails(this.gitProject(workspace), oid); }
+  gitCommitFileDiff(workspace, oid, file, context) { return this.git.commitFileDiff(this.gitProject(workspace), oid, file, context); }
+  gitOpenTerminal(workspace) { return this.git.openTerminal(this.gitProject(workspace)); }
+  /** Drafts an editable message from the staged diff on the chat's model, outside the chat. */
+  async gitCommitMessage(workspace) {
+    this.gitProject(workspace);
+    const config = this.session?.configOptions?.map(option => ({ ...option }));
+    if (!config?.some(option => option.id === 'model' && option.currentValue)) throw new Error('Open a chat in this project to write a commit message.');
+    const evidence = await this.git.commitContext(workspace);
+    this.commitMessageClient?.dispose();
+    const client = this.clientFactory({ binary: this.binary, cwd: workspace });
+    this.commitMessageClient = client;
+    this.children.add(client.exited);
+    client.exited.then(() => this.children.delete(client.exited));
+    try { return { ...(await generateCommitMessage(client, config, evidence.context)), head: evidence.head, index: evidence.index }; }
+    finally { if (this.commitMessageClient === client) this.commitMessageClient = null; }
+  }
+
+  async chooseFiles(picker, room = MAX_ATTACHMENTS) {
     const paths = await picker();
-    if (!paths?.length) return [];
-    const items = await readAttachments(paths);
+    if (!paths?.length) return { files: [], rejected: [] };
+    const result = await readAttachments(paths, room);
     // Files picked here stay openable from the message later.
     try { this.trustedFiles.add(paths); } catch { /* Opening later is optional. */ }
-    return items;
+    return result;
+  }
+
+  /**
+   * What shapes the open chat's replies: where it runs, which instruction files the
+   * engine reads, and which extra folders it may use. Model settings and context
+   * usage come from the session itself.
+   */
+  async chatDetails() {
+    const workspace = this.workspace || '';
+    const standalone = !workspace;
+    const instructions = [];
+    const add = async (file, scope) => {
+      const info = await lstat(file).catch(() => null);
+      if (info?.isFile()) instructions.push({ scope, path: file, bytes: info.size });
+    };
+    if (!standalone) {
+      // The engine reads the global file, then AGENTS.md from the filesystem root down to the project.
+      await add(path.join(this.settingsService.home, '.handwork', 'AGENTS.md'), 'app');
+      const ancestors = [];
+      for (let folder = path.dirname(workspace); folder !== path.dirname(folder); folder = path.dirname(folder)) ancestors.unshift(folder);
+      for (const folder of ancestors) await add(path.join(folder, 'AGENTS.md'), 'ancestor');
+      await add(path.join(workspace, 'AGENTS.md'), 'project');
+    }
+    // Only the saved preferences are needed; settingsInfo would also start the engine to ask its version.
+    const preferences = standalone ? null : await enginePreferences(this.settingsService.home, workspace).catch(() => null);
+    return {
+      workspace, standalone, instructions, home: this.settingsService.home ?? '',
+      directories: preferences?.directories ?? [],
+      permissions: { global: preferences?.global ?? {}, project: preferences?.project ?? {} },
+      sessionId: this.session?.sessionId ?? '',
+    };
   }
 
   // Voice comes from a system dictation app the host detected; the renderer only sees availability.
@@ -196,7 +291,7 @@ export class DesktopBackend extends EventEmitter {
     this.client = engine.client;
     this.session = engine.session;
     this.needsReconnect = engine.needsReconnect === true;
-    return engine.session;
+    return engine.commands ? { ...engine.session, availableCommands: engine.commands } : engine.session;
   }
 
   engineFor(sessionId = this.session?.sessionId) {
@@ -227,6 +322,10 @@ export class DesktopBackend extends EventEmitter {
       if (event.method === 'handwork/session_read_update') return;
       if (!this.engines.has(engine)) return;
       const sessionId = engine.session?.sessionId ?? engine.loadingSessionId;
+      if (event.method === 'session/update' && event.params?.update?.sessionUpdate === 'available_commands_update') engine.commands = event.params.update.availableCommands;
+      const meta = event.params?.update?._meta?.handwork;
+      if (event.method === 'session/update' && meta && Object.hasOwn(meta, 'modelResponseRecovery')) engine.recovery = meta.modelResponseRecovery;
+      if (event.method === 'session/update' && event.params?.update?.sessionUpdate === 'usage_update' && sessionId) this.rememberUsage(sessionId, event.params.update);
       if (event.method === 'session/request_permission' &&
           (!engine.prompting || engine.cancelling || event.params.sessionId !== sessionId)) {
         client.respondPermission(event.id, null);
@@ -294,26 +393,86 @@ export class DesktopBackend extends EventEmitter {
   async prompt(text, attachments = [], sessionId) {
     const engine = this.engineFor(sessionId);
     return this.sessionExclusive(engine, async () => {
-      const { client } = engine;
       if (engine.needsReconnect) throw new Error("Reconnect the project to apply its changed permissions before sending.");
       this.cancelSuggestions();
       const binaryFiles = attachments.some(item => item.data !== undefined && !isPromptImage(item.mimeType));
       const prepared = binaryFiles ? await prepareAttachmentFiles(attachments, engine.standalone ? path.join(engine.directory, 'attachments') : this.attachmentDirectory) : attachments;
       const blocks = promptBlocks(text, prepared);
       if (!blocks.length) throw new Error('Nothing to send');
-      engine.prompting = true;
-      engine.cancelling = false;
-      try {
-        const result = await client.request('session/prompt', { sessionId: engine.session.sessionId, prompt: blocks }, { timeout: 0 });
-        if (result.stopReason === 'end_turn') this.notify('complete', engine.session?.sessionId);
-        return result;
-      } catch (error) { this.notify('error', engine.session?.sessionId); throw error;
-      } finally {
-        engine.prompting = false;
-        engine.cancelling = false;
-        if (!client.closed) client.cancelPermissions();
-      }
+      this.recordModelUse(engine);
+      return this.runPrompt(engine, { sessionId: engine.session.sessionId, prompt: blocks });
     });
+  }
+
+  /**
+   * The engine reports context usage only while a chat is live, and not when its
+   * history is replayed, so the latest figure is saved with the chat's preferences.
+   */
+  rememberUsage(sessionId, update) {
+    if (!Number.isFinite(update.used) || update.used < 0) return;
+    const usage = { used: update.used, ...(Number.isFinite(update.size) && update.size > 0 ? { size: update.size } : {}), at: Date.now() };
+    const previous = this.chatPreferences.list()[sessionId]?.usage;
+    if (previous?.used === usage.used && previous?.size === usage.size) return;
+    try {
+      this.chatPreferences.update(sessionId, { usage });
+      this.emit('event', { method: 'desktop/chat-usage', params: { sessionId, usage } });
+    } catch { /* Context usage is optional; the live figure still shows. */ }
+  }
+
+  /** Counts the chat's provider and model as used. Model shortcuts are optional. */
+  recordModelUse(engine) {
+    const options = engine.session?.configOptions ?? [];
+    const provider = options.find(option => option.id === 'provider')?.currentValue ?? '';
+    const model = options.find(option => option.id === 'model');
+    if (typeof provider !== 'string' || typeof model?.currentValue !== 'string' || !model.currentValue) return;
+    const find = items => Array.isArray(items) ? items.reduce((found, item) => found ?? (item?.value === model.currentValue ? item : find(item?.options)), undefined) : undefined;
+    const name = find(model.options)?.name;
+    try {
+      const preferences = this.modelPreferences.recordUse(provider, model.currentValue, typeof name === 'string' ? name : model.currentValue);
+      this.emit('event', { method: 'desktop/models', params: preferences });
+    } catch { /* Sending never depends on model shortcuts. */ }
+  }
+  getModelPreferences() { return this.modelPreferences.list(); }
+  setModelFavorite(provider, model, name, favorite) {
+    const preferences = this.modelPreferences.setFavorite(provider, model, name, favorite);
+    this.emit('event', { method: 'desktop/models', params: preferences });
+    return preferences;
+  }
+
+  async continueResponse(sessionId) {
+    const engine = this.engineFor(sessionId);
+    return this.sessionExclusive(engine, async () => {
+      if (engine.needsReconnect) throw new Error('Reconnect the project before retrying.');
+      if (!canContinueRecovery(engine.recovery)) throw new Error('No paused response is ready to retry.');
+      this.cancelSuggestions();
+      return this.runPrompt(engine, continuationParams(engine.session.sessionId));
+    });
+  }
+
+  async runPrompt(engine, params) {
+    const { client } = engine;
+    const publishRecovery = recovery => this.emit('event', { method: 'session/update', params: { sessionId: params.sessionId, update: { sessionUpdate: 'session_info_update', _meta: { handwork: { modelResponseRecovery: recovery } } } } });
+    publishRecovery(null);
+    engine.prompting = true;
+    engine.cancelling = false;
+    try {
+      const result = await requestWithRecovery(engine, params, {
+        onWaiting: publishRecovery,
+      });
+      publishRecovery(engine.recovery?.state === 'paused' ? engine.recovery : null);
+      if (result?.stopReason === 'end_turn' && engine.recovery?.state !== 'paused') {
+        this.notify('complete', engine.session?.sessionId);
+      }
+      return { ...result, recoveryPaused: engine.recovery?.state === 'paused' };
+    } catch (error) {
+      publishRecovery(engine.recovery?.state === 'paused' ? engine.recovery : null);
+      this.notify('error', params.sessionId);
+      throw error;
+    } finally {
+      engine.prompting = false;
+      engine.cancelling = false;
+      if (!client.closed) client.cancelPermissions();
+    }
   }
 
   async cancel(sessionId) {
@@ -339,7 +498,7 @@ export class DesktopBackend extends EventEmitter {
     const preferences = this.chatPreferences.list();
     return this.displaySessions({ sessions: this.recentSessions.map(session => {
       const preference = Object.hasOwn(preferences, session.sessionId) ? preferences[session.sessionId] : {};
-      return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true };
+      return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true, archived: preference.archived === true };
     }), preferences });
   }
 
@@ -374,8 +533,17 @@ export class DesktopBackend extends EventEmitter {
       const preferences = this.chatPreferences.list();
       const result = { sessions: [...sessions.values()].map(session => {
         const preference = Object.hasOwn(preferences, session.sessionId) ? preferences[session.sessionId] : {};
-        return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true };
+        return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true, archived: preference.archived === true };
       }), preferences };
+      // Untitled history gets a prompt preview without loading or switching an engine.
+      const untitled = result.sessions.filter(session => !preferences[session.sessionId]?.title && isPlaceholderTitle(session.title));
+      for (let index = 0; index < untitled.length; index += 16) {
+        await Promise.all(untitled.slice(index, index + 16).map(async session => {
+          try { await this.chatSearch.readSession(session.sessionId); } catch { /* Unreadable history stays a new chat. */ }
+          const prompt = this.chatSearch.sessions.get(session.sessionId)?.messages.find(message => message.role === 'user')?.text;
+          session.title = chatTitle(session.title, prompt);
+        }));
+      }
       this.recentSessions = result.sessions;
       this.saveSessionCache();
       return this.displaySessions(result);
@@ -404,6 +572,7 @@ export class DesktopBackend extends EventEmitter {
     for (const directory of directories) removed += (await this.settingsService.clearAttachments(directory)).removed;
     return { removed };
   }
+  commandReport(command) { return commandReport(this.binary, command, this.workspace || this.settingsService.home); }
   async diagnostics() { return this.settingsService.diagnostics(this.binary, this.workspace, this.attachmentDirectory, await this.standaloneAttachmentDirectories()); }
   testNotification() { return this.notify('test'); }
   checkUpdates() { if (!this.settingsService.host.checkUpdates) throw new Error('Desktop update checking is not configured in this build'); return this.settingsService.host.checkUpdates(); }
@@ -509,6 +678,36 @@ export class DesktopBackend extends EventEmitter {
   saveDraft(key, text, files) { return this.drafts.save(key, text, files); }
   listDrafts() { return this.drafts.list(); }
   removeDrafts(keys) { this.drafts.remove(keys); return { removed: keys.length }; }
+  listQueues() { return this.queues.list(); }
+  saveQueue(sessionId, queue) { return this.queues.save(sessionId, queue); }
+
+  /** Writes a full, restorable backup to a file the person chooses. */
+  createBackup() {
+    return this.exclusive(async () => {
+      const date = new Date().toISOString().slice(0, 10);
+      const destination = await this.settingsService.host.saveBackup?.({ defaultName: `Handwork backup ${date}.${BACKUP_EXTENSION}` });
+      if (!destination) return { cancelled: true };
+      return this.backups.create(destination);
+    });
+  }
+  /** Checks a backup the person chooses and reports what restoring it would add. */
+  async previewBackup() {
+    if (!this.settingsService.host.chooseBackup) throw new Error('Restoring backups is unavailable in this preview');
+    const file = await this.settingsService.host.chooseBackup();
+    if (!file) return { cancelled: true };
+    return this.backups.preview(file);
+  }
+  restoreBackup(token, categories) {
+    return this.exclusive(async () => {
+      if (this.prompting) throw new Error('Wait for running replies to finish before restoring.');
+      const result = await this.backups.restore(token, categories);
+      if (result.preferences) this.emit('event', { method: 'desktop/settings', params: this.getSettings() });
+      if (result.preferences) { try { this.emit('event', { method: 'desktop/models', params: this.modelPreferences.list() }); } catch { /* Model shortcuts are optional. */ } }
+      // Restored chats join the saved list; the next refresh reads them from the engine.
+      if (result.chats) { this.recentSessions = []; if (this.client && !this.client.closed) await this.collectSessions().catch(() => {}); }
+      return result;
+    });
+  }
   previewFile(target) { return this.files.preview(target, this.workspace); }
   openFile(target) { return this.files.open(target, this.workspace); }
   revealFile(target) { return this.files.reveal(target, this.workspace); }
@@ -573,6 +772,7 @@ export class DesktopBackend extends EventEmitter {
       let result;
       try { result = await (engine ?? temporary).client.request('session/remove', { sessionId }); }
       finally { if (temporary) { this.engines.delete(temporary); temporary.client.dispose(); } }
+      try { this.queues.remove([sessionId]); } catch { /* A leftover queue is ignored for a missing chat. */ }
       try { this.chatPreferences.remove(sessionId); }
       catch { this.emit('event', { method: 'desktop/notice', params: { message: 'The chat was deleted, but its local display preferences could not be removed.' } }); }
       // The engine releases a deleted active session; the renderer starts or loads another.
@@ -587,11 +787,20 @@ export class DesktopBackend extends EventEmitter {
   async rewindSession(turnIndex, expectedText, sessionId) {
     const engine = this.engineFor(sessionId);
     return this.sessionExclusive(engine, async () => {
-      const result = await engine.client.request('session/rewind', { sessionId: engine.session.sessionId, turnIndex, expectedText });
+      const original = engine.session.sessionId;
+      const result = await engine.client.request('session/rewind', { sessionId: original, turnIndex, expectedText });
       if (typeof result?.sessionId !== 'string') throw new Error('Invalid rewind response');
       engine.session = { sessionId: result.sessionId, configOptions: result.configOptions ?? [] };
       if (this.client === engine.client) this.session = engine.session;
-      return result;
+      // The original stays saved; link the new chat to it so either version can be reopened.
+      const branch = { from: original, turn: turnIndex, at: Date.now() };
+      try {
+        // A chat the person renamed keeps its name in every version.
+        const title = this.chatPreferences.list()[original]?.title;
+        this.chatPreferences.update(result.sessionId, { branch, ...(title ? { title } : {}) });
+      }
+      catch { return result; /* The new chat still works without a version link. */ }
+      return { ...result, branch };
     });
   }
 
@@ -741,6 +950,7 @@ export class DesktopBackend extends EventEmitter {
     this.disposed = true;
     this.historyClient?.dispose();
     this.cancelSuggestions();
+    this.commitMessageClient?.dispose();
     for (const client of this.settingsClients) client.dispose();
     this.settingsClients.clear();
     for (const engine of this.engines) engine.client.dispose();

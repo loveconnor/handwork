@@ -1,5 +1,6 @@
 "use client";
 
+import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import HandworkChanges, { ChangesTrigger } from '@/components/site/HandworkChanges';
 import { useProjectChanges } from '@/lib/use-project-changes';
@@ -8,31 +9,52 @@ import { PromptBar } from "@/components/ui/prompt-bar";
 import { LoadingState } from "honestui/ai/loading-state";
 import { HandworkConversation } from "@/components/site/HandworkConversation";
 import { ApprovalCard } from "honestui/ai/approval-card";
-import HandworkTranscript from "@/components/site/HandworkTranscript";
+import HandworkTranscript, { type MessageVersion } from "@/components/site/HandworkTranscript";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { IconFileText, IconSettings, IconMic, IconPlus, IconClose } from "@/components/atoms/Icons";
 import { ComposerOptions, HandworkTheme, chooseTheme } from "@/components/site/HandworkControls";
-import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, VoiceStatus, ProjectSuggestion, ChatPreference, SavedPrompt } from "@/lib/desktop-api";
-import { applyUpdate, availableCommands, configOptions, emptyConversation, permissionFromEvent, providerList, record, text, type Command, type ConfigOption, type Conversation, type Entry, type Permission, type ProviderInfo } from "@/lib/desktop-state";
+import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, VoiceStatus, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult } from "@/lib/desktop-api";
+import { applyUpdate, availableCommands, configOptions, emptyConversation, withSavedUsage, permissionFromEvent, providerList, record, text, type Command, type ConfigOption, type Conversation, type Entry, type Permission, type ProviderInfo } from "@/lib/desktop-state";
+import { chatTitle, isPlaceholderTitle } from '@/electron/chat-title.mjs';
+import { mergeSidebarChats, sortChatsByRecency } from '@/lib/chat-order';
+import { versionPosition, versionTurns } from '@/lib/chat-versions';
+import { modelShortcuts, type ModelShortcut } from '@/lib/model-shortcuts';
+import { desktopSlashCommands, parseSlashCommand, resolveSlashCommand } from '@/lib/slash-commands.mjs';
 import { HandworkSidebarContent } from "@/components/site/HandworkSidebarContent";
 import { HandworkCommandPalette, type PaletteAction, type PaletteChoicePage } from "@/components/site/HandworkCommandPalette";
 import { HandworkFindBar } from "@/components/site/HandworkFindBar";
 import { HandworkPromptLibrary, PromptFillDialog } from "@/components/site/HandworkPromptLibrary";
 import { HandworkFileViewer, type FileTarget } from "@/components/site/HandworkFileViewer";
 import { HandworkQueue, type QueuedMessage } from "@/components/site/HandworkQueue";
+import { mergeQueues, queueCounts, queueKey, readyQueues, restoreQueues, type Queues } from "@/lib/message-queue";
+import { planAttachments, stageAttachments, type RejectedFile } from "@/lib/attachment-staging";
+import { attentionItems, nextAttention, type AttentionItem, type AttentionKind, type ChatIssue } from "@/lib/attention";
+import { adjacentTab, numberedTab, rememberClosed, reopenCandidate } from "@/lib/tab-navigation";
+import { HandworkAttention } from "@/components/site/HandworkAttention";
+import { HandworkAttachmentTray } from "@/components/site/HandworkAttachmentTray";
+import { HandworkChatDetails } from "@/components/site/HandworkChatDetails";
 import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuSeparator, MenuShortcut } from "@/components/ui/menu";
-import { Search, RefreshCw, RotateCcw, SquarePen, FolderPlus, TextSearch, BookText, Bookmark, SquareDashedMousePointer, Paperclip, Settings as SettingsIcon, Download, Activity, GitCompare, Pencil, Cpu, Plug, Gauge, Shield, SunMoon } from "honestui/icons";
+import { Search, RefreshCw, RotateCcw, SquarePen, FolderPlus, TextSearch, BookText, Bookmark, SquareDashedMousePointer, Paperclip, Settings as SettingsIcon, Download, Activity, GitCompare, Pencil, Cpu, Plug, Gauge, Shield, SunMoon, Archive, ArchiveRestore, Keyboard, History, Star, Info, Hand } from "honestui/icons";
 import { isMac, promptSlug, promptVariables, shortcutLabel } from "@/lib/saved-prompts";
 import { applyAppearance } from "@/lib/appearance";
+import { modelDisplayName } from "@/lib/model-presentation";
 import SettingsModal from "@/components/site/SettingsModal";
 import { ResizeHandle, useStoredSize } from "@/components/site/HandworkResizeHandle";
 import HandworkActivity from "@/components/site/HandworkActivity";
 import HandworkUpdate from "@/components/site/HandworkUpdate";
+import HandworkCommandReport, { type ReportCommand } from '@/components/site/HandworkCommandReport';
+import { HandworkShortcuts } from '@/components/site/HandworkShortcuts';
 
-type SavedSession = { id: string; label: string; workspace?: string; updatedAt?: string; turns?: number; pinned?: boolean };
+const tabActions = ['new', 'next', 'previous', 'reopen', 'close', 'attention', 'details', '1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
+type TabAction = typeof tabActions[number];
+const isTabAction = (value: string): value is TabAction => (tabActions as readonly string[]).includes(value);
+
+type SavedSession = { id: string; label: string; workspace?: string; updatedAt?: string; turns?: number; pinned?: boolean; archived?: boolean };
+
+const cleanError = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "");
 
 function readConversation(snapshot: { title: string; updates: unknown[] }, fallbackTitle: string): Conversation {
   return snapshot.updates.reduce<Conversation>((current, update) => applyUpdate(current, record(update)), { ...emptyConversation(), title: snapshot.title || fallbackTitle });
@@ -50,14 +72,6 @@ function cachedSidebar(): { projects: string[]; sessions: SavedSession[] } {
 /** What a saved draft contains, to skip saving when nothing changed. */
 function draftKey(text: string, files: Attachment[]): string {
   return `${text}\u0000${files.map(file => `${file.name}:${file.size}:${(file.data ?? file.text ?? "").length}`).join("|")}`;
-}
-
-/** Untitled chats are told apart by when they were last touched. */
-function untitledLabel(updatedAt: string): string {
-  const date = new Date(updatedAt);
-  if (Number.isNaN(date.getTime())) return "Untitled chat";
-  const sameDay = date.toDateString() === new Date().toDateString();
-  return `Chat · ${sameDay ? date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 }
 
 /** Honest AI application frame backed by the native Handwork ACP engine. */
@@ -78,6 +92,11 @@ export default function HandworkHarness() {
   const [sessionId, setSessionId] = useState("");
   const [conversation, setConversation] = useState<Conversation>(emptyConversation);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [palettePage, setPalettePage] = useState('');
+  const [reportCommand, setReportCommand] = useState<ReportCommand>();
+  const [settingsSection, setSettingsSection] = useState<'models'>();
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [modelPreferences, setModelPreferences] = useState<ModelPreferences>();
   const [prompts, setPrompts] = useState<SavedPrompt[]>([]);
   const [library, setLibrary] = useState<{ open: boolean; draft?: string }>({ open: false });
   const [fillingPrompt, setFillingPrompt] = useState<SavedPrompt>();
@@ -88,9 +107,19 @@ export default function HandworkHarness() {
   // An action shown beside a notice, valid only while that notice is visible.
   const [noticeAction, setNoticeAction] = useState<{ notice: string; label: string; run: () => void }>();
   const [failedPrompt, setFailedPrompt] = useState<{ session: string; text: string; files: Attachment[]; error: string }>();
-  const [queues, setQueues] = useState<Record<string, QueuedMessage[]>>({});
+  const [queues, setQueues] = useState<Queues>({});
   const [pausedQueues, setPausedQueues] = useState<Set<string>>(new Set());
+  // Queues saved before a restart, until the person resumes or changes them.
+  const [restoredQueues, setRestoredQueues] = useState<Set<string>>(new Set());
+  const queuesRef = useRef<Queues>({});
+  queuesRef.current = queues;
+  const savedQueues = useRef(new Map<string, string>());
+  const queuesLoaded = useRef(false);
+  const restoredQueueCount = useRef(0);
   const [chatRequest, setChatRequest] = useState<string>();
+  // Tab and chat actions from the app menu, handled with the current state.
+  const [tabRequest, setTabRequest] = useState<{ action: TabAction; at: number }>();
+  const lastTabAction = useRef<{ action: string; at: number }>({ action: '', at: 0 });
   const savedDrafts = useRef(new Map<string, string>());
   const pendingDraft = useRef<{ id: string; text: string; files: Attachment[] | null; key: string }>(undefined);
   const restoredDraft = useRef<{ text: string; files: Attachment[] }>(undefined);
@@ -104,6 +133,9 @@ export default function HandworkHarness() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [chatPreferences, setChatPreferences] = useState<Record<string, ChatPreference>>({});
   const [chatAction, setChatAction] = useState<{ kind: "rename" | "delete"; chat: SavedSession }>();
+  const [projectToDelete, setProjectToDelete] = useState<string>();
+  const [deletingProject, setDeletingProject] = useState(false);
+  const [projectDeleteError, setProjectDeleteError] = useState("");
   const [chatName, setChatName] = useState("");
   const [savingChat, setSavingChat] = useState(false);
   const [chatActionError, setChatActionError] = useState("");
@@ -120,6 +152,18 @@ export default function HandworkHarness() {
   const [notice, setNotice] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  // Files read asynchronously are checked against what is attached when they arrive.
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
+  // Files that could not be added to the composer, each with its reason.
+  const [rejectedFiles, setRejectedFiles] = useState<RejectedFile[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  // Failed and interrupted replies per chat, until the chat sends again or the person dismisses them.
+  const [chatIssues, setChatIssues] = useState<Record<string, ChatIssue>>({});
+  // Background approvals and recovery live in refs; this re-renders the attention view when they change.
+  const [, setBackgroundVersion] = useState(0);
+  const [attentionFocus, setAttentionFocus] = useState<{ id: string; kind: AttentionKind }>();
+  const closedTabs = useRef<SavedSession[]>([]);
   const [voice, setVoice] = useState<VoiceStatus>({ available: false });
   const [listening, setListening] = useState(false);
   const [narrowSidebar, setNarrowSidebar] = useState(false);
@@ -130,6 +174,7 @@ export default function HandworkHarness() {
   const [busyProvider, setBusyProvider] = useState("");
   const [providerError, setProviderError] = useState("");
   const [activityOpen, setActivityOpen] = useState(true);
+  const [activityRequested, setActivityRequested] = useState(false);
   const [changesOpen, setChangesOpen] = useState(false);
   const reviewPanel = useRef<HTMLElement>(null);
   const [reviewWidth, setReviewWidth] = useStoredSize('handwork.reviewPanelWidth');
@@ -233,9 +278,16 @@ export default function HandworkHarness() {
     if (!bridge) return;
     bridge.voiceStatus().then(status => setVoice(status)).catch(() => setVoice({ available: false }));
     bridge.listPrompts?.().then(setPrompts).catch(cause => setNotice(cause instanceof Error ? cause.message : String(cause)));
+    // Model shortcuts are optional; without them the picker lists every model as before.
+    bridge.getModelPreferences?.().then(setModelPreferences).catch(() => {});
     let mounted = true;
-    void Promise.all([bridge.listProjects(), bridge.getSettings?.(), bridge.getStartup?.(), bridge.getUpdateDrafts?.().catch(() => { setNotice('Saved update drafts could not be restored.'); return []; }), bridge.listDrafts?.().catch(() => [])]).then(async ([paths, saved, startup, updateDrafts, savedDraftList]) => {
+    void Promise.all([bridge.listProjects(), bridge.getSettings?.(), bridge.getStartup?.(), bridge.getUpdateDrafts?.().catch(() => { setNotice('Saved update drafts could not be restored.'); return []; }), bridge.listDrafts?.().catch(() => []), bridge.listQueues?.().catch(() => { setNotice('Queued messages from your last session could not be restored.'); return []; })]).then(async ([paths, saved, startup, updateDrafts, savedDraftList, savedQueueList]) => {
       if (!mounted) return;
+      const restoredQueue = restoreQueues(savedQueueList ?? []);
+      savedQueues.current = restoredQueue.keys;
+      restoredQueueCount.current = restoredQueue.count;
+      queuesLoaded.current = true;
+      if (restoredQueue.count) { setQueues(restoredQueue.queues); setPausedQueues(restoredQueue.paused); setRestoredQueues(new Set(restoredQueue.paused)); }
       // Unsent drafts come back to their chats. A draft for a chat that was never
       // sent to (and so was discarded) returns to the first chat that opens.
       const known = new Set([...(startup?.tabs ?? []).map(tab => tab.id), ...initialSidebar.sessions.map(session => session.id)]);
@@ -270,7 +322,11 @@ export default function HandworkHarness() {
       if (event.method === 'desktop/settings') { receivePreferences(event.params as SettingsSnapshot); return; }
       if (event.method === 'desktop/suggestions-cleared') { setSuggestionState({ key: '', items: [], status: 'ready' }); setSuggestionRetry(value => value + 1); return; }
       if (event.method === 'desktop/open-settings') { setSettingsOpen(true); return; }
+      if (event.method === 'desktop/open-shortcuts') { setShortcutsOpen(true); return; }
+      if (event.method === 'desktop/models') { setModelPreferences(event.params as ModelPreferences); return; }
       if (event.method === 'desktop/open-chat') { setChatRequest(text(params.sessionId)); return; }
+      if (event.method === 'desktop/chat-usage') { const id = text(params.sessionId); if (id) setChatPreferences(current => ({ ...current, [id]: { ...current[id], usage: params.usage as ChatPreference['usage'] } })); return; }
+      if (event.method === 'desktop/tab') { const action = text(params.action); if (isTabAction(action)) setTabRequest({ action, at: Date.now() }); return; }
       if (event.method === 'desktop/quick-prompt') { setQuickPrompt({ text: text(params.text), attachments: Array.isArray(params.attachments) ? params.attachments as Attachment[] : [] }); return; }
       if (event.method === "desktop/notice") { setNotice(text(params.message)); return; }
       if (event.method === "window/state") { setFullscreen(params.fullscreen === true); return; }
@@ -291,11 +347,14 @@ export default function HandworkHarness() {
       if (eventSession && eventSession !== activeSession.current) {
         if (event.method === 'session/update') {
           chatCache.current.set(eventSession, applyUpdate(chatCache.current.get(eventSession) ?? emptyConversation(), record(params.update)));
+          // Recovery state decides whether a background chat needs attention.
+          if (record(params.update).sessionUpdate === 'session_info_update') setBackgroundVersion(value => value + 1);
         } else if (event.method === 'session/request_permission') {
           const permission = permissionFromEvent(record(event));
           if (permission) permissionCache.current.set(eventSession, [...(permissionCache.current.get(eventSession) ?? []).filter(p => p.id !== permission.id), permission]);
           setUnreadSessions(current => new Set(current).add(eventSession));
-        } else if (event.method === 'engine/permissions_cleared') permissionCache.current.delete(eventSession);
+          setBackgroundVersion(value => value + 1);
+        } else if (event.method === 'engine/permissions_cleared') { permissionCache.current.delete(eventSession); setBackgroundVersion(value => value + 1); }
         return;
       }
       if (event.method === "session/update") {
@@ -320,10 +379,11 @@ export default function HandworkHarness() {
     return () => { mounted = false; unsubscribe(); window.removeEventListener('handwork:settings-error', settingsError); };
   }, []);
 
+  const titlePrompt = conversation.entries.find(entry => entry.kind === 'user')?.text || '';
   useEffect(() => {
     if (!sessionId) return;
-    setTabs(current => current.map(tab => tab.id === sessionId ? { ...tab, label: conversation.title } : tab));
-  }, [conversation.title, sessionId]);
+    setTabs(current => current.map(tab => tab.id === sessionId ? { ...tab, label: chatTitle(conversation.title, titlePrompt) } : tab));
+  }, [conversation.title, titlePrompt, sessionId]);
   useEffect(() => {
     if (!api || autoConnect === undefined) return;
     setAutoConnect(undefined);
@@ -358,7 +418,7 @@ export default function HandworkHarness() {
       const session = record(item);
       const updatedAt = text(session.updatedAt);
       const turns = typeof session.turns === "number" ? session.turns : undefined;
-      return { workspace: typeof session.cwd === 'string' ? session.cwd : workspace, id: text(session.sessionId), label: text(session.title) || (updatedAt ? untitledLabel(updatedAt) : "Untitled chat"), updatedAt, turns, pinned: session.pinned === true };
+      return { workspace: typeof session.cwd === 'string' ? session.cwd : workspace, id: text(session.sessionId), label: chatTitle(text(session.title)), updatedAt, turns, pinned: session.pinned === true, archived: session.archived === true };
     // Sessions that never received a message stay out of the list unless they are open in a tab.
     }).filter(session => session.id && session.turns !== 0));
   }
@@ -390,12 +450,13 @@ export default function HandworkHarness() {
     } catch (cause) { setProviderError(cause instanceof Error ? cause.message : String(cause)); }
     finally { setBusyProvider(""); }
   }
-  function acceptSession(result: SessionResult) {
+  function acceptSession(result: SessionResult, created = false) {
     activeSession.current = result.sessionId;
     setSessionId(result.sessionId);
     const next = configOptions(result.configOptions);
+    setCommands(availableCommands(result.availableCommands));
     rememberOptions(next); setOptions(next);
-    setTabs(current => current.some(tab => tab.id === result.sessionId) ? current : [...current, { id: result.sessionId, label: "New chat", workspace: activeWorkspace.current }]);
+    setTabs(current => current.some(tab => tab.id === result.sessionId) ? current : [...current, { id: result.sessionId, label: "New chat", workspace: activeWorkspace.current, updatedAt: created ? new Date().toISOString() : undefined }]);
   }
   async function sessionAction(action: "open" | "connect" | "new" | "load" | "chat" | "project", id?: string) {
     if (configPending.current) await configTail.current;
@@ -433,7 +494,7 @@ export default function HandworkHarness() {
       if (action === 'load' && !running.current.has(id!)) historyReplay.current = { id: id!, conversation: { ...emptyConversation(), title: initial.title } };
       setPermissions(action === 'load' ? permissionCache.current.get(id!) ?? [] : []);
       const savedDraft = action === 'load' ? drafts.current.get(id!) : undefined;
-      setDraft(savedDraft?.text ?? ''); setAttachments(savedDraft?.files ?? []);
+      setDraft(savedDraft?.text ?? ''); setAttachments(savedDraft?.files ?? []); setRejectedFiles([]);
       const result = action === "load" ? await api.loadSession(id!) : action === "chat" ? await api.newChat() : action === "new" || action === "project" ? await api.newSession() : await api.connect();
       if (action === 'load') {
         const replay = historyReplay.current;
@@ -446,7 +507,7 @@ export default function HandworkHarness() {
           setConversation(retained);
         }
       }
-      acceptSession(result);
+      acceptSession(result, action !== 'load');
       if (api.getSettings) void api.getSettings().then(receivePreferences).catch(() => {});
       if (action !== "load" || initialHistoryRefresh.current) {
         initialHistoryRefresh.current = false;
@@ -468,63 +529,118 @@ export default function HandworkHarness() {
     if (api) await api.saveStartup({ tabs: tabs.map(tab => ({ id: tab.id, label: tab.label, workspace: tab.workspace ?? '' })), active: tabs.some(tab => tab.id === activeSession.current) ? activeSession.current : '' });
     return [...snapshot].filter(([, value]) => value.text || value.files.length).map(([id, value]) => ({ id, ...value }));
   }
-  const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+  /** Adds files that fit; every file that does not is listed with its reason. */
+  function stageFiles(incoming: Attachment[], rejected: RejectedFile[] = []) {
+    const staged = stageAttachments(attachmentsRef.current, incoming);
+    attachmentsRef.current = staged.files;
+    setAttachments(staged.files);
+    setRejectedFiles([...rejected, ...staged.rejected]);
+  }
   /** Dropped files retain their bytes; the backend prepares native file targets. */
   async function stageDroppedFiles(files: File[]) {
     setError("");
+    // Sizes and the file limit are checked before anything is read.
+    const plan = planAttachments(attachmentsRef.current, files.map(file => ({ name: file.name, size: file.size })));
     const staged: Attachment[] = [];
-    for (const file of files.slice(0, 10)) {
-      if (file.size > MAX_ATTACHMENT_BYTES) { setError(`${file.name} is larger than 5 MB`); continue; }
-      const url = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
-      staged.push({ name: file.name, mimeType: file.type || "application/octet-stream", size: file.size, data: url.slice(url.indexOf(",") + 1) });
+    const unreadable: RejectedFile[] = [];
+    for (const index of plan.accepted) {
+      const file = files[index];
+      try {
+        const url = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
+        staged.push({ name: file.name, mimeType: file.type || "application/octet-stream", size: file.size, data: url.slice(url.indexOf(",") + 1) });
+      } catch { unreadable.push({ name: file.name, reason: "Could not be read" }); }
     }
-    setAttachments(current => [...current, ...staged].slice(0, 10));
+    stageFiles(staged, [...plan.rejected, ...unreadable]);
   }
   async function addFiles() {
     if (!api) return;
-    try { const picked = await api.chooseFiles(); setAttachments(current => [...current, ...picked].slice(0, 10)); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    try {
+      const picked = await api.chooseFiles(Math.max(0, 10 - attachmentsRef.current.length));
+      // Older desktop builds return only the files.
+      if (Array.isArray(picked)) stageFiles(picked);
+      else if (picked.files.length || picked.rejected.length) stageFiles(picked.files, picked.rejected);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
   async function toggleVoice() {
     if (!api) return;
     try { if (listening) await api.stopVoice(); else await api.startVoice(); setListening(value => !value); }
     catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
-  async function send(prompt: string, filesOverride?: Attachment[]) {
-    const promptSession = activeSession.current;
+  function touchChat(id: string) {
+    const updatedAt = new Date().toISOString();
+    setTabs(current => current.map(chat => chat.id === id ? { ...chat, updatedAt } : chat));
+    setSessions(current => current.map(chat => chat.id === id ? { ...chat, updatedAt } : chat));
+  }
+  function pauseQueue(id: string) {
+    if (queuesRef.current[id]?.length) setPausedQueues(current => current.has(id) ? current : new Set(current).add(id));
+  }
+  /**
+   * Sends to the open chat, or with `session`, to a chat in the background (queued
+   * follow-ups). A queued message that fails goes back to its queue, not the composer.
+   */
+  async function send(prompt: string, filesOverride?: Attachment[], { session, queued = false }: { session?: string; queued?: boolean } = {}) {
+    const promptSession = session ?? activeSession.current;
+    const background = promptSession !== activeSession.current;
     if (!api || !promptSession || lock.current || running.current.has(promptSession)) throw new Error("Wait for your chat to be ready.");
-    const pendingSettings = configPending.current ? configTail.current : undefined;
-    const promptOperation = ++operation.current;
-    markChatRead(promptSession);
-    const localId = `local-${promptOperation}`;
+    const pendingSettings = !background && configPending.current ? configTail.current : undefined;
+    // Background sends must not invalidate a send the person is making in the open chat.
+    const promptOperation = background ? operation.current : ++operation.current;
+    if (!background) markChatRead(promptSession);
+    const localId = `local-${crypto.randomUUID()}`;
     const files = filesOverride ?? attachments;
     running.current.add(promptSession); setRunningSessions(new Set(running.current));
-    setError(""); setNotice(""); setFailedPrompt(current => current?.session === promptSession ? undefined : current);
+    if (!background) { setError(""); setNotice(""); }
+    setFailedPrompt(current => current?.session === promptSession ? undefined : current);
+    clearIssue(promptSession);
     const shownFiles = files.map(file => ({ name: file.name, mimeType: file.mimeType, size: file.size, data: file.mimeType.startsWith("image/") ? file.data : undefined, uri: file.uri?.startsWith("file:") ? file.uri : undefined }));
-    setConversation(current => ({ ...current, recovery: undefined, entries: [...current.entries, { id: localId, kind: "user", text: prompt, attachments: shownFiles }] }));
-    setAttachments([]);
+    const addMessage = (current: Conversation): Conversation => ({ ...current, recovery: undefined, canContinue: false, entries: [...current.entries, { id: localId, kind: "user", text: prompt, attachments: shownFiles }] });
+    const removeMessage = (current: Conversation): Conversation => ({ ...current, entries: current.entries.filter(entry => entry.id !== localId) });
+    if (background) {
+      // A background chat's transcript lives in the cache until it is opened again.
+      if (!chatCache.current.has(promptSession) && api.readSession) {
+        try { chatCache.current.set(promptSession, readConversation(await api.readSession(promptSession), chatPreferences[promptSession]?.title || "Chat")); }
+        catch { /* Opening the chat reads its history again. */ }
+      }
+      chatCache.current.set(promptSession, addMessage(chatCache.current.get(promptSession) ?? emptyConversation()));
+    } else setConversation(addMessage);
+    if (filesOverride === undefined) { setAttachments([]); setRejectedFiles([]); }
     let dispatched = false;
     try {
       if (pendingSettings && !await pendingSettings) throw new Error("The setting change failed. Choose a provider and try again.");
-      if (promptOperation !== operation.current && activeSession.current === promptSession) {
-        setConversation(current => ({ ...current, entries: current.entries.filter(entry => entry.id !== localId) }));
+      if (!background && promptOperation !== operation.current && activeSession.current === promptSession) {
+        setConversation(removeMessage);
+        if (queued) throw new Error("The queued message was held back.");
         setDraft(prompt); setAttachments(files);
         return;
       }
       dispatched = true;
+      touchChat(promptSession);
+      // Continuing an archived chat means it is not finished, so it returns to Chats.
+      if (chatPreferences[promptSession]?.archived) void api.updateChat(promptSession, { archived: false }).then(preference => setChatPreferences(current => ({ ...current, [promptSession]: preference }))).catch(() => { /* It stays under Archived. */ });
       const result = record(await api.prompt(prompt, files, promptSession));
       const reason = text(result.stopReason);
       if (reason === 'end_turn' && activeSession.current !== promptSession) {
         setUnreadSessions(current => new Set(current).add(promptSession));
       }
-      if (activeSession.current === promptSession && reason && reason !== "end_turn" && reason !== "cancelled") {
+      if (activeSession.current === promptSession && !result.recoveryPaused && reason && reason !== "end_turn" && reason !== "cancelled") {
         const message = `Response ended early: ${reason.replaceAll("_", " ")}.`;
         setNotice(message);
         setNoticeAction({ notice: message, label: "Try again", run: () => void latest.current.retryLast() });
       }
+      // Follow-ups wait when a reply did not finish cleanly, so they never build on a broken turn.
+      if (reason !== "end_turn" || result.recoveryPaused) pauseQueue(promptSession);
+      if (reason && reason !== "end_turn" && reason !== "cancelled" && !result.recoveryPaused) setChatIssues(current => ({ ...current, [promptSession]: { kind: "interrupted", message: `Reply ended early: ${reason.replaceAll("_", " ")}.` } }));
     } catch (cause) {
-      if (!dispatched) setConversation(current => ({ ...current, entries: current.entries.filter(entry => entry.id !== localId) }));
-      if (activeSession.current === promptSession) {
+      pauseQueue(promptSession);
+      setChatIssues(current => ({ ...current, [promptSession]: { kind: "failed", message: cleanError(cause) } }));
+      // A failed queued message returns to its queue, so the transcript does not show it twice.
+      if (!dispatched || queued) {
+        if (activeSession.current === promptSession) setConversation(removeMessage);
+        else if (chatCache.current.has(promptSession)) chatCache.current.set(promptSession, removeMessage(chatCache.current.get(promptSession)!));
+      }
+      if (queued) {
+        if (activeSession.current === promptSession) setError(cause instanceof Error ? cause.message : String(cause));
+      } else if (activeSession.current === promptSession) {
         const message = cause instanceof Error ? cause.message : String(cause);
         setError(message);
         setAttachments(current => current.length ? current : files);
@@ -563,7 +679,7 @@ export default function HandworkHarness() {
     setCapturing(true); setError("");
     try {
       const shot = await api.captureScreen();
-      if (shot) { setAttachments(current => [...current, shot].slice(0, 10)); focusComposer(); }
+      if (shot) { stageFiles([shot]); focusComposer(); }
     } catch (cause) { setError((cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")); }
     finally { setCapturing(false); }
   }
@@ -577,6 +693,27 @@ export default function HandworkHarness() {
       setNotice(message);
       if (result.path) { const file = result.path; setNoticeAction({ notice: message, label: isMac ? "Show in Finder" : "Show in folder", run: () => void api.revealFile(file).catch(() => {}) }); }
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+  }
+  /** Restored chats, prompts, projects, drafts, and queues join what is already open. */
+  async function afterRestore(result: RestoreResult) {
+    if (!api) return;
+    void refreshSessions(api).catch(() => {});
+    if (result.prompts) void api.listPrompts().then(setPrompts).catch(() => {});
+    if (result.projects) void api.listProjects().then(setProjects).catch(() => {});
+    if (result.drafts) {
+      for (const entry of await api.listDrafts().catch(() => [])) {
+        if (drafts.current.get(entry.id)?.text || drafts.current.get(entry.id)?.files.length || entry.id === activeSession.current) continue;
+        drafts.current.set(entry.id, { text: entry.text, files: entry.files });
+        savedDrafts.current.set(entry.id, draftKey(entry.text, entry.files));
+      }
+    }
+    if (result.queued) {
+      const { queues: merged, added } = mergeQueues(queuesRef.current, await api.listQueues().catch(() => []));
+      for (const id of added) savedQueues.current.set(id, queueKey(merged[id], true));
+      setQueues(merged);
+      setPausedQueues(current => new Set([...current, ...added]));
+      setRestoredQueues(current => new Set([...current, ...added]));
+    }
   }
   const openFind = (query?: string) => setFind(current => ({ open: true, query: query ?? current.query, focus: current.focus + 1 }));
   /** Edit and Try again both branch the chat: the earlier version stays as its own chat. */
@@ -594,7 +731,10 @@ export default function HandworkHarness() {
     setConversation(emptyConversation());
     try {
       const result = await api.rewindSession(index, users[index].rawText ?? users[index].text);
-      setTabs(current => current.filter(tab => tab.id !== oldSession));
+      // The new version takes the original's tab; the original stays one click away.
+      setTabs(current => current.map(tab => tab.id === oldSession ? { ...tab, id: result.sessionId, updatedAt: new Date().toISOString() } : tab));
+      const branch = result.branch;
+      if (branch) setChatPreferences(current => ({ ...current, [result.sessionId]: { ...current[result.sessionId], branch, ...(current[oldSession]?.title ? { title: current[oldSession].title } : {}) } }));
       acceptSession(result);
 
     } catch (cause) {
@@ -608,7 +748,7 @@ export default function HandworkHarness() {
     // Sending clears notices, so the note about the earlier version follows the new reply.
     const announce = () => {
       if (activeSession.current !== branch) return;
-      const message = reason === "retry" ? "The previous reply is saved as a separate chat. File changes and commands it made remain." : "Previous version saved as a separate chat. Earlier file changes and commands remain.";
+      const message = reason === "retry" ? "The previous reply is saved as another version. Switch versions with the arrows under your message. File changes and commands it made remain." : "Your previous message is saved as another version. Switch versions with the arrows under it. Earlier file changes and commands remain.";
       setNotice(message);
       setNoticeAction({ notice: message, label: "Open previous version", run: () => latest.current.openChat(oldChat) });
     };
@@ -619,7 +759,25 @@ export default function HandworkHarness() {
   const lastUserEntry = conversation.entries.findLast(entry => entry.kind === "user");
   // The engine regenerates text-only turns; attachments have to be sent again.
   const canRegenerate = !!lastUserEntry && !lastUserEntry.attachments?.length;
+  async function continueResponse() {
+    const target = activeSession.current;
+    if (!api || !target || lock.current || running.current.has(target)) return;
+    running.current.add(target); setRunningSessions(new Set(running.current));
+    setError(''); setNotice(''); clearIssue(target);
+    try {
+      touchChat(target);
+      await api.continueResponse(target);
+    } catch (cause) {
+      if (activeSession.current === target) setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      running.current.delete(target); setRunningSessions(new Set(running.current));
+      permissionCache.current.delete(target);
+      if (activeSession.current === target) setPermissions([]);
+      void refreshSessions(api).catch(() => {});
+    }
+  }
   async function retryLast() {
+    if (conversation.canContinue) { await continueResponse(); return; }
     const failed = failedPrompt?.session === activeSession.current ? failedPrompt : undefined;
     setFailedPrompt(undefined); setError(""); setNotice("");
     if (lastUserEntry && canRegenerate) {
@@ -635,6 +793,8 @@ export default function HandworkHarness() {
 
   /** Closing a tab only hides it; the chat stays in the sidebar. */
   function closeTab(id: string) {
+    const closing = tabs.find(tab => tab.id === id);
+    if (closing) closedTabs.current = rememberClosed(closedTabs.current, closing);
     const remaining = tabs.filter(tab => tab.id !== id);
     setTabs(remaining);
     if (id !== sessionId) return;
@@ -646,7 +806,7 @@ export default function HandworkHarness() {
   async function cancel() {
     ++operation.current;
     // Stopping a reply also holds any queued follow-ups until the person resumes them.
-    if (queues[sessionId]?.length) setPausedQueues(current => new Set(current).add(sessionId));
+    pauseQueue(sessionId);
     try { await api?.cancel(sessionId); setPermissions([]); }
     catch (cause) { setError(String(cause)); }
   }
@@ -656,6 +816,8 @@ export default function HandworkHarness() {
     try {
       await api.deleteSession(id);
       chatCache.current.delete(id);
+      editQueue(id, () => []);
+      clearIssue(id);
       setTabs(current => current.filter(tab => tab.id !== id));
       setSessions(current => current.filter(session => session.id !== id));
       if (id === sessionId) {
@@ -667,12 +829,54 @@ export default function HandworkHarness() {
       await refreshSessions(api);
     } finally { lock.current = false; setWorking(false); }
   }
+  async function deleteProject() {
+    if (!api || !projectToDelete || deletingProject) return;
+    setDeletingProject(true); setProjectDeleteError("");
+    try {
+      setProjects(await api.removeProject(projectToDelete));
+      setProjectToDelete(undefined);
+    } catch (cause) { setProjectDeleteError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { setDeletingProject(false); }
+  }
   async function pinChat(chat: SavedSession) {
     if (!api || blocked) return;
     try {
       const preference = await api.updateChat(chat.id, { pinned: !chat.pinned });
       setChatPreferences(current => ({ ...current, [chat.id]: preference }));
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+  }
+  /** Archived chats leave the sidebar lists but stay searchable. An open chat stays open. */
+  async function archiveChat(chat: SavedSession, archived: boolean) {
+    if (!api) return;
+    if (archived && running.current.has(chat.id)) { setNotice("Wait for this chat to finish before archiving it."); return; }
+    try {
+      const preference = await api.updateChat(chat.id, { archived });
+      setChatPreferences(current => ({ ...current, [chat.id]: preference }));
+      if (archived && chat.id !== shownSession) setTabs(current => current.filter(tab => tab.id !== chat.id));
+      const message = archived ? `Archived “${chat.label}”. Find it under Archived or search with ${shortcutLabel("Mod+K")}.` : `Restored “${chat.label}”.`;
+      setNotice(message);
+      setNoticeAction(archived ? { notice: message, label: "Undo", run: () => void archiveChat(chat, false) } : undefined);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+  }
+  /** Switches to another version of this chat in the same tab. */
+  function openVersion(id: string) {
+    const target = recents.find(chat => chat.id === id);
+    if (!target || blocked || busy) return;
+    const from = shownSession;
+    setTabs(current => current.some(tab => tab.id === id) ? current : current.map(tab => tab.id === from ? { id: target.id, label: target.label, workspace: target.workspace, updatedAt: target.updatedAt } : tab));
+    openChat(target);
+  }
+  /** A model on another provider switches the provider first, which changes the models offered. */
+  async function chooseModel(target: ModelShortcut) {
+    if (target.provider !== (options.find(option => option.id === "provider")?.currentValue ?? "") && await configure("provider", target.provider) !== true) return;
+    await configure("model", target.model);
+  }
+  async function favoriteModel(favorite: boolean) {
+    const model = options.find(option => option.id === "model");
+    if (!api?.setModelFavorite || !model) return;
+    const name = model.options.find(choice => choice.value === model.currentValue)?.name ?? model.currentValue;
+    try { setModelPreferences(await api.setModelFavorite(options.find(option => option.id === "provider")?.currentValue ?? "", model.currentValue, name, favorite)); }
+    catch (cause) { setError((cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")); }
   }
   async function saveChatAction() {
     if (!api || !chatAction || savingChat) return;
@@ -687,29 +891,32 @@ export default function HandworkHarness() {
     } catch (cause) { setChatActionError(cause instanceof Error ? cause.message : String(cause)); }
     finally { setSavingChat(false); }
   }
-  /** Engine-advertised slash commands, fulfilled with the ACP surface the desktop already has. */
+  /** Adapt the terminal registry to native controls. Never send commands as model prompts. */
   async function runCommand(name: string, args: string) {
-    const choose = (optionId: string, query: string) => {
-      const option = options.find(item => item.id === optionId);
-      if (!option) { setNotice(`No ${optionId} setting is available for this session.`); return; }
-      if (!query) { setNotice("Choose a model in the session configuration below."); return; }
-      const needle = query.toLowerCase();
-      const match = option.options.find(choice => choice.value.toLowerCase() === needle || choice.name.toLowerCase() === needle)
-        ?? option.options.find(choice => choice.value.toLowerCase().includes(needle) || choice.name.toLowerCase().includes(needle));
-      if (!match) { setNotice(`No ${option.name || optionId} matches "${query}". Options: ${option.options.map(choice => choice.name).join(", ")}`); return; }
-      void configure(option.id, match.value);
-    };
-    setNotice("");
-    switch (name) {
-      case "help": setNotice(`Commands: ${commands.map(command => `/${command.name}`).join("  ")}`); break;
-      case "new": case "clear": await sessionAction("chat"); break;
-      case "resume": setNotice("Pick a saved chat from the sidebar to resume it."); break;
-      case "model": choose("model", args); break;
-      case "reasoning": choose("effort", args); break;
-      case "permissions": choose("mode", args); break;
-      case "status": case "usage": case "context": setActivityOpen(true); break;
-      case "settings": setSettingsOpen(true); break;
-      default: setNotice(`/${name} is not available in the desktop app yet.`);
+    const action = resolveSlashCommand(name, args, composerOptions);
+    setNotice('');
+    switch (action.kind) {
+      case 'notice': setNotice(action.message); break;
+      case 'commands': setPalettePage('commands'); setPaletteOpen(true); break;
+      case 'new': await sessionAction(workspace ? 'project' : 'chat', workspace || undefined); break;
+      case 'resume': setPalettePage(''); setPaletteOpen(true); break;
+      case 'settings': setSettingsSection(action.section); setSettingsOpen(true); break;
+      case 'report': setReportCommand(action.command); break;
+      case 'rename':
+        if (!activeChat) { setNotice('Start a chat before renaming it.'); break; }
+        setChatAction({ kind: 'rename', chat: activeChat }); setChatName(action.title || activeChat.label); setChatActionError(''); break;
+      case 'copy': {
+        const reply = shownConversation.entries.findLast(entry => entry.kind === 'assistant');
+        if (!reply?.text) { setNotice('There is no assistant response to copy yet.'); break; }
+        await navigator.clipboard.writeText(reply.text); setNotice('Response copied.'); break;
+      }
+      case 'diff':
+        if (!workspace) { setNotice('Open a project to review its changes.'); break; }
+        setActivityOpen(false); setChangesOpen(true); break;
+      case 'export': await exportChat('current', 'markdown'); break;
+      case 'activity': setChangesOpen(false); setActivityOpen(true); setActivityRequested(true); break;
+      case 'choices': setPalettePage(action.optionId); setPaletteOpen(true); break;
+      case 'configure': await configure(action.optionId, action.value); break;
     }
   }
   async function configure(id: string, value: string) {
@@ -751,6 +958,7 @@ export default function HandworkHarness() {
   }
   const shownConversation = pendingChat ? chatCache.current.get(pendingChat.id) ?? (historyPreview?.id === pendingChat.id ? historyPreview.conversation : { ...emptyConversation(), title: pendingChat.label }) : conversation;
   const shownSession = pendingChat?.id ?? sessionId;
+  const shownUsage = withSavedUsage(shownConversation, chatPreferences[shownSession]?.usage);
   const showProjectTools = !!workspace && (!pendingChat || pendingChat.workspace === workspace);
   const unavailable = !api || !sessionId || !!pendingChat;
   const blocked = working || configuring || picking || navigating || !!pendingChat;
@@ -762,15 +970,15 @@ export default function HandworkHarness() {
   const removedLines = changes.reduce((total, file) => total + file.removed, 0);
   const closeReviewPanel = () => {
     document.getElementById(changesOpen ? 'handwork-changes-trigger' : 'handwork-activity-trigger')?.focus();
-    setChangesOpen(false); setActivityOpen(false);
+    setChangesOpen(false); setActivityOpen(false); setActivityRequested(false);
   };
   const provider = options.find(option => option.id === "provider");
   const openProject = () => void sessionAction("open");
-  // Open tabs lead the list; a tab still titled "New chat" borrows the saved session's title.
-  const recents: SavedSession[] = [
-    ...tabs.map(tab => tab.label === "New chat" || tab.label === "Untitled session" ? { ...tab, label: sessions.find(session => session.id === tab.id)?.label ?? tab.label } : tab),
-    ...sessions.filter(session => (!session.workspace || projects.includes(session.workspace)) && !tabs.some(tab => tab.id === session.id)),
-  ].map(chat => ({ ...chat, label: chatPreferences[chat.id]?.title || chat.label, pinned: chatPreferences[chat.id]?.pinned ?? chat.pinned ?? false })).sort((a, b) => Number(b.pinned) - Number(a.pinned));
+  // Merge saved activity into open tabs, then sort every sidebar group by recency.
+  const recents: SavedSession[] = sortChatsByRecency(mergeSidebarChats(
+    tabs.map(tab => isPlaceholderTitle(tab.label) ? { ...tab, label: sessions.find(session => session.id === tab.id)?.label ?? tab.label } : tab),
+    sessions, projects,
+  ).map(chat => ({ ...chat, label: chatPreferences[chat.id]?.title || chatTitle(chat.label, (chat.id === sessionId ? conversation : chatCache.current.get(chat.id))?.entries.find(entry => entry.kind === 'user')?.text), pinned: chatPreferences[chat.id]?.pinned ?? chat.pinned ?? false, archived: chatPreferences[chat.id]?.archived ?? chat.archived ?? false })));
   const workspaceName = workspace.split("/").filter(Boolean).pop() || workspace;
   const landing = !pendingChat && conversation.entries.length === 0 && !busy;
   const suggestionRoute = JSON.stringify(options.filter(option => ["provider", "model", "effort", "fast_mode"].includes(option.id)).map(option => [option.id, option.currentValue]));
@@ -830,24 +1038,155 @@ export default function HandworkHarness() {
     if (chat && chat.id !== shownSession) openChat({ ...chat, label: chatPreferences[chat.id]?.title || chat.label });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatRequest, startupReady]);
-  // Queued follow-ups send one at a time once the current reply finishes.
+  // Queued follow-ups send one at a time once their chat's reply finishes, in that chat,
+  // even while the person reads another one.
   const queue = queues[sessionId] ?? [];
   const queuePaused = pausedQueues.has(sessionId);
-  function dispatchQueued(next: QueuedMessage) {
-    const target = sessionId;
-    setQueues(current => ({ ...current, [target]: (current[target] ?? []).filter(item => item.id !== next.id) }));
-    if (next.text.startsWith("/")) { const [name, ...args] = next.text.slice(1).split(/\s+/); void runCommand(name, args.join(" ")); return; }
-    void send(next.text, next.files).catch(() => {
+  const queuedCounts = queueCounts(queues);
+  const queuedCommand = (item: QueuedMessage) => !item.files.length && !!parseSlashCommand(item.text);
+  function editQueue(id: string, change: (items: QueuedMessage[]) => QueuedMessage[]) {
+    setQueues(current => {
+      const items = change(current[id] ?? []);
+      const next = { ...current };
+      if (items.length) next[id] = items; else delete next[id];
+      return next;
+    });
+  }
+  function resumeQueue(id: string) {
+    setPausedQueues(current => { if (!current.has(id)) return current; const next = new Set(current); next.delete(id); return next; });
+    setRestoredQueues(current => { if (!current.has(id)) return current; const next = new Set(current); next.delete(id); return next; });
+  }
+  function dispatchQueued(target: string, next: QueuedMessage) {
+    editQueue(target, items => items.filter(item => item.id !== next.id));
+    const command = queuedCommand(next) ? parseSlashCommand(next.text) : null;
+    const task = command ? runCommand(command.name, command.args) : send(next.text, next.files, { session: target, queued: true });
+    void task.catch(cause => {
       // Keep the message and stop sending the rest until the person decides.
-      setQueues(current => ({ ...current, [target]: [next, ...(current[target] ?? [])] }));
+      editQueue(target, items => [next, ...items.filter(item => item.id !== next.id)]);
       setPausedQueues(current => new Set(current).add(target));
+      if (activeSession.current !== target) {
+        setUnreadSessions(current => new Set(current).add(target));
+        const label = chatPreferences[target]?.title || recents.find(chat => chat.id === target)?.label || "another chat";
+        setNotice(`A queued message in “${label}” could not send, so its queue is paused. ${(cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}`);
+      }
     });
   }
   useEffect(() => {
-    if (!queue.length || queuePaused || !api || busy || blocked || lock.current) return;
-    dispatchQueued(queue[0]);
+    if (!api || lock.current || working || navigating) return;
+    const ready = readyQueues({ queues, paused: pausedQueues, running: running.current, active: sessionId, activeBlocked: blocked || !sessionId, opening: pendingChat?.id, isCommand: queuedCommand });
+    for (const { session, item } of ready) dispatchQueued(session, item);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, queuePaused, api, busy, blocked]);
+  }, [queues, pausedQueues, api, runningSessions, blocked, working, navigating, sessionId, pendingChat]);
+  // An emptied queue forgets that it was paused, so the next follow-up sends normally.
+  useEffect(() => {
+    for (const id of new Set([...pausedQueues, ...restoredQueues])) if (!queues[id]?.length) resumeQueue(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queues]);
+  // Every change to a queue is saved at once, so quitting never loses queued work.
+  useEffect(() => {
+    if (!api?.saveQueue || !queuesLoaded.current) return;
+    for (const id of new Set([...Object.keys(queues), ...savedQueues.current.keys()])) {
+      const items = queues[id] ?? [];
+      const paused = pausedQueues.has(id);
+      const key = queueKey(items, paused);
+      if ((savedQueues.current.get(id) ?? "") === key) continue;
+      if (key) savedQueues.current.set(id, key); else savedQueues.current.delete(id);
+      void api.saveQueue(id, { paused, items }).catch(() => {
+        savedQueues.current.delete(id);
+        setNotice("Queued messages could not be saved. They still send while Handwork stays open.");
+      });
+    }
+  }, [api, queues, pausedQueues]);
+  // Queues saved before a restart are announced once the first chat is open.
+  useEffect(() => {
+    const count = restoredQueueCount.current;
+    if (!count || !startupReady || !sessionId || working) return;
+    restoredQueueCount.current = 0;
+    setNotice(`${count} queued message${count === 1 ? " was" : "s were"} saved when Handwork closed. ${count === 1 ? "It is" : "They are"} paused so you can review before sending.`);
+  }, [startupReady, sessionId, working]);
+  // Chats that need the person (approvals, failed or paused replies, paused queues), then working chats.
+  const approvalCounts = new Map<string, number>();
+  for (const [id, list] of permissionCache.current) if (id !== sessionId && list.length) approvalCounts.set(id, list.length);
+  if (sessionId && permissions.length) approvalCounts.set(sessionId, permissions.length);
+  const recoverable = new Set<string>([...chatCache.current].filter(([id, cached]) => id !== sessionId && cached.canContinue).map(([id]) => id));
+  if (sessionId && conversation.canContinue) recoverable.add(sessionId);
+  const attention = attentionItems({
+    chats: [...recents, ...tabs], approvals: approvalCounts, issues: chatIssues, recoverable, running: runningSessions, queued: queuedCounts,
+    pausedQueues: new Map([...pausedQueues].filter(id => queues[id]?.length).map(id => [id, queues[id].length])),
+  });
+  const attentionKinds = new Map(attention.map(item => [item.id, item.kind]));
+  function clearIssue(id: string) {
+    setChatIssues(current => { if (!Object.hasOwn(current, id)) return current; const next = { ...current }; delete next[id]; return next; });
+  }
+  /** Opens the chat and puts focus on the control that resolves what it is waiting for. */
+  function openAttention(item: AttentionItem) {
+    setAttentionFocus({ id: item.id, kind: item.kind });
+    if (item.id === shownSession) return;
+    const chat = recents.find(entry => entry.id === item.id) ?? tabs.find(entry => entry.id === item.id) ?? { id: item.id, label: item.label, workspace: item.workspace };
+    openChat({ ...chat, label: chatPreferences[chat.id]?.title || chat.label });
+  }
+  function goToNextAttention() {
+    const next = nextAttention(attention, shownSession);
+    if (next) openAttention(next);
+    else setNotice("Nothing needs you right now.");
+  }
+  useEffect(() => {
+    const target = attentionFocus;
+    if (!target || pendingChat || working || navigating || sessionId !== target.id) return;
+    setAttentionFocus(undefined);
+    const issue = chatIssues[target.id];
+    // A reason recorded while the chat was in the background is shown once it is open.
+    if (target.kind === 'failed' && issue && !error) setError(issue.message);
+    if (target.kind === 'interrupted' && issue && !conversation.canContinue) {
+      setNotice(issue.message);
+      setNoticeAction({ notice: issue.message, label: "Try again", run: () => { clearIssue(target.id); void latest.current.retryLast(); } });
+    }
+    const controls: Record<AttentionKind, string> = {
+      approval: '[data-attention="approval"] :is([role="radio"][tabindex="0"], [role="checkbox"], textarea, button:not([disabled]))',
+      failed: '[data-attention="queue"] [data-primary], [data-attention="error"] button:not([disabled])',
+      interrupted: '[data-attention="recovery"] button:not([disabled]), [data-attention="notice"] button:not([disabled])',
+      queue: '[data-attention="queue"] [data-primary]',
+      running: '',
+    };
+    // Wait for the opened chat to render its controls.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const control = controls[target.kind] ? document.querySelector<HTMLElement>(controls[target.kind]) : null;
+      if (!control) { focusComposer(); return; }
+      control.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      control.focus();
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attentionFocus, pendingChat, working, navigating, sessionId]);
+  /** Tab, chat, and attention actions from the keyboard or the app menu. */
+  function runTabAction(action: TabAction) {
+    // A shortcut can reach both the menu and the page; act on it once.
+    const now = Date.now();
+    if (lastTabAction.current.action === action && now - lastTabAction.current.at < 200) return;
+    lastTabAction.current = { action, at: now };
+    const open = (chat: SavedSession) => { if (chat.id !== shownSession) openChat({ ...chat, label: chatPreferences[chat.id]?.title || chat.label }); };
+    switch (action) {
+      case 'new': if (!blocked && api) void sessionAction("chat"); break;
+      case 'next': case 'previous': { const tab = adjacentTab(tabs, shownSession, action === 'next' ? 1 : -1); if (tab && !picking) open(tab); break; }
+      case 'close': if (!blocked && tabs.some(tab => tab.id === shownSession)) closeTab(shownSession); break;
+      case 'reopen': {
+        const { tab, rest } = reopenCandidate(closedTabs.current, tabs.map(item => item.id), id => recents.some(chat => chat.id === id));
+        closedTabs.current = rest;
+        if (!tab) { setNotice("There is no closed tab to reopen."); break; }
+        setTabs(current => current.some(item => item.id === tab.id) ? current : [...current, tab]);
+        open(tab);
+        break;
+      }
+      case 'attention': goToNextAttention(); break;
+      case 'details': setDetailsOpen(true); break;
+      default: { const tab = numberedTab(tabs, Number(action)); if (tab && !picking) open(tab); }
+    }
+  }
+  useEffect(() => {
+    if (!tabRequest) return;
+    setTabRequest(undefined);
+    runTabAction(tabRequest.action);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRequest]);
   // Quick entry prompts always start a fresh standalone chat.
   useEffect(() => {
     if (!quickPrompt || !api || blocked || lock.current) return;
@@ -862,12 +1201,31 @@ export default function HandworkHarness() {
   }, [quickPrompt, api, blocked]);
   useEffect(() => {
     const keys = (event: KeyboardEvent) => {
-      if (event.repeat || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+      if (event.altKey) return;
+      const dialog = document.querySelector('[role="dialog"], [role="alertdialog"]');
+      const run = (action: TabAction) => { event.preventDefault(); runTabAction(action); };
+      // Control+Tab switches tabs on every platform, as in browsers.
+      if (event.ctrlKey && !event.metaKey && event.code === 'Tab') { if (!dialog) run(event.shiftKey ? 'previous' : 'next'); return; }
+      if (!(isMac ? event.metaKey : event.ctrlKey)) return;
       const key = event.key.toLowerCase();
+      if (event.shiftKey) {
+        if (dialog || event.repeat) return;
+        if (event.code === 'BracketRight') run('next');
+        else if (event.code === 'BracketLeft') run('previous');
+        else if (key === 't') run('reopen');
+        else if (key === 'a') run('attention');
+        return;
+      }
+      if (event.repeat) return;
       // Dialogs keep their own keyboard behaviour.
-      if (document.querySelector('[role="dialog"], [role="alertdialog"]') && key !== 'f') return;
-      if (key === 'f' && !document.querySelector('[role="dialog"]')) { event.preventDefault(); openFind(); }
-      else if (key === 'n') { event.preventDefault(); if (!blocked && api) void sessionAction("chat"); }
+      if (dialog && key !== 'f') return;
+      const digit = /^Digit([1-9])$/.exec(event.code)?.[1];
+      if (digit) run(digit as TabAction);
+      else if (key === 'f' && !document.querySelector('[role="dialog"]')) { event.preventDefault(); openFind(); }
+      else if (key === 'n') run('new');
+      else if (key === 'w') run('close');
+      else if (key === 'i') run('details');
+      else if (key === '/') { event.preventDefault(); setShortcutsOpen(true); }
     };
     window.addEventListener('keydown', keys);
     return () => window.removeEventListener('keydown', keys);
@@ -877,18 +1235,49 @@ export default function HandworkHarness() {
 
   const composerOptions = options.filter(option => workspace || option.id !== "mode").map(option => option.id === "provider" ? { ...option, options: option.options.filter(choice => choice.value === option.currentValue || providers.some(item => item.id === choice.value && item.connected)) } : option);
   const activeChat = recents.find(chat => chat.id === sessionId);
+  const viewedChat = recents.find(chat => chat.id === shownSession);
+  const shortcuts = modelShortcuts(modelPreferences, composerOptions);
+  // Versions are offered only between chats that can still be opened.
+  const openableChats = new Set(recents.map(chat => chat.id));
+  const versionFor = (turn: number): MessageVersion | undefined => {
+    const position = versionPosition(chatPreferences, shownSession, turn, openableChats);
+    if (!position) return undefined;
+    const locked = blocked || busy;
+    return { index: position.index, total: position.total, onPrevious: position.previous && !locked ? () => openVersion(position.previous!) : undefined, onNext: position.next && !locked ? () => openVersion(position.next!) : undefined };
+  };
+  const latestVersionTurn = activeChat ? versionTurns(chatPreferences, activeChat.id, openableChats).at(-1) : undefined;
+  const latestVersion = activeChat && latestVersionTurn !== undefined ? versionPosition(chatPreferences, activeChat.id, latestVersionTurn, openableChats) : undefined;
+  const currentModel = options.find(option => option.id === "model");
+  const commandIcons: Record<string, ReactNode> = { model: <Gauge aria-hidden />, security: <Shield aria-hidden />, account: <Plug aria-hidden />, workspace: <FolderPlus aria-hidden />, session: <SquarePen aria-hidden />, general: <BookText aria-hidden /> };
+  const slashItems = desktopSlashCommands.flatMap(command => [command.name, ...(command.showAliases ? command.aliases : [])].map(name => ({
+    id: name, label: name, description: commands.find(item => item.name === command.name)?.description || command.description,
+    hint: command.input, icon: commandIcons[command.category] || <SettingsIcon aria-hidden />,
+  })));
   const paletteActions: PaletteAction[] = [
+    ...desktopSlashCommands.map(command => ({ id: `slash:${command.name}`, label: `/${command.name}`, description: command.description, group: 'commands' as const, icon: commandIcons[command.category] || <SettingsIcon aria-hidden />, keywords: command.aliases.map(alias => `/${alias}`).join(' '), disabled: blocked || !api, run: () => { void runCommand(command.name, '').catch(cause => setError(String(cause))); } })),
     { id: "new-chat", label: "New chat", icon: <SquarePen aria-hidden />, shortcut: "Mod+N", keywords: "start conversation", disabled: blocked || !api, run: () => void sessionAction("chat") },
     { id: "open-project", label: "Open project…", icon: <FolderPlus aria-hidden />, keywords: "folder workspace add", disabled: blocked || !api, run: openProject },
     { id: "find", label: "Find in chat", icon: <TextSearch aria-hidden />, shortcut: "Mod+F", keywords: "search text conversation", disabled: !shownConversation.entries.length, run: () => openFind() },
+    { id: 'slash-commands', label: 'Slash commands', icon: <BookText aria-hidden />, keywords: 'slash commands help', run: () => { setPalettePage('commands'); setPaletteOpen(true); } },
     { id: "prompts", label: "Saved prompts", icon: <BookText aria-hidden />, keywords: "library snippets templates", disabled: !api, run: () => setLibrary({ open: true }) },
     ...(draft.trim() ? [{ id: "save-prompt", label: "Save draft as prompt", icon: <Bookmark aria-hidden />, keywords: "snippet template library", run: () => setLibrary({ open: true, draft }) }] : []),
     { id: "screenshot", label: "Take screenshot", icon: <SquareDashedMousePointer aria-hidden />, keywords: "capture screen window region image attach", disabled: !api?.captureScreen || blocked || capturing || attachments.length >= 10, run: () => void captureScreenshot() },
     { id: "attach", label: "Attach files…", icon: <Paperclip aria-hidden />, keywords: "upload file image", disabled: !api || blocked, run: () => void addFiles() },
     ...(activeChat && conversation.entries.length ? [{ id: "rename", label: "Rename chat…", icon: <Pencil aria-hidden />, keywords: "title", disabled: blocked, run: () => { setChatAction({ kind: "rename", chat: activeChat }); setChatName(activeChat.label); setChatActionError(""); } }] : []),
+    ...(activeChat && conversation.entries.length ? [activeChat.archived
+      ? { id: "restore", label: "Restore chat", icon: <ArchiveRestore aria-hidden />, keywords: "unarchive archived", run: () => void archiveChat(activeChat, false) }
+      : { id: "archive", label: "Archive chat", icon: <Archive aria-hidden />, keywords: "hide finished done", disabled: busy, run: () => void archiveChat(activeChat, true) }] : []),
+    ...(recents.some(chat => chat.archived) ? [{ id: "archived", label: "Archived chats", icon: <Archive aria-hidden />, keywords: "archive hidden finished restore filter", run: () => { setPalettePage("archived"); setPaletteOpen(true); } }] : []),
+    ...(latestVersion?.previous ? [{ id: "previous-version", label: "Previous version", description: `Version ${latestVersion.index} of ${latestVersion.total}`, icon: <History aria-hidden />, keywords: "regenerate retry edit original branch", disabled: blocked || busy, run: () => openVersion(latestVersion.previous!) }] : []),
+    ...(latestVersion?.next ? [{ id: "next-version", label: "Newer version", description: `Version ${latestVersion.index + 2} of ${latestVersion.total}`, icon: <History aria-hidden />, keywords: "regenerate retry edit new branch", disabled: blocked || busy, run: () => openVersion(latestVersion.next!) }] : []),
+    ...(currentModel && api?.setModelFavorite ? [{ id: "favorite-model", label: shortcuts.favorite ? "Remove model from favorites" : "Add model to favorites", description: modelDisplayName(currentModel.options.find(choice => choice.value === currentModel.currentValue)?.name ?? currentModel.currentValue), icon: <Star aria-hidden />, keywords: "favorite star pin model", run: () => void favoriteModel(!shortcuts.favorite) }] : []),
     { id: "export-markdown", label: "Export chat as Markdown", icon: <Download aria-hidden />, keywords: "save download share md document", disabled: !api || working || !conversation.entries.length, run: () => void exportChat("current", "markdown") },
     { id: "export-json", label: "Export chat as JSON", icon: <Download aria-hidden />, keywords: "save download backup data", disabled: !api || working || !conversation.entries.length, run: () => void exportChat("current", "json") },
+    { id: "chat-details", label: "Chat details", icon: <Info aria-hidden />, shortcut: "Mod+I", keywords: "model provider instructions agents context tokens folders permissions attachments", disabled: !api || !sessionId, run: () => setDetailsOpen(true) },
+    ...(attention.some(item => item.kind !== "running") ? [{ id: "next-attention", label: "Next chat that needs you", description: attention.find(item => item.kind !== "running")?.label, icon: <Hand aria-hidden />, shortcut: "Mod+Shift+A", keywords: "approval failed paused blocked attention", run: goToNextAttention }] : []),
+    ...(closedTabs.current.length ? [{ id: "reopen-tab", label: "Reopen closed tab", icon: <History aria-hidden />, shortcut: "Mod+Shift+T", keywords: "undo close tab restore", run: () => runTabAction("reopen") }] : []),
     { id: "settings", label: "Settings", icon: <SettingsIcon aria-hidden />, shortcut: "Mod+,", keywords: "preferences options", run: () => setSettingsOpen(true) },
+    { id: "shortcuts", label: "Keyboard shortcuts", icon: <Keyboard aria-hidden />, shortcut: "Mod+/", keywords: "keys hotkeys keybindings help reference", run: () => setShortcutsOpen(true) },
     ...(showProjectTools ? [
       { id: "activity", label: activityOpen ? "Hide activity" : "Show activity", icon: <Activity aria-hidden />, group: "view" as const, keywords: "tools panel", run: () => { setActivityOpen(value => !value); setChangesOpen(false); } },
       { id: "changes", label: changesOpen ? "Hide changes" : "Review changes", icon: <GitCompare aria-hidden />, group: "view" as const, keywords: "diff git files panel", run: () => { setChangesOpen(value => !value); setActivityOpen(false); } },
@@ -897,34 +1286,48 @@ export default function HandworkHarness() {
   const pageIcons: Record<string, ReactNode> = { model: <Cpu aria-hidden />, provider: <Plug aria-hidden />, effort: <Gauge aria-hidden />, mode: <Shield aria-hidden /> };
   const pageLabels: Record<string, string> = { model: "Switch model", provider: "Switch provider", effort: "Reasoning effort", mode: "Session mode" };
   const palettePages: PaletteChoicePage[] = [
-    ...composerOptions.filter(option => option.id in pageLabels && option.options.length > 1).map(option => ({ id: option.id, label: pageLabels[option.id], icon: pageIcons[option.id], option, disabled: busy || working || picking || navigating || unavailable })),
+    ...composerOptions.filter(option => option.id in pageLabels && option.options.length > 0).map(option => ({ id: option.id, label: pageLabels[option.id], icon: pageIcons[option.id], option, disabled: busy || working || picking || navigating || unavailable })),
     { id: "theme", label: "Theme", icon: <SunMoon aria-hidden />, option: { id: "theme", name: "Theme", currentValue: preferences?.app.theme ?? "system", options: [{ value: "system", name: "System" }, { value: "light", name: "Light" }, { value: "dark", name: "Dark" }] } },
   ];
 
   const composer = <div className="handwork-composer" onDragOver={event => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDrop={event => {
     event.preventDefault(); if (!blocked) void stageDroppedFiles(Array.from(event.dataTransfer.files)).catch(cause => setError(String(cause)));
   }}>
-    {queue.length > 0 && <HandworkQueue items={queue} paused={queuePaused} busy={busy}
-      onResume={() => setPausedQueues(current => { const next = new Set(current); next.delete(sessionId); return next; })}
-      onSendNow={item => { setPausedQueues(current => { const next = new Set(current); next.delete(sessionId); return next; }); if (!busy && !blocked) dispatchQueued(item); }}
+    {queue.length > 0 && !pendingChat && <HandworkQueue items={queue} paused={queuePaused} restored={restoredQueues.has(sessionId)} busy={busy}
+      onResume={() => resumeQueue(sessionId)}
+      onSendNow={() => resumeQueue(sessionId)}
       onEdit={item => {
-        setQueues(current => ({ ...current, [sessionId]: (current[sessionId] ?? []).filter(entry => entry.id !== item.id) }));
+        editQueue(sessionId, items => items.filter(entry => entry.id !== item.id));
         setDraft(current => current.trim() ? `${current.trimEnd()}\n\n${item.text}` : item.text);
-        setAttachments(current => [...current, ...item.files].slice(0, 10));
+        stageFiles(item.files);
         focusComposer();
       }}
-      onRemove={item => setQueues(current => ({ ...current, [sessionId]: (current[sessionId] ?? []).filter(entry => entry.id !== item.id) }))} />}
+      onRemove={item => editQueue(sessionId, items => items.filter(entry => entry.id !== item.id))}
+      onClear={() => {
+        const target = sessionId; const removed = queue;
+        editQueue(target, () => []);
+        const message = `Removed ${removed.length} queued message${removed.length === 1 ? "" : "s"}.`;
+        setNotice(message);
+        setNoticeAction({ notice: message, label: "Undo", run: () => { editQueue(target, items => [...removed, ...items.filter(item => !removed.some(entry => entry.id === item.id))]); setPausedQueues(current => new Set(current).add(target)); } });
+      }} />}
+    {viewedChat?.archived && <div className="handwork-archived-banner" role="status"><Archive aria-hidden width={14} height={14} /><span>This chat is archived. Sending a message restores it.</span><Button size="xs" variant="outline" onClick={() => void archiveChat(viewedChat, false)}><ArchiveRestore aria-hidden width={12} height={12} />Restore</Button></div>}
     <PromptBar sendKey={preferences?.app.sendKey} value={draft} onValueChange={setDraft} hasExternalAttachments={attachments.length > 0} placeholder={busy && !pendingChat ? "Queue a follow-up…" : conversation.entries.length ? "Reply to Handwork…" : workspaceName ? `Ask about ${workspaceName}…` : "Ask Handwork…"}
       onQueue={busy && !pendingChat ? ({ text: queued }) => {
         const target = sessionId;
-        setQueues(current => ({ ...current, [target]: [...(current[target] ?? []), { id: crypto.randomUUID(), text: queued, files: attachments }] }));
-        setAttachments([]);
+        editQueue(target, items => [...items, { id: crypto.randomUUID(), text: queued, files: attachments, queuedAt: Date.now() }]);
+        setAttachments([]); setRejectedFiles([]);
       } : undefined}
       disabled={unavailable || working || picking || navigating} onStop={busy && !pendingChat ? () => void cancel() : undefined}
-      commands={[...commands.map(command => ({ id: command.name, label: command.name, description: command.description })), ...prompts.map(prompt => ({ id: `prompt:${prompt.id}`, label: promptSlug(prompt), description: prompt.title, icon: <BookText /> }))]}
+      commands={[...slashItems, ...prompts.map(prompt => ({ id: `prompt:${prompt.id}`, label: promptSlug(prompt), description: prompt.title, icon: <BookText /> }))]}
       onItemSelect={item => {
         const prompt = item.id.startsWith("prompt:") ? prompts.find(entry => `prompt:${entry.id}` === item.id) : undefined;
-        if (!prompt) return;
+        if (!prompt) {
+          // A menu selection is an action, not text that needs another press of Send.
+          if (!/^\/[\w-]*$/.test(draft.trim())) return;
+          setDraft('');
+          void runCommand(item.label, '').catch(cause => setError(String(cause)));
+          return;
+        }
         // Swap the typed /name for the prompt itself.
         const token = `/${item.label} `;
         setDraft(current => { const index = current.lastIndexOf(token); return index < 0 ? current : current.slice(0, index) + current.slice(index + token.length); });
@@ -938,11 +1341,12 @@ export default function HandworkHarness() {
         void stageDroppedFiles(files).catch(cause => setError(String(cause)));
       }}
       onSubmit={({ text }) => {
-        if (text.startsWith("/")) { const [name, ...args] = text.slice(1).split(/\s+/); void runCommand(name, args.join(" ")); return; }
+        const command = attachments.length ? null : parseSlashCommand(text);
+        if (command) { void runCommand(command.name, command.args).catch(cause => { setError(String(cause)); setDraft(current => current || text); }); return; }
         const target = sessionId;
         void send(text).catch(() => { if (activeSession.current === target) setDraft(current => current || text); });
       }}
-      attachmentPreview={attachments.length > 0 && <div className="handwork-attachments" aria-label="Attachments">{attachments.map((file, index) => <Button key={`${file.name}-${index}`} size="sm" variant="secondary" aria-label={`Remove ${file.name}`} onClick={() => setAttachments(current => current.filter((_, i) => i !== index))}>{file.data && file.mimeType.startsWith("image/") ? <img className="handwork-attachment-thumb" src={`data:${file.mimeType};base64,${file.data}`} alt="" /> : <IconFileText size={14} />}<span>{file.name}</span><IconClose size={12} /></Button>)}</div>}
+      attachmentPreview={(attachments.length > 0 || rejectedFiles.length > 0) && <HandworkAttachmentTray files={attachments} rejected={rejectedFiles} onRemove={index => setAttachments(current => current.filter((_, i) => i !== index))} onDismissRejected={() => setRejectedFiles([])} />}
       leadingActions={<Menu>
         <MenuTrigger render={<Button className="handwork-attach" size="icon" variant="ghost" aria-label="Add files, screenshots, and prompts" title="Add files, screenshots, and prompts" disabled={!api || blocked || capturing} />}><IconPlus size={18} /></MenuTrigger>
         <MenuPopup side="top" align="start" sideOffset={10} className="handwork-composer-menu" aria-label="Add to message">
@@ -954,12 +1358,22 @@ export default function HandworkHarness() {
         </MenuPopup>
       </Menu>}
       actions={<>
-        <ComposerOptions options={composerOptions} disabled={busy || working || picking || navigating || unavailable} syncing={configuring} onChange={(id, value) => void configure(id, value)} />
+        <ComposerOptions options={composerOptions} disabled={busy || working || picking || navigating || unavailable} syncing={configuring} onChange={(id, value) => void configure(id, value)}
+          shortcuts={shortcuts} onChooseModel={model => void chooseModel(model)} onFavorite={api?.setModelFavorite ? favorite => void favoriteModel(favorite) : undefined} />
         {voice.available && <Button size="icon-sm" variant="ghost" aria-label={listening ? "Stop dictation" : "Dictate"} title={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening} onClick={() => void toggleVoice()}><IconMic size={16} /></Button>}
       </>} />
   </div>;
   return <main className={`handwork-app ${desktopMac ? "handwork-mac" : ""}`}>
     {desktopMac && <div aria-hidden className="app-drag handwork-titlebar" />}
+    <Dialog open={!!projectToDelete} onOpenChange={open => { if (!open && !deletingProject) setProjectToDelete(undefined); }}>
+      <DialogPopup className="handwork-chat-dialog" showCloseButton={!deletingProject} initialFocus={() => document.getElementById("handwork-project-cancel")} finalFocus={() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')}>
+        <form onSubmit={event => { event.preventDefault(); void deleteProject(); }}>
+          <DialogHeader><DialogTitle>Delete project?</DialogTitle><DialogDescription>Remove "{projectToDelete?.split('/').filter(Boolean).pop()}" from Projects? Files on disk and chats will not be deleted. You can add the folder again later.</DialogDescription></DialogHeader>
+          {projectDeleteError && <p role="alert" className="handwork-chat-action-error">{projectDeleteError}</p>}
+          <DialogFooter><Button id="handwork-project-cancel" type="button" variant="ghost" disabled={deletingProject} onClick={() => setProjectToDelete(undefined)}>Cancel</Button><Button type="submit" variant="destructive" disabled={deletingProject}>{deletingProject ? "Deleting…" : "Delete project"}</Button></DialogFooter>
+        </form>
+      </DialogPopup>
+    </Dialog>
     <Dialog open={!!chatAction} onOpenChange={open => { if (!open && !savingChat) setChatAction(undefined); }}>
       <DialogPopup className="handwork-chat-dialog" showCloseButton={!savingChat} initialFocus={() => document.getElementById(chatAction?.kind === "rename" ? "handwork-chat-name" : "handwork-chat-cancel")} finalFocus={() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')}>
         <form onSubmit={event => { event.preventDefault(); void saveChatAction(); }}>
@@ -970,18 +1384,23 @@ export default function HandworkHarness() {
         </form>
       </DialogPopup>
     </Dialog>
-    <HandworkCommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} api={api} chats={recents} projects={projects} prompts={prompts} actions={paletteActions} pages={palettePages}
+    <HandworkCommandPalette open={paletteOpen} initialPage={palettePage} onOpenChange={open => { setPaletteOpen(open); if (!open) setPalettePage(''); }} api={api} chats={recents} projects={projects} prompts={prompts} actions={paletteActions} pages={palettePages}
+      models={shortcuts} onChooseModel={model => void chooseModel(model)}
       onOpenChat={(chat, query) => { openChat(chat); if (query) openFind(query); }} onNewProjectChat={project => { if (!blocked) void sessionAction("project", project); }}
       onUsePrompt={usePrompt} onChoose={(id, value) => { if (id === "theme") void chooseTheme(value as "system" | "light" | "dark"); else void configure(id, value); }} />
     <HandworkPromptLibrary open={library.open} newDraft={library.draft} onOpenChange={open => setLibrary({ open })} api={api} prompts={prompts} onPromptsChange={setPrompts} onUse={usePrompt} />
     <PromptFillDialog prompt={fillingPrompt} onCancel={() => setFillingPrompt(undefined)} onInsert={insertPrompt} />
     <HandworkFileViewer file={viewingFile} api={api} onClose={() => setViewingFile(undefined)} />
+    <HandworkCommandReport command={reportCommand} api={api} onClose={() => setReportCommand(undefined)} />
+    <HandworkChatDetails open={detailsOpen} onOpenChange={setDetailsOpen} api={api} title={activeChat?.label || conversation.title || "New chat"} chatId={sessionId || undefined} options={options} conversation={withSavedUsage(conversation, chatPreferences[sessionId]?.usage)} onOpenSettings={() => setSettingsOpen(true)} onOpenFile={setViewingFile} />
+    <HandworkShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} preferences={preferences?.app} desktop={!!api} />
     <SidebarNav collapsed={narrowSidebar ? !narrowSidebarOpen : undefined} onCollapsedChange={collapsed => { if (narrowSidebar) setNarrowSidebarOpen(!collapsed); }} collapsedFooter={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} compact prepareRestart={prepareUpdateRestart} /><Button variant="ghost" size="icon-sm" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /></Button></div>} className="handwork-sidebar" header={<div className="handwork-sidebar-heading"><h1 data-slot="handwork-brand" className="handwork-brand">Handwork</h1><Button size="icon-sm" variant="ghost" aria-label="Search and commands" aria-haspopup="dialog" aria-expanded={paletteOpen} title={`Search and commands (${shortcutLabel("Mod+K")})`} onClick={() => setPaletteOpen(true)}><Search aria-hidden width={16} height={16} /></Button></div>}
       items={[]} onNavigate={() => {}} threads={[]} onThreadSelect={() => {}}
       onNewChat={() => { if (!blocked && api) void sessionAction("chat"); }}
-      content={<HandworkSidebarContent projects={projects} sessions={recents} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} busy={busy} connecting={working || navigating} disabled={blocked || !api} chatDisabled={picking || !api}
-        onAdd={openProject} onNewProjectChat={project => void sessionAction("project", project)} onChat={openChat} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)}
-        onRename={chat => { setChatAction({ kind: "rename", chat }); setChatName(chat.label); setChatActionError(""); }} onDelete={chat => { setChatAction({ kind: "delete", chat }); setChatActionError(""); }} />}
+      content={<><HandworkAttention items={attention} activeSession={shownSession} disabled={picking || !api} onOpen={openAttention} onDismiss={item => clearIssue(item.id)} /><HandworkSidebarContent attention={attentionKinds} projects={projects} sessions={recents} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={blocked || !api} chatDisabled={picking || !api}
+        onDeleteProject={project => { setProjectToDelete(project); setProjectDeleteError(""); }}
+        onAdd={openProject} onNewProjectChat={project => void sessionAction("project", project)} onChat={openChat} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)} onArchive={(chat, archived) => void archiveChat(chat, archived)}
+        onRename={chat => { setChatAction({ kind: "rename", chat }); setChatName(chat.label); setChatActionError(""); }} onDelete={chat => { setChatAction({ kind: "delete", chat }); setChatActionError(""); }} /></>}
       footer={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}><IconSettings size={16} />Settings</Button><HandworkTheme /></div></div>} />
     <section className="handwork-workspace" aria-label="Conversation workspace">
       <header className="handwork-header" aria-label="Conversation toolbar">
@@ -992,13 +1411,14 @@ export default function HandworkHarness() {
           </div>) : <span className="handwork-title">Handwork</span>}
           <Button className="handwork-new-tab" size="icon-sm" variant="ghost" aria-label="New chat" title="New chat" disabled={blocked || !api} onClick={() => void sessionAction("chat")}><IconPlus size={15} /></Button>
         </div>
+        <Button className="handwork-details-trigger" size="icon-sm" variant="ghost" aria-label="Chat details" title={`Chat details (${shortcutLabel("Mod+I")})`} aria-haspopup="dialog" disabled={!api || !sessionId || !!pendingChat} onClick={() => setDetailsOpen(true)}><Info aria-hidden width={15} height={15} /></Button>
         {showProjectTools && <div className="handwork-header-actions">
           <ChangesTrigger open={changesOpen} fileCount={projectChangeState.snapshot?.totalFiles ?? 0} added={changesComplete ? addedLines : undefined} removed={changesComplete ? removedLines : undefined} onClick={() => { setChangesOpen(value => !value); setActivityOpen(false); }} />
           <Button id="handwork-activity-trigger" size="xs" variant="ghost" aria-pressed={activityOpen} onClick={() => { setActivityOpen(value => !value); setChangesOpen(false); }}>Activity</Button>
 
         </div>}
       </header>
-      {error && <div role="alert" className="handwork-notice"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
+      {error && <div role="alert" className="handwork-notice" data-attention="error"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
       {!api && <p className="handwork-notice">Open the Electron app with npm run desktop:dev to use local Handwork. This browser preview cannot access your files or run commands.</p>}
       <div className="handwork-workspace-body">
       <HandworkConversation landing={landing} sessionKey={shownSession} busy={busy || working || !!pendingChat}
@@ -1012,33 +1432,34 @@ export default function HandworkHarness() {
       </div>}</>}>
         {pendingChat && shownConversation.entries.length === 0 && <div className="handwork-opening"><h2>{pendingChat.label}</h2>{!busy && <LoadingState label="Opening chat…" />}</div>}
         {!pendingChat && conversation.entries.length === 0 && <div className="handwork-empty">
-          <h2>{workspaceName ? <>What’s next for <span className="handwork-greeting-project" title={workspace}>{workspaceName}</span>?</> : "What can I help with?"}</h2>
+          <h2>{workspaceName ? <>What’s next for <HoverTooltip content={workspace}><span className="handwork-greeting-project" >{workspaceName}</span></HoverTooltip>?</> : "What can I help with?"}</h2>
           {!sessionId && <>{working ? <p role="status">{workspaceName ? "Connecting to your project…" : "Starting your chat…"}</p> : <><p>{workspaceName ? "Reconnect to continue working with your code." : "Ask a question or attach a file to get started."}</p><Button disabled={!api || blocked} variant="outline" size="sm" onClick={() => void sessionAction(workspace ? "connect" : "chat")}>{workspace ? "Reconnect" : "New chat"}</Button></>}</>}
         </div>}
         {shownConversation.entries.length > 0 && <HandworkTranscript entries={shownConversation.entries} busy={busy || working || !!pendingChat} onSend={send} onEdit={editMessage}
-          onRetry={canRegenerate && !pendingChat && !blocked ? () => void retryLast() : undefined}
+          onRetry={canRegenerate && !pendingChat && !blocked ? () => void retryLast() : undefined} versionFor={versionFor}
           workspace={showProjectTools ? workspace : undefined} onOpenFile={setViewingFile} onRevealFile={target => void api?.revealFile(target).catch(cause => setError((cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")))} />}
-        {(pendingChat ? [] : permissions).map(permission => <ApprovalCard key={permission.id} questions={[{ id: permission.id.toString(), prompt: `${permission.title}\n${permission.detail}`, type: "single", required: true, options: permission.options.map(option => ({ value: option.optionId, label: option.name })) }]}
-          onSubmit={async answers => { const selected = answers[permission.id.toString()]?.selected[0]; if (selected && !answering) await answerPermission(permission.id, selected); }} />)}
+        {(pendingChat ? [] : permissions).map(permission => <div key={permission.id} data-attention="approval"><ApprovalCard questions={[{ id: permission.id.toString(), prompt: `${permission.title}\n${permission.detail}`, type: "single", required: true, options: permission.options.map(option => ({ value: option.optionId, label: option.name })) }]}
+          onSubmit={async answers => { const selected = answers[permission.id.toString()]?.selected[0]; if (selected && !answering) await answerPermission(permission.id, selected); }} /></div>)}
         {busy && !pendingChat && <div className="handwork-loading"><LoadingState label={permissions.length ? "Waiting for your approval" : "Handwork is working"} /></div>}
-        {(notice || shownConversation.recovery) && <div role="status" className="handwork-notice"><span>{notice || shownConversation.recovery}</span>{notice && noticeAction?.notice === notice && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => { const action = noticeAction; setNotice(""); setNoticeAction(undefined); action.run(); }}>{noticeAction.label}</Button>}</div>}
+        {shownConversation.recovery && <div role="status" className="handwork-notice" data-attention="recovery"><span>{shownConversation.recovery}</span>{shownConversation.canContinue && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked || !api || !sessionId} onClick={() => void continueResponse()}><RotateCcw aria-hidden width={12} height={12} />Retry</Button>}</div>}
+        {notice && <div role="status" className="handwork-notice" data-attention="notice"><span>{notice}</span>{noticeAction?.notice === notice && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => { const action = noticeAction; setNotice(""); setNoticeAction(undefined); action.run(); }}>{noticeAction.label}</Button>}</div>}
       </HandworkConversation>
-      {showProjectTools && (changesOpen || activityOpen && tools.length > 0) && <aside id="handwork-review-panel" ref={reviewPanel} tabIndex={-1} className="handwork-review-panel" data-panel={changesOpen ? "changes" : "activity"} data-sized={reviewWidth ? "" : undefined} style={reviewWidth ? { "--handwork-review-width": `${reviewWidth}px` } as CSSProperties : undefined} aria-label={changesOpen ? "Changes" : "Activity"} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeReviewPanel(); } }}>
+      {(showProjectTools || activityRequested) && (changesOpen || activityOpen && (tools.length > 0 || activityRequested)) && <aside id="handwork-review-panel" ref={reviewPanel} tabIndex={-1} className="handwork-review-panel" data-panel={changesOpen ? "changes" : "activity"} data-sized={reviewWidth ? "" : undefined} style={reviewWidth ? { "--handwork-review-width": `${reviewWidth}px` } as CSSProperties : undefined} aria-label={changesOpen ? "Changes" : "Activity"} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeReviewPanel(); } }}>
         <ResizeHandle className="handwork-review-resize" orientation="vertical" direction={-1} label="Resize panel" min={300}
           max={() => (reviewPanel.current?.parentElement?.clientWidth ?? 1200) - 360}
           measure={() => reviewPanel.current?.getBoundingClientRect().width} onResize={setReviewWidth} />
-        <div className="handwork-panel-header"><h2>{changesOpen ? "Changes" : "Activity"}</h2><div className="handwork-panel-actions">{changesOpen && !!workspace && <Button size="icon-sm" variant="link" aria-label="Refresh project changes" title="Refresh project changes" disabled={projectChangeState.loading} onClick={projectChangeState.refresh}><RefreshCw size={14} aria-hidden /></Button>}<Button size="icon-sm" variant="ghost" aria-label="Close panel" title="Close panel (Escape)" onClick={closeReviewPanel}><IconClose size={16} /></Button></div></div>
-        <div className="handwork-panel-content">{changesOpen ? <HandworkChanges key={workspace} api={api} workspace={workspace} snapshot={projectChangeState.snapshot} loading={projectChangeState.loading} error={projectChangeState.error} /> : <HandworkActivity entries={shownConversation.entries} workspaceName={workspaceName} used={shownConversation.used} capacity={shownConversation.capacity} />}</div>
+        <div className="handwork-panel-header"><h2>{changesOpen ? "Source control" : "Activity"}</h2><div className="handwork-panel-actions">{changesOpen && !!workspace && <Button size="icon-sm" variant="link" aria-label="Refresh project changes" title="Refresh project changes" disabled={projectChangeState.loading} onClick={projectChangeState.refresh}><RefreshCw size={14} aria-hidden /></Button>}<Button size="icon-sm" variant="ghost" aria-label="Close panel" title="Close panel (Escape)" onClick={closeReviewPanel}><IconClose size={16} /></Button></div></div>
+        <div className="handwork-panel-content">{changesOpen ? <HandworkChanges modelLabel={currentModel ? modelDisplayName(currentModel.options.find(choice => choice.value === currentModel.currentValue)?.name ?? currentModel.currentValue) : undefined} modelPending={configuring || navigating} onWrite={api ? async () => { await configTail.current; return api.gitCommitMessage(workspace); } : undefined} key={workspace} api={api} workspace={workspace} snapshot={projectChangeState.snapshot} loading={projectChangeState.loading} error={projectChangeState.error} onChanged={projectChangeState.refresh} /> : <HandworkActivity entries={shownConversation.entries} workspaceName={workspaceName} used={shownUsage.used} capacity={shownUsage.capacity} />}</div>
       </aside>}
       </div>
     </section>
-    <SettingsModal api={api} preferences={preferences} onPreferences={receivePreferences} workspace={workspace} busy={busy || working || configuring} hasMessages={conversation.entries.length > 0} onReconnect={async () => {
+    <SettingsModal initialSection={settingsSection} api={api} preferences={preferences} onPreferences={receivePreferences} workspace={workspace} busy={busy || working || configuring} hasMessages={conversation.entries.length > 0} onReconnect={async () => {
       const previous = activeSession.current;
       await sessionAction('connect', workspace);
       if (!activeSession.current) throw new Error('Could not reconnect. Try opening the project again.');
       const temporary = activeSession.current;
       if (previous && conversation.entries.length) { await sessionAction('load', previous); if (activeSession.current === previous) setTabs(current => current.filter(tab => tab.id !== temporary)); }
-    }} open={settingsOpen} onClose={() => setSettingsOpen(false)} providers={providers} providersReady={providersReady} busyProvider={busyProvider} error={providerError}
-      onConnect={(id, key) => providerAction("connect", id, key)} onSignIn={id => providerAction("signIn", id)} onDisconnect={id => providerAction("disconnect", id)} onUse={id => void useProvider(id)} currentProvider={provider?.currentValue} />
+    }} open={settingsOpen} onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }} providers={providers} providersReady={providersReady} busyProvider={busyProvider} error={providerError}
+      onConnect={(id, key) => providerAction("connect", id, key)} onSignIn={id => providerAction("signIn", id)} onDisconnect={id => providerAction("disconnect", id)} onUse={id => void useProvider(id)} currentProvider={provider?.currentValue} onShowShortcuts={() => setShortcutsOpen(true)} onRestored={result => void afterRestore(result)} />
   </main>;
 }
