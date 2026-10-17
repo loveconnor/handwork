@@ -109,7 +109,10 @@ test('a full backup restores chats, attachments, prompts, preferences, versions,
     assert.deepEqual(result, { chats: 2, attachments: 2, prompts: 1, projects: 1, drafts: 1, queued: 1, preferences: true, skippedChats: 0 });
     assert.deepEqual((await readdir(target.sessionDirectory)).sort(), ['childAgent01', 'projectChat1', 'standalone01']);
     assert.equal(await readFile(path.join(target.sessionDirectory, 'projectChat1', 'events.jsonl'), 'utf8'), await readFile(path.join(source.sessionDirectory, 'projectChat1', 'events.jsonl'), 'utf8'));
-    assert.equal((await stat(path.join(target.sessionDirectory, 'projectChat1'))).mode & 0o077, 0, 'restored history is private');
+    // Windows stat modes do not represent directory access permissions.
+    if (process.platform !== 'win32') {
+      assert.equal((await stat(path.join(target.sessionDirectory, 'projectChat1'))).mode & 0o077, 0, 'restored history is private');
+    }
     // Standalone chats point at this app's private chat folder.
     const moved = JSON.parse(await readFile(path.join(target.sessionDirectory, 'standalone01', 'session.json'), 'utf8'));
     assert.equal(moved.workspace_root, path.join(target.chatDirectory, standalone));

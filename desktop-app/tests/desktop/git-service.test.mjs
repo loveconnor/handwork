@@ -14,7 +14,8 @@ const CONFIG = '[user]\n\tname = Handwork Test\n\temail = test@example.com\n[ini
 
 /** A project with an `origin` bare remote, isolated from the person's Git configuration. */
 function sandbox(config = CONFIG) {
-  const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'handwork-git-')));
+  // Match fs/promises.realpath used by GitService, including Windows long paths.
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'handwork-git-')));
   writeFileSync(path.join(root, 'gitconfig'), config);
   const env = { GIT_CONFIG_GLOBAL: path.join(root, 'gitconfig'), GIT_CONFIG_NOSYSTEM: '1', HOME: root, XDG_CONFIG_HOME: path.join(root, 'xdg') };
   const shell = { ...process.env, ...env };
@@ -408,7 +409,8 @@ test('Git failures are classified with the next step', () => {
 });
 
 test('push destinations that start release workflows are recognized', () => {
-  const release = readFileSync(new URL('../../.github/workflows/desktop-release.yml', import.meta.url), 'utf8');
+  // Release sync omits this repository's .github directory from desktop-app.
+  const release = 'name: Desktop release\non:\n  push:\n    branches: [main]\n  workflow_dispatch:\n';
   assert.equal(workflowRunsOnPush(release, 'main'), true);
   assert.equal(workflowRunsOnPush(release, 'feature/login'), false);
   const patterns = 'name: Release\non:\n  push:\n    branches:\n      - "release/**"\n      - "!release/skip"\n  pull_request:\n';

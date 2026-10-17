@@ -27,6 +27,10 @@ test('release sync copies tracked source, removes deleted files, and preserves t
     assert.equal(existsSync(path.join(directory, 'desktop-app/.github')), false);
     assert.equal(existsSync(path.join(directory, 'desktop-app/node_modules')), false);
     assert.equal(readFileSync(path.join(directory, '.github/workflows/desktop-release.yml'), 'utf8'), 'signed release fixture');
+    // Run the workflow parser test in the same layout as the signed release jobs.
+    execFileSync(process.execPath, ['--test', '--test-name-pattern=push destinations that start release workflows', 'tests/desktop/git-service.test.mjs'], {
+      cwd: path.join(directory, 'desktop-app'), stdio: 'pipe',
+    });
     assert.throws(() => execFileSync(process.execPath, ['scripts/sync-release-source.mjs', directory], { stdio: 'pipe' }), /uncommitted changes/);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
