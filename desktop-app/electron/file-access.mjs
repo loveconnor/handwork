@@ -12,7 +12,10 @@ const MAX_TEXT_BYTES = 512 * 1024;
 const MAX_TRUSTED = 2000;
 
 const inside = (child, parent) => child === parent || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
-const canonical = file => { try { return realpathSync(file); } catch { return path.resolve(file); } };
+// Match fs/promises.realpath's native resolution, including Windows path casing.
+// The JS realpathSync implementation can preserve input casing instead, making
+// an allowed root or picked file differ from the path returned by describe().
+const canonical = file => { try { return realpathSync.native(file); } catch { return path.resolve(file); } };
 
 /** Files the person chose in the system file picker stay openable later. */
 export class TrustedFiles {

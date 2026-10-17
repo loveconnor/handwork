@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, session, shell, Tray } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, session, shell, Tray } from 'electron';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -246,6 +246,8 @@ desktopUpdater = new DesktopUpdater({
   beforeInstall: async drafts => { updateDrafts.save(drafts); quitRequested = true; },
 });
 desktopUpdater.start();
+powerMonitor.on('resume', () => void desktopUpdater.checkIfDue());
+app.on('browser-window-focus', () => void desktopUpdater.checkIfDue());
 // Packaged macOS apps use the native asset catalog, including clear and tinted icons.
 if (process.platform === 'darwin' && !app.isPackaged) {
   const updateDockIcon = () => app.dock.setIcon(nativeTheme.shouldUseDarkColors

@@ -161,7 +161,10 @@ and ARM64 installers with their matching engines, and tests installation, chat,
 and an actual older-to-newer upgrade before publishing. The npm package has a
 separate version and publishing process.
 
-The sidebar checks for updates after launch and every six hours. Users can also
+The app checks for updates 15 seconds after launch and every hour while running.
+It also checks when the computer wakes or an app window regains focus if the last
+check was at least an hour ago. Available updates stay visible in the sidebar
+until the user chooses to download them. Users can also
 check manually, download an available update, and choose **Restart to update**.
 Downloads never interrupt a chat. Restart is blocked during a running response;
 unsent drafts and attachments are saved before installation and restored after

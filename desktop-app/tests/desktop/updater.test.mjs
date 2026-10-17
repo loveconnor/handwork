@@ -17,6 +17,72 @@ function fixture(options = {}) {
   return { service, updater };
 }
 
+test('automatic checks run after launch and hourly, and stop on shutdown', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: 1000 });
+  const { service, updater } = fixture();
+  let attempts = 0;
+  updater.checkForUpdates = async () => { attempts++; updater.emit('update-not-available'); };
+  t.after(() => service.stop());
+  service.start();
+  service.start();
+  t.mock.timers.tick(14999);
+  assert.equal(attempts, 0);
+  t.mock.timers.tick(1);
+  await service.pending;
+  assert.equal(attempts, 1);
+  t.mock.timers.tick(60 * 60 * 1000);
+  await service.pending;
+  assert.equal(attempts, 2);
+  service.stop();
+  t.mock.timers.tick(2 * 60 * 60 * 1000);
+  await service.checkIfDue();
+  assert.equal(attempts, 2);
+});
+
+test('wake and focus catch up on overdue checks without repeated requests', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: 1000 });
+  const { service, updater } = fixture();
+  let attempts = 0;
+  updater.checkForUpdates = async () => { attempts++; updater.emit('update-not-available'); };
+  t.after(() => service.stop());
+  service.start();
+  await service.checkIfDue();
+  assert.equal(attempts, 0);
+  await service.check(); // A manual check also throttles background checks.
+  t.mock.timers.setTime(Date.now() + 60 * 60 * 1000);
+  await Promise.all([service.checkIfDue(), service.checkIfDue()]);
+  assert.equal(attempts, 2);
+  await service.checkIfDue();
+  assert.equal(attempts, 2);
+  updater.checkForUpdates = async () => { attempts++; throw new Error('offline'); };
+  t.mock.timers.setTime(Date.now() + 60 * 60 * 1000);
+  await service.checkIfDue();
+  assert.equal(service.snapshot().status, 'error');
+  await service.checkIfDue();
+  assert.equal(attempts, 3);
+  t.mock.timers.setTime(Date.now() + 60 * 60 * 1000);
+  await service.checkIfDue();
+  assert.equal(attempts, 4);
+});
+
+test('automatic checks preserve the update prompt and never download an update', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: 1000 });
+  const { service, updater } = fixture();
+  let downloads = 0;
+  updater.downloadUpdate = async () => { downloads++; };
+  t.after(() => service.stop());
+  service.start();
+  t.mock.timers.tick(15000);
+  await service.pending;
+  const available = service.snapshot();
+  assert.equal(available.status, 'available');
+  updater.checkForUpdates = async () => { throw new Error('offline'); };
+  t.mock.timers.tick(60 * 60 * 1000);
+  await service.checkIfDue();
+  assert.deepEqual(service.snapshot(), available);
+  assert.equal(downloads, 0);
+});
+
 test('checking, downloading, and installing are distinct user actions and restart is blocked while busy', async () => {
   let busy = true;
   let saved;

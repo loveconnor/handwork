@@ -1,5 +1,7 @@
 import { EventEmitter } from 'node:events';
 
+const CHECK_INTERVAL = 60 * 60 * 1000;
+
 /** The renderer gets status and three actions, never an installer path or feed URL. */
 export class DesktopUpdater extends EventEmitter {
   constructor({ updater, available, unavailableReason, isBusy = () => false, beforeInstall = async () => {} }) {
@@ -29,6 +31,7 @@ export class DesktopUpdater extends EventEmitter {
   async check() {
     if (this.state.status === 'unavailable' || ['downloading', 'downloaded', 'installing'].includes(this.state.status)) return this.snapshot();
     if (this.pending) return this.pending;
+    this.nextCheckAt = Date.now() + CHECK_INTERVAL;
     this.set({ status: 'checking', version: undefined, progress: undefined, message: 'Checking for updates…' });
     this.pending = Promise.resolve().then(async () => {
       try { await this.updater.checkForUpdates(); }
@@ -64,10 +67,20 @@ export class DesktopUpdater extends EventEmitter {
     return this.snapshot();
   }
   start() {
-    if (this.state.status === 'unavailable' || this.interval) return;
-    this.initial = setTimeout(() => void this.check(), 15000);
-    this.interval = setInterval(() => void this.check(), 6 * 60 * 60 * 1000);
-    this.initial.unref?.(); this.interval.unref?.();
+    if (this.state.status === 'unavailable' || this.initial || this.interval) return;
+    this.nextCheckAt = Date.now() + 15000;
+    this.initial = setTimeout(() => {
+      void this.checkIfDue();
+      this.interval = setInterval(() => void this.checkIfDue(), CHECK_INTERVAL);
+      this.interval.unref?.();
+    }, 15000);
+    this.initial.unref?.();
   }
-  stop() { clearTimeout(this.initial); clearInterval(this.interval); this.interval = null; }
+  async checkIfDue() {
+    // Keep an available update visible until the user chooses to download it.
+    // Focus and wake events share the timer's throttle, including manual checks.
+    if ((!this.initial && !this.interval) || Date.now() < this.nextCheckAt || this.state.version) return this.snapshot();
+    return this.check();
+  }
+  stop() { clearTimeout(this.initial); clearInterval(this.interval); this.initial = null; this.interval = null; }
 }

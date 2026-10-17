@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, writeFile, rm, chmod, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, chmod, readdir, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -76,6 +76,30 @@ test('files open only inside allowed folders, never as apps or scripts, and can 
     trusted.add([path.join(outside, 'picked.txt')]);
     assert.equal((await files.preview(path.join(outside, 'picked.txt'), project)).text, 'chosen');
     await assert.rejects(files.preview(path.join(project, 'missing.txt'), project), /no longer exists/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('project roots and picked files use the same native path casing as previews', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'handwork-path-case-'));
+  try {
+    const project = path.join(root, 'MixedCaseProject');
+    const picked = path.join(root, 'PickedNote.txt');
+    await mkdir(project);
+    await writeFile(path.join(project, 'Plan.md'), '# Plan\n');
+    await writeFile(picked, 'chosen');
+    // Windows resolves these inputs to the existing mixed-case paths. On other
+    // platforms keep the exact spelling because filesystems may be case sensitive.
+    const inputPath = file => process.platform === 'win32' ? file.toLowerCase() : file;
+    const storePath = path.join(root, 'trusted.json');
+    const trusted = new TrustedFiles(storePath);
+    trusted.add([inputPath(picked)]);
+    assert.deepEqual(trusted.list(), [await realpath(picked)]);
+    const files = new FileAccess({ roots: () => [inputPath(project)], trusted: new TrustedFiles(storePath), shell: {} });
+    const preview = await files.preview('Plan.md', inputPath(project));
+    assert.equal(preview.allowed, true);
+    assert.equal(preview.kind, 'text');
+    assert.equal(preview.canOpen, true);
+    assert.equal((await files.preview(inputPath(picked))).text, 'chosen');
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
