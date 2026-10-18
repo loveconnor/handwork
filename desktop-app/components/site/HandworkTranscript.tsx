@@ -21,6 +21,8 @@ import { transcriptBlocks, toolLabel } from '@/lib/transcript-activity';
 import { bareGenuiSource } from '@/lib/genui-response';
 import { actionSubmission } from '@/lib/genui-action';
 import { replySources, sourceUrl } from '@/lib/reply-sources';
+import { isResponseError } from '@/lib/response-error';
+import { HandworkResponseError } from './HandworkResponseError';
 
 /** A link a reply makes to a file on this computer, such as file:///… or /Users/…/notes.md. */
 export function localFileTarget(href?: string): string | undefined {
@@ -167,10 +169,11 @@ function ResponseActivity({ entries, active }: { entries: Entry[]; active: boole
   </details>;
 }
 
-export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRetry, versionFor, onOpenFile, onRevealFile, workspace }: {
+export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRetry, versionFor, onOpenFile, onRevealFile, workspace, recovery, canContinue, onContinue, continuationDisabled }: {
   entries: Entry[]; busy: boolean; onSend: (text: string) => Promise<void>; onEdit: (id: string, text: string) => Promise<void>;
   /** Offered on the latest reply when it can be regenerated. */
   onRetry?: () => void;
+  recovery?: string; canContinue?: boolean; onContinue?: () => void; continuationDisabled?: boolean;
   /** Other saved versions of a user turn, made by editing or retrying it. Turns count user messages from 0. */
   versionFor?: (turn: number) => MessageVersion | undefined;
   onOpenFile: (file: FileTarget) => void; onRevealFile: (target: string) => void;
@@ -192,6 +195,11 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRe
         </div>;
       }
       const entry = block.entry;
+      if (entry.kind === 'assistant' && isResponseError(entry.text)) {
+        // The checkpoint card below owns the current failure; old failures stay in history.
+        if ((recovery || busy) && index > lastUser) return null;
+        return <HandworkResponseError key={entry.id} detail={entry.text} />;
+      }
       const submission = entry.kind === 'user' ? actionSubmission(entry.text) : null;
       const userText = submission ? `${submission.message}\n\n${submission.fields.map(field => `${field.label}: ${field.value}`).join('\n')}` : entry.text;
       const generatedSource = entry.kind === 'assistant' ? bareGenuiSource(entry.text) : null;
@@ -216,5 +224,7 @@ export default function HandworkTranscript({ entries, busy, onSend, onEdit, onRe
         </>}
       </ChatMessage></div>;
     })}
+    {recovery && (!busy || canContinue ? <HandworkResponseError detail={recovery} onContinue={canContinue ? onContinue : undefined} disabled={busy || continuationDisabled} />
+      : <div role="status" className="handwork-notice" data-attention="recovery">{recovery}</div>)}
   </div>;
 }

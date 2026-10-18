@@ -326,6 +326,8 @@ export class DesktopBackend extends EventEmitter {
       const meta = event.params?.update?._meta?.handwork;
       if (event.method === 'session/update' && meta && Object.hasOwn(meta, 'modelResponseRecovery')) engine.recovery = meta.modelResponseRecovery;
       if (event.method === 'session/update' && event.params?.update?.sessionUpdate === 'usage_update' && sessionId) this.rememberUsage(sessionId, event.params.update);
+      if (event.method === 'session/update' && event.params?.update?.sessionUpdate === 'session_info_update' &&
+          sessionId && !engine.loadingSessionId && (!event.params.sessionId || event.params.sessionId === sessionId)) this.rememberTitle(sessionId, event.params.update.title);
       if (event.method === 'session/request_permission' &&
           (!engine.prompting || engine.cancelling || event.params.sessionId !== sessionId)) {
         client.respondPermission(event.id, null);
@@ -419,6 +421,14 @@ export class DesktopBackend extends EventEmitter {
     } catch { /* Context usage is optional; the live figure still shows. */ }
   }
 
+  /** Keep live generated titles when the engine's saved history still has a prompt preview. */
+  rememberTitle(sessionId, title) {
+    if (isPlaceholderTitle(title)) return;
+    try {
+      if (this.chatPreferences.list()[sessionId]?.generatedTitle !== title) this.chatPreferences.update(sessionId, { generatedTitle: title });
+    } catch { /* A failed optional metadata write must not interrupt the response. */ }
+  }
+
   /** Counts the chat's provider and model as used. Model shortcuts are optional. */
   recordModelUse(engine) {
     const options = engine.session?.configOptions ?? [];
@@ -498,7 +508,7 @@ export class DesktopBackend extends EventEmitter {
     const preferences = this.chatPreferences.list();
     return this.displaySessions({ sessions: this.recentSessions.map(session => {
       const preference = Object.hasOwn(preferences, session.sessionId) ? preferences[session.sessionId] : {};
-      return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true, archived: preference.archived === true };
+      return { ...session, title: preference.title || preference.generatedTitle || session.title, pinned: preference.pinned === true, archived: preference.archived === true };
     }), preferences });
   }
 
@@ -533,7 +543,7 @@ export class DesktopBackend extends EventEmitter {
       const preferences = this.chatPreferences.list();
       const result = { sessions: [...sessions.values()].map(session => {
         const preference = Object.hasOwn(preferences, session.sessionId) ? preferences[session.sessionId] : {};
-        return { ...session, ...(preference.title ? { title: preference.title } : {}), pinned: preference.pinned === true, archived: preference.archived === true };
+        return { ...session, title: preference.title || preference.generatedTitle || session.title, pinned: preference.pinned === true, archived: preference.archived === true };
       }), preferences };
       // Untitled history gets a prompt preview without loading or switching an engine.
       const untitled = result.sessions.filter(session => !preferences[session.sessionId]?.title && isPlaceholderTitle(session.title));
@@ -677,6 +687,7 @@ export class DesktopBackend extends EventEmitter {
 
   saveDraft(key, text, files) { return this.drafts.save(key, text, files); }
   listDrafts() { return this.drafts.list(); }
+  moveDraft(source, target) { return this.drafts.move(source, target); }
   removeDrafts(keys) { this.drafts.remove(keys); return { removed: keys.length }; }
   listQueues() { return this.queues.list(); }
   saveQueue(sessionId, queue) { return this.queues.save(sessionId, queue); }
@@ -824,7 +835,10 @@ export class DesktopBackend extends EventEmitter {
       client.on('event', collect);
       try {
         const result = await client.request('handwork/session/read', { sessionId });
-        return { ...result, updates };
+        const preference = this.chatPreferences.list()[sessionId];
+        const title = preference?.title || preference?.generatedTitle;
+        if (title) updates.push({ sessionUpdate: 'session_info_update', title });
+        return { ...result, ...(title ? { title } : {}), updates };
       } finally { client.off('event', collect); }
     })().finally(() => this.historyReads.delete(sessionId));
     this.historyReads.set(sessionId, reading);
@@ -852,6 +866,9 @@ export class DesktopBackend extends EventEmitter {
           const configured = await engine.client.request('session/set_config_option', { sessionId, configId, value });
           if (Array.isArray(configured?.configOptions)) engine.session.configOptions = configured.configOptions;
         }
+        const preference = this.chatPreferences.list()[sessionId];
+        const title = preference?.title || preference?.generatedTitle;
+        if (title) this.emit('event', { method: 'session/update', params: { sessionId, update: { sessionUpdate: 'session_info_update', title } } });
         return { ...result, ...this.activate(engine), historyReplayed: true };
       } catch (error) { this.engines.delete(engine); engine.client.dispose(); throw error; }
       finally { delete engine.loadingSessionId; }
@@ -892,8 +909,22 @@ export class DesktopBackend extends EventEmitter {
     return this.withLocalProbe(result);
   }
 
-  async providerRequest(method, params) {
-    if (this.client && !this.client.closed) return this.client.request(method, params);
+  providerUsage(provider) {
+    if (provider !== 'codex') return Promise.reject(new Error('Subscription usage is only available for Codex'));
+    if (this.usageJob) return this.usageJob;
+    if (this.settingsClients.size >= 3) return Promise.reject(new Error('A provider check is already running. Try again shortly.'));
+    // Never queue a network usage check on the active chat's ACP connection.
+    this.usageJob = this.providerRequest('handwork/providers/usage', { provider }, true)
+      .catch(cause => {
+        if (/method not found|unknown method/i.test(cause?.message ?? '')) throw new Error('Update the Handwork engine to view subscription usage.');
+        throw cause;
+      })
+      .finally(() => { this.usageJob = null; });
+    return this.usageJob;
+  }
+
+  async providerRequest(method, params, background = false) {
+    if (!background && this.client && !this.client.closed) return this.client.request(method, params);
     // Provider setup must work before a chat has credentials. This short-lived
     // process only manages credentials; it never creates sessions or runs prompts.
     const client = this.clientFactory({

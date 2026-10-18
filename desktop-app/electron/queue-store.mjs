@@ -33,8 +33,10 @@ export class QueueStore {
   }
 
   /** Replaces one chat's queue. An empty queue is removed. */
-  save(sessionId, { paused, items }) {
+  save(sessionId, { paused, items }, { evict = true } = {}) {
     const queues = this.read();
+    if (!evict && !Object.hasOwn(queues, sessionId) && Object.keys(queues).length >= MAX_QUEUES) return { saved: false, skipped: 0 };
+    if (!evict && !this.blobs.canFit(items.flatMap(item => item.files))) return { saved: false, skipped: items.reduce((total, item) => total + item.files.length, 0) };
     // Attachments already stored for an unchanged message are reused, not re-encoded.
     const previous = new Map((queues[sessionId]?.items ?? []).map(item => [item.id, item]));
     let skipped = 0;

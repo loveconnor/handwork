@@ -23,6 +23,7 @@ import { DraftStore } from './draft-store.mjs';
 import { QueueStore } from './queue-store.mjs';
 import { BACKUP_EXTENSION } from './backup.mjs';
 import { TrustedFiles } from './file-access.mjs';
+import { appVersion } from './app-version.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appIcon = path.join(root, 'electron', 'assets', 'handwork.png');
@@ -92,7 +93,7 @@ function createWindow() {
     stop: () => shell.openExternal('wispr-flow://stop-hands-free'),
   };
   const settings = new DesktopSettings(path.join(app.getPath('userData'), 'desktop-settings.json'));
-  const settingsService = new SettingsService({ settings, version: app.getVersion(), host: {
+  const settingsService = new SettingsService({ settings, version: appVersion, host: {
     chooseFolder: async () => { const result = await dialog.showOpenDialog(window, { title: 'Allow an additional project folder', properties: ['openDirectory'] }); return result.canceled ? null : result.filePaths[0]; },
     saveExport: async ({ format = 'json', defaultName = 'handwork-chats.json' } = {}) => {
       const filters = format === 'markdown' ? [{ name: 'Markdown', extensions: ['md'] }] : [{ name: 'JSON', extensions: ['json'] }];

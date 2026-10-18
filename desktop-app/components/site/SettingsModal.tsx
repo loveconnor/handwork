@@ -10,6 +10,7 @@ import { Monitor, Plug, Shield, UserRound, Bell, Database, Info } from 'honestui
 import { ProviderLogo } from './ProviderLogo';
 import { HandworkTheme } from './HandworkControls';
 import { HandworkBackup } from './HandworkBackup';
+import { HandworkSubscriptionUsage } from './HandworkSubscriptionUsage';
 import { configOptions, type ProviderInfo } from '@/lib/desktop-state';
 import { modelDisplayName } from '@/lib/model-presentation';
 import { shortcutLabel } from '@/lib/saved-prompts';
@@ -142,6 +143,7 @@ export default function SettingsModal(props: SettingsModalProps) {
                   {provider.connected && <Button variant="ghost" size="sm" disabled={disabled || busy || !!busyProvider} onClick={() => void run(async () => (await api!.testProvider(provider.id)).message).then(value => { if (value) setMessage(value); })}>Test</Button>}
                   {busyProvider === provider.id ? <span role="status">Updating…</span> : provider.signIn === 'none' ? <Button size="sm" variant="ghost" disabled={busy || !provider.connected || provider.id === currentProvider} onClick={() => onUse?.(provider.id)}>{provider.id === currentProvider ? 'In use' : 'Use'}</Button> : provider.connected ? <Button variant="ghost" size="sm" disabled={busy || pending} onClick={() => void onDisconnect(provider.id)}>Disconnect</Button> : provider.signIn === 'browser' ? <Button size="sm" variant="outline" disabled={busy || pending} onClick={() => void onSignIn(provider.id)}>Sign in</Button> : <Button size="sm" variant="outline" disabled={busy || pending} onClick={() => { setEditing(editing === provider.id ? '' : provider.id); setKey(''); }}>{editing === provider.id ? 'Cancel' : 'Connect'}</Button>}
                 </div></div>
+                {provider.id === 'codex' && provider.connected && <HandworkSubscriptionUsage api={api} active={open && !busyProvider} />}
                 {editing === provider.id && <form className="handwork-key-form" onSubmit={event => { event.preventDefault(); if (key.trim() && !busyProvider) void onConnect(provider.id, key.trim()); }}><label htmlFor={`key-${provider.id}`}>{provider.name} API key</label><Input id={`key-${provider.id}`} type="password" autoComplete="off" value={key} onChange={event => setKey(event.target.value)} disabled={!!busyProvider} /><Button type="submit" size="sm" disabled={!key.trim() || !!busyProvider}>Save</Button></form>}
               </li>)}
             </ul>}

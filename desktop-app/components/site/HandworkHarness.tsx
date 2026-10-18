@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { IconFileText, IconSettings, IconMic, IconPlus, IconClose } from "@/components/atoms/Icons";
 import { ComposerOptions, HandworkTheme, chooseTheme } from "@/components/site/HandworkControls";
-import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, VoiceStatus, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult } from "@/lib/desktop-api";
+import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, VoiceStatus, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult, SavedDraft } from "@/lib/desktop-api";
 import { applyUpdate, availableCommands, configOptions, emptyConversation, withSavedUsage, permissionFromEvent, providerList, record, text, type Command, type ConfigOption, type Conversation, type Entry, type Permission, type ProviderInfo } from "@/lib/desktop-state";
 import { chatTitle, isPlaceholderTitle } from '@/electron/chat-title.mjs';
 import { mergeSidebarChats, sortChatsByRecency } from '@/lib/chat-order';
@@ -33,6 +33,8 @@ import { mergeQueues, queueCounts, queueKey, readyQueues, restoreQueues, type Qu
 import { planAttachments, stageAttachments, type RejectedFile } from "@/lib/attachment-staging";
 import { attentionItems, nextAttention, type AttentionItem, type AttentionKind, type ChatIssue } from "@/lib/attention";
 import { adjacentTab, numberedTab, rememberClosed, reopenCandidate } from "@/lib/tab-navigation";
+import { draftKey, splitDrafts } from '@/lib/draft-recovery';
+import { queueConfiguration, type ConfigChange } from '@/lib/configuration-queue';
 import { HandworkAttention } from "@/components/site/HandworkAttention";
 import { HandworkAttachmentTray } from "@/components/site/HandworkAttachmentTray";
 import { HandworkChatDetails } from "@/components/site/HandworkChatDetails";
@@ -67,11 +69,6 @@ function cachedSidebar(): { projects: string[]; sessions: SavedSession[] } {
     if (Array.isArray(value?.projects) && value.projects.every((item: unknown) => typeof item === 'string') && Array.isArray(value.sessions) && value.sessions.every((item: SavedSession) => item && typeof item.id === 'string' && typeof item.label === 'string')) return value;
   } catch { /* An unavailable or stale cache never blocks startup. */ }
   return { projects: [], sessions: [] };
-}
-
-/** What a saved draft contains, to skip saving when nothing changed. */
-function draftKey(text: string, files: Attachment[]): string {
-  return `${text}\u0000${files.map(file => `${file.name}:${file.size}:${(file.data ?? file.text ?? "").length}`).join("|")}`;
 }
 
 /** Honest AI application frame backed by the native Handwork ACP engine. */
@@ -122,7 +119,9 @@ export default function HandworkHarness() {
   const lastTabAction = useRef<{ action: string; at: number }>({ action: '', at: 0 });
   const savedDrafts = useRef(new Map<string, string>());
   const pendingDraft = useRef<{ id: string; text: string; files: Attachment[] | null; key: string }>(undefined);
-  const restoredDraft = useRef<{ text: string; files: Attachment[] }>(undefined);
+  const [recoveredDrafts, setRecoveredDrafts] = useState<SavedDraft[]>([]);
+  const [recoveringDraft, setRecoveringDraft] = useState(false);
+  const [restoredDraft, setRestoredDraft] = useState<{ session: string; key: string }>();
   // Actions stored with a notice run against the newest chat state, not the state when they were created.
   const latest = useRef<{ retryLast: () => Promise<void>; openChat: (chat: SavedSession) => void }>({ retryLast: async () => {}, openChat: () => {} });
   const activeWorkspace = useRef("");
@@ -288,16 +287,13 @@ export default function HandworkHarness() {
       restoredQueueCount.current = restoredQueue.count;
       queuesLoaded.current = true;
       if (restoredQueue.count) { setQueues(restoredQueue.queues); setPausedQueues(restoredQueue.paused); setRestoredQueues(new Set(restoredQueue.paused)); }
-      // Unsent drafts come back to their chats. A draft for a chat that was never
-      // sent to (and so was discarded) returns to the first chat that opens.
+      // Keep every original until it has been moved durably to an open chat.
       const known = new Set([...(startup?.tabs ?? []).map(tab => tab.id), ...initialSidebar.sessions.map(session => session.id)]);
-      const orphans: string[] = [];
       for (const entry of savedDraftList ?? []) {
         savedDrafts.current.set(entry.id, draftKey(entry.text, entry.files));
-        if (known.has(entry.id)) drafts.current.set(entry.id, { text: entry.text, files: entry.files });
-        else { orphans.push(entry.id); restoredDraft.current ??= { text: entry.text, files: entry.files }; }
+        drafts.current.set(entry.id, { text: entry.text, files: entry.files });
       }
-      if (orphans.length) void bridge.removeDrafts?.(orphans).catch(() => {});
+      setRecoveredDrafts(splitDrafts(savedDraftList ?? [], known).orphans);
       for (const entry of updateDrafts ?? []) drafts.current.set(entry.id, { text: entry.text, files: entry.files });
       setProjects(paths);
       if (saved) {
@@ -867,9 +863,11 @@ export default function HandworkHarness() {
     openChat(target);
   }
   /** A model on another provider switches the provider first, which changes the models offered. */
-  async function chooseModel(target: ModelShortcut) {
-    if (target.provider !== (options.find(option => option.id === "provider")?.currentValue ?? "") && await configure("provider", target.provider) !== true) return;
-    await configure("model", target.model);
+  function chooseModel(target: ModelShortcut) {
+    const changes: ConfigChange[] = [];
+    if (target.provider !== (options.find(option => option.id === "provider")?.currentValue ?? "")) changes.push(['provider', target.provider]);
+    changes.push(['model', target.model]);
+    return configureChanges(changes);
   }
   async function favoriteModel(favorite: boolean) {
     const model = options.find(option => option.id === "model");
@@ -919,30 +917,40 @@ export default function HandworkHarness() {
       case 'configure': await configure(action.optionId, action.value); break;
     }
   }
-  async function configure(id: string, value: string) {
-    if (!api || lock.current || busy) return;
+  function configure(id: string, value: string) {
+    return configureChanges([[id, value]]);
+  }
+  function configureChanges(changes: ConfigChange[]) {
+    if (!api || lock.current || running.current.has(activeSession.current)) return;
+    const bridge = api;
     const version = ++configVersion.current;
     configPending.current = true; setConfiguring(true); setError("");
     setOptions(current => {
-      if (id !== 'provider') return current.map(option => option.id === id ? { ...option, currentValue: value } : option);
-      const dependent = new Set(['model', 'effort', 'fast_mode']);
-      const cached = providerOptions.current.get(value) ?? [];
-      return [...current.filter(option => !dependent.has(option.id)).map(option => option.id === id ? { ...option, currentValue: value } : option), ...cached.filter(option => dependent.has(option.id))];
-    });
-    // Keep engine requests in order; only the latest choice may update the UI.
-    const next = configTail.current.then(async () => {
-      try {
-        const result = configOptions(record(await api.setConfig(id, value)).configOptions);
-        rememberOptions(result);
-        if (version === configVersion.current) setOptions(result);
-        return true;
-      } catch (cause) {
-        if (version === configVersion.current) {
-          setOptions(confirmedOptions.current);
-          setError(cause instanceof Error ? cause.message : String(cause));
+      let next = current;
+      for (const [id, value] of changes) {
+        if (id !== 'provider') next = next.map(option => option.id === id ? { ...option, currentValue: value } : option);
+        else {
+          const dependent = new Set(['model', 'effort', 'fast_mode']);
+          const cached = providerOptions.current.get(value) ?? [];
+          next = [...next.filter(option => !dependent.has(option.id)).map(option => option.id === id ? { ...option, currentValue: value } : option), ...cached.filter(option => dependent.has(option.id))];
         }
-        return false;
       }
+      return next;
+    });
+    // Enqueue the complete selection synchronously, including its dependent model.
+    const next = queueConfiguration(configTail.current, changes, async (id, value) => {
+      const result = configOptions(record(await bridge.setConfig(id, value)).configOptions);
+      rememberOptions(result);
+      return result;
+    }).then(results => {
+      if (version === configVersion.current && results.length) setOptions(results[results.length - 1]);
+      return true;
+    }).catch(cause => {
+      if (version === configVersion.current) {
+        setOptions(confirmedOptions.current);
+        setError(cause instanceof Error ? cause.message : String(cause));
+      }
+      return false;
     }).finally(() => {
       if (version === configVersion.current) { configPending.current = false; setConfiguring(false); }
     });
@@ -961,7 +969,7 @@ export default function HandworkHarness() {
   const shownUsage = withSavedUsage(shownConversation, chatPreferences[shownSession]?.usage);
   const showProjectTools = !!workspace && (!pendingChat || pendingChat.workspace === workspace);
   const unavailable = !api || !sessionId || !!pendingChat;
-  const blocked = working || configuring || picking || navigating || !!pendingChat;
+  const blocked = working || configuring || picking || navigating || recoveringDraft || !!pendingChat;
   const tools = shownConversation.entries.filter(entry => entry.kind === "tool");
   const projectChangeState = useProjectChanges(api, workspace);
   const changes = projectChangeState.snapshot?.files ?? [];
@@ -995,6 +1003,11 @@ export default function HandworkHarness() {
     return () => { current = false; };
   }, [api, sessionId, landing, working, configuring, picking, suggestionKey, suggestionRetry, preferences?.effective.suggestions, settingsOpen]);
   const projectSuggestions = suggestionState.key === suggestionKey ? suggestionState.items : [];
+  const orphanDrafts = recoveredDrafts.filter(entry => !recents.some(chat => chat.id === entry.id));
+  const draftRestored = restoredDraft?.session === sessionId && restoredDraft.key === draftKey(draft, attachments);
+  useEffect(() => {
+    if (restoredDraft && !draftRestored) setRestoredDraft(undefined);
+  }, [restoredDraft, draftRestored]);
   // Drafts save shortly after typing stops, and immediately when the chat changes.
   const draftSession = sessionId && !pendingChat && !working ? sessionId : "";
   function flushDraft() {
@@ -1002,7 +1015,12 @@ export default function HandworkHarness() {
     pendingDraft.current = undefined;
     if (!pending || !api?.saveDraft) return;
     savedDrafts.current.set(pending.id, pending.key);
-    void api.saveDraft(pending.id, pending.text, pending.files).catch(() => { savedDrafts.current.delete(pending.id); });
+    return api.saveDraft(pending.id, pending.text, pending.files).then(result => {
+      if (!result.saved || result.skipped) throw new Error('Draft storage is full.');
+    }).catch(() => {
+      if (savedDrafts.current.get(pending.id) === pending.key) savedDrafts.current.delete(pending.id);
+      setNotice('Your draft could not be saved. Keep this chat open and remove attachments or free storage space.');
+    });
   }
   useEffect(() => {
     if (!api?.saveDraft || !startupReady || !draftSession) return;
@@ -1021,13 +1039,30 @@ export default function HandworkHarness() {
     window.addEventListener("pagehide", flush);
     return () => window.removeEventListener("pagehide", flush);
   });
-  // A draft whose chat no longer exists returns in the first empty composer.
+  async function recoverDraft(entry: SavedDraft) {
+    if (!api?.moveDraft || !sessionId || blocked || lock.current || draft || attachments.length) return;
+    lock.current = true; setRecoveringDraft(true);
+    try {
+      // Commit a just-cleared composer before refusing to replace its saved draft.
+      await flushDraft();
+      const result = await api.moveDraft(entry.id, sessionId);
+      if (!result.saved) throw new Error('This draft could not be restored. Its original is still saved.');
+      pendingDraft.current = undefined;
+      savedDrafts.current.delete(entry.id);
+      drafts.current.delete(entry.id);
+      savedDrafts.current.set(sessionId, draftKey(entry.text, entry.files));
+      drafts.current.set(sessionId, { text: entry.text, files: entry.files });
+      setDraft(entry.text); setAttachments(entry.files);
+      setRecoveredDrafts(current => current.filter(item => item.id !== entry.id));
+      setRestoredDraft({ session: sessionId, key: draftKey(entry.text, entry.files) });
+    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { lock.current = false; setRecoveringDraft(false); }
+  }
+  // Restore one into an empty composer. Every other draft remains on disk and in the picker.
   useEffect(() => {
-    const restored = restoredDraft.current;
-    if (!restored || !startupReady || !sessionId || working || draft || attachments.length) return;
-    restoredDraft.current = undefined;
-    setDraft(restored.text); setAttachments(restored.files);
-    setNotice("Restored your unsent message.");
+    if (!startupReady || !sessionId || working || draft || attachments.length) return;
+    const restored = orphanDrafts[0];
+    if (restored) void recoverDraft(restored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startupReady, sessionId, working]);
   // Clicking a notification opens the chat it is about.
@@ -1159,6 +1194,8 @@ export default function HandworkHarness() {
   }, [attentionFocus, pendingChat, working, navigating, sessionId]);
   /** Tab, chat, and attention actions from the keyboard or the app menu. */
   function runTabAction(action: TabAction) {
+    // Native accelerators bypass the page's key handler and must obey its modal guard too.
+    if (settingsOpen || recoveringDraft || lock.current || document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
     // A shortcut can reach both the menu and the page; act on it once.
     const now = Date.now();
     if (lastTabAction.current.action === action && now - lastTabAction.current.at < 200) return;
@@ -1293,6 +1330,16 @@ export default function HandworkHarness() {
   const composer = <div className="handwork-composer" onDragOver={event => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDrop={event => {
     event.preventDefault(); if (!blocked) void stageDroppedFiles(Array.from(event.dataTransfer.files)).catch(cause => setError(String(cause)));
   }}>
+    {(draftRestored || recoveringDraft || orphanDrafts.length > 0) && <div className="handwork-draft-recovery">
+      {(draftRestored || recoveringDraft) && <span role="status" className="handwork-draft-recovery-status"><RotateCcw aria-hidden width={14} height={14} />{recoveringDraft ? 'Restoring draft…' : 'Draft restored'}</span>}
+      {orphanDrafts.length > 0 && <Menu>
+        <MenuTrigger render={<Button className="handwork-draft-recovery-trigger" size="xs" variant="ghost" disabled={blocked || !sessionId} />}><History aria-hidden width={14} height={14} />{orphanDrafts.length} saved {orphanDrafts.length === 1 ? 'draft' : 'drafts'}</MenuTrigger>
+        <MenuPopup side="top" align="start" className="handwork-draft-recovery-menu" aria-label="Saved unsent messages">
+          {(draft || attachments.length > 0) && <p className="handwork-draft-recovery-hint">Clear your message or open a new chat to restore another draft.</p>}
+          {orphanDrafts.map(entry => <MenuItem key={entry.id} className="handwork-draft-recovery-item" disabled={!!draft || attachments.length > 0} onClick={() => void recoverDraft(entry)}><span>{entry.text.trim().slice(0, 80) || entry.files.map(file => file.name).join(', ').slice(0, 80) || 'Unsent message'}</span></MenuItem>)}
+        </MenuPopup>
+      </Menu>}
+    </div>}
     {queue.length > 0 && !pendingChat && <HandworkQueue items={queue} paused={queuePaused} restored={restoredQueues.has(sessionId)} busy={busy}
       onResume={() => resumeQueue(sessionId)}
       onSendNow={() => resumeQueue(sessionId)}
@@ -1317,7 +1364,7 @@ export default function HandworkHarness() {
         editQueue(target, items => [...items, { id: crypto.randomUUID(), text: queued, files: attachments, queuedAt: Date.now() }]);
         setAttachments([]); setRejectedFiles([]);
       } : undefined}
-      disabled={unavailable || working || picking || navigating} onStop={busy && !pendingChat ? () => void cancel() : undefined}
+      disabled={unavailable || working || picking || navigating || recoveringDraft} onStop={busy && !pendingChat ? () => void cancel() : undefined}
       commands={[...slashItems, ...prompts.map(prompt => ({ id: `prompt:${prompt.id}`, label: promptSlug(prompt), description: prompt.title, icon: <BookText /> }))]}
       onItemSelect={item => {
         const prompt = item.id.startsWith("prompt:") ? prompts.find(entry => `prompt:${entry.id}` === item.id) : undefined;
@@ -1418,7 +1465,7 @@ export default function HandworkHarness() {
 
         </div>}
       </header>
-      {error && <div role="alert" className="handwork-notice" data-attention="error"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
+      {error && !(shownConversation.canContinue && failedPrompt?.session === sessionId && failedPrompt.error === error) && <div role="alert" className="handwork-notice" data-attention="error"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
       {!api && <p className="handwork-notice">Open the Electron app with npm run desktop:dev to use local Handwork. This browser preview cannot access your files or run commands.</p>}
       <div className="handwork-workspace-body">
       <HandworkConversation landing={landing} sessionKey={shownSession} busy={busy || working || !!pendingChat}
@@ -1435,13 +1482,13 @@ export default function HandworkHarness() {
           <h2>{workspaceName ? <>What’s next for <HoverTooltip content={workspace}><span className="handwork-greeting-project" >{workspaceName}</span></HoverTooltip>?</> : "What can I help with?"}</h2>
           {!sessionId && <>{working ? <p role="status">{workspaceName ? "Connecting to your project…" : "Starting your chat…"}</p> : <><p>{workspaceName ? "Reconnect to continue working with your code." : "Ask a question or attach a file to get started."}</p><Button disabled={!api || blocked} variant="outline" size="sm" onClick={() => void sessionAction(workspace ? "connect" : "chat")}>{workspace ? "Reconnect" : "New chat"}</Button></>}</>}
         </div>}
-        {shownConversation.entries.length > 0 && <HandworkTranscript entries={shownConversation.entries} busy={busy || working || !!pendingChat} onSend={send} onEdit={editMessage}
+        {(shownConversation.entries.length > 0 || shownConversation.recovery) && <HandworkTranscript entries={shownConversation.entries} busy={busy || working || !!pendingChat} onSend={send} onEdit={editMessage}
+          recovery={shownConversation.recovery} canContinue={shownConversation.canContinue} onContinue={() => void continueResponse()} continuationDisabled={blocked || !api || !sessionId || !!pendingChat}
           onRetry={canRegenerate && !pendingChat && !blocked ? () => void retryLast() : undefined} versionFor={versionFor}
           workspace={showProjectTools ? workspace : undefined} onOpenFile={setViewingFile} onRevealFile={target => void api?.revealFile(target).catch(cause => setError((cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")))} />}
         {(pendingChat ? [] : permissions).map(permission => <div key={permission.id} data-attention="approval"><ApprovalCard questions={[{ id: permission.id.toString(), prompt: `${permission.title}\n${permission.detail}`, type: "single", required: true, options: permission.options.map(option => ({ value: option.optionId, label: option.name })) }]}
           onSubmit={async answers => { const selected = answers[permission.id.toString()]?.selected[0]; if (selected && !answering) await answerPermission(permission.id, selected); }} /></div>)}
         {busy && !pendingChat && <div className="handwork-loading"><LoadingState label={permissions.length ? "Waiting for your approval" : "Handwork is working"} /></div>}
-        {shownConversation.recovery && <div role="status" className="handwork-notice" data-attention="recovery"><span>{shownConversation.recovery}</span>{shownConversation.canContinue && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked || !api || !sessionId} onClick={() => void continueResponse()}><RotateCcw aria-hidden width={12} height={12} />Retry</Button>}</div>}
         {notice && <div role="status" className="handwork-notice" data-attention="notice"><span>{notice}</span>{noticeAction?.notice === notice && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => { const action = noticeAction; setNotice(""); setNoticeAction(undefined); action.run(); }}>{noticeAction.label}</Button>}</div>}
       </HandworkConversation>
       {(showProjectTools || activityRequested) && (changesOpen || activityOpen && (tools.length > 0 || activityRequested)) && <aside id="handwork-review-panel" ref={reviewPanel} tabIndex={-1} className="handwork-review-panel" data-panel={changesOpen ? "changes" : "activity"} data-sized={reviewWidth ? "" : undefined} style={reviewWidth ? { "--handwork-review-width": `${reviewWidth}px` } as CSSProperties : undefined} aria-label={changesOpen ? "Changes" : "Activity"} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeReviewPanel(); } }}>

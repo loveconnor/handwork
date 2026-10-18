@@ -16,7 +16,8 @@ export class BlobStore {
   }
 
   bytes() {
-    if (!this.directory || !existsSync(this.directory)) return 0;
+    if (!this.directory) return [...this.memory.values()].reduce((total, bytes) => total + bytes.length, 0);
+    if (!existsSync(this.directory)) return 0;
     return readdirSync(this.directory).filter(name => BLOB.test(name)).reduce((total, name) => total + statSync(path.join(this.directory, name)).size, 0);
   }
 
@@ -24,7 +25,11 @@ export class BlobStore {
   put(content, used) {
     const bytes = Buffer.from(content);
     const name = createHash('sha256').update(bytes).digest('hex');
-    if (!this.directory) { this.memory.set(name, bytes); return name; }
+    if (!this.directory) {
+      if (this.memory.has(name)) return name;
+      if (used + bytes.length > this.limit) return null;
+      this.memory.set(name, bytes); return name;
+    }
     const file = path.join(this.directory, name);
     if (existsSync(file)) return name;
     if (used + bytes.length > this.limit) return null;
@@ -46,15 +51,32 @@ export class BlobStore {
     for (const name of readdirSync(this.directory)) if (BLOB.test(name) && !used.has(name)) { try { unlinkSync(path.join(this.directory, name)); } catch { /* Retried on the next save. */ } }
   }
 
+  /** Checks a whole save before writing any blobs, counting each new hash once. */
+  canFit(files) {
+    let used = this.bytes();
+    const seen = new Set();
+    for (const file of files) {
+      const content = file.data !== undefined ? Buffer.from(file.data, 'base64') : Buffer.from(file.text ?? '', 'utf8');
+      const name = createHash('sha256').update(content).digest('hex');
+      if (seen.has(name)) continue;
+      seen.add(name);
+      if (this.directory ? existsSync(path.join(this.directory, name)) : this.memory.has(name)) continue;
+      used += content.length;
+    }
+    return used <= this.limit;
+  }
+
   /** Stores attachments as blob references. Files that do not fit are counted as skipped. */
   encode(files) {
     let used = this.bytes();
     let skipped = 0;
     const saved = files.map(file => {
       const content = file.data !== undefined ? Buffer.from(file.data, 'base64') : Buffer.from(file.text ?? '', 'utf8');
+      const name = createHash('sha256').update(content).digest('hex');
+      const existing = this.directory ? existsSync(path.join(this.directory, name)) : this.memory.has(name);
       const blob = this.put(content, used);
       if (!blob) { skipped++; return null; }
-      used += content.length;
+      if (!existing) used += content.length;
       return { name: file.name, mimeType: file.mimeType, size: file.size, ...(file.uri ? { uri: file.uri } : {}), encoding: file.data !== undefined ? 'base64' : 'text', blob };
     }).filter(Boolean);
     return { saved, skipped };

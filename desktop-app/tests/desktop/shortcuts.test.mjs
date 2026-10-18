@@ -43,6 +43,13 @@ test('listed app shortcuts match the handlers that implement them', () => {
   assert.match(main, /label: 'Keyboard Shortcuts', accelerator: 'CmdOrCtrl\+\/'/);
 });
 
+test('native tab actions cannot bypass an open modal or in-progress draft recovery', () => {
+  const harness = source('components/site/HandworkHarness.tsx');
+  const action = harness.slice(harness.indexOf('  function runTabAction(action: TabAction) {'), harness.indexOf('  useEffect(() => {\n    if (!tabRequest) return;'));
+  assert.match(action, /if \(settingsOpen \|\| recoveringDraft \|\| lock\.current \|\| document\.querySelector\('\[role="dialog"\], \[role="alertdialog"\]'\)\) return;/);
+  assert.ok(action.indexOf('document.querySelector') < action.indexOf('lastTabAction.current ='));
+});
+
 test('keys render in each platform’s notation', () => {
   assert.deepEqual(shortcutKeys('Mod+Shift+G', true), ['⌘', '⇧', 'G']);
   assert.deepEqual(shortcutKeys('Mod+Shift+G', false), ['Ctrl', 'Shift', 'G']);

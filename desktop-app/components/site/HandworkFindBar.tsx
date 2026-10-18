@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Search, X } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
+import { findTextMatches } from '@/lib/find-text';
 
 const BLOCKS = 'p,li,pre,td,th,h1,h2,h3,h4,h5,h6,blockquote,summary,dt,dd,[data-slot="message-content"]';
 
@@ -12,8 +13,7 @@ const HighlightClass = (globalThis as unknown as { Highlight?: new (...ranges: R
 
 /** Finds `query` in rendered text, including matches that cross inline formatting. */
 function findRanges(root: Element, query: string): Range[] {
-  const needle = query.toLocaleLowerCase();
-  if (!needle) return [];
+  if (!query) return [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement;
@@ -35,15 +35,14 @@ function findRanges(root: Element, query: string): Range[] {
     nodes.push({ node, start: flat.length });
     flat += node.nodeValue!;
   }
-  const lower = flat.toLocaleLowerCase();
   const ranges: Range[] = [];
   const locate = (offset: number) => {
     let low = 0; let high = nodes.length - 1;
     while (low < high) { const mid = (low + high + 1) >> 1; if (nodes[mid].start <= offset) low = mid; else high = mid - 1; }
     return { node: nodes[low].node, offset: Math.min(offset - nodes[low].start, nodes[low].node.length) };
   };
-  for (let index = lower.indexOf(needle); index >= 0 && ranges.length < 2000; index = lower.indexOf(needle, index + needle.length)) {
-    const start = locate(index); const end = locate(index + needle.length);
+  for (const match of findTextMatches(flat, query)) {
+    const start = locate(match.start); const end = locate(match.end);
     const range = document.createRange();
     range.setStart(start.node, start.offset); range.setEnd(end.node, end.offset);
     ranges.push(range);

@@ -26,6 +26,14 @@ Engine configuration requests stay ordered; sending waits for the latest choice
 to activate. Failed changes restore the last confirmed settings and retain the
 draft. The first activation may still require the provider's catalog request.
 
+Settings → Models & providers shows Codex subscription allowances beneath the
+connected account, including remaining percentages and local reset times. Usage
+refreshes every minute while that section is visible, on focus, and after a
+reported reset. Refresh checks the allowance; it cannot reset OpenAI's limits.
+The check uses a separate background engine, sends no model prompt, and keeps
+credentials in the native engine. Rebuild the sibling engine and desktop together
+after changing this integration.
+
 The `/harness` route and Electron app use Honest UI 0.2.3 and Honest AI:
 SidebarNav, PromptBar, ChatThread, ChatMessage, Markdown with Honest Prose and
 Prose Syntax, ThinkingState, ToolChips, ApprovalCard, TaskRows, and LoadingState.

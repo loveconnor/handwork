@@ -33,8 +33,10 @@ export class DraftStore {
   }
 
   /** `files` of null keeps the attachments already saved for this chat. */
-  save(key, text, files) {
+  save(key, text, files, { evict = true } = {}) {
     const drafts = this.read();
+    if (!evict && !Object.hasOwn(drafts, key) && Object.keys(drafts).length >= MAX_DRAFTS) return { saved: false, skipped: 0 };
+    if (!evict && files && !this.blobs.canFit(files)) return { saved: false, skipped: files.length };
     const previous = Object.hasOwn(drafts, key) ? drafts[key] : undefined;
     let saved = previous?.files ?? [];
     let skipped = 0;
@@ -45,6 +47,19 @@ export class DraftStore {
     for (const old of keys.slice(MAX_DRAFTS)) delete drafts[old];
     this.write(drafts);
     return { saved: true, skipped };
+  }
+
+  /** Moves the serialized draft in one manifest write without touching its blobs. */
+  move(sourceKey, targetKey) {
+    const drafts = this.read();
+    if (!Object.hasOwn(drafts, sourceKey)) return { saved: false, skipped: 0 };
+    if (sourceKey === targetKey) return { saved: true, skipped: 0 };
+    const target = Object.hasOwn(drafts, targetKey) ? drafts[targetKey] : undefined;
+    if (target && (target.text?.trim() || target.files?.length)) return { saved: false, skipped: 0 };
+    drafts[targetKey] = drafts[sourceKey];
+    delete drafts[sourceKey];
+    this.write(drafts);
+    return { saved: true, skipped: 0 };
   }
 
   /** Every saved draft with its attachments restored; unreadable attachments are dropped. */

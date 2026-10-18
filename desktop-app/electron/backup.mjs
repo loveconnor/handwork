@@ -6,6 +6,8 @@ import { createInterface } from 'node:readline';
 import { pipeline } from 'node:stream/promises';
 import { createGunzip, createGzip } from 'node:zlib';
 import path from 'node:path';
+import { MAX_QUEUED } from './queue-store.mjs';
+import { backupRelativePath, relocateAttachmentEvents } from './backup-attachments.mjs';
 
 export const BACKUP_FORMAT = 'handwork-backup';
 export const BACKUP_EXTENSION = 'handwork-backup';
@@ -260,9 +262,8 @@ export class BackupService {
     if (!chosen.size) throw new Error('Choose at least one thing to restore.');
     const staging = path.join(path.dirname(this.sessionDirectory), `.handwork-restore-${randomUUID()}`);
     const existingSessions = new Set(await readdir(this.sessionDirectory).catch(() => []));
-    const existingChats = new Set(await readdir(this.chatDirectory).catch(() => []));
     const drafts = []; const queues = [];
-    const result = { chats: 0, attachments: 0, prompts: 0, projects: 0, drafts: 0, queued: 0, preferences: false, skippedChats: 0 };
+    const result = { chats: 0, attachments: 0, prompts: 0, projects: 0, drafts: 0, queued: 0, preferences: false, skippedChats: 0, skippedDrafts: 0, skippedQueued: 0 };
     const skipped = new Set();
     try {
       const { header } = await scanBackup(pending.file, async record => {
@@ -271,7 +272,7 @@ export class BackupService {
         const { root, id, relative } = record.entry;
         if (!chosen.has('chats')) return;
         // A chat already on this computer keeps its local copy.
-        if ((root === 'sessions' && existingSessions.has(id)) || (root === 'chats' && existingChats.has(id))) { if (root === 'sessions') skipped.add(id); return; }
+        if (root === 'sessions' && existingSessions.has(id)) { skipped.add(id); return; }
         const target = path.join(staging, root, root === 'attachments' ? id : path.join(id, ...relative.split('/')));
         await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
         await writeFile(target, record.data, { mode: 0o600, flag: 'wx' });
@@ -302,27 +303,58 @@ export class BackupService {
   async placeChats(staging, header) {
     let chats = 0; let attachments = 0;
     const sourceChats = typeof header.source?.chatDirectory === 'string' ? header.source.chatDirectory : '';
+    const roots = [
+      { source: sourceChats, destination: this.chatDirectory, archive: 'chats' },
+      { source: header.source?.attachmentDirectory, destination: this.attachmentDirectory, archive: 'attachments' },
+    ];
+    // Place files first so imported links point only at successfully placed bytes.
+    const archived = new Map();
+    for (const root of ['chats', 'attachments']) {
+      const directory = root === 'chats' ? this.chatDirectory : this.attachmentDirectory;
+      const added = new Set();
+      await mkdir(path.dirname(directory), { recursive: true, mode: 0o700 });
+      for await (const file of walk(path.join(staging, root), root)) {
+        const parts = file.archived.split('/').slice(1);
+        const parent = path.join(directory, ...parts.slice(0, -1));
+        // Never follow a local symlink while merging private folders.
+        for (let i = 0; i < parts.length; i++) {
+          const folder = path.join(directory, ...parts.slice(0, i));
+          await mkdir(folder, { mode: 0o700 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+          if (!(await lstat(folder)).isDirectory()) throw new Error('Cannot restore attachments through a non-directory or symbolic link.');
+        }
+        let target = path.join(parent, parts.at(-1));
+        const data = await readFile(file.absolute);
+        let placed = false;
+        for (;;) {
+          try { await writeFile(target, data, { flag: 'wx', mode: 0o600 }); placed = true; break; }
+          catch (error) {
+            if (error.code !== 'EEXIST') throw error;
+            const info = await lstat(target);
+            if (info.isFile() && (await readFile(target)).equals(data)) break;
+            target = path.join(parent, `restored-${randomUUID()}${path.extname(parts.at(-1)).slice(0, 16)}`);
+          }
+        }
+        archived.set(file.archived, target);
+        if (placed) added.add(root === 'chats' ? parts[0] : file.archived);
+      }
+      attachments += added.size;
+    }
     const stagedSessions = await readdir(path.join(staging, 'sessions')).catch(() => []);
     for (const id of stagedSessions) {
       const staged = path.join(staging, 'sessions', id);
       // Standalone chats ran in the backed-up app's private folder; point them at this one.
-      if (sourceChats) await this.relocateSession(path.join(staged, 'session.json'), sourceChats);
       const target = path.join(this.sessionDirectory, id);
       if (await exists(target)) continue;
+      if (sourceChats) await this.relocateSession(path.join(staged, 'session.json'), sourceChats);
+      // Work only on staged history. Existing local sessions are never rewritten.
+      for await (const file of walk(staged, '')) {
+        if (path.basename(file.absolute) !== 'events.jsonl') continue;
+        const contents = await readFile(file.absolute, 'utf8');
+        const relocated = relocateAttachmentEvents(contents, roots, archived);
+        if (contents !== relocated) await writeFile(file.absolute, relocated, { mode: 0o600 });
+      }
       await move(staged, target);
       try { if (JSON.parse(await readFile(path.join(target, 'session.json'), 'utf8')).subagent_child !== true) chats++; } catch { chats++; }
-    }
-    for (const id of await readdir(path.join(staging, 'chats')).catch(() => [])) {
-      const target = path.join(this.chatDirectory, id);
-      if (await exists(target)) continue;
-      await move(path.join(staging, 'chats', id), target);
-      attachments++;
-    }
-    for (const name of await readdir(path.join(staging, 'attachments')).catch(() => [])) {
-      const target = path.join(this.attachmentDirectory, name);
-      if (await exists(target)) continue;
-      await move(path.join(staging, 'attachments', name), target);
-      attachments++;
     }
     return { chats, attachments };
   }
@@ -333,8 +365,9 @@ export class BackupService {
     let changed = false;
     for (const key of ['workspace_root', 'origin_workspace_root']) {
       const value = metadata[key];
-      if (typeof value === 'string' && (value === sourceChats || value.startsWith(sourceChats + '/') || value.startsWith(sourceChats + '\\'))) {
-        metadata[key] = path.join(this.chatDirectory, ...value.slice(sourceChats.length).split(/[\\/]/).filter(Boolean));
+      const relative = backupRelativePath(sourceChats, value);
+      if (relative) {
+        metadata[key] = path.join(this.chatDirectory, ...relative);
         changed = true;
       }
     }
@@ -376,22 +409,27 @@ export class BackupService {
   }
 
   restoreUnsent(drafts, queues) {
-    let restoredDrafts = 0; let queued = 0;
+    let restoredDrafts = 0; let queued = 0; let skippedDrafts = 0; let skippedQueued = 0;
     const localDrafts = new Set(this.drafts.list().map(draft => draft.id));
     for (const draft of drafts) {
       if (!draftKey(draft?.id) || localDrafts.has(draft.id) || !validMessage(draft)) continue;
-      this.drafts.save(draft.id, draft.text, draft.files);
+      if (!draft.text.trim() && !draft.files.length) continue;
+      if (!this.drafts.save(draft.id, draft.text, draft.files, { evict: false }).saved) { skippedDrafts++; continue; }
+      localDrafts.add(draft.id);
       restoredDrafts++;
     }
     const localQueues = new Set(this.queues.list().map(queue => queue.sessionId));
     for (const queue of queues) {
       if (!draftKey(queue?.sessionId) || localQueues.has(queue.sessionId) || !Array.isArray(queue.items)) continue;
-      const items = queue.items.filter(item => validMessage(item) && typeof item.id === 'string' && item.id.length <= 64).slice(0, 50);
+      const valid = queue.items.filter(item => validMessage(item) && (item.text.trim() || item.files.length) && typeof item.id === 'string' && item.id.length <= 64);
+      const items = valid.slice(0, MAX_QUEUED);
       if (!items.length) continue;
-      // Restored queues wait for review before anything is sent.
-      this.queues.save(queue.sessionId, { paused: true, items });
+      // Restored queues wait for review before anything is sent. Never evict local work.
+      if (!this.queues.save(queue.sessionId, { paused: true, items }, { evict: false }).saved) { skippedQueued += valid.length; continue; }
+      localQueues.add(queue.sessionId);
+      skippedQueued += valid.length - items.length;
       queued += items.length;
     }
-    return { drafts: restoredDrafts, queued };
+    return { drafts: restoredDrafts, queued, skippedDrafts, skippedQueued };
   }
 }

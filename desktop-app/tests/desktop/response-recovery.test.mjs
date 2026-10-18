@@ -5,9 +5,18 @@ import { canAutoRecover, canContinueRecovery, continuationParams, requestWithRec
 import { DesktopBackend } from '../../electron/backend.mjs';
 import { applyUpdate, emptyConversation } from '../../lib/desktop-state.ts';
 import { validateArguments } from '../../electron/ipc.mjs';
+import { isResponseError } from '../../lib/response-error.ts';
 
 const paused = { state: 'paused', durable: true, requiredAction: 'continue_later', cause: 'network_interrupted', attempt: 1, attemptLimit: 10, message: 'Network interrupted. Recovery paused.' };
 const info = recovery => ({ sessionUpdate: 'session_info_update', _meta: { handwork: { modelResponseRecovery: recovery } } });
+
+test('provider failure notices are recognized without treating explanations or code as errors', () => {
+  assert.equal(isResponseError('provider_error: Provider response failed'), true);
+  assert.equal(isResponseError(' Provider response failed.\n'), true);
+  for (const reply of ['Here is how to fix provider_error: Provider response failed', '```\nprovider_error: Provider response failed\n```', 'The response is complete.']) {
+    assert.equal(isResponseError(reply), false);
+  }
+});
 
 test('recovery projection preserves ordinary updates and clears resolved or null status', () => {
   const state = applyUpdate(emptyConversation(), info(paused));

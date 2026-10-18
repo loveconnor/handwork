@@ -21,7 +21,7 @@ export type BackupPreview = {
   projects: { total: number; available: number }; unsent: { drafts: number; queued: number }; preferences: boolean;
 };
 export type RestoreCategory = 'chats' | 'prompts' | 'preferences' | 'unsent';
-export type RestoreResult = { chats: number; skippedChats: number; attachments: number; prompts: number; projects: number; drafts: number; queued: number; preferences: boolean };
+export type RestoreResult = { chats: number; skippedChats: number; skippedDrafts: number; skippedQueued: number; attachments: number; prompts: number; projects: number; drafts: number; queued: number; preferences: boolean };
 export type ChatDetails = {
   workspace: string; standalone: boolean; sessionId: string;
   /** The home folder, so paths can be shown as ~/…. Older desktop builds omit it. */
@@ -33,6 +33,8 @@ export type ChatDetails = {
 };
 export type FilePreview = { name: string; path: string; size: number; kind: 'image' | 'text' | 'other'; mimeType?: string; data?: string; text?: string; truncated?: boolean; allowed: boolean; canOpen: boolean; canReveal: boolean };
 export type ChatSearchResult = { sessionId: string; title: string; role: 'user' | 'assistant'; messageIndex: number; matches: number; updatedAt: number; snippet: string };
+export type SubscriptionUsageWindow = { id: string; label: string; usedPercent: number; resetsAt: number | null; windowMinutes: number | null };
+export type SubscriptionUsage = { plan: string | null; windows: SubscriptionUsageWindow[] };
 export type SettingsScope = 'app' | 'project';
 export type UpdateState = { status: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'error' | 'unavailable'; message: string; version?: string; progress?: number };
 export type UpdateDraft = { id: string; text: string; files: Attachment[] };
@@ -113,10 +115,13 @@ export interface DesktopAPI {
   removeProjectFolder(folder: string): Promise<SettingsInfo>;
   providerModels(provider: string): Promise<{ configOptions: unknown }>;
   testProvider(provider: string): Promise<{ message: string }>;
+  providerUsage(provider: 'codex'): Promise<SubscriptionUsage>;
   exportChats(scope: 'current' | 'all', format: 'markdown' | 'json'): Promise<{ cancelled?: boolean; count?: number; path?: string }>;
   /** `files` of null keeps the attachments already saved for this chat. */
   saveDraft(id: string, text: string, files: Attachment[] | null): Promise<{ saved: boolean; skipped: number }>;
   listDrafts(): Promise<SavedDraft[]>;
+  /** Atomically transfers a saved draft without eviction or attachment re-encoding. */
+  moveDraft(source: string, target: string): Promise<{ saved: boolean; skipped: number }>;
   removeDrafts(ids: string[]): Promise<{ removed: number }>;
   listQueues(): Promise<SavedQueue[]>;
   saveQueue(sessionId: string, queue: { paused: boolean; items: QueuedMessage[] }): Promise<{ saved: boolean; skipped: number }>;

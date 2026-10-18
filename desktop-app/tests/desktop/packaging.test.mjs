@@ -4,7 +4,15 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { enginePath } from '../../electron/engine-path.mjs';
+import { appVersion } from '../../electron/app-version.mjs';
 import { desktopTarget, stageEngine } from '../../scripts/desktop-engine.mjs';
+
+test('desktop version comes from the app manifest, not the Electron runtime', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
+  assert.equal(appVersion, manifest.version);
+  const main = await readFile(new URL('../../electron/main.mjs', import.meta.url), 'utf8');
+  assert.match(main, /new SettingsService\(\{ settings, version: appVersion,/);
+});
 
 function executable(machine) {
   const header = Buffer.alloc(256);
