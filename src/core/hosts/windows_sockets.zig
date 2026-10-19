@@ -105,6 +105,27 @@ pub fn poll(fds: []PollFd, timeout_ms: i32) !usize {
     };
 }
 
+/// Nonblocking connect succeeds in writefds and fails in exceptfds. Ordinary
+/// read/write polling is not the connect-completion contract on Winsock.
+/// https://learn.microsoft.com/windows/win32/api/winsock2/nf-winsock2-select
+pub fn waitForConnect(handle: Handle, timeout_ms: u32) !std.posix.E {
+    var writable = std.mem.zeroes(c.fd_set);
+    writable.fd_count = 1;
+    writable.fd_array[0] = handle;
+    var failed = writable;
+    var timeout: c.timeval = .{
+        .tv_sec = @intCast(timeout_ms / 1000),
+        .tv_usec = @intCast((timeout_ms % 1000) * 1000),
+    };
+    const rc = c.select(0, null, &writable, &failed, &timeout);
+    if (rc == 0) return error.Timeout;
+    if (rc < 0) return switch (errno(c.WSAGetLastError())) {
+        .INTR => error.Interrupted,
+        else => error.ConnectionFailed,
+    };
+    return socketError(handle);
+}
+
 pub fn socketError(handle: Handle) !std.posix.E {
     var code: c_int = 0;
     var length: c_int = @sizeOf(c_int);
@@ -140,6 +161,26 @@ test "Windows socket error translation preserves retry, refusal, reset and timeo
     try std.testing.expectEqual(std.posix.E.TIMEDOUT, errno(10060));
 }
 
+test "Windows socket connect completion reports refusal on both loopback families" {
+    if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
+    for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
+        const address = try std.Io.net.IpAddress.parse(hostname, 0);
+        var server = address.listen(std.testing.io, .{}) catch |err| switch (err) {
+            error.AddressFamilyUnsupported, error.AddressUnavailable => if (address == .ip6) continue else return err,
+            else => return err,
+        };
+        const closed_address = server.socket.address;
+        server.deinit(std.testing.io);
+        const connection = connect(closed_address) catch |err| switch (err) {
+            error.ConnectionRefused => continue,
+            else => return err,
+        };
+        defer close(connection.handle);
+        try std.testing.expect(connection.pending);
+        try std.testing.expectEqual(std.posix.E.CONNREFUSED, try waitForConnect(connection.handle, 10_000));
+    }
+}
+
 test "Windows socket loopback connects polls exchanges bytes and observes eof" {
     if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
     const address = std.Io.net.IpAddress{ .ip4 = .{ .bytes = .{ 127, 0, 0, 1 }, .port = 0 } };
@@ -147,9 +188,9 @@ test "Windows socket loopback connects polls exchanges bytes and observes eof" {
     defer server.deinit(std.testing.io);
     const connection = try connect(server.socket.address);
     defer close(connection.handle);
+    try std.testing.expectEqual(std.posix.E.SUCCESS, try waitForConnect(connection.handle, 2000));
     var writable = [_]PollFd{.{ .fd = connection.handle, .events = Poll.OUT, .revents = 0 }};
     try std.testing.expectEqual(@as(usize, 1), try poll(&writable, 2000));
-    try std.testing.expectEqual(std.posix.E.SUCCESS, try socketError(connection.handle));
     const peer = try server.accept(std.testing.io);
     var peer_open = true;
     defer if (peer_open) peer.close(std.testing.io);

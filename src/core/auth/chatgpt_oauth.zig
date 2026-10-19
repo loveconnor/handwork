@@ -1042,9 +1042,7 @@ test "ChatGPT browser callback accepts IPv4 and IPv6 localhost and releases both
             };
             defer winsock.close(connection.handle);
             try std.testing.expect(connection.pending);
-            var fds = [_]winsock.PollFd{.{ .fd = connection.handle, .events = winsock.Poll.OUT, .revents = 0 }};
-            try std.testing.expectEqual(@as(usize, 1), try winsock.poll(&fds, 2000));
-            try std.testing.expectEqual(std.posix.E.CONNREFUSED, try winsock.socketError(connection.handle));
+            try std.testing.expectEqual(std.posix.E.CONNREFUSED, try winsock.waitForConnect(connection.handle, 10_000));
         } else {
             try std.testing.expectError(error.ConnectionRefused, address.connect(io_mod.getIo(), .{ .mode = .stream }));
         }

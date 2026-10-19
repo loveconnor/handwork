@@ -76,7 +76,7 @@ pub fn await(
         };
         var handed_off = false;
         defer if (!handed_off) stream.close(io_mod.getIo());
-        setSocketTimeouts(stream.socket.handle);
+        if (comptime !is_windows) setSocketTimeouts(stream.socket.handle);
 
         const maybe_request = readRequest(alloc, stream, cancel_flag, allowed_cors_origin) catch |err| switch (err) {
             error.Cancelled => return err,
@@ -277,6 +277,16 @@ fn callbackPage(comptime title: []const u8, comptime detail: []const u8) []const
 }
 
 pub fn writeResponse(stream: std.Io.net.Stream, outcome: Response, cors_origin: ?[]const u8) !void {
+    if (comptime is_windows) return withResponseDeadline(
+        io_mod.getIo(),
+        writeResponseInner,
+        .{ stream, outcome, cors_origin },
+        .fromSeconds(socket_timeout_seconds),
+    );
+    return writeResponseInner(stream, outcome, cors_origin);
+}
+
+fn writeResponseInner(stream: std.Io.net.Stream, outcome: Response, cors_origin: ?[]const u8) !void {
     const reply: struct { status: []const u8, body: []const u8 } = switch (outcome) {
         .ok => .{
             .status = "200 OK",
@@ -311,6 +321,16 @@ pub fn writeResponse(stream: std.Io.net.Stream, outcome: Response, cors_origin: 
 }
 
 fn writePreflightResponse(stream: std.Io.net.Stream, origin: []const u8) !void {
+    if (comptime is_windows) return withResponseDeadline(
+        io_mod.getIo(),
+        writePreflightResponseInner,
+        .{ stream, origin },
+        .fromSeconds(socket_timeout_seconds),
+    );
+    return writePreflightResponseInner(stream, origin);
+}
+
+fn writePreflightResponseInner(stream: std.Io.net.Stream, origin: []const u8) !void {
     var buffer: [1024]u8 = undefined;
     var writer = stream.writer(io_mod.getIo(), &buffer);
     try writer.interface.print(
@@ -327,13 +347,35 @@ fn writePreflightResponse(stream: std.Io.net.Stream, origin: []const u8) !void {
     try writer.interface.flush();
 }
 
-fn setSocketTimeouts(socket: std.posix.socket_t) void {
-    if (comptime is_windows) {
-        windows_callback_sockets.setTimeouts(io_mod.getIo(), socket, @intCast(socket_timeout_seconds * 1000)) catch |err| {
-            debug_trace.logf("auth", "OAuth callback timeout setup failed error={s}", .{@errorName(err)});
-        };
-        return;
+// Raw AFD I/O does not go through Winsock's blocking-call timeout handling.
+// Bound the whole write, since formatting can drain a full writer buffer too.
+fn withResponseDeadline(
+    io: std.Io,
+    comptime operation: anytype,
+    args: std.meta.ArgsTuple(@TypeOf(operation)),
+    timeout: std.Io.Duration,
+) !void {
+    const Completion = union(enum) {
+        completed: anyerror!void,
+        deadline: std.Io.Cancelable!void,
+    };
+    var results: [2]Completion = undefined;
+    var select: std.Io.Select(Completion) = .init(io, &results);
+    // Join before returning so no task can outlive its stream or response data,
+    // including when the second task cannot be launched.
+    defer select.cancelDiscard();
+    try select.concurrent(.completed, operation, args);
+    try select.concurrent(.deadline, std.Io.sleep, .{ io, timeout, .awake });
+    switch (try select.await()) {
+        .completed => |result| try result,
+        .deadline => |result| {
+            try result;
+            return error.Timeout;
+        },
     }
+}
+
+fn setSocketTimeouts(socket: std.posix.socket_t) void {
     const timeout = std.posix.timeval{ .sec = socket_timeout_seconds, .usec = 0 };
     const receive_rc = std.c.setsockopt(
         socket,
@@ -356,6 +398,59 @@ fn setSocketTimeouts(socket: std.posix.socket_t) void {
     if (send_rc != 0) {
         const err = std.posix.errno(send_rc);
         debug_trace.logf("auth", "OAuth callback send timeout setup failed errno={s}", .{@tagName(err)});
+    }
+}
+
+const ResponseDeadlineProbe = struct {
+    io: std.Io,
+    delay_ms: i64,
+    fail: bool = false,
+    started: bool = false,
+    finished: bool = false,
+
+    fn run(self: *@This()) anyerror!void {
+        self.started = true;
+        defer self.finished = true;
+        try self.io.sleep(.fromMilliseconds(self.delay_ms), .awake);
+        if (self.fail) return error.WriteFailed;
+    }
+};
+
+test "browser callback response deadline preserves success errors and cancellation cleanup" {
+    const cases = [_]struct { delay_ms: i64, timeout_ms: i64, fail: bool, expected: ?anyerror }{
+        .{ .delay_ms = 0, .timeout_ms = 500, .fail = false, .expected = null },
+        .{ .delay_ms = 0, .timeout_ms = 500, .fail = true, .expected = error.WriteFailed },
+        .{ .delay_ms = 60_000, .timeout_ms = 25, .fail = false, .expected = error.Timeout },
+    };
+    for (cases) |case| {
+        var probe = ResponseDeadlineProbe{ .io = std.testing.io, .delay_ms = case.delay_ms, .fail = case.fail };
+        const started_ms = io_mod.milliTimestamp();
+        const result = withResponseDeadline(std.testing.io, ResponseDeadlineProbe.run, .{&probe}, .fromMilliseconds(case.timeout_ms));
+        if (case.expected) |expected| {
+            try std.testing.expectError(expected, result);
+        } else {
+            try result;
+        }
+        try std.testing.expect(!probe.started or probe.finished);
+        try std.testing.expect(io_mod.milliTimestamp() - started_ms < 2_000);
+    }
+}
+
+test "browser callback response deadline joins after first or second task launch failure" {
+    for ([_]usize{ 0, 1 }) |limit| {
+        var threaded = std.Io.Threaded.init(std.testing.allocator, .{ .concurrent_limit = .limited(limit) });
+        defer threaded.deinit();
+        const io = threaded.io();
+        var probe = ResponseDeadlineProbe{ .io = io, .delay_ms = 60_000 };
+        const started_ms = io_mod.milliTimestamp();
+        try std.testing.expectError(error.ConcurrencyUnavailable, withResponseDeadline(
+            io,
+            ResponseDeadlineProbe.run,
+            .{&probe},
+            .fromSeconds(60),
+        ));
+        try std.testing.expect(!probe.started or probe.finished);
+        try std.testing.expect(io_mod.milliTimestamp() - started_ms < 2_000);
     }
 }
 

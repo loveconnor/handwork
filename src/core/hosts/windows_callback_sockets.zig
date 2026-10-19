@@ -107,26 +107,14 @@ pub fn readable(io: std.Io, handle: windows.HANDLE, timeout_ms: i32) !bool {
     if (info.count == 0) return false;
     // A reset is readable: the stream reader classifies it and drops the
     // speculative connection without terminating the login attempt.
-    if (info.entries[0].status != .SUCCESS and info.entries[0].events & 0x0010 == 0)
+    if (info.entries[0].status != .SUCCESS and info.entries[0].events & 0x0010 == 0) {
+        std.log.err("OAuth callback AFD poll entry failed status={s} (0x{x}) events=0x{x}", .{
+            @tagName(info.entries[0].status), @intFromEnum(info.entries[0].status), info.entries[0].events,
+        });
         return windows.unexpectedStatus(info.entries[0].status);
+    }
     if (info.entries[0].events & 0x0020 != 0) return error.OAuthCallbackListenerFailed;
     return info.entries[0].events & events != 0;
-}
-
-pub fn setTimeouts(io: std.Io, handle: windows.HANDLE, millis: u32) !void {
-    for ([_]u32{ ws2_32.SO.RCVTIMEO, ws2_32.SO.SNDTIMEO }) |option| {
-        const info: windows.AFD.SOCKOPT_INFO = .{
-            .mode = .set,
-            .level = ws2_32.SOL.SOCKET,
-            .optname = option,
-            .optval = &millis,
-            .optlen = @sizeOf(u32),
-        };
-        switch (try control(io, handle, windows.IOCTL.AFD.SOCKOPT, std.mem.asBytes(&info), &.{})) {
-            .SUCCESS => {},
-            else => |err| return windows.unexpectedStatus(err),
-        }
-    }
 }
 
 test "Windows callback AFD poll recognizes only native timeout statuses" {
@@ -162,7 +150,6 @@ test "Windows callback AFD sockets poll accept data silence EOF and reserve each
         const peer = try server.accept(io);
         var peer_open = true;
         defer if (peer_open) peer.close(io);
-        try setTimeouts(io, peer.socket.handle, 1000);
         try std.testing.expect(!try readable(io, peer.socket.handle, 10));
         var writer = client.writer(io, &.{});
         try writer.interface.writeAll("callback");
