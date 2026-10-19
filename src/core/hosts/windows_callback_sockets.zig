@@ -162,7 +162,9 @@ test "Windows callback AFD sockets poll accept data silence EOF and reserve each
         peer.close(io);
         peer_open = false;
         try std.testing.expect(try readable(io, client.socket.handle, 1000));
-        var client_reader = client.reader(io, &.{});
+        // takeByte requires nonzero buffer capacity, even when expecting EOF.
+        var client_read_buffer: [1]u8 = undefined;
+        var client_reader = client.reader(io, &client_read_buffer);
         try std.testing.expectError(error.EndOfStream, client_reader.interface.takeByte());
     }
 }
