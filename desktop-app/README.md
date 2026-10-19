@@ -274,6 +274,30 @@ check the x64 unpacked package with:
 node scripts/desktop-smoke.mjs release/win-unpacked/resources
 ```
 
+To verify Codex browser login on Windows, rebuild the engine and installer after
+changing the sibling engine's `src/core/auth/chatgpt_oauth.zig`. Reinstalling an
+older installer will not include the fix. The callback keeps the registered
+`localhost` URL and listens on both `127.0.0.1` and `::1` when IPv6 is available.
+
+1. Install the rebuilt package and start a fresh Codex sign-in in Settings.
+2. While the browser is waiting for login, run these commands in PowerShell:
+
+   ```powershell
+   Test-NetConnection -ComputerName 127.0.0.1 -Port 1455
+   Test-NetConnection -ComputerName ::1 -Port 1455
+   ```
+
+   Both should report `TcpTestSucceeded: True` when IPv6 is enabled. If the login
+   URL uses port 1457, test that port instead. These probes do not submit a login.
+3. Complete browser login within five minutes without editing the callback URL.
+   Confirm the browser reports success and Settings shows Codex as connected.
+4. Repeat with the CLI using the rebuilt engine's `handwork.exe login codex`.
+   Close other pending sign-ins first. Do not share callback query strings or tokens.
+
+The engine regression command is `zig build test -Dtest-filter="ChatGPT browser"`.
+It checks callbacks over both loopback families, occupied-port fallback and cleanup.
+Windows CI runs it natively. Live account login still requires the manual check.
+
 For ARM64, use `release/win-arm64-unpacked/resources` on an ARM64 Windows machine.
 The smoke check starts the bundled engine and verifies the desktop ACP handshake
 without contacting a model provider. Before distributing, also install and launch
