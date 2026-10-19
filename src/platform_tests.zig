@@ -6,6 +6,7 @@ test {
     _ = @import("core/hosts/windows_private_storage.zig");
     _ = @import("core/hosts/windows_paths.zig");
     _ = @import("core/hosts/windows_sockets.zig");
+    _ = @import("core/hosts/windows_callback_sockets.zig");
     _ = @import("core/hosts/windows_processes.zig");
     _ = @import("core/hosts/windows_shell.zig");
     _ = @import("ui/terminal/windows_console.zig");

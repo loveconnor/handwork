@@ -1,15 +1,14 @@
 const std = @import("std");
 const is_windows = @import("builtin").os.tag == .windows;
-const windows_sockets = @import("../hosts/windows_sockets.zig");
-const PollFd = if (is_windows) windows_sockets.PollFd else std.posix.pollfd;
-const Poll = if (is_windows) windows_sockets.Poll else std.posix.POLL;
-fn pollSocket(fds: []PollFd, timeout: i32) !usize {
-    if (comptime is_windows) return windows_sockets.poll(fds, timeout);
-    return std.posix.poll(fds, timeout);
-}
-fn pollHandle(socket: std.posix.socket_t) if (is_windows) usize else std.posix.socket_t {
-    if (comptime is_windows) return @intFromPtr(socket);
-    return socket;
+const windows_callback_sockets = @import("../hosts/windows_callback_sockets.zig");
+
+fn socketReadable(socket: std.posix.socket_t, timeout_ms: i32, comptime listener: bool) !bool {
+    if (comptime is_windows) return windows_callback_sockets.readable(io_mod.getIo(), socket, timeout_ms);
+    var fds = [_]std.posix.pollfd{.{ .fd = socket, .events = std.posix.POLL.IN, .revents = 0 }};
+    if (try std.posix.poll(&fds, timeout_ms) == 0) return false;
+    if (fds[0].revents & std.posix.POLL.NVAL != 0 or
+        (listener and fds[0].revents & std.posix.POLL.IN == 0)) return error.OAuthCallbackListenerFailed;
+    return true;
 }
 const debug_trace = @import("../shared/debug_trace.zig");
 const io_mod = @import("../shared/io.zig");
@@ -146,18 +145,9 @@ fn listenerReady(
     cancel_flag: *std.atomic.Value(bool),
 ) !bool {
     if (cancel_flag.load(.seq_cst)) return error.Cancelled;
-    var fds = [_]PollFd{.{
-        .fd = pollHandle(listener.socket.handle),
-        .events = Poll.IN,
-        .revents = 0,
-    }};
-    const ready = try pollSocket(&fds, poll_ms);
+    const ready = try socketReadable(listener.socket.handle, poll_ms, true);
     if (cancel_flag.load(.seq_cst)) return error.Cancelled;
-    if (ready == 0) return false;
-    if ((fds[0].revents & Poll.IN) == 0) {
-        return error.OAuthCallbackListenerFailed;
-    }
-    return true;
+    return ready;
 }
 
 fn requestReadable(
@@ -172,14 +162,9 @@ fn requestReadable(
             0
         else
             @intCast(@min(remaining_ms, poll_ms));
-        var fds = [_]PollFd{.{
-            .fd = pollHandle(socket),
-            .events = Poll.IN,
-            .revents = 0,
-        }};
-        const ready = try pollSocket(&fds, wait_ms);
+        const ready = try socketReadable(socket, wait_ms, false);
         if (cancel_flag.load(.seq_cst)) return error.Cancelled;
-        if (ready != 0) return true;
+        if (ready) return true;
         if (remaining_ms <= 0) return false;
     }
 }
@@ -343,6 +328,12 @@ fn writePreflightResponse(stream: std.Io.net.Stream, origin: []const u8) !void {
 }
 
 fn setSocketTimeouts(socket: std.posix.socket_t) void {
+    if (comptime is_windows) {
+        windows_callback_sockets.setTimeouts(io_mod.getIo(), socket, @intCast(socket_timeout_seconds * 1000)) catch |err| {
+            debug_trace.logf("auth", "OAuth callback timeout setup failed error={s}", .{@errorName(err)});
+        };
+        return;
+    }
     const timeout = std.posix.timeval{ .sec = socket_timeout_seconds, .usec = 0 };
     const receive_rc = std.c.setsockopt(
         socket,

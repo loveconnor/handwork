@@ -4,8 +4,9 @@ const builtin = @import("builtin");
 const io_mod = @import("../shared/io.zig");
 
 pub fn listen(address: std.Io.net.IpAddress) !std.Io.net.Server {
-    // Windows has different reuse semantics. Keep its exclusive default.
-    if (comptime builtin.os.tag == .windows) return address.listen(io_mod.getIo(), .{});
+    if (comptime builtin.os.tag == .windows) {
+        return @import("../hosts/windows_callback_sockets.zig").listen(io_mod.getIo(), address);
+    }
     const posix = std.posix;
     const SocketAddress = extern union {
         any: posix.sockaddr,
