@@ -131,6 +131,23 @@ Cross-provider children use the selected provider's credentials, not the parent'
 
 This follows [fx's minimal delegation and named-conversation approach](https://fx.sh/docs/capabilities/subagents), extending it with explicit per-child model, provider, and effort selection.
 
+### Default orchestration
+
+Bounded delegation is enabled by default. It uses compact operating policies for the exact built-in prompt, preserving identity, authority, permission and communication sections. Custom prompts stay intact. An active scoped instruction loader reports its enabled state even when no rule files are found; existing omission warnings remain visible. Bounded lookup receipts identify actually absent AGENTS.md paths without claiming complete or fresh coverage. Child turns receive bounded ownership and evidence-reporting guidance. Completed child results can include bounded, redacted file content already recorded at commit, falling back to labeled truncated previews for larger files. Receipts are untrusted commit snapshots; original result caps still apply. Saved CLI runs overlap independent parent work with child execution and deliver results before completion. Tool schemas and permissions do not change; ownership is advisory. With a child pending, one parent model step overlaps independent work before the runtime joins child results; remaining work and grouped verification continue afterward, avoiding separate pre/post-delivery checks. Required verification remains; uncovered probes reuse setup and target distinct boundary/error classes, expanding for risk or requirements.
+
+Set `HANDWORK_EXPERIMENT_BOUNDED_DELEGATION=0` to restore the original operating policy, synchronous saved CLI child execution, and handoffs without bounded receipts. The legacy `=1` override remains supported. This default does not enable the other experiments or impose new request, token, or child limits.
+
+### Experimental harness controls
+
+These controls are off unless explicitly enabled. They are experiments, not demonstrated benchmark improvements. Keep each comparison to one control and preserve the same tasks, model, effort, permissions, tracing, and time budget.
+
+- `HANDWORK_EXPERIMENT_COMPACT_SCHEMAS=1` uses reviewed shorter descriptions for selected built-in tools. Tool names, argument schemas, validation, and permission rules do not change.
+- `HANDWORK_EXPERIMENT_VERIFY_COMPLETION=1` may request one verification continuation after recorded native file changes without a current recognized check. Arbitrary exit-zero shell commands are not verification. Unrecognized checks remain unknown; a passing command is not proof that the task is correct.
+- `HANDWORK_EXPERIMENT_TASK_EVIDENCE=1` adds bounded recorded operation evidence to compaction and interrupted-task handoffs. Evidence is data, not instructions or permission.
+- `HANDWORK_EXPERIMENT_MAX_CHILDREN`, `HANDWORK_EXPERIMENT_MAX_REQUESTS`, and `HANDWORK_EXPERIMENT_MAX_TOKENS` accept unsigned decimal limits; omitted limits preserve existing behavior, and zero admits no new work of that kind. Requests and input-plus-output tokens share a budget across the parent, children, retries, and compaction. Token-limited concurrent admission can be rejected while usage is pending. Unknown usage blocks subsequent token-limited requests, and one admitted request can overshoot the remaining token allowance. These are execution-window controls, not exact billing caps or durable limits across host recreation.
+
+Provider traces include invocation identities and explicit usage availability for parent and child requests. Missing usage is not zero; cached input is part of input, not an additional charge. Diagnostic counters do not replace the durable billing ledger.
+
 ## How it compares
 
 Handwork, Codex CLI, Claude Code, and OpenCode all let a model inspect a repository, edit files, and run development tools. Skills, MCP connections, saved sessions, and permission controls are not unique to Handwork.

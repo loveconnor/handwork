@@ -10,6 +10,22 @@ const model_response_recovery = @import("model_response_recovery.zig");
 const provider_set = @import("../../provider/provider_set.zig");
 const model_tool_schema = @import("../../tooling/model_tool_schema.zig");
 const stream_provider = @import("../stream_provider.zig");
+const io_mod = @import("../../shared/io.zig");
+
+pub fn experimentEnabled(value: ?[]const u8) bool {
+    return if (value) |text| std.mem.eql(u8, text, "1") else false;
+}
+
+pub fn taskEvidenceExperimentEnabled() bool {
+    return experimentEnabled(io_mod.getenv("HANDWORK_EXPERIMENT_TASK_EVIDENCE"));
+}
+
+test "completion experiments require exact opt in" {
+    try std.testing.expect(experimentEnabled("1"));
+    for ([_]?[]const u8{ null, "", "0", "true", "yes", " 1" }) |value| {
+        try std.testing.expect(!experimentEnabled(value));
+    }
+}
 
 const ReasoningEffort = types.ReasoningEffort;
 
@@ -45,6 +61,9 @@ pub const Config = struct {
     step_limit_notice: []const u8 = default_step_limit_notice,
     cancel_flag: *std.atomic.Value(bool),
     review_enabled: bool = false,
+    /// Null follows the opt-in environment; explicit values isolate embedded callers and tests.
+    verify_completion: ?bool = null,
+    task_evidence: ?bool = null,
     fast_mode: bool = false,
     effort: ReasoningEffort = .auto,
     first_call_tool_choice: types.ToolChoice = .auto,
@@ -67,4 +86,12 @@ pub const Config = struct {
     ephemeral_command_replay: ?*command_replay_store.EphemeralStore = null,
     subagent_id: u64 = 0,
     context_limits: context_limits.Values = .{},
+
+    pub fn verifyCompletionEnabled(self: Config) bool {
+        return self.verify_completion orelse experimentEnabled(io_mod.getenv("HANDWORK_EXPERIMENT_VERIFY_COMPLETION"));
+    }
+
+    pub fn taskEvidenceEnabled(self: Config) bool {
+        return self.task_evidence orelse taskEvidenceExperimentEnabled();
+    }
 };

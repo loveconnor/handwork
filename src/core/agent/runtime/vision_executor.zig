@@ -7,6 +7,7 @@ const image_attachments = @import("../../images/image_attachments.zig");
 const session_usage = @import("../../session/session_usage.zig");
 const types = @import("../../shared/types.zig");
 const image_provider = @import("image_provider.zig");
+const execution_budget = @import("../execution_budget.zig");
 const tool_contracts = @import("tool_contracts.zig");
 const vision_contracts = @import("vision_contracts.zig");
 
@@ -28,6 +29,7 @@ const system_prompt =
 pub const Config = struct {
     model: []const u8,
     stream_provider: agent_stream_provider.Provider,
+    execution_budget: ?*execution_budget.Budget = null,
     api_key: []const u8,
     credential_source: ?types.CredentialSource = null,
     session_id: ?[]const u8 = null,
@@ -290,6 +292,7 @@ fn runBatchAttempt(
         verified_images,
         .{
             .stream_provider = config.stream_provider,
+            .execution_budget = config.execution_budget,
             .model = config.model,
             .api_key = config.api_key,
             .credential_source = config.credential_source,

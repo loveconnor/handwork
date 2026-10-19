@@ -8,6 +8,7 @@ const session_permission_state = @import("../../permissions/session_permission_s
 const command_replay_store = @import("../../session/command_replay_store.zig");
 const result_commit = @import("../../tooling/result_commit.zig");
 const tool_dispatch = @import("../../tooling/tool_dispatch.zig");
+const execution_budget = @import("../execution_budget.zig");
 
 pub const vision = @import("vision_contracts.zig");
 
@@ -129,6 +130,7 @@ pub fn unavailableHostToolResult(alloc: Allocator) Allocator.Error!ToolExecution
 }
 
 pub const ToolExecutionRequest = struct {
+    execution_budget: ?*execution_budget.Budget = null,
     skill_locations: ?*const skill_contract.Locations = null,
     call_allocator: Allocator,
     result_allocator: Allocator,

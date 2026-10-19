@@ -15,6 +15,8 @@ pub const Request = struct {
     payload: ?[]const u8 = null,
     /// Optional preformatted Authorization value, borrowed for this request.
     authorization: ?[]const u8 = null,
+    /// Optional Codex account selector, never returned to callers.
+    account_id: ?[]const u8 = null,
     cancel_flag: ?*std.atomic.Value(bool) = null,
     deadline: ?std.Io.Clock.Timestamp = null,
 };
@@ -26,6 +28,7 @@ pub const Disposition = enum {
 
 pub const Response = struct {
     disposition: Disposition,
+    status: ?std.http.Status = null,
     /// Owned bytes allocated with the allocator passed to `Provider.execute`.
     body: []u8,
 

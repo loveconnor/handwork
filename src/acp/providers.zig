@@ -7,6 +7,7 @@ const api_key_store = @import("../core/auth/api_key_store.zig");
 const api_providers = @import("../core/config/api_providers.zig");
 const provider_policy = @import("../core/config/provider_policy.zig");
 const chatgpt_oauth = @import("../core/auth/chatgpt_oauth.zig");
+const chatgpt_usage = @import("../core/auth/chatgpt_usage.zig");
 const grok_oauth = @import("../core/auth/grok_oauth.zig");
 const model_provider = @import("../core/config/model_provider.zig");
 const host_target = @import("../core/hosts/target.zig");
@@ -64,6 +65,31 @@ pub fn handleList(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Me
     defer out.deinit();
     try writeProviderList(state, alloc, &out.writer);
     try state.writer.writeResponse(alloc, msg.id, out.writer.buffered());
+}
+
+/// Usage is independent of the active model and never requires a chat session.
+pub fn handleUsage(state: *server.ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void {
+    const parsed = (try parseParams(alloc, msg)) orelse return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.invalid_params, .message = "Invalid params" });
+    defer parsed.deinit();
+    validateUsageParams(parsed.value) catch |err| return state.writer.writeError(alloc, msg.id, .{
+        .code = ErrorCode.invalid_params,
+        .message = if (err == error.UnsupportedUsageProvider) "Usage is only supported for codex" else "Invalid params",
+    });
+    const usage = chatgpt_usage.load(alloc, state.cfg.provider_endpoint.oauth_transport) catch |err| return state.writer.writeError(alloc, msg.id, .{
+        .code = ErrorCode.internal_error,
+        .message = chatgpt_usage.errorMessage(err),
+    });
+    var out: std.Io.Writer.Allocating = .init(alloc);
+    defer out.deinit();
+    try usage.write(&out.writer);
+    try state.writer.writeResponse(alloc, msg.id, out.written());
+}
+
+fn validateUsageParams(value: std.json.Value) !void {
+    if (value != .object) return error.InvalidUsageParams;
+    const provider = value.object.get("provider") orelse return error.InvalidUsageParams;
+    if (provider != .string) return error.InvalidUsageParams;
+    if (!std.mem.eql(u8, provider.string, "codex")) return error.UnsupportedUsageProvider;
 }
 
 const Params = struct { provider: model_provider.ProviderId, api_key: ?[]const u8 };
@@ -127,6 +153,26 @@ pub fn handleDisconnect(state: *server.ServerState, alloc: Allocator, msg: *json
     };
     if (failed) return state.writer.writeError(alloc, msg.id, .{ .code = ErrorCode.internal_error, .message = "Could not remove the stored credential" });
     try handleList(state, alloc, msg);
+}
+
+test "Codex usage params reject unsupported providers before loading credentials" {
+    const Case = struct { body: []const u8, err: ?anyerror };
+    for ([_]Case{
+        .{ .body = "{\"provider\":\"codex\"}", .err = null },
+        .{ .body = "{\"provider\":\"anthropic\"}", .err = error.UnsupportedUsageProvider },
+        .{ .body = "{\"provider\":\"unknown-private-value\"}", .err = error.UnsupportedUsageProvider },
+        .{ .body = "{}", .err = error.InvalidUsageParams },
+        .{ .body = "null", .err = error.InvalidUsageParams },
+        .{ .body = "{\"provider\":1}", .err = error.InvalidUsageParams },
+    }) |case| {
+        const parsed = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, case.body, .{});
+        defer parsed.deinit();
+        if (case.err) |err| {
+            try std.testing.expectError(err, validateUsageParams(parsed.value));
+        } else {
+            try validateUsageParams(parsed.value);
+        }
+    }
 }
 
 test "provider params accept catalog slugs and reject unknown providers" {

@@ -1,6 +1,7 @@
 const std = @import("std");
 const agent_runtime = @import("../agent/agent_runtime.zig");
 const agent_stream_provider = @import("../agent/stream_provider.zig");
+const execution_budget = @import("../agent/execution_budget.zig");
 const runtime_context_compaction = @import("../agent/runtime/context_compaction.zig");
 const compaction_activity = @import("../output/compaction_activity.zig");
 const runtime_prompt_context = @import("../agent/runtime/prompt_context.zig");
@@ -1033,7 +1034,11 @@ pub fn Runtime(comptime App: type) type {
                 else
                     null;
 
+            const budget_options = try execution_budget.Options.fromEnvironment();
+            var fallback_budget = execution_budget.Budget.init(std.heap.c_allocator, budget_options.limits());
+            defer fallback_budget.deinit();
             var deps = app_callbacks.Bindings(App).agentRuntimeDeps(app);
+            deps.execution_budget = executionBudgetForApp(app, &fallback_budget);
             deps.compaction_failure = failure_provenance;
             const semantic_presentation = app_callbacks.Bindings(App).semanticPresentationSink(app);
             const config = buildQueuedPromptConfig(
@@ -1091,7 +1096,11 @@ pub fn Runtime(comptime App: type) type {
             const source_tokens = runtime_prompt_context.estimateCompactionSourceTokens(
                 messages.items,
             );
-            const deps = app_callbacks.Bindings(App).agentRuntimeDeps(app);
+            const budget_options = try execution_budget.Options.fromEnvironment();
+            var fallback_budget = execution_budget.Budget.init(std.heap.c_allocator, budget_options.limits());
+            defer fallback_budget.deinit();
+            var deps = app_callbacks.Bindings(App).agentRuntimeDeps(app);
+            deps.execution_budget = executionBudgetForApp(app, &fallback_budget);
             const capabilities = deps.available_model_capabilities(deps.ctx, job.model);
             const permission_mode = app_permission_runtime.Runtime(App).livePermissionSnapshot(app).mode;
             var tool_projection = try app.snapshotModelToolProjection(arena, permission_mode);
@@ -1258,6 +1267,15 @@ pub fn Runtime(comptime App: type) type {
             const body = try types.renderContextNoticeBody(std.heap.c_allocator, notice);
             defer std.heap.c_allocator.free(body);
             try writer.writeAll(body);
+        }
+
+        fn executionBudgetForApp(app: *App, fallback: *execution_budget.Budget) ?*execution_budget.Budget {
+            if (comptime @hasField(App, "session_persistence")) {
+                if (comptime @hasField(@TypeOf(app.session_persistence), "subagent_host")) {
+                    if (app.session_persistence.subagent_host) |child_host| return child_host.configuredBudget();
+                }
+            }
+            return if (fallback.limits.max_requests != null or fallback.limits.max_tokens != null) fallback else null;
         }
 
         fn buildQueuedPromptConfig(

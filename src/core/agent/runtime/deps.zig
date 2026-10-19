@@ -15,6 +15,7 @@ const tool_dispatch = @import("../../tooling/tool_dispatch.zig");
 const tool_contracts = @import("tool_contracts.zig");
 const context_contract = @import("../../workspace/context_contract.zig");
 const compaction_activity = @import("../../output/compaction_activity.zig");
+const execution_budget = @import("../execution_budget.zig");
 
 const Allocator = std.mem.Allocator;
 const ChatMessage = types.ChatMessage;
@@ -257,6 +258,7 @@ pub const AgentRuntimeDeps = struct {
     report_inner_tool_usage: ?*const fn (ctx: *anyopaque, tool_name: []const u8, usage: types.ToolUsage) void = null,
     usage: ?*session_usage.Usage = null,
     usage_allocator: Allocator = std.heap.c_allocator,
+    execution_budget: ?*execution_budget.Budget = null,
     // Accent for the +N / -N counts in a committed file's status line.
     // Captured by value at construction; that is safe only while the marker
     // colors never change after startup (they are theme-independent).

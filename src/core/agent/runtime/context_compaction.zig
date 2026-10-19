@@ -10,6 +10,9 @@ const types = @import("../../shared/types.zig");
 const runtime_provider_step = @import("provider_step.zig");
 const runtime_prompt_context = @import("prompt_context.zig");
 const compaction_state = @import("context_compaction_state.zig");
+const completion_verification = @import("completion_verification.zig");
+const runtime_config = @import("config.zig");
+const execution_budget = @import("../execution_budget.zig");
 
 test {
     _ = compaction_state;
@@ -23,6 +26,7 @@ const max_summary_chunks: usize = 64;
 
 pub const Request = struct {
     stream_provider: agent_stream_provider.Provider,
+    execution_budget: ?*execution_budget.Budget = null,
     cooperative_transport_pulse: ?agent_stream_provider.CooperativePulse = null,
     model: []const u8,
     api_key: []const u8,
@@ -38,6 +42,9 @@ pub const Request = struct {
     usage: ?*session_usage.Usage = null,
     usage_allocator: Allocator = std.heap.c_allocator,
     trace_ctx: debug_trace.TraceContext,
+    task_evidence_enabled: ?bool = null,
+    /// Exact current-turn records, including exchanges already cut from model context.
+    task_evidence_messages: ?[]const types.ChatMessage = null,
 };
 
 pub const Result = struct {
@@ -131,7 +138,11 @@ pub fn compact(
 
     const semantic_messages = try compaction_state.projectSemanticMessages(scratch, compactable);
     defer if (semantic_messages.len > 0) scratch.free(semantic_messages);
-    const base_handoff = try compaction_state.renderHandoff(scratch, &.{});
+    const task_evidence = if (request.task_evidence_enabled orelse runtime_config.taskEvidenceExperimentEnabled())
+        try completion_verification.renderMessages(scratch, request.task_evidence_messages orelse source_messages)
+    else
+        null;
+    const base_handoff = try compaction_state.renderHandoffWithEvidence(scratch, &.{}, task_evidence);
     defer scratch.free(base_handoff);
     try runtime_prompt_context.validateCompactionHandoff(
         base_handoff,
@@ -213,7 +224,7 @@ pub fn compact(
         addUsage(&total_usage, call.usage);
     }
 
-    const handoff = try compaction_state.renderHandoff(alloc, summaries);
+    const handoff = try compaction_state.renderHandoffWithEvidence(alloc, summaries, task_evidence);
     errdefer alloc.free(handoff);
     try runtime_prompt_context.validateCompactionHandoff(
         handoff,
@@ -382,6 +393,8 @@ fn runSummaryCall(
             alloc,
             .{
                 .credential = credential,
+                .request_purpose = .compaction,
+                .execution_budget = request.execution_budget,
                 .session_id = request.session_id,
                 .model = request.model,
                 .retry_count = if (attempt == 0) request.retry_count else 1,
@@ -516,6 +529,7 @@ const FakeProvider = struct {
         request: agent_stream_provider.ModelRequest,
     ) !agent_stream_provider.Result {
         const self: *FakeProvider = @ptrCast(@alignCast(raw.?));
+        try std.testing.expectEqual(.compaction, request.request_purpose);
         if (request.cooperative_pulse) |pulse| try pulse.pulse();
         if (self.request_count < self.retry_counts.len) self.retry_counts[self.request_count] = request.retry_count;
         self.request_count += 1;

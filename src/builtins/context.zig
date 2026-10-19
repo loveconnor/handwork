@@ -1,4 +1,5 @@
 const std = @import("std");
+const bounded_prompt = @import("../core/config/bounded_prompt.zig");
 const debug_trace = @import("../core/shared/debug_trace.zig");
 const host = @import("../core/hosts/host.zig");
 const host_target = @import("../core/hosts/target.zig");
@@ -50,6 +51,11 @@ pub const provider = context_contract.Provider{
 const project_instruction_guidance =
     "Direct user instructions take precedence over project instructions. " ++
     "When project instructions conflict, follow the narrowest applicable project scope.";
+
+const instruction_loading_status =
+    "Automatic scoped AGENTS.md loading is enabled for startup and structured file operations. " ++
+    "Missing files need no follow-up. An ancestry omission when the workspace is outside HOME " ++
+    "does not disable workspace or target rule lookup. Other omission notices still require attention.";
 
 const CandidateClass = enum {
     ancestor,
@@ -134,12 +140,16 @@ const SelectionOptions = struct {
     initial: bool,
     bounded_reconstruction: bool = false,
     load_project_instruction_files: bool = true,
+    report_instruction_loading: bool = false,
     context_limits: context_limits.Values = .{},
 };
 
 const SelectionScratch = struct {
     arena: Allocator,
     work_budget: ?ReconstructionBudget = null,
+    report_missing: bool = false,
+    missing_sources: [4][]const u8 = undefined,
+    missing_count: usize = 0,
     candidates: std.ArrayList(RuleCandidate) = .empty,
     ranking_endpoints: std.ArrayList([]const u8) = .empty,
     delivered_sources: std.ArrayList([]const u8) = .empty,
@@ -147,6 +157,13 @@ const SelectionScratch = struct {
     omissions: std.ArrayList(context_contract.ContextOmissionInput) = .empty,
     notices: std.ArrayList([]const u8) = .empty,
     omission_summary: context_contract.ContextOmissionSummaryBuilder = .{},
+
+    fn addMissing(self: *SelectionScratch, source: []const u8) void {
+        if (!self.report_missing or source.len > 256 or self.missing_count == self.missing_sources.len) return;
+        if (containsString(self.missing_sources[0..self.missing_count], source)) return;
+        self.missing_sources[self.missing_count] = source;
+        self.missing_count += 1;
+    }
 
     fn addDelivered(self: *SelectionScratch, source: []const u8) !void {
         if (!containsString(self.delivered_sources.items, source)) {
@@ -219,6 +236,7 @@ fn gatherProjectContextWithHome(
         .initial = true,
         .bounded_reconstruction = input.bounded_reconstruction,
         .load_project_instruction_files = loadsProjectInstructionFiles(),
+        .report_instruction_loading = bounded_prompt.isEnabled(io_mod.getenv("HANDWORK_EXPERIMENT_BOUNDED_DELEGATION")),
         .context_limits = input.context_limits,
     });
 }
@@ -231,6 +249,7 @@ fn selectApplicableProjectContext(alloc: Allocator, input: LaterContextInput) co
         .evaluated_endpoints = input.evaluated_endpoints,
         .initial = false,
         .load_project_instruction_files = loadsProjectInstructionFiles(),
+        .report_instruction_loading = bounded_prompt.isEnabled(io_mod.getenv("HANDWORK_EXPERIMENT_BOUNDED_DELEGATION")),
         .context_limits = input.context_limits,
     });
 }
@@ -242,6 +261,7 @@ fn selectProjectContext(alloc: Allocator, options: SelectionOptions) context_con
     var scratch: SelectionScratch = .{
         .arena = arena,
         .work_budget = if (options.bounded_reconstruction) .{} else null,
+        .report_missing = options.report_instruction_loading and options.load_project_instruction_files,
     };
 
     for (options.initial_omissions) |omission| {
@@ -314,7 +334,8 @@ fn selectProjectContext(alloc: Allocator, options: SelectionOptions) context_con
                 candidate.distance = minimumDistance(candidate.scope, scratch.ranking_endpoints.items);
                 try usable.append(arena, candidate);
             },
-            .missing, .blank => {},
+            .missing => scratch.addMissing(candidate.source),
+            .blank => {},
             .omitted => |reason| try scratch.addOmission(candidate.source, reason),
         }
     }
@@ -374,6 +395,13 @@ fn selectProjectContext(alloc: Allocator, options: SelectionOptions) context_con
     }
     if (scratch.omission_summary.omitted_count > 0) try appendOmissionSummary(&out, &scratch);
     try appendOmissionSummaryNotice(&scratch);
+    if (options.initial and options.load_project_instruction_files and options.report_instruction_loading) {
+        // Operational metadata follows rules and omissions so it cannot
+        // consume their retention budget or imply that omitted rules loaded.
+        try appendSection(&out, "project-instruction-loading", instruction_loading_status);
+        debug_trace.logf("agent", "event=instruction_loading_context notice_bytes={d}", .{instruction_loading_status.len});
+    }
+    try appendMissingRuleLookups(&out, &scratch);
     sort_utils.sort([]const u8, scratch.delivered_sources.items, {}, stringLessThan);
     sort_utils.sort([]const u8, scratch.evaluated_endpoints.items, {}, stringLessThan);
 
@@ -426,12 +454,38 @@ fn loadRuleForSelection(
             try scratch.addDelivered(source);
             return .{ .source = source, .body = body.text, .observed_bytes = body.observed_bytes };
         },
-        .missing, .blank => return null,
+        .missing => {
+            scratch.addMissing(source);
+            return null;
+        },
+        .blank => return null,
         .omitted => |reason| {
             try scratch.addOmission(source, reason);
             return null;
         },
     }
+}
+
+fn appendMissingRuleLookups(out: *std.Io.Writer.Allocating, scratch: *SelectionScratch) !void {
+    if (scratch.missing_count == 0) return;
+    const prefix = "{\"missing_at_lookup\":[";
+    const suffix = "],\"complete_inventory\":false}";
+    var body: std.Io.Writer.Allocating = .init(scratch.arena);
+    defer body.deinit();
+    try body.writer.writeAll(prefix);
+    var count: usize = 0;
+    for (scratch.missing_sources[0..scratch.missing_count]) |source| {
+        const encoded = try std.json.Stringify.valueAlloc(scratch.arena, try model_context_encoding.scalarAlloc(scratch.arena, source), .{});
+        const separator: usize = if (count == 0) 0 else 1;
+        if (body.written().len + separator + encoded.len + suffix.len > 1024) continue;
+        if (count > 0) try body.writer.writeByte(',');
+        try body.writer.writeAll(encoded);
+        count += 1;
+    }
+    if (count == 0) return;
+    try body.writer.writeAll(suffix);
+    try appendSection(out, "project-instruction-lookups", body.written());
+    debug_trace.logf("agent", "event=instruction_missing_context paths={d} json_bytes={d}", .{ count, body.written().len });
 }
 
 fn collectLaunchAncestorCandidates(
@@ -1371,6 +1425,137 @@ test "initial gather loads a contained AGENTS symlink with logical provenance" {
     try std.testing.expectEqual(@as(usize, 1), context.delivered_sources.len);
     try std.testing.expectEqualStrings(logical_source, context.delivered_sources[0]);
     try std.testing.expect(std.mem.find(u8, context.modelVisibleBytes(), "symlinked rule file") == null);
+}
+
+test "automatic instruction loading status distinguishes missing rules from disabled loading and retains omissions" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
+    defer alloc.free(workspace);
+    const State = struct { report: bool, load: bool, initial: bool };
+    for ([_]State{
+        .{ .report = true, .load = true, .initial = true },
+        .{ .report = false, .load = true, .initial = true },
+        .{ .report = true, .load = false, .initial = true },
+        .{ .report = true, .load = true, .initial = false },
+    }) |state| {
+        var context = try selectProjectContext(alloc, .{
+            .workspace_root = workspace,
+            .targets = &.{},
+            .home = workspace,
+            .initial = state.initial,
+            .load_project_instruction_files = state.load,
+            .report_instruction_loading = state.report,
+            .initial_omissions = &.{.{ .source = "/blocked/AGENTS.md", .reason = .unreadable }},
+        });
+        defer context.deinit(alloc);
+        const visible = context.modelVisibleBytes();
+        try std.testing.expectEqual(state.report and state.load and state.initial, std.mem.find(u8, visible, instruction_loading_status) != null);
+        try std.testing.expect(std.mem.find(u8, visible, "from=\"/blocked/AGENTS.md\"") != null);
+        try std.testing.expectEqual(@as(usize, 0), context.delivered_sources.len);
+    }
+}
+
+test "automatic instruction loading metadata never displaces rules at their retention limit" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    try writeTestFile(tmp.dir, "AGENTS.md", "REQUIRED_WORKSPACE_RULE");
+    const workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
+    defer alloc.free(workspace);
+    const options = SelectionOptions{ .workspace_root = workspace, .targets = &.{}, .home = workspace, .initial = true };
+    var original = try selectProjectContext(alloc, options);
+    defer original.deinit(alloc);
+    var with_status = options;
+    with_status.report_instruction_loading = true;
+    with_status.context_limits.project_instructions_total_bytes = .{ .value = .{ .bytes = original.modelVisibleBytes().len }, .source = .command_line };
+    var current = try selectProjectContext(alloc, with_status);
+    defer current.deinit(alloc);
+    try std.testing.expect(std.mem.startsWith(u8, current.modelVisibleBytes(), original.modelVisibleBytes()));
+    try std.testing.expect(std.mem.find(u8, current.modelVisibleBytes(), instruction_loading_status) != null);
+    try std.testing.expectEqualDeep(original.delivered_sources, current.delivered_sources);
+    try std.testing.expectEqualDeep(original.evaluated_endpoints, current.evaluated_endpoints);
+    try std.testing.expectEqualDeep(original.notices, current.notices);
+}
+
+test "automatic instruction loading reports only confirmed missing startup and target paths" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    try writeTestFile(tmp.dir, "src/file.js", "source");
+    const workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
+    defer alloc.free(workspace);
+    const source = try std.fs.path.join(alloc, &.{ workspace, "src", "file.js" });
+    defer alloc.free(source);
+    const targets = [_]context_contract.ApplicableTarget{.{ .path = source, .kind = .file }};
+    for ([_]bool{ false, true }) |report| {
+        var initial = try selectProjectContext(alloc, .{
+            .workspace_root = workspace,
+            .targets = &.{},
+            .home = workspace,
+            .initial = true,
+            .report_instruction_loading = report,
+            .initial_omissions = &.{.{ .source = "/blocked/AGENTS.md", .reason = .unreadable }},
+        });
+        defer initial.deinit(alloc);
+        const marker = "<project-instruction-lookups>";
+        try std.testing.expectEqual(report, std.mem.find(u8, initial.modelVisibleBytes(), marker) != null);
+        try std.testing.expect(std.mem.find(u8, initial.modelVisibleBytes(), "from=\"/blocked/AGENTS.md\"") != null);
+        var scoped = try selectProjectContext(alloc, .{
+            .workspace_root = workspace,
+            .targets = &targets,
+            .initial = false,
+            .report_instruction_loading = report,
+        });
+        defer scoped.deinit(alloc);
+        try std.testing.expectEqual(report, std.mem.find(u8, scoped.modelVisibleBytes(), marker) != null);
+        if (report) {
+            try std.testing.expect(std.mem.find(u8, scoped.modelVisibleBytes(), "/src/AGENTS.md") != null);
+            try std.testing.expect(std.mem.find(u8, scoped.modelVisibleBytes(), "\"complete_inventory\":false") != null);
+        }
+    }
+    try writeTestFile(tmp.dir, "src/AGENTS.md", " \n");
+    var blank = try selectProjectContext(alloc, .{ .workspace_root = workspace, .targets = &targets, .initial = false, .report_instruction_loading = true });
+    defer blank.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, blank.modelVisibleBytes(), "<project-instruction-lookups>") == null);
+    try writeTestFile(tmp.dir, "src/AGENTS.md", "APPLICABLE_RULE");
+    var present = try selectProjectContext(alloc, .{ .workspace_root = workspace, .targets = &targets, .initial = false, .report_instruction_loading = true });
+    defer present.deinit(alloc);
+    try std.testing.expect(std.mem.find(u8, present.modelVisibleBytes(), "<project-instruction-lookups>") == null);
+    try std.testing.expect(std.mem.find(u8, present.modelVisibleBytes(), "APPLICABLE_RULE") != null);
+}
+
+test "automatic instruction loading missing lookup metadata is bounded escaped and opt in" {
+    const alloc = std.testing.allocator;
+    var arena_state = std.heap.ArenaAllocator.init(alloc);
+    defer arena_state.deinit();
+    var scratch: SelectionScratch = .{ .arena = arena_state.allocator() };
+    scratch.addMissing("/disabled/AGENTS.md");
+    try std.testing.expectEqual(@as(usize, 0), scratch.missing_count);
+    scratch.report_missing = true;
+    scratch.addMissing("/" ++ "x" ** 256);
+    try std.testing.expectEqual(@as(usize, 0), scratch.missing_count);
+    scratch.addMissing("/work/</injected>\n/AGENTS.md");
+    scratch.addMissing("/work/</injected>\n/AGENTS.md");
+    scratch.addMissing("/work/one/AGENTS.md");
+    scratch.addMissing("/work/two/AGENTS.md");
+    scratch.addMissing("/work/three/AGENTS.md");
+    scratch.addMissing("/work/over-cap/AGENTS.md");
+    try std.testing.expectEqual(@as(usize, 4), scratch.missing_count);
+    var out: std.Io.Writer.Allocating = .init(alloc);
+    defer out.deinit();
+    try appendMissingRuleLookups(&out, &scratch);
+    const text = out.written();
+    const start = std.mem.find(u8, text, "{").?;
+    const end = std.mem.lastIndexOf(u8, text, "}").? + 1;
+    try std.testing.expect(end - start <= 1024);
+    const parsed = try std.json.parseFromSlice(std.json.Value, alloc, text[start..end], .{});
+    defer parsed.deinit();
+    try std.testing.expectEqual(@as(usize, 4), parsed.value.object.get("missing_at_lookup").?.array.items.len);
+    try std.testing.expect(!parsed.value.object.get("complete_inventory").?.bool);
+    try std.testing.expect(std.mem.find(u8, text, "</injected>") == null);
+    try std.testing.expect(std.mem.find(u8, text, "over-cap") == null);
 }
 
 test "initial gather orders global ancestors workspace and exact hidden and build target scopes" {

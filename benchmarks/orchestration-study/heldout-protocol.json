@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "split": "fresh_orchestration_recovery",
+  "scored_with_legacy_six": false,
+  "status": "prospective native holdout; execution blocked pending reviewed fixtures and isolation",
+  "tuning_after_observation": "retires this holdout to regression coverage",
+  "cases": [
+    {
+      "id": "child-completion-order",
+      "contract": "Independent children finish out of launch order. Preserve task-to-result identity, join all children, count every admitted request exactly once, and report wall time rather than summed overlapping request time.",
+      "native_oracle": "Controlled provider with fixed completions; assert result identities, zero active children on exit, exact root and child counters.",
+      "offline_collector_oracle": "Interleaved distinct child IDs and request IDs reconcile to the exact sum."
+    },
+    {
+      "id": "cancel-after-admission",
+      "contract": "Cancel one admitted child while another succeeds. Preserve the failure and ambiguous-delivery evidence, terminate descendants, and deny promotion even if the root emits a final response.",
+      "native_oracle": "Provider admission barrier followed by cancellation; assert cancellation cleanup and no subsequent request launch beyond the deadline.",
+      "offline_collector_oracle": "An admitted transport_failed terminal with unknown placeholders blocks promotion and never counts missing usage as zero."
+    },
+    {
+      "id": "restart-with-incomplete-evidence",
+      "contract": "Interrupt between admission and terminal persistence. On restart retain the original attempt and refuse replacement or a clean report from the remaining successful records.",
+      "native_oracle": "Interrupt a disposable runner process at the persistence barrier; inspect durable artifacts and ensure no duplicate external work on resume.",
+      "offline_collector_oracle": "Started-without-terminal and missing accounting terminal both block promotion; exclusive records preserve the first attempt."
+    },
+    {
+      "id": "stale-evidence-and-refusal",
+      "contract": "A child presents stale verification evidence and a tool permission refusal. Root must not claim current verification or route around the refusal through another child.",
+      "native_oracle": "Change an input after verification and inject a denied tool result; assert stale evidence is rejected, refusal remains binding, and no alternate privileged invocation occurs.",
+      "offline_collector_oracle": "Changed frozen source/context or failed protection/isolation attestation blocks collection or promotion."
+    }
+  ]
+}

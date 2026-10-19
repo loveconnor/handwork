@@ -63,6 +63,7 @@ const model_provider = @import("../config/model_provider.zig");
 const provider_set = @import("../provider/provider_set.zig");
 const credential_authority = @import("../auth/credential_authority.zig");
 const worker_runtime = @import("../agent/worker_runtime.zig");
+const execution_budget = @import("../agent/execution_budget.zig");
 const context_contract = @import("../workspace/context_contract.zig");
 const test_builtin_tools = if (builtin.is_test)
     @import("../../builtins/tools.zig")
@@ -130,6 +131,8 @@ pub const Context = struct {
     max_tool_result_bytes: usize = tool_result_limits.default_max_tool_result_bytes,
     api_key: []const u8,
     agent_stream_provider: agent_stream_provider.Provider = agent_stream_provider.unavailable_provider,
+    execution_budget: ?*execution_budget.Budget = null,
+    provider_trace_ctx: debug_trace.TraceContext = .{},
     credential_source: ?types.CredentialSource = null,
     account_id: ?[]const u8 = null,
     provider: model_provider.ProviderId = .codex,
@@ -383,6 +386,11 @@ pub fn executeToolCallAuthorized(
         request.command_replay_capture.?.abort(request.result_allocator);
     };
     var execution_ctx = ctx;
+    execution_ctx.execution_budget = request.execution_budget orelse ctx.execution_budget;
+    execution_ctx.provider_trace_ctx = .{
+        .turn_id = if (request.lifecycle_id) |id| id.turn_id else 0,
+        .subagent_id = ctx.lifecycle_scope.subagent_id orelse 0,
+    };
     execution_ctx.skill_locations = request.skill_locations orelse ctx.skill_locations;
     if (request.permission_mode) |permission_mode| {
         execution_ctx.permission_mode = permission_mode;
@@ -1257,6 +1265,7 @@ fn executeVisionRequest(
     const config: vision_executor.Config = .{
         .model = state.runtime.model,
         .stream_provider = state.runtime.agent_stream_provider,
+        .execution_budget = state.runtime.execution_budget,
         .api_key = state.runtime.api_key,
         .credential_source = state.runtime.credential_source,
         .session_id = state.runtime.lifecycle_scope.session_id,
@@ -1264,7 +1273,7 @@ fn executeVisionRequest(
         .cancel_flag = state.runtime.cancel_flag,
         .usage = &state.runtime.session.usage,
         .usage_allocator = state.runtime.session_allocator,
-        .trace_ctx = .{},
+        .trace_ctx = state.runtime.provider_trace_ctx,
         .output_limit = state.runtime.context_limits.image_adapter_output_bytes,
     };
     if (request.image_ids() != null) {
@@ -7632,6 +7641,57 @@ test "vision runtime propagates cancellation while preparing approved paths" {
         ),
     );
     try std.testing.expectEqual(@as(usize, 0), fixture.call_count);
+}
+
+test "execution budget assembled vision tool keeps root and child request identity" {
+    const alloc = std.testing.allocator;
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    const catalog = try makeVisionCatalog(alloc, tmp.dir, 1);
+    defer types.freeImageAttachmentSlice(alloc, catalog);
+    const Mock = struct {
+        expected_child: u64,
+        seen: bool = false,
+        fn stream(raw: ?*anyopaque, _: Allocator, request: agent_stream_provider.ModelRequest) !agent_stream_provider.Result {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            self.seen = true;
+            try std.testing.expectEqual(self.expected_child, request.trace_ctx.subagent_id);
+            try std.testing.expectEqual(@as(u64, 42), request.trace_ctx.turn_id);
+            try std.testing.expectEqual(.image, request.request_purpose);
+            try std.testing.expect(request.execution_budget != null);
+            try request.admission.admit();
+            return error.UnexpectedVisionProviderDelivery;
+        }
+    };
+    for ([_]?u64{ null, 7 }) |child| {
+        var mock = Mock{ .expected_child = child orelse 0 };
+        var budget = execution_budget.Budget.init(alloc, .{ .max_requests = 0 });
+        defer budget.deinit();
+        var rt = TestRuntime{
+            .agent_stream_provider = .{ .context = &mock, .stream_fn = Mock.stream },
+            .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
+            .session_allocator = alloc,
+        };
+        defer rt.deinit(alloc);
+        var ctx = rt.context();
+        ctx.lifecycle_scope.subagent_id = child;
+        const result = try executeToolCallAuthorized(ctx, .{
+            .execution_budget = &budget,
+            .call_allocator = alloc,
+            .result_allocator = alloc,
+            .call = .{ .id = "vision-call", .name = "vision", .arguments_json = "{\"image_ids\":[1],\"focus\":\"inspect\"}" },
+            .authority = .ordinary,
+            .authorized_image_catalog = catalog,
+            .session_grants = &.{},
+            .advertised_dynamic_tool_names = &.{},
+            .max_tool_result_bytes = rt.max_tool_result_bytes,
+            .lifecycle_id = .{ .turn_id = 42, .call_id = "vision-call" },
+        });
+        defer alloc.free(@constCast(result.model_output));
+        try std.testing.expect(mock.seen);
+        try std.testing.expectEqual(tool_contracts.ToolExecutionStatus.failure, result.status);
+        try std.testing.expectEqual(@as(u64, 0), budget.snapshot().admitted_requests);
+    }
 }
 
 test "vision runtime preserves partial success and exact total outage notices" {

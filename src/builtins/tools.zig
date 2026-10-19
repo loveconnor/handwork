@@ -234,6 +234,7 @@ pub const glob_files = ToolSpec{
     .model_schema = .{
         .name = "glob_files",
         .description = glob_files_description,
+        .compact_description = "Find paths by glob, not contents. mode=count returns an exact file count without listings. Narrow path/pattern if capped. Use read_file for contents; do not run find or count non-file concepts.",
         .input_schema = .{
             .properties = &.{
                 .{ .name = "pattern", .json_type = .string, .description = "Glob pattern to match, such as src/**/*.zig or *.md." },
@@ -264,6 +265,7 @@ pub const grep_files = ToolSpec{
     .model_schema = .{
         .name = "grep_files",
         .description = grep_files_description,
+        .compact_description = "Literal text search, no regex. patterns combines related literals with OR and unique lines; pattern searches one. Narrow path/include. Choose matches, files_with_matches, or count; context_lines adds bounded context, head_limit/offset paginate. Use glob_files for filenames.",
         .input_schema = .{
             .properties = &.{
                 .{ .name = "patterns", .json_type = .array, .bounds = &.{ .min_items = 1, .max_items = 32 }, .shape = &.{ .array_values = .{ .json_type = .string } } },
@@ -309,6 +311,7 @@ pub const read_file = ToolSpec{
     .model_schema = .{
         .name = "read_file",
         .description = read_file_description,
+        .compact_description = "Read UTF-8 with line numbers. Batch independent known paths in files, each with start_line/line_count; use path for one. Output shares one budget, so narrow large reads. Discover unknown paths with glob_files/grep_files.",
         .input_schema = .{
             .properties = &.{
                 .{ .name = "files", .json_type = .array, .bounds = &.{ .min_items = 1, .max_items = 32 }, .shape = &.{ .array_objects = &read_file_item_schema } },
@@ -340,6 +343,7 @@ pub const write_file = ToolSpec{
     .model_schema = .{
         .name = "write_file",
         .description = write_file_description,
+        .compact_description = "Write complete contents to a new file, or intentionally replace an entire small/generated file. Use edit_file for targeted changes. Not for partial replacement, deletion, or unapproved external paths.",
         .input_schema = .{
             .properties = &.{
                 .{ .name = "path", .json_type = .string, .description = "File path; relative paths use the workspace root." },
@@ -379,6 +383,7 @@ pub const edit_file = ToolSpec{
     .model_schema = .{
         .name = "edit_file",
         .description = edit_file_description,
+        .compact_description = "Patch a previously read file. Prefer edits for atomic replacements against the original: each old_string must match once, with no overlapping ranges. Legacy old_string/new_string accepts one replacement. Not for missing files, broad rewrites, ambiguous matches, generated formatting, or cross-file refactors.",
         .input_schema = .{
             .properties = &.{
                 .{ .name = "path", .json_type = .string, .description = "File path; relative paths use the workspace root." },
@@ -928,6 +933,30 @@ pub fn toolRequiresApproval(tool_name: []const u8) bool {
 
 pub fn toolHasPermissionContract(tool_name: []const u8) bool {
     return lookup(tool_name) != null;
+}
+
+test "compact schema footprint preserves every builtin argument contract" {
+    const alloc = std.testing.allocator;
+    var normal = try tool_projection.buildModelToolProjectionForSet(alloc, advertisement_set, .{ .subagent_available = true, .compact_descriptions = false });
+    defer normal.deinit(alloc);
+    var compact = try tool_projection.buildModelToolProjectionForSet(alloc, advertisement_set, .{ .subagent_available = true, .compact_descriptions = true });
+    defer compact.deinit(alloc);
+    try std.testing.expectEqualDeep(normal.advertised_names, compact.advertised_names);
+    try std.testing.expectEqual(normal.advertised_functions.len, compact.advertised_functions.len);
+    var normal_bytes: usize = 0;
+    var compact_bytes: usize = 0;
+    for (normal.advertised_functions, compact.advertised_functions) |before, after| {
+        try std.testing.expectEqualStrings(before.name, after.name);
+        try std.testing.expectEqualDeep(before.input_schema, after.input_schema);
+        const full = try model_tool_schema.builtinFunctionSchemaJsonAlloc(alloc, before);
+        defer alloc.free(full);
+        const small = try model_tool_schema.builtinFunctionSchemaJsonAlloc(alloc, after);
+        defer alloc.free(small);
+        normal_bytes += full.len;
+        compact_bytes += small.len;
+    }
+    try std.testing.expect(compact_bytes < normal_bytes);
+    std.debug.print("schema footprint original={d} compact={d} saved_bytes={d}\n", .{ normal_bytes, compact_bytes, normal_bytes - compact_bytes });
 }
 
 test "built-in model-facing tool contract stays byte exact" {

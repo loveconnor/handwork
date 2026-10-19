@@ -5,6 +5,7 @@ const types = @import("../../shared/types.zig");
 const debug_trace = @import("../../shared/debug_trace.zig");
 const session_usage = @import("../../session/session_usage.zig");
 const runtime_provider_step = @import("provider_step.zig");
+const execution_budget = @import("../execution_budget.zig");
 
 const Allocator = std.mem.Allocator;
 const ChatMessage = types.ChatMessage;
@@ -12,6 +13,7 @@ const ChatMessage = types.ChatMessage;
 pub const Request = struct {
     model: []const u8,
     stream_provider: agent_stream_provider.Provider,
+    execution_budget: ?*execution_budget.Budget = null,
     api_key: []const u8,
     credential_source: ?types.CredentialSource = null,
     session_id: ?[]const u8 = null,
@@ -55,6 +57,8 @@ pub fn inspect(
         request.stream_provider,
         alloc,
         .{
+            .execution_budget = request.execution_budget,
+            .request_purpose = .image,
             .credential = if (request.credential_source == .host_managed)
                 .host_managed
             else
@@ -144,6 +148,39 @@ fn onEvent(raw: *anyopaque, event: agent_stream_provider.Event) void {
         .content_delta => |chunk| onContentChunk(raw, chunk),
         else => {},
     }
+}
+
+test "execution budget image provider forwards limits purpose and child identity" {
+    const Mock = struct {
+        calls: usize = 0,
+        fn stream(raw: ?*anyopaque, _: Allocator, request: agent_stream_provider.ModelRequest) !agent_stream_provider.Result {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            try std.testing.expectEqual(.image, request.request_purpose);
+            try std.testing.expectEqual(@as(u64, 7), request.trace_ctx.subagent_id);
+            try std.testing.expect(request.execution_budget != null);
+            try request.admission.admit();
+            self.calls += 1;
+            return .{ .completed = .{} };
+        }
+    };
+    const alloc = std.testing.allocator;
+    var budget = execution_budget.Budget.init(alloc, .{ .max_requests = 0 });
+    defer budget.deinit();
+    var cancel = std.atomic.Value(bool).init(false);
+    var mock: Mock = .{};
+    try std.testing.expectError(error.ExecutionBudgetRequestsExceeded, inspect(alloc, "system", "user", &.{}, .{
+        .model = "test",
+        .stream_provider = .{ .context = &mock, .stream_fn = Mock.stream },
+        .execution_budget = &budget,
+        .api_key = "test-key",
+        .retry_count = 1,
+        .cancel_flag = &cancel,
+        .trace_ctx = .{ .subagent_id = 7 },
+        .capture_limit_bytes = 1024,
+        .response_format = .{ .name = "test", .description = "test", .schema = .null },
+    }));
+    try std.testing.expectEqual(@as(usize, 0), mock.calls);
+    try std.testing.expectEqual(@as(usize, 0), budget.snapshot().in_flight);
 }
 
 test "shared image provider capture counts all streamed bytes while retaining its bound" {

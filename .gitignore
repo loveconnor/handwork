@@ -24,6 +24,9 @@ sdk/dist/
 benchmarks/results/*.json
 benchmarks/baseline.json
 
+# Local orchestrator benchmark outputs (kept on disk)
+/benchmarks/orchestration-results/
+
 # Local agent/editor/tooling directories from this workspace
 .adal/
 .agents/

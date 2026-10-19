@@ -390,9 +390,26 @@ fn loadChatGptCredential(
     transport: oauth_transport.Provider,
     mode: chatgpt_oauth.RefreshMode,
 ) !?Credential {
+    // Isolated runners may borrow a session through a read-only mount. Never
+    // rotate its remote refresh token when the new session cannot be persisted.
+    const read_only = if (io_mod.getenv("HANDWORK_AUTH_READ_ONLY")) |value|
+        std.mem.eql(u8, value, "1")
+    else
+        false;
+    return loadChatGptCredentialWithPolicy(alloc, transport, mode, read_only);
+}
+
+fn loadChatGptCredentialWithPolicy(
+    alloc: std.mem.Allocator,
+    transport: oauth_transport.Provider,
+    mode: chatgpt_oauth.RefreshMode,
+    read_only: bool,
+) !?Credential {
+    if (read_only and mode == .force) return error.CredentialStorageUnavailable;
     try requireSourceStorage(.chatgpt_subscription);
-    var access = (try chatgpt_oauth.loadAccess(alloc, transport, mode)) orelse return null;
+    var access = (try chatgpt_oauth.loadAccess(alloc, transport, if (read_only) .stored else mode)) orelse return null;
     defer access.deinit(alloc);
+    if (read_only and access.refresh_after_ms <= io_mod.milliTimestamp()) return error.CredentialStorageUnavailable;
     const token = access.access_token;
     access.access_token = &.{};
     const account_id = access.account_id;
@@ -403,6 +420,20 @@ fn loadChatGptCredential(
         .account_id = account_id,
         .refresh_after_ms = access.refresh_after_ms,
     };
+}
+
+test "read-only subscription refuses forced refresh before storage or transport" {
+    const RejectTransport = struct {
+        fn execute(_: ?*anyopaque, _: std.mem.Allocator, _: oauth_transport.Request) !oauth_transport.Response {
+            return error.TestUnexpectedTokenRotation;
+        }
+    };
+    try std.testing.expectError(error.CredentialStorageUnavailable, loadChatGptCredentialWithPolicy(
+        std.testing.allocator,
+        .{ .execute_fn = RejectTransport.execute },
+        .force,
+        true,
+    ));
 }
 
 fn loadStoredChatGptCredential(alloc: std.mem.Allocator) !?Credential {

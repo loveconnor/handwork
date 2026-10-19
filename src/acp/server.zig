@@ -72,6 +72,7 @@ const AcpMethod = enum {
     providers_list,
     providers_connect,
     providers_disconnect,
+    providers_usage,
     desktop_permission,
     desktop_directory,
     unknown,
@@ -97,6 +98,7 @@ const AcpMethod = enum {
         if (std.mem.eql(u8, method, "handwork/providers/list")) return .providers_list;
         if (std.mem.eql(u8, method, "handwork/providers/connect")) return .providers_connect;
         if (std.mem.eql(u8, method, "handwork/providers/disconnect")) return .providers_disconnect;
+        if (std.mem.eql(u8, method, "handwork/providers/usage")) return .providers_usage;
         if (std.mem.eql(u8, method, "handwork/settings/permission")) return .desktop_permission;
         if (std.mem.eql(u8, method, "handwork/settings/directory")) return .desktop_directory;
         return .unknown;
@@ -117,6 +119,7 @@ const AcpMethod = enum {
             .providers_list,
             .providers_connect,
             .providers_disconnect,
+            .providers_usage,
             => false,
             .session_list,
             .session_remove,
@@ -1288,6 +1291,7 @@ fn dispatch(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message) !void 
         .providers_list => providers.handleList(state, alloc, msg),
         .providers_connect => providers.handleConnect(state, alloc, msg),
         .providers_disconnect => providers.handleDisconnect(state, alloc, msg),
+        .providers_usage => providers.handleUsage(state, alloc, msg),
         .desktop_permission => @import("desktop_settings.zig").handlePermission(state, alloc, msg),
         .desktop_directory => @import("desktop_settings.zig").handleDirectory(state, alloc, msg),
         .initialize,
@@ -2667,6 +2671,8 @@ test "ACP method parser classifies request dispatch methods" {
     try std.testing.expectEqual(AcpMethod.libhandwork_checkpoint, AcpMethod.parse("libhandwork/checkpoint"));
     try std.testing.expectEqual(AcpMethod.libhandwork_restore, AcpMethod.parse("libhandwork/restore"));
     try std.testing.expectEqual(AcpMethod.libhandwork_new, AcpMethod.parse("libhandwork/new"));
+    try std.testing.expectEqual(AcpMethod.providers_usage, AcpMethod.parse("handwork/providers/usage"));
+    try std.testing.expect(!AcpMethod.providers_usage.waitsForActivePrompt());
     try std.testing.expectEqual(AcpMethod.unknown, AcpMethod.parse("workspace/unknown"));
     try std.testing.expect(AcpMethod.libhandwork_checkpoint.isLibhandwork());
     try std.testing.expect(AcpMethod.libhandwork_restore.isLibhandwork());

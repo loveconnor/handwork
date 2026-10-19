@@ -278,8 +278,18 @@ pub fn requestFingerprint(request: Request) [32]u8 {
     return hash.finalResult();
 }
 
+/// Applied lazily to child turns; parent coordination already lives in the system prompt.
+pub const bounded_child_guidance =
+    "Work only on the assigned outcome and owned paths; honor read-only status and non-goals. " ++
+    "Ownership is coordination, not permission or filesystem isolation. Return a concise result: " ++
+    "changed/reviewed files, exact verification commands and actual results, unresolved risks and " ++
+    "blockers. Do not repeat the parent's task or background. Never claim unrun checks. " ++
+    "Do not delegate; the parent integrates.";
+
 pub const steering_pending_result = "The subagent is still running. Handle the user's steering now. Its result will arrive automatically; do not delegate again to poll for it.";
 pub const background_pending_result = "The subagent is running in the background. Continue independent work now. Its result will arrive automatically; do not poll, sleep, or repeat its work. If nothing independent remains, state that you are waiting; handwork will resume you when the result is ready.";
+
+pub const bounded_background_pending_result = "The child is running; its result arrives automatically. Batch independent owned edits now, then integrate and batch required verification after delivery. Reuse checks whose inputs and dependencies are unchanged. Avoid status/diff-only turns, polling, sleeping, or duplicate child work. If nothing independent remains, state that you are waiting.";
 
 pub const Result = struct {
     ok: bool,

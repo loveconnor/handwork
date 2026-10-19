@@ -7,6 +7,8 @@ const debug_trace = @import("../../shared/debug_trace.zig");
 const io_mod = @import("../../shared/io.zig");
 const runtime_telemetry = @import("telemetry.zig");
 const runtime_tool_contracts = @import("tool_contracts.zig");
+const request_accounting = @import("request_accounting.zig");
+const execution_budget = @import("../execution_budget.zig");
 
 const Allocator = std.mem.Allocator;
 const TraceContext = debug_trace.TraceContext;
@@ -22,8 +24,13 @@ const InvocationAdmission = struct {
     attempt_evidence: *AttemptEvidence,
     trace_ctx: TraceContext,
     model: []const u8,
+    request_id: u64,
     caller_admission: agent_stream_provider.Admission,
     observation: ?session_usage.InvocationObservation = null,
+    admitted: bool = false,
+    budget: ?*execution_budget.Budget = null,
+    budget_ticket: ?execution_budget.Ticket = null,
+    cancel_flag: *const std.atomic.Value(bool),
 
     fn admit(raw: *anyopaque) !void {
         const self: *@This() = @ptrCast(@alignCast(raw));
@@ -32,13 +39,15 @@ const InvocationAdmission = struct {
         if (self.caller_admission.admit_fn != null) {
             try self.caller_admission.admit();
         }
+        if (self.budget) |budget| self.budget_ticket = try budget.beginRequest(self.cancel_flag);
         self.attempt_evidence.provider_admitted = true;
+        self.admitted = true;
         debug_trace.eventf(
             "agent",
             "provider_admitted",
             self.trace_ctx,
-            "model={s}",
-            .{self.model},
+            "model={s} request_id={d}",
+            .{ self.model, self.request_id },
         );
     }
 };
@@ -54,17 +63,29 @@ pub fn streamModelCompletion(
         return agent_stream_provider.failResult(error.Cancelled);
     }
     const started_at_ms = io_mod.milliTimestamp();
+    const request_id = request_accounting.begin(request_value);
     var admission = InvocationAdmission{
         .usage = usage,
         .attempt_evidence = request_value.attempt_evidence,
         .trace_ctx = request_value.trace_ctx,
         .model = request_value.model,
+        .request_id = request_id,
         .caller_admission = request_value.admission,
+        .budget = request_value.execution_budget,
+        .cancel_flag = request_value.cancel_flag,
+    };
+    var settlement: execution_budget.Settlement = .unknown;
+    defer if (admission.budget_ticket) |ticket| {
+        ticket.owner.finishRequest(ticket, settlement) catch |err| {
+            debug_trace.eventf("agent", "execution_budget_settlement_failed", request_value.trace_ctx, "error={s}", .{@errorName(err)});
+        };
     };
     var request = request_value;
     request.admission = .{ .context = &admission, .admit_fn = InvocationAdmission.admit };
     @import("request_efficiency.zig").recordRequest(request);
     var result = provider.stream(alloc, request) catch |err| {
+        if (request.delivery.load() == .definitely_unsent) settlement = .unbilled;
+        request_accounting.finish(request, request_id, null, started_at_ms, admission.admitted);
         runtime_telemetry.recordProviderCallMetric(request.model, started_at_ms, 0, 0, 0, 0, request.trace_ctx.turn_id, request.trace_ctx.step_id, request.trace_ctx.subagent_id, @errorName(err), "");
         if (admission.observation) |observation| try observation.fail(
             if (request.delivery.load() == .possibly_sent) .ambiguous_delivery else .unbilled,
@@ -72,6 +93,17 @@ pub fn streamModelCompletion(
         return err;
     };
     errdefer result.deinit(alloc);
+    settlement = switch (result) {
+        .completed => |completed| blk: {
+            const counters = request_accounting.Counters.fromCompleted(completed);
+            break :blk if (completed.completion.delivery_ambiguous or !counters.consistent()) .unknown else .{ .usage = .{
+                .input_tokens = counters.input,
+                .output_tokens = counters.output,
+            } };
+        },
+        .failed => if (request.delivery.load() == .definitely_unsent) .unbilled else .unknown,
+    };
+    request_accounting.finish(request, request_id, result, started_at_ms, admission.admitted);
     const observation = admission.observation orelse
         return agent_stream_provider.failResult(error.ProviderAdmissionMissing);
 
@@ -422,6 +454,41 @@ test "provider preflight failure does not reserve usage" {
     try std.testing.expectEqual(@as(u64, 0), snapshot.settled_through_sequence);
 }
 
+test "request accounting missing admission frees an owned result exactly once" {
+    const Mock = struct {
+        fn stream(_: ?*anyopaque, alloc: Allocator, _: agent_stream_provider.ModelRequest) !agent_stream_provider.Result {
+            return .{ .completed = .{ .completion = .{ .content = try alloc.dupe(u8, "owned response") }, .ownership = .owned } };
+        }
+        fn event(_: *anyopaque, _: agent_stream_provider.Event) void {}
+    };
+    const alloc = std.testing.allocator;
+    var cancel = std.atomic.Value(bool).init(false);
+    var delivery = DeliveryCertainty.init();
+    var evidence: AttemptEvidence = .{};
+    var callback: u8 = 0;
+    try std.testing.expectError(error.ProviderAdmissionMissing, streamModelCompletion(
+        .{ .stream_fn = Mock.stream },
+        alloc,
+        .{
+            .credential = .{ .direct = .{ .secret_bytes = "test-key" } },
+            .model = "test/model",
+            .retry_count = 1,
+            .messages = &.{},
+            .tool_choice = .auto,
+            .provider_options = .{},
+            .trace_ctx = .{},
+            .content_capture_limit = null,
+            .delivery = &delivery,
+            .attempt_evidence = &evidence,
+            .events = .{ .context = &callback, .emit_fn = Mock.event },
+            .cancel_flag = &cancel,
+        },
+        null,
+        alloc,
+    ));
+    try std.testing.expect(!evidence.provider_admitted);
+}
+
 test "caller admission publishes before provider attempt is admitted" {
     const CallerAdmission = struct {
         calls: usize = 0,
@@ -738,6 +805,65 @@ test "selected MCP schemas replace old definitions without duplicate names" {
     const properties = tools.items[0].input_schema.object.get("properties").?.object;
     try std.testing.expect(properties.contains("new_value"));
     try std.testing.expect(!properties.contains("old_value"));
+}
+
+test "execution budget provider admission shares root child capacity and settles errors" {
+    const Mock = struct {
+        opens: usize = 0,
+        ambiguous: bool = false,
+        fn stream(raw: ?*anyopaque, _: Allocator, request: agent_stream_provider.ModelRequest) !agent_stream_provider.Result {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            try request.admission.admit();
+            self.opens += 1;
+            request.delivery.markPossiblySent();
+            if (self.ambiguous) return error.StreamInterrupted;
+            return .{ .completed = .{ .completion = .{ .usage = .{ .input_tokens = 3, .output_tokens = 2 }, .finish_reason = .stop } } };
+        }
+        fn event(_: *anyopaque, _: agent_stream_provider.Event) void {}
+    };
+    const alloc = std.testing.allocator;
+    for ([_]bool{ false, true }) |ambiguous| {
+        var budget = execution_budget.Budget.init(alloc, if (ambiguous) .{ .max_tokens = 100 } else .{ .max_requests = 1 });
+        defer budget.deinit();
+        var mock: Mock = .{ .ambiguous = ambiguous };
+        var cancel = std.atomic.Value(bool).init(false);
+        var delivery = DeliveryCertainty.init();
+        var evidence: AttemptEvidence = .{};
+        var callback: u8 = 0;
+        var request: agent_stream_provider.ModelRequest = .{
+            .credential = .{ .direct = .{ .secret_bytes = "test-key" } },
+            .model = "test/model",
+            .retry_count = 1,
+            .messages = &.{},
+            .tool_choice = .auto,
+            .provider_options = .{},
+            .trace_ctx = .{},
+            .content_capture_limit = null,
+            .delivery = &delivery,
+            .attempt_evidence = &evidence,
+            .events = .{ .context = &callback, .emit_fn = Mock.event },
+            .cancel_flag = &cancel,
+            .execution_budget = &budget,
+        };
+        const provider: agent_stream_provider.Provider = .{ .context = &mock, .stream_fn = Mock.stream };
+        if (ambiguous) {
+            try std.testing.expectError(error.StreamInterrupted, streamModelCompletion(provider, alloc, request, null, alloc));
+            try std.testing.expectEqual(@as(u64, 1), budget.snapshot().unknown_requests);
+        } else {
+            var result = try streamModelCompletion(provider, alloc, request, null, alloc);
+            defer result.deinit(alloc);
+            try std.testing.expectEqual(@as(u64, 5), budget.snapshot().known_tokens);
+        }
+        try std.testing.expectEqual(@as(usize, 0), budget.snapshot().in_flight);
+        delivery = .init();
+        evidence = .{};
+        request.trace_ctx.subagent_id = 1;
+        try std.testing.expectError(if (ambiguous) error.ExecutionBudgetUsageUnknown else error.ExecutionBudgetRequestsExceeded, streamModelCompletion(provider, alloc, request, null, alloc));
+        try std.testing.expectEqual(@as(usize, 1), mock.opens);
+        try std.testing.expect(!evidence.provider_admitted);
+        try std.testing.expectEqual(@as(u64, 1), budget.snapshot().admitted_requests);
+        try std.testing.expectEqual(@as(usize, 0), budget.snapshot().in_flight);
+    }
 }
 
 test "invalid writer at provider completion prevents delivery of executable tool calls" {

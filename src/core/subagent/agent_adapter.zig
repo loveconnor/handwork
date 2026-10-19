@@ -423,6 +423,7 @@ fn runtimeDeps(context: *Context) agent_runtime.AgentRuntimeDeps {
         .format_tool_execution_error = formatToolExecutionError,
         .report_usage = reportUsage,
         .usage = &context.turn.sessionRuntime().usage,
+        .execution_budget = context.config.host.configuredBudget(),
         .usage_allocator = context.turn.alloc,
     };
 }

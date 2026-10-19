@@ -70,6 +70,10 @@ const OAuthHttpOperation = struct {
                 else
                     .default,
             },
+            .extra_headers = if (self.request.account_id) |account_id|
+                &.{.{ .name = "chatgpt-account-id", .value = account_id }}
+            else
+                &.{},
             .redirect_behavior = .unhandled,
             .response_writer = &response_writer,
         }) catch |err| switch (err) {
@@ -81,10 +85,19 @@ const OAuthHttpOperation = struct {
 
         return .{
             .disposition = if (result.status == .ok) .accepted else .rejected,
+            .status = result.status,
             .body = try self.alloc.dupe(u8, body),
         };
     }
 };
+
+test "oauth transport rejects an expired deadline before network admission" {
+    try std.testing.expectError(error.Timeout, provider.execute(std.testing.allocator, .{
+        .method = .get,
+        .url = "http://127.0.0.1:0/never-requested",
+        .deadline = std.Io.Clock.Timestamp.fromNow(io_mod.getIo(), .{ .clock = .awake, .raw = .fromMilliseconds(-1) }),
+    }));
+}
 
 test "oauth transport user agent uses the product version" {
     try std.testing.expect(std.mem.startsWith(u8, provider_client.user_agent, "handwork/"));

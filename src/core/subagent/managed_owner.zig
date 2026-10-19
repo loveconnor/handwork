@@ -14,7 +14,7 @@ const types = @import("../shared/types.zig");
 const Allocator = std.mem.Allocator;
 
 pub const StartResult = enum { started, already_running };
-pub const StartError = error{ OutOfMemory, OwnerClosed, ChildUnavailable, ThreadSpawnFailed };
+pub const StartError = error{ OutOfMemory, OwnerClosed, ChildUnavailable, ThreadSpawnFailed, MaxChildrenReached };
 pub const WaitError = error{ OutOfMemory, ChildUnavailable, StateUnavailable };
 pub const CancelError = error{ChildUnavailable};
 
@@ -86,6 +86,9 @@ pub const Owner = struct {
     authority_resolver: *authority.Resolver,
     approvals: *approval_registry.Registry,
     max_history_turns: usize = 8,
+    /// Optional running child-turn cap. Completed slots and persistent identities
+    /// do not consume capacity; cancellation retains capacity until completion.
+    max_concurrent_children: ?usize = null,
     mutex: std.Io.Mutex = .init,
     waiters_changed: std.Io.Condition = .init,
     slots: std.ArrayList(*Slot) = .empty,
@@ -232,6 +235,13 @@ pub const Owner = struct {
                         _ = self.feedback.swapRemove(feedback_index);
                         item.deinit(self.alloc);
                     } else feedback_index += 1;
+                }
+                if (self.max_concurrent_children) |limit| {
+                    var running: usize = 0;
+                    for (self.slots.items) |slot| {
+                        if (slot.completion == .running) running += 1;
+                    }
+                    if (running >= limit) return error.MaxChildrenReached;
                 }
                 const slot = try self.alloc.create(Slot);
                 errdefer self.alloc.destroy(slot);
@@ -448,6 +458,58 @@ fn destroySlot(owner: *Owner, slot: *Slot) void {
     std.debug.assert(slot.route_refs == 0);
     owner.alloc.free(slot.child_id);
     owner.alloc.destroy(slot);
+}
+
+test "managed owner child cap keeps replay and cancellation capacity under concurrent starts" {
+    const alloc = std.testing.allocator;
+    var owner = Owner{
+        .alloc = alloc,
+        .sessions = undefined,
+        .state_store = undefined,
+        .services = undefined,
+        .authority_resolver = undefined,
+        .approvals = undefined,
+        .max_concurrent_children = 1,
+    };
+    // No thread may be spawned in this full-capacity fixture. The existing Slot
+    // stays alive until all concurrent callers have joined.
+    var active = Slot{ .owner = &owner, .child_id = @constCast("active-child") };
+    try owner.slots.append(alloc, &active);
+    defer owner.slots.deinit(alloc);
+    try std.testing.expectEqual(StartResult.already_running, try owner.start("active-child"));
+    active.cancel.store(true, .seq_cst);
+    const Fixture = struct {
+        owner: *Owner,
+        rejected: bool = false,
+        failure: ?anyerror = null,
+        fn run(self: *@This()) void {
+            _ = self.owner.start("new-child") catch |err| {
+                if (err == error.MaxChildrenReached) self.rejected = true else self.failure = err;
+                return;
+            };
+        }
+    };
+    var fixtures: [4]Fixture = undefined;
+    var threads: [4]std.Thread = undefined;
+    var started: usize = 0;
+    defer for (threads[0..started]) |thread| thread.join();
+    for (&fixtures, &threads) |*fixture, *thread| {
+        fixture.* = .{ .owner = &owner };
+        thread.* = try std.Thread.spawn(.{}, Fixture.run, .{fixture});
+        started += 1;
+    }
+    for (threads[0..started]) |thread| thread.join();
+    started = 0;
+    for (fixtures) |fixture| {
+        try std.testing.expect(fixture.failure == null);
+        try std.testing.expect(fixture.rejected);
+    }
+    try std.testing.expectEqual(@as(usize, 1), owner.slots.items.len);
+    // Completed slots do not consume capacity, but a zero cap still blocks a
+    // new child. This also avoids invoking the deliberately absent services.
+    active.completion = .{ .published = .{ .phase = .finished, .outcome = .cancelled } };
+    owner.max_concurrent_children = 0;
+    try std.testing.expectError(error.MaxChildrenReached, owner.start("new-child"));
 }
 
 test "child feedback deduplicates operations and bounds queued receipts" {

@@ -7,6 +7,7 @@ const tool_dispatch = @import("../tooling/tool_dispatch.zig");
 const model_tool_schema = @import("../tooling/model_tool_schema.zig");
 const model_provider = @import("../config/model_provider.zig");
 const credential_authority = @import("../auth/credential_authority.zig");
+const execution_budget = @import("execution_budget.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -237,6 +238,9 @@ pub const ModelRequest = struct {
     admission: Admission = .{},
     cancel_flag: *std.atomic.Value(bool),
     provider_attempt_owner: ProviderAttemptOwner = .transport,
+    /// Shared root/child pre-delivery admission limits. Never sent to the provider.
+    execution_budget: ?*execution_budget.Budget = null,
+    request_purpose: enum { generation, compaction, image } = .generation,
 
     pub fn data(self: ModelRequest) RequestData {
         return .{
@@ -302,7 +306,36 @@ pub const Completed = struct {
     completion: types.ModelCompletion = .{},
     usage: UsageOutcome = .{ .unavailable = .unbilled },
     ownership: ResultOwnership = .borrowed,
+    /// Preserve raw provider counters. Anthropic reports uncached input separately.
+    context_input_basis: enum { total, uncached } = .total,
+
+    pub fn totalContextInput(self: Completed) ?u64 {
+        const raw = self.completion.usage;
+        const input = raw.input_tokens orelse return null;
+        if (self.context_input_basis == .total) return input;
+        const read = raw.cache_read_tokens orelse return null;
+        const created = raw.cache_write_tokens orelse return null;
+        const partial = std.math.add(u64, input, read) catch return null;
+        return std.math.add(u64, partial, created) catch null;
+    }
 };
+
+test "request accounting normalizes provider input basis without double counting cache" {
+    const anthropic: Completed = .{
+        .context_input_basis = .uncached,
+        .completion = .{ .usage = .{ .input_tokens = 3, .cache_read_tokens = 80, .cache_write_tokens = 20, .output_tokens = 5 } },
+    };
+    try std.testing.expectEqual(@as(?u64, 103), anthropic.totalContextInput());
+    try std.testing.expectEqual(@as(?u64, 3), anthropic.completion.usage.input_tokens);
+    const openai: Completed = .{ .completion = .{ .usage = .{ .input_tokens = 103, .cache_read_tokens = 80, .output_tokens = 5 } } };
+    try std.testing.expectEqual(@as(?u64, 103), openai.totalContextInput());
+    var incomplete = anthropic;
+    incomplete.completion.usage.cache_write_tokens = null;
+    try std.testing.expect(incomplete.totalContextInput() == null);
+    var overflow = anthropic;
+    overflow.completion.usage.input_tokens = std.math.maxInt(u64);
+    try std.testing.expect(overflow.totalContextInput() == null);
+}
 
 pub const Failure = struct {
     kind: FailureKind,

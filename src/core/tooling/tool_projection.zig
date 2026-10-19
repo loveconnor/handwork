@@ -4,6 +4,7 @@ const permissions = @import("../permissions/permissions.zig");
 const tool_dispatch = @import("tool_dispatch.zig");
 const tool_set_contract = @import("tool_set.zig");
 const types = @import("../shared/types.zig");
+const io_mod = @import("../shared/io.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -11,6 +12,8 @@ pub const Options = struct {
     permission_mode: types.PermissionMode = .auto,
     permission_rules: types.PermissionRuleSet = .{},
     subagent_available: bool = false,
+    /// Null uses the process experiment flag; explicit false keeps original wording.
+    compact_descriptions: ?bool = null,
 };
 
 const BuildKind = enum { full, read_only };
@@ -521,16 +524,18 @@ fn buildToolProjection(alloc: Allocator, tool_set: tool_set_contract.ToolSet, ki
     errdefer guidance_out.deinit();
 
     var first_custom_guidance = true;
+    var resolved_options = options;
+    resolved_options.compact_descriptions = options.compact_descriptions orelse compactDescriptionsEnabled();
 
     for (tool_set.order) |tool_name| {
         const tool = tool_set.registry.lookup(tool_name) orelse continue;
-        try appendBuiltinTool(alloc, &advertised_names, &advertised_functions, &guidance_out.writer, &first_custom_guidance, tool.*, kind, tool_set, options);
+        try appendBuiltinTool(alloc, &advertised_names, &advertised_functions, &guidance_out.writer, &first_custom_guidance, tool.*, kind, tool_set, resolved_options);
     }
 
     if (kind == .full) {
         for (tool_set.registry.tools) |tool| {
             if (isCanonicalToolName(tool_set, tool.name)) continue;
-            try appendBuiltinTool(alloc, &advertised_names, &advertised_functions, &guidance_out.writer, &first_custom_guidance, tool, kind, tool_set, options);
+            try appendBuiltinTool(alloc, &advertised_names, &advertised_functions, &guidance_out.writer, &first_custom_guidance, tool, kind, tool_set, resolved_options);
         }
     }
 
@@ -566,7 +571,11 @@ fn appendBuiltinTool(
     }
     try advertised_names.append(alloc, tool.name);
     if (!tool.provider_executed and tool.write_provider_advertisement_fn == null) {
-        try advertised_functions.append(alloc, tool.model_schema);
+        var function = tool.model_schema;
+        if (options.compact_descriptions orelse false) {
+            function.description = function.compact_description orelse function.description;
+        }
+        try advertised_functions.append(alloc, function);
     }
     if (tool.write_provider_advertisement_fn != null) {
         if (first_custom_guidance.*) {
@@ -576,6 +585,35 @@ fn appendBuiltinTool(
         }
         try guidance_writer.writeAll(tool.description);
     }
+}
+
+fn compactDescriptionsEnabled() bool {
+    return std.mem.eql(u8, io_mod.getenv("HANDWORK_EXPERIMENT_COMPACT_SCHEMAS") orelse "", "1");
+}
+
+test "compact schema projection changes only reviewed wording and preserves tool authority" {
+    const alloc = std.testing.allocator;
+    var tool = test_read_file;
+    tool.model_schema.compact_description = "Read test file.";
+    var normal = try buildTestModelToolProjectionForRegistry(alloc, &.{tool}, .{ .compact_descriptions = false });
+    defer normal.deinit(alloc);
+    var compact = try buildTestModelToolProjectionForRegistry(alloc, &.{tool}, .{ .compact_descriptions = true });
+    defer compact.deinit(alloc);
+    try std.testing.expectEqualDeep(normal.advertised_names, compact.advertised_names);
+    try std.testing.expectEqualStrings(tool.model_schema.description, normal.advertised_functions[0].description);
+    try std.testing.expectEqualStrings("Read test file.", compact.advertised_functions[0].description);
+    try std.testing.expectEqualDeep(normal.advertised_functions[0].input_schema, compact.advertised_functions[0].input_schema);
+    try std.testing.expectEqualStrings(normal.custom_guidance, compact.custom_guidance);
+    const rendered = try model_tool_schema.builtinFunctionSchemaJsonAlloc(alloc, compact.advertised_functions[0]);
+    defer alloc.free(rendered);
+    try std.testing.expect(std.mem.find(u8, rendered, "compact_description") == null);
+    var deny_rules = [_]types.PermissionRule{.{ .permission = @constCast("read"), .pattern = @constCast("*"), .action = .deny }};
+    var denied = try buildTestModelToolProjectionForRegistry(alloc, &.{tool}, .{
+        .compact_descriptions = true,
+        .permission_rules = .{ .rules = &deny_rules },
+    });
+    defer denied.deinit(alloc);
+    try std.testing.expectEqual(@as(usize, 0), denied.advertised_names.len);
 }
 
 /// A provider-executed tool is never dispatched locally, so an unsettled `ask`

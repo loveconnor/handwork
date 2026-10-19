@@ -312,7 +312,7 @@ pub fn consume(alloc: Allocator, anthropic: bool, reader: *std.Io.Reader, events
     }
     const owned_calls = try calls.toOwnedSlice(alloc);
     errdefer types.freeToolCallSlice(alloc, owned_calls);
-    return .{ .completed = .{ .completion = .{ .content = try content.toOwnedSlice(alloc), .tool_calls = owned_calls, .usage = usage, .finish_reason = finish }, .ownership = .owned, .usage = .{ .unavailable = .possibly_billed } } };
+    return .{ .completed = .{ .completion = .{ .content = try content.toOwnedSlice(alloc), .tool_calls = owned_calls, .usage = usage, .finish_reason = finish }, .ownership = .owned, .usage = .{ .unavailable = .possibly_billed }, .context_input_basis = if (anthropic) .uncached else .total } };
 }
 fn announce(events: stream.EventSink, call: *Pending) void {
     if (!call.started and call.id.items.len > 0 and call.name.items.len > 0) {
@@ -343,6 +343,17 @@ test "public API stream joins fragmented tool arguments and requires terminal pr
     try std.testing.expectEqual(@as(?u64, 10), result.completed.completion.usage.input_tokens);
     try std.testing.expectError(error.IncompleteProviderStream, testConsume(false, wire[0 .. wire.len - "data: [DONE]\n\n".len]));
 }
+test "public API Anthropic cached-heavy usage keeps raw counts and marks input basis" {
+    const wire =
+        "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":3,\"cache_read_input_tokens\":80,\"cache_creation_input_tokens\":20}}}\n\n" ++
+        "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":5}}\n\n" ++
+        "data: {\"type\":\"message_stop\"}\n\n";
+    var result = try testConsume(true, wire);
+    defer result.deinit(std.testing.allocator);
+    try std.testing.expectEqual(@as(?u64, 3), result.completed.completion.usage.input_tokens);
+    try std.testing.expectEqual(@as(?u64, 103), result.completed.totalContextInput());
+}
+
 test "public API Anthropic stream preserves text tools and incremental usage" {
     const wire =
         "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":7}}}\n\n" ++

@@ -1090,7 +1090,8 @@ pub const Reducer = struct {
             }
             return true;
         } else if (std.mem.eql(u8, event_type, "error")) {
-            try self.accept_failure(alloc, event_value.object);
+            const failure = event_value.object.get("error");
+            try self.accept_failure(alloc, if (failure != null and failure.? == .object) failure.?.object else event_value.object);
             self.terminal_seen = true;
             self.finish_reason = .provider_error;
             return true;
@@ -1185,7 +1186,13 @@ pub const Reducer = struct {
     }
 
     fn accept_failure(self: *Reducer, alloc: std.mem.Allocator, fields: std.json.ObjectMap) !void {
-        const code = stringField(fields, "code") orelse "provider_error";
+        // Some subscription endpoints wrap error events and use type when code
+        // is null. Preserve that classification instead of erasing it behind a
+        // generic non-retryable failure. The event's own type="error" is not a
+        // server error classification.
+        const error_type = stringField(fields, "type");
+        const code = stringField(fields, "code") orelse
+            (if (error_type != null and !std.mem.eql(u8, error_type.?, "error")) error_type.? else "provider_error");
         const message = stringField(fields, "message") orelse "Provider response failed";
         const bounded_code = types.ModelFailureDiagnostic.init(code);
         const bounded_message = types.ModelFailureDiagnostic.init(message);
@@ -1193,7 +1200,8 @@ pub const Reducer = struct {
         const text = try std.fmt.bufPrint(&buffer, "{s}: {s}", .{ bounded_code.view(), bounded_message.view() });
         const detail = types.ModelFailureDiagnostic.init(text);
         self.provider_failure_detail = try alloc.dupe(u8, detail.view());
-        self.provider_failure_cause = if (std.mem.eql(u8, code, "server_error"))
+        self.provider_failure_cause = if (std.mem.eql(u8, code, "server_error") or
+            std.mem.eql(u8, code, "server_is_overloaded"))
             null
         else if (std.mem.eql(u8, code, "rate_limit_exceeded"))
             .rate_limited
@@ -1997,6 +2005,8 @@ test "Responses terminal failures retain provider diagnostics as outcomes" {
     for ([_][]const u8{
         "{\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"code\":\"server_error\",\"message\":\"temporarily unavailable\"}}}",
         "{\"type\":\"error\",\"code\":\"server_error\",\"message\":\"temporarily unavailable\"}",
+        "{\"type\":\"error\",\"error\":{\"code\":\"server_error\",\"message\":\"temporarily unavailable\"}}",
+        "{\"type\":\"error\",\"error\":{\"code\":null,\"type\":\"server_error\",\"message\":\"temporarily unavailable\"}}",
     }) |event| {
         var stream = ToolRecordTest.init(std.testing.allocator);
         defer stream.deinit();
@@ -2005,6 +2015,46 @@ test "Responses terminal failures retain provider diagnostics as outcomes" {
         defer stream.freeCompletion(completion);
         try std.testing.expectEqual(types.ProviderFinishReason.provider_error, completion.finish_reason.?);
         try std.testing.expectEqualStrings("server_error: temporarily unavailable", completion.provider_failure_detail.?);
+        try std.testing.expect(completion.provider_failure_cause != .non_retryable);
+    }
+}
+
+test "Responses nested errors retain rate limits and request rejection without inventing usage" {
+    const cases = .{
+        .{ "{\"type\":\"error\",\"error\":{\"code\":\"rate_limit_exceeded\",\"message\":\"wait\"}}", types.ProviderFailureCause.rate_limited },
+        .{ "{\"type\":\"error\",\"error\":{\"code\":\"invalid_request_error\",\"message\":\"invalid request\"}}", types.ProviderFailureCause.non_retryable },
+        .{ "{\"type\":\"error\",\"error\":{\"type\":\"unknown_error\",\"message\":\"unknown\"}}", types.ProviderFailureCause.non_retryable },
+        .{ "{\"type\":\"error\",\"error\":null}", types.ProviderFailureCause.non_retryable },
+    };
+    inline for (cases) |case| {
+        var stream = ToolRecordTest.init(std.testing.allocator);
+        defer stream.deinit();
+        try stream.apply(case[0]);
+        const completion = try stream.finish();
+        defer stream.freeCompletion(completion);
+        try std.testing.expectEqual(types.ProviderFinishReason.provider_error, completion.finish_reason.?);
+        try std.testing.expectEqual(case[1], completion.provider_failure_cause.?);
+        try std.testing.expect(completion.usage.input_tokens == null);
+        try std.testing.expect(completion.usage.output_tokens == null);
+    }
+}
+
+test "Responses server overload is retryable for flat nested and failed response envelopes" {
+    for ([_][]const u8{
+        "{\"type\":\"error\",\"code\":\"server_is_overloaded\",\"message\":\"Our servers are currently overloaded. Please try again later.\"}",
+        "{\"type\":\"error\",\"error\":{\"code\":\"server_is_overloaded\",\"message\":\"Our servers are currently overloaded. Please try again later.\"}}",
+        "{\"type\":\"error\",\"error\":{\"code\":null,\"type\":\"server_is_overloaded\",\"message\":\"Our servers are currently overloaded. Please try again later.\"}}",
+        "{\"type\":\"response.failed\",\"response\":{\"error\":{\"code\":\"server_is_overloaded\",\"message\":\"Our servers are currently overloaded. Please try again later.\"}}}",
+    }) |event| {
+        var stream = ToolRecordTest.init(std.testing.allocator);
+        defer stream.deinit();
+        try stream.apply(event);
+        const completion = try stream.finish();
+        defer stream.freeCompletion(completion);
+        try std.testing.expectEqual(types.ProviderFinishReason.provider_error, completion.finish_reason.?);
+        try std.testing.expect(completion.provider_failure_cause == null);
+        try std.testing.expect(std.mem.startsWith(u8, completion.provider_failure_detail.?, "server_is_overloaded:"));
+        try std.testing.expect(completion.usage.input_tokens == null);
     }
 }
 

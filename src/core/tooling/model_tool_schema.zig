@@ -60,6 +60,8 @@ pub const ObjectSchema = struct {
 pub const FunctionSchema = struct {
     name: []const u8,
     description: []const u8,
+    /// Reviewed alternative wording. Projection may opt in; never serialized as metadata.
+    compact_description: ?[]const u8 = null,
     input_schema: ObjectSchema = .{},
 };
 
