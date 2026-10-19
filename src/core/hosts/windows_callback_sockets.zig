@@ -81,6 +81,12 @@ pub fn listen(io: std.Io, address: std.Io.net.IpAddress) !std.Io.net.Server {
     return .{ .socket = .{ .handle = handle, .address = bound_address }, .options = .{ .mode = .stream, .protocol = .tcp } };
 }
 
+fn pollTimedOut(status: windows.NTSTATUS) bool {
+    // AFD can complete an expired poll with the I/O timeout status rather
+    // than the wait timeout status. Neither indicates a broken listener.
+    return status == .TIMEOUT or status == .IO_TIMEOUT;
+}
+
 pub fn readable(io: std.Io, handle: windows.HANDLE, timeout_ms: i32) !bool {
     const Entry = extern struct { handle: windows.HANDLE, events: u32, status: windows.NTSTATUS };
     const PollInfo = extern struct { timeout: i64, count: u32, exclusive: u32, entries: [1]Entry };
@@ -92,10 +98,11 @@ pub fn readable(io: std.Io, handle: windows.HANDLE, timeout_ms: i32) !bool {
         .exclusive = 0,
         .entries = .{.{ .handle = handle, .events = events, .status = .SUCCESS }},
     };
-    switch (try control(io, handle, windows.IOCTL.AFD.POLL, std.mem.asBytes(&info), std.mem.asBytes(&info))) {
-        .SUCCESS => {},
-        .TIMEOUT => return false,
-        else => |err| return windows.unexpectedStatus(err),
+    const status = try control(io, handle, windows.IOCTL.AFD.POLL, std.mem.asBytes(&info), std.mem.asBytes(&info));
+    if (pollTimedOut(status)) return false;
+    if (status != .SUCCESS) {
+        std.log.err("OAuth callback AFD poll failed status={s} (0x{x})", .{ @tagName(status), @intFromEnum(status) });
+        return windows.unexpectedStatus(status);
     }
     if (info.count == 0) return false;
     // A reset is readable: the stream reader classifies it and drops the
@@ -122,6 +129,14 @@ pub fn setTimeouts(io: std.Io, handle: windows.HANDLE, millis: u32) !void {
     }
 }
 
+test "Windows callback AFD poll recognizes only native timeout statuses" {
+    try std.testing.expect(pollTimedOut(.TIMEOUT));
+    try std.testing.expect(pollTimedOut(.IO_TIMEOUT));
+    try std.testing.expect(!pollTimedOut(.SUCCESS));
+    try std.testing.expect(!pollTimedOut(.INVALID_HANDLE));
+    try std.testing.expect(!pollTimedOut(.INVALID_PARAMETER));
+}
+
 test "Windows callback AFD sockets poll accept data silence EOF and reserve each loopback family" {
     if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
     const io = std.testing.io;
@@ -143,6 +158,7 @@ test "Windows callback AFD sockets poll accept data silence EOF and reserve each
         const client = try server.socket.address.connect(io, .{ .mode = .stream });
         defer client.close(io);
         try std.testing.expect(try readable(io, server.socket.handle, 1000));
+        try std.testing.expect(try readable(io, server.socket.handle, 0));
         const peer = try server.accept(io);
         var peer_open = true;
         defer if (peer_open) peer.close(io);

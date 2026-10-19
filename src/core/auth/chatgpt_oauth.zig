@@ -1032,7 +1032,22 @@ test "ChatGPT browser callback accepts IPv4 and IPv6 localhost and releases both
     for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
         if (std.mem.eql(u8, hostname, "::1") and listeners.ipv6 == null) continue;
         const address = try std.Io.net.IpAddress.parse(hostname, port);
-        try std.testing.expectError(error.ConnectionRefused, address.connect(io_mod.getIo(), .{ .mode = .stream }));
+        if (comptime @import("builtin").os.tag == .windows) {
+            // Zig 0.16's AFD connect maps refusal to error.Unexpected. Probe
+            // through Winsock instead, and require the actual refusal code.
+            const winsock = @import("../hosts/windows_sockets.zig");
+            const connection = winsock.connect(address) catch |err| switch (err) {
+                error.ConnectionRefused => continue,
+                else => return err,
+            };
+            defer winsock.close(connection.handle);
+            try std.testing.expect(connection.pending);
+            var fds = [_]winsock.PollFd{.{ .fd = connection.handle, .events = winsock.Poll.OUT, .revents = 0 }};
+            try std.testing.expectEqual(@as(usize, 1), try winsock.poll(&fds, 2000));
+            try std.testing.expectEqual(std.posix.E.CONNREFUSED, try winsock.socketError(connection.handle));
+        } else {
+            try std.testing.expectError(error.ConnectionRefused, address.connect(io_mod.getIo(), .{ .mode = .stream }));
+        }
     }
     if (comptime @import("builtin").os.tag != .windows) {
         var rebound = try bindBrowserCallbackPorts(&.{port});
