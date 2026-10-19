@@ -3,8 +3,17 @@
 const std = @import("std");
 
 const default_prompt = @embedFile("../../builtins/system_prompt.md");
-const operation_start = std.mem.indexOf(u8, default_prompt, "# Efficient execution\n") orelse @compileError("default operating policy boundary missing");
-const operation_end = std.mem.indexOf(u8, default_prompt, "# Workspace and permissions\n") orelse @compileError("default authority policy boundary missing");
+const operation_start = policyBoundary(default_prompt, "# Efficient execution");
+const operation_end = policyBoundary(default_prompt, "# Workspace and permissions");
+
+fn policyBoundary(comptime prompt: []const u8, comptime heading: []const u8) usize {
+    // Windows checkouts may embed CRLF. A failed LF search scans the entire
+    // prompt, so allow enough compile-time work before trying the CRLF form.
+    @setEvalBranchQuota(1_000_000);
+    return std.mem.indexOf(u8, prompt, heading ++ "\n") orelse
+        (std.mem.indexOf(u8, prompt, heading ++ "\r\n") orelse
+            @compileError("default policy boundary missing: " ++ heading));
+}
 const identity = default_prompt[0..operation_start];
 const authority_and_communication = default_prompt[operation_end..];
 
@@ -80,6 +89,21 @@ test "bounded prompt preserves authority and custom policy while reducing operat
     }
     try testing.expect(std.mem.indexOf(u8, child_prompt, "Routing is creation-only") == null);
     std.debug.print("bounded prompt bytes: default={d} parent={d} child={d}\n", .{ default_prompt.len, parent_prompt.len, child_prompt.len });
+}
+
+test "bounded prompt finds policy boundaries at compile time with LF and CRLF" {
+    inline for (.{ "\n", "\r\n" }) |newline| {
+        const prefix = "identity" ++ newline ++ ("padding" ++ newline) ** 2048;
+        const operations = "# Efficient execution" ++ newline ++ "operation policy" ++ newline;
+        const authority = "# Workspace and permissions" ++ newline ++ "authority policy" ++ newline;
+        const prompt = prefix ++ operations ++ authority;
+        const start = comptime policyBoundary(prompt, "# Efficient execution");
+        const end = comptime policyBoundary(prompt, "# Workspace and permissions");
+        try std.testing.expectEqual(prefix.len, start);
+        try std.testing.expectEqual(prefix.len + operations.len, end);
+        try std.testing.expectEqualStrings(prefix, prompt[0..start]);
+        try std.testing.expectEqualStrings(authority, prompt[end..]);
+    }
 }
 
 test "bounded prompt defaults on with explicit legacy overrides" {

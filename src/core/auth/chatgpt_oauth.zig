@@ -53,8 +53,29 @@ const TokenSet = struct {
     }
 };
 
+const BrowserCallbackListeners = struct {
+    ipv4: std.Io.net.Server,
+    ipv6: ?std.Io.net.Server,
+
+    fn deinit(self: *BrowserCallbackListeners) void {
+        self.ipv4.deinit(io_mod.getIo());
+        if (self.ipv6) |*listener| listener.deinit(io_mod.getIo());
+    }
+
+    fn awaitCallback(
+        self: *BrowserCallbackListeners,
+        alloc: Allocator,
+        expected_state: []const u8,
+        cancel_flag: *std.atomic.Value(bool),
+    ) !?browser_callback.Accepted(BrowserCallback) {
+        if (try awaitBrowserCallback(alloc, &self.ipv4, expected_state, cancel_flag)) |accepted| return accepted;
+        if (self.ipv6) |*listener| return awaitBrowserCallback(alloc, listener, expected_state, cancel_flag);
+        return null;
+    }
+};
+
 const BrowserLoginContext = struct {
-    listener: std.Io.net.Server,
+    listeners: BrowserCallbackListeners,
     redirect_uri: []u8,
     code_verifier: []u8,
     state: []u8,
@@ -62,7 +83,7 @@ const BrowserLoginContext = struct {
 
     fn deinit(self: *BrowserLoginContext, alloc: Allocator) void {
         self.finishCallback(alloc, false);
-        self.listener.deinit(io_mod.getIo());
+        self.listeners.deinit();
         alloc.free(self.redirect_uri);
         secret.zeroAndFree(alloc, self.code_verifier);
         secret.zeroAndFree(alloc, self.state);
@@ -117,10 +138,10 @@ fn prepareBrowserSignIn(alloc: Allocator) !PreparedBrowserLogin {
     const configured_token_endpoint = try configuredEndpoint(alloc, e2e_token_url_env, token_url);
     errdefer alloc.free(configured_token_endpoint);
 
-    var listener = try bindBrowserCallback(io_mod.getenv(e2e_issuer_url_env) != null);
+    var listeners = try bindBrowserCallback(io_mod.getenv(e2e_issuer_url_env) != null);
     var listener_owned = true;
-    errdefer if (listener_owned) listener.deinit(io_mod.getIo());
-    const callback_port = listener.socket.address.getPort();
+    errdefer if (listener_owned) listeners.deinit();
+    const callback_port = listeners.ipv4.socket.address.getPort();
     const redirect_uri = try std.fmt.allocPrint(
         alloc,
         "http://localhost:{d}/auth/callback",
@@ -145,7 +166,7 @@ fn prepareBrowserSignIn(alloc: Allocator) !PreparedBrowserLogin {
     const context = try alloc.create(BrowserLoginContext);
     errdefer alloc.destroy(context);
     context.* = .{
-        .listener = listener,
+        .listeners = listeners,
         .redirect_uri = redirect_uri,
         .code_verifier = code_verifier,
         .state = state,
@@ -193,17 +214,29 @@ fn deinitBrowserLoginContext(raw: ?*anyopaque, alloc: Allocator) void {
     alloc.destroy(context);
 }
 
-fn bindBrowserCallback(e2e: bool) !std.Io.net.Server {
-    if (e2e) {
-        var address = try std.Io.net.IpAddress.parse("127.0.0.1", 0);
-        return address.listen(io_mod.getIo(), .{ .reuse_address = true });
-    }
-    for (browser_callback_ports) |port| {
+fn bindBrowserCallback(e2e: bool) !BrowserCallbackListeners {
+    return bindBrowserCallbackPorts(if (e2e) &.{0} else &browser_callback_ports);
+}
+
+fn bindBrowserCallbackPorts(ports: []const u16) !BrowserCallbackListeners {
+    for (ports) |port| {
         var address = try std.Io.net.IpAddress.parse("127.0.0.1", port);
-        return address.listen(io_mod.getIo(), .{ .reuse_address = true }) catch |err| switch (err) {
+        var ipv4 = address.listen(io_mod.getIo(), .{}) catch |err| switch (err) {
             error.AddressInUse => continue,
             else => return err,
         };
+        var owned = true;
+        defer if (owned) ipv4.deinit(io_mod.getIo());
+        // Keep the registered localhost redirect, accepting both address families.
+        // Wildcard addresses would expose login to other machines on the LAN.
+        var ipv6_address = try std.Io.net.IpAddress.parse("::1", ipv4.socket.address.getPort());
+        const ipv6 = ipv6_address.listen(io_mod.getIo(), .{}) catch |err| switch (err) {
+            error.AddressFamilyUnsupported, error.AddressUnavailable => null,
+            error.AddressInUse => continue,
+            else => return err,
+        };
+        owned = false;
+        return .{ .ipv4 = ipv4, .ipv6 = ipv6 };
     }
     return error.ChatGptOAuthCallbackPortUnavailable;
 }
@@ -239,9 +272,8 @@ fn pollBrowserToken(
     if (comptime host_target.is_wasm) return error.ChatGptOAuthUnavailable;
     if (cancel_flag.load(.seq_cst)) return error.Cancelled;
     const context: *BrowserLoginContext = @ptrCast(@alignCast(raw.?));
-    var accepted = (try awaitBrowserCallback(
+    var accepted = (try context.listeners.awaitCallback(
         alloc,
-        &context.listener,
         context.state,
         cancel_flag,
     )) orelse return .pending;
@@ -953,6 +985,49 @@ test "Codex refresh uses JSON and accepts omitted token rotation and lifetime" {
     try std.testing.expect(std.mem.find(u8, state.payload[0..state.payload_len], "\"grant_type\":\"refresh_token\"") != null);
     try std.testing.expect(response.refresh_token == null);
     try std.testing.expect(response.expires_in == null);
+}
+
+test "ChatGPT browser callback accepts IPv4 and IPv6 localhost and releases both listeners" {
+    var listeners = try bindBrowserCallback(true);
+    var owned = true;
+    defer if (owned) listeners.deinit();
+    const port = listeners.ipv4.socket.address.getPort();
+    var cancel_flag = std.atomic.Value(bool).init(false);
+    for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
+        if (std.mem.eql(u8, hostname, "::1") and listeners.ipv6 == null) continue;
+        const address = try std.Io.net.IpAddress.parse(hostname, port);
+        var client = try address.connect(io_mod.getIo(), .{ .mode = .stream });
+        defer client.close(io_mod.getIo());
+        var buffer: [512]u8 = undefined;
+        var writer = client.writer(io_mod.getIo(), &buffer);
+        try writer.interface.writeAll("GET /auth/callback?code=granted&state=expected HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        try writer.interface.flush();
+        var accepted = (try listeners.awaitCallback(std.testing.allocator, "expected", &cancel_flag)) orelse return error.CallbackNeverArrived;
+        defer accepted.deinit();
+        defer accepted.callback.deinit(std.testing.allocator);
+        try std.testing.expectEqualStrings("granted", accepted.callback.code);
+        try accepted.respond(.ok);
+    }
+    listeners.deinit();
+    owned = false;
+    var rebound = try bindBrowserCallbackPorts(&.{port});
+    defer rebound.deinit();
+}
+
+test "ChatGPT browser callback skips a port occupied on either loopback family" {
+    for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
+        var address = try std.Io.net.IpAddress.parse(hostname, 0);
+        var occupied = address.listen(io_mod.getIo(), .{ .reuse_address = true }) catch |err| switch (err) {
+            error.AddressFamilyUnsupported, error.AddressUnavailable => continue,
+            else => return err,
+        };
+        defer occupied.deinit(io_mod.getIo());
+        const port = occupied.socket.address.getPort();
+        try std.testing.expectError(error.ChatGptOAuthCallbackPortUnavailable, bindBrowserCallbackPorts(&.{port}));
+        var fallback = try bindBrowserCallbackPorts(&.{ port, 0 });
+        defer fallback.deinit();
+        try std.testing.expect(fallback.ipv4.socket.address.getPort() != port);
+    }
 }
 
 test "ChatGPT browser authorization URL uses PKCE without device authentication" {

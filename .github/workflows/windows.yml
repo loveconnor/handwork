@@ -43,6 +43,10 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: zig build test -Dtest-filter="cell size report" -Doptimize=ReleaseSafe --test-timeout 60s --summary all
+      - name: Test Codex localhost callbacks on IPv4 and IPv6
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: pwsh
+        run: zig build test -Dtest-filter="ChatGPT browser" -Doptimize=ReleaseSafe --test-timeout 60s --summary all
       - name: Test settings, sessions and commands
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
