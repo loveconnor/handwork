@@ -1,6 +1,7 @@
 const std = @import("std");
 const credentials = @import("credentials.zig");
 const browser_callback = @import("browser_callback.zig");
+const callback_listener = @import("callback_listener.zig");
 const chatgpt_session = @import("chatgpt_session.zig");
 const debug_trace = @import("../shared/debug_trace.zig");
 const host = @import("../hosts/host.zig");
@@ -220,8 +221,8 @@ fn bindBrowserCallback(e2e: bool) !BrowserCallbackListeners {
 
 fn bindBrowserCallbackPorts(ports: []const u16) !BrowserCallbackListeners {
     for (ports) |port| {
-        var address = try std.Io.net.IpAddress.parse("127.0.0.1", port);
-        var ipv4 = address.listen(io_mod.getIo(), .{}) catch |err| switch (err) {
+        const address = try std.Io.net.IpAddress.parse("127.0.0.1", port);
+        var ipv4 = callback_listener.listen(address) catch |err| switch (err) {
             error.AddressInUse => continue,
             else => return err,
         };
@@ -229,8 +230,8 @@ fn bindBrowserCallbackPorts(ports: []const u16) !BrowserCallbackListeners {
         defer if (owned) ipv4.deinit(io_mod.getIo());
         // Keep the registered localhost redirect, accepting both address families.
         // Wildcard addresses would expose login to other machines on the LAN.
-        var ipv6_address = try std.Io.net.IpAddress.parse("::1", ipv4.socket.address.getPort());
-        const ipv6 = ipv6_address.listen(io_mod.getIo(), .{}) catch |err| switch (err) {
+        const ipv6_address = try std.Io.net.IpAddress.parse("::1", ipv4.socket.address.getPort());
+        const ipv6 = callback_listener.listen(ipv6_address) catch |err| switch (err) {
             error.AddressFamilyUnsupported, error.AddressUnavailable => null,
             error.AddressInUse => continue,
             else => return err,
@@ -1003,21 +1004,46 @@ test "ChatGPT browser callback accepts IPv4 and IPv6 localhost and releases both
         try writer.interface.writeAll("GET /auth/callback?code=granted&state=expected HTTP/1.1\r\nHost: localhost\r\n\r\n");
         try writer.interface.flush();
         var accepted = (try listeners.awaitCallback(std.testing.allocator, "expected", &cancel_flag)) orelse return error.CallbackNeverArrived;
-        defer accepted.deinit();
-        defer accepted.callback.deinit(std.testing.allocator);
-        try std.testing.expectEqualStrings("granted", accepted.callback.code);
+        var accepted_open = true;
+        defer if (accepted_open) accepted.deinit();
+        var callback = accepted.callback;
+        defer callback.deinit(std.testing.allocator);
+        try std.testing.expectEqualStrings("granted", callback.code);
         try accepted.respond(.ok);
+        accepted.deinit();
+        accepted_open = false;
+        // Read through EOF instead of resetting a connection with unread data.
+        // Real browser logins can leave the server in TCP TIME_WAIT.
+        var read_buffer: [512]u8 = undefined;
+        var reader = client.reader(io_mod.getIo(), &read_buffer);
+        var response_bytes: usize = 0;
+        while (true) {
+            _ = reader.interface.takeByte() catch |err| switch (err) {
+                error.EndOfStream => break,
+                else => return err,
+            };
+            response_bytes += 1;
+        }
+        try std.testing.expect(response_bytes > 0);
     }
     listeners.deinit();
     owned = false;
-    var rebound = try bindBrowserCallbackPorts(&.{port});
-    defer rebound.deinit();
+    // Closed listeners must refuse connections even while TCP retains TIME_WAIT.
+    for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
+        if (std.mem.eql(u8, hostname, "::1") and listeners.ipv6 == null) continue;
+        const address = try std.Io.net.IpAddress.parse(hostname, port);
+        try std.testing.expectError(error.ConnectionRefused, address.connect(io_mod.getIo(), .{ .mode = .stream }));
+    }
+    if (comptime @import("builtin").os.tag != .windows) {
+        var rebound = try bindBrowserCallbackPorts(&.{port});
+        defer rebound.deinit();
+    }
 }
 
 test "ChatGPT browser callback skips a port occupied on either loopback family" {
     for ([_][]const u8{ "127.0.0.1", "::1" }) |hostname| {
-        var address = try std.Io.net.IpAddress.parse(hostname, 0);
-        var occupied = address.listen(io_mod.getIo(), .{ .reuse_address = true }) catch |err| switch (err) {
+        const address = try std.Io.net.IpAddress.parse(hostname, 0);
+        var occupied = callback_listener.listen(address) catch |err| switch (err) {
             error.AddressFamilyUnsupported, error.AddressUnavailable => continue,
             else => return err,
         };
