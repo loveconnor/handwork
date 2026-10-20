@@ -80,8 +80,8 @@ pub const InputReader = struct {
                 const key = record.Event.KeyEvent;
                 // With VT input enabled, navigation and function keys arrive as
                 // synthesized Unicode records containing their escape sequence.
-                if (key.uChar.UnicodeChar != 0 or isControlSpace(key.wVirtualKeyCode, key.dwControlKeyState)) {
-                    self.pushCodeUnit(key.uChar.UnicodeChar, key.wRepeatCount);
+                if (inputCodeUnit(key.wVirtualKeyCode, key.dwControlKeyState, key.uChar.UnicodeChar)) |unit| {
+                    self.pushCodeUnit(unit, key.wRepeatCount);
                     if (self.repeats > 0) return true;
                 }
             }
@@ -130,6 +130,26 @@ pub const InputReader = struct {
         return written;
     }
 };
+
+fn inputCodeUnit(key: u16, modifiers: u32, unit: u16) ?u16 {
+    if (unit != 0) return unit;
+    if (isControlSpace(key, modifiers)) return 0;
+    // Some console hosts report the virtual shortcut without a Unicode unit.
+    // Preserve Ctrl-V on the same raw-byte route as terminal keyboard reports.
+    if (key == 'V' and (modifiers & 0x000c) != 0 and (modifiers & 0x0003) == 0) return 22;
+    return null;
+}
+
+test "Windows console forwards Ctrl V without a Unicode unit and preserves text paste" {
+    try std.testing.expectEqual(@as(?u16, 22), inputCodeUnit('V', 0x0008, 0));
+    try std.testing.expectEqual(@as(?u16, 22), inputCodeUnit('V', 0x0004, 0));
+    try std.testing.expectEqual(@as(?u16, 22), inputCodeUnit('V', 0x0008, 22));
+    try std.testing.expectEqual(@as(?u16, null), inputCodeUnit('V', 0, 0));
+    try std.testing.expectEqual(@as(?u16, null), inputCodeUnit('V', 0x000a, 0));
+    try std.testing.expectEqual(@as(?u16, 'v'), inputCodeUnit('V', 0, 'v'));
+    try std.testing.expectEqual(@as(?u16, '['), inputCodeUnit(0, 0, '['));
+    try std.testing.expectEqual(@as(?u16, 0), inputCodeUnit(' ', 0x0008, 0));
+}
 
 fn isControlSpace(key: u16, modifiers: u32) bool {
     return key == 0x20 and (modifiers & 0x000c) != 0;

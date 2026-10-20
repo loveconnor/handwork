@@ -216,6 +216,31 @@ pub fn Runtime(comptime App: type) type {
         pub const installPromptHistory = history_rt.installPromptHistory;
         pub const loadAndInstallPromptHistory = history_rt.loadAndInstallPromptHistory;
 
+        fn pasteClipboardTextResult(app: *App, result: anyerror![]u8, max_input_len: usize) !void {
+            const text = result catch |err| {
+                if (err == error.OutOfMemory or err == error.Canceled) return err;
+                try app.writeDomainNotice(.{
+                    .topic = "clipboard",
+                    .tone = .@"error",
+                    .body = "Unable to read clipboard text. Try pasting again.",
+                }, true);
+                return;
+            };
+            defer app.alloc.free(text);
+            const normalized = text_utils.normalizeLineEndingsInPlace(text);
+            if (normalized.len == 0) return;
+            if (!text_utils.isModelSafeText(normalized)) {
+                try app.writeDomainNotice(.{
+                    .topic = "input",
+                    .tone = .@"error",
+                    .body = "Pasted text contains unsupported bytes and was not added to the draft.",
+                }, true);
+                return;
+            }
+            try paste_rt.handlePastedBytes(app, normalized, max_input_len);
+            app.shell.render_requests.request(.footer);
+        }
+
         pub fn handleHostOwnedClipboardShortcut(app: *App) !void {
             if (modelMenuActive(app)) return;
             _ = image_commands.Commands(App).attachClipboardIfImage(app) catch |err| {
@@ -1123,13 +1148,7 @@ pub fn Runtime(comptime App: type) type {
             }
 
             if (resolved == .clipboard_text_paste) {
-                const text = clipboard_content.loadText(app.alloc, max_input_len) catch |err| {
-                    debug_trace.logf("input", "clipboard text paste failed err={s}", .{@errorName(err)});
-                    return .done;
-                };
-                defer app.alloc.free(text);
-                try paste_rt.handlePastedBytes(app, text, max_input_len);
-                app.shell.render_requests.request(.footer);
+                try pasteClipboardTextResult(app, clipboard_content.loadText(app.alloc, max_input_len), max_input_len);
                 return .done;
             }
 
@@ -1631,7 +1650,20 @@ pub fn Runtime(comptime App: type) type {
                         debug_trace.logf("input", "image attach skipped reason=model_menu_active", .{});
                         return;
                     }
-                    try image_commands.Commands(App).attachClipboard(app);
+                    if (comptime @import("builtin").os.tag == .windows) {
+                        const attached = image_commands.Commands(App).attachClipboardIfImage(app) catch |err| {
+                            if (err == error.OutOfMemory or err == error.Canceled) return err;
+                            try app.writeDomainNotice(.{
+                                .topic = "clipboard",
+                                .tone = .@"error",
+                                .body = "Unable to read clipboard image. Try /paste again or use /image <path>.",
+                            }, true);
+                            return;
+                        };
+                        if (!attached) try pasteClipboardTextResult(app, clipboard_content.loadText(app.alloc, max_input_len), max_input_len);
+                    } else {
+                        try image_commands.Commands(App).attachClipboard(app);
+                    }
                 },
                 24 => {
                     return;
@@ -15849,4 +15881,30 @@ test "app_input_runtime cell size reports preserve a pending transcript open" {
     try feedRoutingBytes(&app, "\x1b[6;24;12t");
     try std.testing.expect(app.shell.cancelPendingFullTranscriptOpen());
     try std.testing.expectEqualStrings("", app.input_runtime.edit_state.input.items);
+}
+
+test "clipboard text shortcut normalizes Windows newlines and inserts without submitting" {
+    const alloc = std.testing.allocator;
+    var app = FakeSubmitApp{ .alloc = alloc };
+    defer app.deinit();
+    try app.input_runtime.edit_state.input.appendSlice(alloc, "before after");
+    app.input_runtime.edit_state.cursor = 7;
+    try Runtime(FakeSubmitApp).pasteClipboardTextResult(&app, alloc.dupe(u8, "日本語\r\nnext\rline"), 4096);
+    try std.testing.expectEqualStrings("before 日本語\nnext\nlineafter", app.input_runtime.edit_state.input.items);
+    try std.testing.expect(app.last_prompt == null);
+    try std.testing.expectEqual(@as(usize, 0), app.pending_images.items.len);
+}
+
+test "clipboard text shortcut preserves draft on read failure unsafe text and input limit" {
+    const alloc = std.testing.allocator;
+    var app = FakeSubmitApp{ .alloc = alloc };
+    defer app.deinit();
+    try app.input_runtime.edit_state.input.appendSlice(alloc, "draft");
+    app.input_runtime.edit_state.cursor = 2;
+    try Runtime(FakeSubmitApp).pasteClipboardTextResult(&app, error.ClipboardBusy, 4096);
+    try Runtime(FakeSubmitApp).pasteClipboardTextResult(&app, alloc.dupe(u8, "bad\x00text"), 4096);
+    try Runtime(FakeSubmitApp).pasteClipboardTextResult(&app, alloc.dupe(u8, "too long"), 5);
+    try std.testing.expectEqualStrings("draft", app.input_runtime.edit_state.input.items);
+    try std.testing.expectEqual(@as(usize, 2), app.input_runtime.edit_state.cursor);
+    try std.testing.expect(app.last_prompt == null);
 }

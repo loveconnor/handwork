@@ -1,6 +1,7 @@
 //! Platform adapters can be compiled and tested before the entire CLI port is
 //! ready. Keep this root independent of application, provider and session code.
 test {
+    _ = @import("core/hosts/windows_clipboard.zig");
     _ = @import("core/hosts/process_startup.zig");
     _ = @import("core/hosts/windows_file_io.zig");
     _ = @import("core/hosts/windows_private_storage.zig");

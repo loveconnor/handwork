@@ -1812,6 +1812,23 @@ pub const ClipboardImageAttachment = struct {
 };
 
 pub fn loadClipboardImageAttachment(alloc: std.mem.Allocator) anyerror!ClipboardImageAttachment {
+    if (comptime builtin.os.tag == .windows) {
+        const bytes = try @import("../hosts/windows_clipboard.zig").loadImagePng(alloc, max_image_bytes);
+        defer alloc.free(bytes);
+        const source_dir = try createTempSnapshotDir(alloc);
+        errdefer {
+            cleanupSnapshotDir(source_dir);
+            alloc.free(source_dir);
+        }
+        const temp_path = try std.fs.path.join(alloc, &.{ source_dir, "clipboard.png" });
+        defer alloc.free(temp_path);
+        {
+            var file = try io_mod.createPrivateFileAbsolute(io_mod.getIo(), temp_path, .{ .exclusive = true });
+            defer file.close(io_mod.getIo());
+            try file.writeStreamingAll(io_mod.getIo(), bytes);
+        }
+        return .{ .attachment = try loadImageAttachment(alloc, temp_path), .source_dir = source_dir };
+    }
     if (builtin.os.tag != .macos) return error.Unsupported;
 
     const source_dir = try createTempSnapshotDir(alloc);

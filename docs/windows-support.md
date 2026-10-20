@@ -40,6 +40,60 @@ release step; the implementation does not publish automatically.
   packing refuses missing targets. Global npm update detection recognizes the
   new package layout.
 
+## Clipboard
+
+Windows clipboard image attachment uses native APIs. `/paste` (or `/paste-image`)
+attaches a copied PNG or bitmap, including screenshots. Control-V attaches an
+image when the terminal forwards the key to Handwork. Clipboard text reads and
+copying replies or selections also use native Unicode clipboard access.
+
+Windows Terminal and VS Code may consume Control-V as their own text-paste
+shortcut. A terminal text paste does not transmit image bytes. Use `/paste` if
+Control-V does nothing for a copied image. Clipboard access happens on the
+machine running Handwork, so a remote session cannot read your local Windows
+clipboard. An empty clipboard or a clipboard containing only text produces a
+"no image found on clipboard" notice without changing the draft.
+
+### Windows Terminal Control-V
+
+To forward Control-V to Handwork, open Windows Terminal **Settings > Open JSON
+file**. Add this action to the existing `actions` array and replace any existing
+`ctrl+v` entry in `keybindings` with this binding. Merge the entries; keep your
+other actions and bindings.
+
+```json
+{
+  "actions": [
+    {
+      "id": "User.HandworkPaste",
+      "name": "Send Control-V to application",
+      "command": { "action": "sendInput", "input": "\u0016" }
+    }
+  ],
+  "keybindings": [
+    { "keys": "ctrl+v", "id": "User.HandworkPaste" }
+  ]
+}
+```
+
+After rebuilding Handwork, this binding lets the composer attach clipboard images
+and paste clipboard text when no image is available. Text stays in the draft, and Windows line endings
+become newlines. `/paste` continues to attach images only.
+
+Windows Terminal applies this binding to all tabs and applications. Control-V
+will send a control character to other applications rather than invoking the
+terminal's Paste action. Keep Control-Shift-V bound to Paste for other applications
+and for sign-in or other prompts outside Handwork's composer.
+Remove the custom binding to restore the terminal's default Control-V behavior.
+Older settings files may embed `keys` directly in an action; replace the existing
+Control-V action instead of keeping two bindings for the same shortcut.
+See [Microsoft's action and keybinding documentation](https://learn.microsoft.com/en-us/windows/terminal/customize-settings/actions#send-input).
+
+Native clipboard round-trip checks replace the system clipboard and are opt-in:
+set `HANDWORK_TEST_CLIPBOARD=1` only on a disposable Windows desktop, then run
+`zig build test-platform`. Windows CI enables these checks. They cover Unicode
+text, missing images, size limits, PNG data, and bitmap color and row orientation.
+
 ## Verification
 
 [Native Windows x64 CI](https://github.com/loveconnor/handwork/actions/runs/38819044192)
@@ -128,9 +182,8 @@ before publishing a package that advertises Windows support.
   host and remain unsupported on Windows. Captured commands (`tty: false`),
   including managed background execution, use the Windows command runner.
   A Windows ConPTY / terminal-host implementation remains required for parity.
-- Clipboard image capture remains macOS-only. Windows users can attach an image
-  by path. Background binary self-replacement is disabled on Windows; use npm
-  updates or rebuild source installations.
+- Background binary self-replacement is disabled on Windows; use npm updates
+  or rebuild source installations.
 - The broader settings test suite has three failures and one crash in legacy
   settings migration tests. The same failures were reproduced in an isolated
   copy using the original settings-store source. The focused HTTP transport,

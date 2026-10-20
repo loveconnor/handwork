@@ -112,7 +112,7 @@ pub fn Commands(comptime App: type) type {
                 if (err == error.NoClipboardImage) {
                     try app.writeDomainNotice(.{ .topic = "images", .tone = .neutral, .body = "no image found on clipboard" }, true);
                 } else if (err == error.Unsupported) {
-                    try app.writeDomainNotice(.{ .topic = "images", .tone = .neutral, .body = "clipboard image paste is supported only on macOS; use /image <path>" }, true);
+                    try app.writeDomainNotice(.{ .topic = "images", .tone = .neutral, .body = "clipboard image paste is unavailable on this host; use /image <path>" }, true);
                 } else {
                     const line = try std.fmt.allocPrint(app.alloc, "failed to paste clipboard image: {s}", .{@errorName(err)});
                     defer app.alloc.free(line);

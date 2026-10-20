@@ -12,6 +12,10 @@ pub const clipboard = host.Clipboard{
 pub const secret_store = host.unavailable_secret_store;
 
 fn copyToClipboard(_: ?*anyopaque, text: []const u8) host.ClipboardError!bool {
+    if (comptime builtin.os.tag == .windows) {
+        @import("windows_clipboard.zig").copyText(std.heap.page_allocator, text) catch return error.CopyFailed;
+        return true;
+    }
     const argv = clipboardCommand(builtin.os.tag) orelse return false;
     const io = io_mod.getIo();
     var child = std.process.spawn(io, .{

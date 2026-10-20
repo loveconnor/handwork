@@ -304,7 +304,7 @@ without contacting a model provider. Before distributing, also install and launc
 the installer on Windows and check provider login, chat streaming, folder/file
 pickers, approvals, cancellation, and reopening saved chats. Cross-packaging on
 macOS does not verify those Windows behaviors. The engine's Windows support is
-experimental; interactive PTY tools and clipboard image capture remain limited.
+experimental; interactive PTY tools remain limited. Native Windows clipboard image capture is supported through `/paste`; terminal shortcut forwarding varies by host.
 
 For an installer-level test on a Windows test machine with Node.js available to
 the test harness, run:

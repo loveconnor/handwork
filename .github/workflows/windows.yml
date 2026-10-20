@@ -32,6 +32,8 @@ jobs:
         shell: pwsh
         run: node scripts/package-native.mjs --target=win32-x64
       - name: Test native Windows adapters
+        env:
+          HANDWORK_TEST_CLIPBOARD: '1'
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: pwsh
         run: zig build test-platform -Doptimize=ReleaseSafe --test-timeout 60s --summary all

@@ -41,6 +41,8 @@ pub fn build(b: *std.Build) void {
         platform_tests.root_module.linkSystemLibrary("ws2_32", .{});
         platform_tests.root_module.linkSystemLibrary("shell32", .{});
         platform_tests.root_module.linkSystemLibrary("ole32", .{});
+        platform_tests.root_module.linkSystemLibrary("user32", .{});
+        platform_tests.root_module.linkSystemLibrary("gdi32", .{});
     }
     platform_check.dependOn(&platform_tests.step);
     const terminal_platform_check = b.addObject(.{
@@ -102,6 +104,8 @@ pub fn build(b: *std.Build) void {
         exe.root_module.linkSystemLibrary("ws2_32", .{});
         exe.root_module.linkSystemLibrary("shell32", .{});
         exe.root_module.linkSystemLibrary("ole32", .{});
+        exe.root_module.linkSystemLibrary("user32", .{});
+        exe.root_module.linkSystemLibrary("gdi32", .{});
     }
     if (target.result.os.tag == .macos) {
         exe.root_module.linkFramework("ApplicationServices", .{});
@@ -137,6 +141,8 @@ pub fn build(b: *std.Build) void {
         test_module.linkSystemLibrary("ws2_32", .{});
         test_module.linkSystemLibrary("shell32", .{});
         test_module.linkSystemLibrary("ole32", .{});
+        test_module.linkSystemLibrary("user32", .{});
+        test_module.linkSystemLibrary("gdi32", .{});
     }
     const exe_tests = b.addTest(.{
         .root_module = test_module,
@@ -161,6 +167,8 @@ pub fn build(b: *std.Build) void {
         integration_module.linkSystemLibrary("ws2_32", .{});
         integration_module.linkSystemLibrary("shell32", .{});
         integration_module.linkSystemLibrary("ole32", .{});
+        integration_module.linkSystemLibrary("user32", .{});
+        integration_module.linkSystemLibrary("gdi32", .{});
     }
     const integration_tests = b.addTest(.{ .root_module = integration_module, .filters = &.{"platform integration"} });
     platform_check.dependOn(&integration_tests.step);

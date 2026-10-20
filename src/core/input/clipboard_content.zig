@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 const io_mod = @import("../shared/io.zig");
 
 pub fn loadText(alloc: std.mem.Allocator, limit: usize) ![]u8 {
+    if (comptime builtin.os.tag == .windows) return @import("../hosts/windows_clipboard.zig").loadText(alloc, limit);
     if (builtin.os.tag != .macos) return error.Unsupported;
     const result = try std.process.run(alloc, io_mod.getIo(), .{
         .argv = &.{"pbpaste"},
