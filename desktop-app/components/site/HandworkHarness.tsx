@@ -1,7 +1,9 @@
 "use client";
 
 import { HoverTooltip } from "@/components/ui/tooltip";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { HandworkWindowControls } from './HandworkWindowControls';
+import { bindHorizontalWheel } from '@/lib/horizontal-scroll';
 import HandworkChanges, { ChangesTrigger } from '@/components/site/HandworkChanges';
 import { useProjectChanges } from '@/lib/use-project-changes';
 import { SidebarNav } from "@/components/ui/sidebar-nav";
@@ -163,11 +165,15 @@ export default function HandworkHarness() {
   const [, setBackgroundVersion] = useState(0);
   const [attentionFocus, setAttentionFocus] = useState<{ id: string; kind: AttentionKind }>();
   const closedTabs = useRef<SavedSession[]>([]);
+  const tabsRef = useCallback((strip: HTMLDivElement | null) => {
+    if (strip) return bindHorizontalWheel(strip);
+  }, []);
   const [voice, setVoice] = useState<VoiceStatus>({ available: false });
   const [listening, setListening] = useState(false);
   const [narrowSidebar, setNarrowSidebar] = useState(false);
   const [narrowSidebarOpen, setNarrowSidebarOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [maximized, setMaximized] = useState(false);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [providersReady, setProvidersReady] = useState(false);
   const [busyProvider, setBusyProvider] = useState("");
@@ -325,7 +331,7 @@ export default function HandworkHarness() {
       if (event.method === 'desktop/tab') { const action = text(params.action); if (isTabAction(action)) setTabRequest({ action, at: Date.now() }); return; }
       if (event.method === 'desktop/quick-prompt') { setQuickPrompt({ text: text(params.text), attachments: Array.isArray(params.attachments) ? params.attachments as Attachment[] : [] }); return; }
       if (event.method === "desktop/notice") { setNotice(text(params.message)); return; }
-      if (event.method === "window/state") { setFullscreen(params.fullscreen === true); return; }
+      if (event.method === "window/state") { setFullscreen(params.fullscreen === true); setMaximized(params.maximized === true); return; }
       if (event.method === "engine/error") {
         const failedSession = text(params.sessionId);
         if (failedSession && failedSession !== activeSession.current) {
@@ -1269,6 +1275,7 @@ export default function HandworkHarness() {
   });
   // Inside the Electron shell on macOS the system title bar is hidden; leave room for the traffic lights.
   const desktopMac = !!api && !fullscreen && typeof navigator !== "undefined" && /Macintosh/.test(navigator.userAgent);
+  const desktopWindows = !!api && !fullscreen && typeof navigator !== 'undefined' && /Windows/.test(navigator.userAgent);
 
   const composerOptions = options.filter(option => workspace || option.id !== "mode").map(option => option.id === "provider" ? { ...option, options: option.options.filter(choice => choice.value === option.currentValue || providers.some(item => item.id === choice.value && item.connected)) } : option);
   const activeChat = recents.find(chat => chat.id === sessionId);
@@ -1410,8 +1417,9 @@ export default function HandworkHarness() {
         {voice.available && <Button size="icon-sm" variant="ghost" aria-label={listening ? "Stop dictation" : "Dictate"} title={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening} onClick={() => void toggleVoice()}><IconMic size={16} /></Button>}
       </>} />
   </div>;
-  return <main className={`handwork-app ${desktopMac ? "handwork-mac" : ""}`}>
+  return <main className={`handwork-app ${desktopWindows ? 'handwork-windows' : ''} ${desktopMac ? "handwork-mac" : ""}`}>
     {desktopMac && <div aria-hidden className="app-drag handwork-titlebar" />}
+    {desktopWindows && api && <HandworkWindowControls api={api} maximized={maximized} onState={state => { setFullscreen(state.fullscreen); setMaximized(state.maximized); }} />}
     <Dialog open={!!projectToDelete} onOpenChange={open => { if (!open && !deletingProject) setProjectToDelete(undefined); }}>
       <DialogPopup className="handwork-chat-dialog" showCloseButton={!deletingProject} initialFocus={() => document.getElementById("handwork-project-cancel")} finalFocus={() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')}>
         <form onSubmit={event => { event.preventDefault(); void deleteProject(); }}>
@@ -1451,7 +1459,7 @@ export default function HandworkHarness() {
       footer={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}><IconSettings size={16} />Settings</Button><HandworkTheme /></div></div>} />
     <section className="handwork-workspace" aria-label="Conversation workspace">
       <header className="handwork-header" aria-label="Conversation toolbar">
-        <div className="handwork-tabs" aria-label="Open chats">
+        <div ref={tabsRef} className="handwork-tabs" aria-label="Open chats">
           {tabs.length ? tabs.map(tab => <div key={tab.id} className={`handwork-tab ${shownSession === tab.id ? "is-active" : ""}`}>
             <Button className="handwork-tab-label" variant="ghost" size="sm" disabled={picking} aria-pressed={shownSession === tab.id} title={chatPreferences[tab.id]?.title || tab.label} onClick={() => openChat({ ...tab, label: chatPreferences[tab.id]?.title || tab.label })}>{chatPreferences[tab.id]?.title || tab.label}</Button>
             <Button className="handwork-tab-close" variant="ghost" size="icon-sm" disabled={blocked} aria-label={`Close ${chatPreferences[tab.id]?.title || tab.label}`} onClick={() => closeTab(tab.id)}><IconClose size={12} /></Button>

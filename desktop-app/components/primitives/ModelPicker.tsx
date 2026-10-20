@@ -81,7 +81,7 @@ export default function ModelPicker({ models, modelValue, onSelectModel, provide
     <div role="dialog" aria-label="Model picker" onKeyDown={onKeyDown} className={cn("relative flex overflow-hidden rounded-[14px] bg-surface text-ink shadow-raised", className)} style={style}>
       {/* The rail is absolutely positioned so the main column decides the height; long provider lists scroll inside it. */}
       {(providers.length > 0 || onManageProviders) && (
-        <div className="absolute inset-y-0 left-0 flex w-12 flex-col items-center gap-1 overflow-y-auto border-r border-line py-2 [scrollbar-width:none]" role="tablist" aria-label="Providers">
+        <div className="absolute inset-y-0 left-0 flex w-12 flex-col items-center gap-1 overflow-y-auto scrollbar-hidden border-r border-line py-2" role="tablist" aria-label="Providers">
           {providers.map((item) => {
             const selected = item.value === providerValue;
             return (
@@ -108,7 +108,7 @@ export default function ModelPicker({ models, modelValue, onSelectModel, provide
             className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-3" />
           {provider && <span className="shrink-0 text-[11px] text-ink-3">{provider.name}</span>}
         </label>
-        <GlideMenu className="max-h-60 overflow-y-auto p-1" highlightClassName="inset-x-1 rounded-[8px] bg-hover">
+        <GlideMenu className="max-h-60 overflow-y-auto scrollbar-hidden p-1" highlightClassName="inset-x-1 rounded-[8px] bg-hover">
           <div role="listbox" aria-label="Models">
             {visible.map((item, index) => {
               const selected = item.value === modelValue;

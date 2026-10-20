@@ -40,6 +40,7 @@ const reviewedCommit = value => plain(value, ['repository', 'branch', 'head', 'i
   (value.head === null || /^[0-9a-f]{40,64}$/.test(value.head)) && /^[a-f0-9]{64}$/.test(value.index);
 const pushDestination = value => plain(value, ['remote', 'branch']) && validRefName(value.remote) && validRefName(value.branch);
 const signatures = {
+  windowAction: [value => ['minimize', 'toggle-maximize', 'close', 'state'].includes(value)],
   commandReport: [value => ['status', 'usage', 'doctor', 'version'].includes(value)],
   getUpdateState: [], downloadUpdate: [], installUpdate: [validUpdateDrafts], getUpdateDrafts: [],
   geocodePlace: [value => text(value, 800) && value.trim().length >= 2 && value.length <= 200 && !/[\x00-\x1f]/.test(value)],
@@ -122,11 +123,12 @@ export function validateArguments(method, args) {
   }
 }
 
-export function registerIpc({ ipcMain, webContents, rendererURL, backend, chooseWorkspace, chooseFiles }) {
+export function registerIpc({ ipcMain, webContents, rendererURL, backend, chooseWorkspace, chooseFiles, windowAction }) {
   for (const method of Object.keys(signatures)) {
     ipcMain.handle(CHANNEL_PREFIX + method, (event, ...args) => {
       if (!isTrustedSender(event, webContents, rendererURL)) throw new Error('Untrusted desktop IPC sender');
       validateArguments(method, args);
+      if (method === 'windowAction') return windowAction(args[0]);
       if (method === 'chooseWorkspace') return backend.chooseWorkspace(chooseWorkspace);
       if (method === 'chooseFiles') return backend.chooseFiles(chooseFiles, args[0]);
       return backend[method](...args);

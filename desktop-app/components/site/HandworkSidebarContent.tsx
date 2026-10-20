@@ -8,7 +8,7 @@ import type { AttentionKind } from '@/lib/attention';
 import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuSeparator } from '@/components/ui/menu';
 
 type Chat = { id: string; label: string; workspace?: string; updatedAt?: string; pinned?: boolean; archived?: boolean };
-const projectName = (project: string) => project.split('/').filter(Boolean).pop() || project;
+const projectName = (project: string) => project.split(/[\\/]/).filter(Boolean).pop() || project;
 
 function CollapsibleChats({ open, children }: { open: boolean; children: ReactNode }) {
   return <div className="handwork-sidebar-collapse" data-open={open} aria-hidden={!open} inert={!open}>

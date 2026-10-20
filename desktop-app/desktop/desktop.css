@@ -105,7 +105,8 @@ button:disabled { cursor: not-allowed; }
 .handwork-model-options { width: 300px; max-width: calc(100vw - 24px); max-height: min(480px, var(--available-height), 75dvh); padding: 6px; border-radius: 12px; }
 .handwork-model-options [data-slot="menu-label"] { padding: 6px 10px; font-size: var(--hui-font-size-mini, 11px); line-height: var(--hui-line-height-small, 16px); font-weight: 500; color: var(--hui-color-foreground-base-secondary); }
 .handwork-model-options [data-slot="menu-separator"] { margin: 6px 4px; }
-.handwork-model-list { max-height: min(240px, 40dvh); overflow-y: auto; overscroll-behavior: contain; }
+.handwork-model-list { max-height: min(240px, 40dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.handwork-model-list::-webkit-scrollbar { display: none; }
 .handwork-model-options [role^="menuitem"], .handwork-option-submenu [role^="menuitem"] { min-height: 36px; padding: 8px 10px; border-radius: 7px; font-size: var(--hui-font-size-control, 13px); line-height: calc(var(--hui-line-height-control, 16px) + 2px); }
 .handwork-model-item { grid-template-columns: 1fr 16px; }
 .handwork-model-item > :first-child { grid-column: 2; grid-row: 1; }
@@ -142,6 +143,10 @@ button:disabled { cursor: not-allowed; }
 @media (max-width: 700px) { .handwork-model-trigger { max-width: 120px; } .handwork-composer { padding: 8px 12px 12px; } }
 @media (forced-colors: active) { .handwork-composer [data-slot="prompt-bar-actions"] > button:last-child { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; } }
 
+/* The drag rectangle must end before the caption controls. Padding alone still overlaps them. */
+.handwork-windows .handwork-workspace > .handwork-header { margin-right: 138px; padding-right: 8px; -webkit-app-region: drag; }
+.handwork-windows .handwork-workspace > .handwork-header button,
+.handwork-windows .handwork-workspace > .handwork-header .handwork-tab { -webkit-app-region: no-drag; }
 .handwork-mac .handwork-workspace > .handwork-header { -webkit-app-region: drag; }
 .handwork-mac .handwork-workspace > .handwork-header button { -webkit-app-region: no-drag; }
 /* A whole tab is interactive: hovering anywhere on it reveals its close button. */
@@ -179,7 +184,8 @@ button:disabled { cursor: not-allowed; }
 
 .handwork-sidebar .handwork-brand { font-size: 15px; line-height: 24px; font-weight: 600; }
 .handwork-header { display: flex; align-items: center; gap: 8px; min-height: 44px; height: 44px; padding: 0 8px; flex-shrink: 0; }
-.handwork-tabs { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; padding: 0; border: 0; overflow-x: auto; }
+.handwork-tabs { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; padding: 0; border: 0; overflow-x: auto; scrollbar-width: none; -webkit-app-region: no-drag; }
+.handwork-tabs::-webkit-scrollbar { display: none; }
 /* The close button floats over the end of the title, so idle tabs use their full width. */
 .handwork-tab { --handwork-tab-surface: transparent; position: relative; display: flex; align-items: center; width: 144px; height: calc(var(--hui-line-height-regular, 20px) + 8px); flex-shrink: 0; border-radius: var(--hui-radius-2); background: var(--handwork-tab-surface); }
 .handwork-tab.is-active, .handwork-tab:hover { --handwork-tab-surface: var(--hui-color-background-neutral-secondary); }
@@ -1112,3 +1118,12 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-details-footer { flex-direction: row; justify-content: space-between; gap: 8px; border-top: 1px solid var(--hui-color-border-base-primary); }
 .handwork-details-footer button:only-child { margin-left: auto; }
 @media (max-width: 520px) { .handwork-details-tools { grid-template-columns: minmax(0, 1fr); } }
+
+/* Custom Windows caption buttons use the same tooltip and colors as app controls. */
+.handwork-window-controls { position: fixed; top: 0; right: 0; z-index: 30; display: flex; height: 44px; -webkit-app-region: no-drag; }
+.handwork-window-controls::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--hui-color-border-base-primary); pointer-events: none; -webkit-app-region: no-drag; }
+.handwork-window-controls, .handwork-window-controls * { -webkit-app-region: no-drag; }
+.handwork-window-controls button { display: flex; align-items: center; justify-content: center; width: 46px; height: 44px; border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--hui-color-foreground-base-secondary); -webkit-app-region: no-drag; }
+.handwork-window-controls button:hover { background: var(--hui-color-background-neutral-secondary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-window-controls button:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.handwork-window-controls .handwork-window-close:hover { background: #c42b1c; color: #fff; }

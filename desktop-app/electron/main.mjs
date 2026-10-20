@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, session, shell, Tray } from 'electron';
 import path from 'node:path';
+import { windowAction, windowState } from './window-controls.mjs';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DesktopSettings } from './desktop-settings.mjs';
@@ -155,9 +156,12 @@ function createWindow() {
   const currentBackend = backend;
   window = new BrowserWindow({
     icon: appIcon,
+    autoHideMenuBar: true,
     width: 1280, height: 860, minWidth: 800, minHeight: 600,
     // Window controls sit above the sidebar; the workspace toolbar shares the top edge.
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 14, y: 14 } } : {}),
+    // Integrate Windows caption buttons into the app toolbar, like macOS.
+    ...(process.platform === 'win32' ? { titleBarStyle: 'hidden', titleBarOverlay: false } : {}),
     backgroundColor: '#161618',
     webPreferences: {
       preload: path.join(root, 'electron', 'preload.cjs'),
@@ -182,6 +186,7 @@ function createWindow() {
   wc.on('render-process-gone', () => cleanup(currentBackend));
   const unregister = registerIpc({
     ipcMain, webContents: wc, rendererURL, backend: currentBackend,
+    windowAction: action => windowAction(currentWindow, action),
     chooseWorkspace: async () => {
       const result = await dialog.showOpenDialog(currentWindow, { properties: ['openDirectory'], title: 'Choose Handwork workspace' });
       return !currentWindow.isDestroyed() && !result.canceled ? result.filePaths[0] : null;
@@ -192,7 +197,9 @@ function createWindow() {
     },
   });
   // The renderer reserves room for the traffic lights only while they are visible.
-  const sendWindowState = () => { if (!wc.isDestroyed()) wc.send(EVENT_CHANNEL, { method: 'window/state', params: { fullscreen: currentWindow.isFullScreen() } }); };
+  const sendWindowState = () => { if (!wc.isDestroyed()) wc.send(EVENT_CHANNEL, { method: 'window/state', params: windowState(currentWindow) }); };
+  currentWindow.on('maximize', sendWindowState);
+  currentWindow.on('unmaximize', sendWindowState);
   currentWindow.on('enter-full-screen', sendWindowState);
   currentWindow.on('leave-full-screen', sendWindowState);
   wc.on('did-finish-load', sendWindowState);

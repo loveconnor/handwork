@@ -171,6 +171,7 @@ export interface DesktopAPI {
   listProjects(): Promise<string[]>;
   removeProject(path: string): Promise<string[]>;
   selectProject(path: string): Promise<{ path: string }>;
+  windowAction(action: 'minimize' | 'toggle-maximize' | 'close' | 'state'): Promise<{ fullscreen: boolean; maximized: boolean } | undefined>;
   chooseWorkspace(): Promise<{ path: string } | null>;
   /** Reads up to `room` picked files; the rest, and any that cannot be attached, come back with reasons. */
   chooseFiles(room?: number): Promise<{ files: Attachment[]; rejected: { name: string; reason: string }[] }>;
