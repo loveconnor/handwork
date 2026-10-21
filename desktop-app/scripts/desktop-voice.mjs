@@ -42,6 +42,8 @@ export function voiceBuildArguments(source, build, target) {
     '-DBUILD_SHARED_LIBS=OFF', '-DWHISPER_BUILD_TESTS=OFF', '-DWHISPER_BUILD_SERVER=OFF',
     '-DWHISPER_CURL=OFF', '-DGGML_NATIVE=OFF', '-DGGML_METAL=OFF', '-DGGML_OPENMP=OFF',
     '-DGGML_AVX=OFF', '-DGGML_AVX2=OFF', '-DGGML_FMA=OFF', '-DGGML_F16C=OFF',
+    // MSVC ARM requires host feature probes; ClangCL can cross-compile a portable baseline.
+    ...(target.platform === 'win32' && target.arch === 'arm64' ? ['-T', 'ClangCL', '-DGGML_CPU_ARM_ARCH=armv8-a'] : []),
     ...(target.platform === 'darwin' ? ['-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0'] : ['-A', target.arch === 'arm64' ? 'ARM64' : 'x64', '-DCMAKE_POLICY_DEFAULT_CMP0091=NEW', '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded']),
   ];
 }
@@ -50,7 +52,8 @@ export function voiceBuildArguments(source, build, target) {
 export async function stageVoice(projectRoot = root, target = desktopTarget()) {
   const cache = path.join(projectRoot, 'resources', 'voice-build');
   const source = path.join(cache, 'source');
-  const build = path.join(cache, `${target.platform}-${target.arch}-${WHISPER_TAG}`);
+  const toolchain = target.platform === 'win32' && target.arch === 'arm64' ? '-clangcl-armv8-a' : '';
+  const build = path.join(cache, `${target.platform}-${target.arch}-${WHISPER_TAG}${toolchain}`);
   const destination = path.join(projectRoot, 'resources', target.directory, 'voice');
   await mkdir(cache, { recursive: true });
   await mkdir(destination, { recursive: true });

@@ -138,7 +138,18 @@ test('packaged speech assets use the correct executable and static portable buil
     assert.ok(args.includes('-DBUILD_SHARED_LIBS=OFF'));
     assert.ok(args.includes('-DGGML_NATIVE=OFF'));
     assert.ok(args.includes('-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded'));
+    if (arch === 'arm64') {
+      assert.equal(args[args.indexOf('-T') + 1], 'ClangCL');
+      assert.ok(args.includes('-DGGML_CPU_ARM_ARCH=armv8-a'));
+    } else {
+      assert.ok(!args.includes('-T'));
+      assert.ok(!args.some(arg => arg.startsWith('-DGGML_CPU_ARM_ARCH=')));
+    }
   }
+  const macArgs = voiceBuildArguments('source', 'build', { platform: 'darwin', arch: 'arm64' });
+  assert.ok(!macArgs.includes('-T'));
+  assert.ok(macArgs.includes('-DGGML_NATIVE=OFF'));
+  assert.ok(macArgs.includes('-DCMAKE_OSX_ARCHITECTURES=arm64'));
   assert.deepEqual(voicePaths({ packaged: true, resourcesPath: '/app/resources', platform: 'win32', root: '/unused' }), {
     binary: path.join('/app/resources/voice', 'whisper-cli.exe'), model: path.join('/app/resources/voice', 'ggml-base.en-q5_1.bin'),
   });
