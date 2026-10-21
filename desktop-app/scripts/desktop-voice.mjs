@@ -37,11 +37,12 @@ async function stageModel(cache) {
 }
 
 export function voiceBuildArguments(source, build, target) {
+  // Let CMake discover the installed Visual Studio version on Windows runners.
   return ['-S', source, '-B', build, '-DCMAKE_BUILD_TYPE=Release',
     '-DBUILD_SHARED_LIBS=OFF', '-DWHISPER_BUILD_TESTS=OFF', '-DWHISPER_BUILD_SERVER=OFF',
     '-DWHISPER_CURL=OFF', '-DGGML_NATIVE=OFF', '-DGGML_METAL=OFF', '-DGGML_OPENMP=OFF',
     '-DGGML_AVX=OFF', '-DGGML_AVX2=OFF', '-DGGML_FMA=OFF', '-DGGML_F16C=OFF',
-    ...(target.platform === 'darwin' ? ['-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0'] : ['-G', 'Visual Studio 17 2022', '-A', target.arch === 'arm64' ? 'ARM64' : 'x64', '-DCMAKE_POLICY_DEFAULT_CMP0091=NEW', '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded']),
+    ...(target.platform === 'darwin' ? ['-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0'] : ['-A', target.arch === 'arm64' ? 'ARM64' : 'x64', '-DCMAKE_POLICY_DEFAULT_CMP0091=NEW', '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded']),
   ];
 }
 

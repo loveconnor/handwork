@@ -133,6 +133,7 @@ test('packaged speech assets use the correct executable and static portable buil
   for (const arch of ['x64', 'arm64']) {
     const target = { platform: 'win32', arch };
     const args = voiceBuildArguments('source', 'build', target);
+    assert.ok(!args.includes('-G'), 'CMake must discover the installed Visual Studio version');
     assert.equal(args[args.indexOf('-A') + 1], arch === 'arm64' ? 'ARM64' : 'x64');
     assert.ok(args.includes('-DBUILD_SHARED_LIBS=OFF'));
     assert.ok(args.includes('-DGGML_NATIVE=OFF'));
