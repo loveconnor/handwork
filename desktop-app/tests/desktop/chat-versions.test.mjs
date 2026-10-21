@@ -3,12 +3,33 @@ import { test } from 'node:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { versionFamily, versionPosition, versionTurns } from '../../lib/chat-versions.ts';
+import { chatVersionIds, collapseChatVersions, versionFamily, versionPosition, versionTurns } from '../../lib/chat-versions.ts';
 import { ChatPreferences } from '../../electron/chat-preferences.mjs';
 import { DesktopBackend } from '../../electron/backend.mjs';
 import { validateArguments } from '../../electron/ipc.mjs';
 
 const branch = (from, turn, at) => ({ branch: { from, turn, at } });
+
+test('edits and retries stay in one chat row across different turns and reopening', () => {
+  const preferences = { edit: branch('original', 0, 10), retry: branch('edit', 3, 20), alternative: branch('original', 1, 30) };
+  // Input is sorted by activity, as it is in the harness.
+  const chats = ['alternative', 'unrelated', 'retry', 'edit', 'original'].map(id => ({ id, workspace: '/project' }));
+  const ids = rows => rows.map(chat => chat.id);
+  assert.deepEqual(ids(collapseChatVersions(chats, preferences, 'retry')), ['retry', 'unrelated']);
+  assert.deepEqual(ids(collapseChatVersions(chats, preferences, 'original')), ['original', 'unrelated'], 'opening an earlier version still selects the single row');
+  assert.deepEqual(ids(collapseChatVersions(chats, preferences, 'unrelated')), ['alternative', 'unrelated'], 'a closed chat reopens its most recently active version');
+  assert.deepEqual([...chatVersionIds(preferences, 'edit', new Set(chats.map(chat => chat.id)))].sort(), ['alternative', 'edit', 'original', 'retry']);
+  assert.deepEqual(versionFamily(preferences, 'edit', 0), ['original', 'edit'], 'hidden sessions remain available to the message version arrows');
+  assert.equal(chats.length, 5, 'collapsing rows preserves the stored versions');
+});
+
+test('chat rows tolerate missing originals, cycles and links across workspaces', () => {
+  const preferences = { edit: branch('missing', 0, 10), retry: branch('edit', 1, 20), a: branch('b', 0, 30), b: branch('a', 0, 40) };
+  const chats = [{ id: 'retry' }, { id: 'edit' }, { id: 'a', workspace: '/one' }, { id: 'b', workspace: '/two' }];
+  assert.deepEqual(collapseChatVersions(chats, preferences, '').map(chat => chat.id), ['retry', 'a', 'b']);
+  assert.deepEqual([...chatVersionIds(preferences, 'a', new Set(['a', 'b']))].sort(), ['a', 'b']);
+  assert.deepEqual(collapseChatVersions([], preferences, ''), []);
+});
 
 test('retries of one turn form a single family in the order they were made', () => {
   // v1 → v2 (retry turn 2) → v3 (retry turn 2 again, from v2); v4 retries v1 later.
@@ -57,7 +78,7 @@ test('rewinding records the original and keeps a custom name; IPC cannot forge l
   const directory = mkdtempSync(path.join(tmpdir(), 'handwork-versions-'));
   try {
     const preferences = new ChatPreferences(path.join(directory, 'preferences.json'));
-    preferences.update('original', { title: 'Release plan', pinned: true });
+    preferences.update('original', { title: 'Release plan', pinned: true, archived: false });
     const backend = new DesktopBackend({ chatPreferences: preferences, settingsService: { home: directory } });
     const requests = [];
     const engine = { session: { sessionId: 'original' }, client: { async request(method, params) { requests.push([method, params]); return { sessionId: 'retry', configOptions: [] }; } } };
@@ -68,7 +89,7 @@ test('rewinding records the original and keeps a custom name; IPC cannot forge l
     assert.equal(result.branch.from, 'original');
     assert.equal(result.branch.turn, 2);
     const saved = new ChatPreferences(path.join(directory, 'preferences.json')).list();
-    assert.deepEqual(saved.retry, { branch: result.branch, title: 'Release plan' });
+    assert.deepEqual(saved.retry, { branch: result.branch, title: 'Release plan', pinned: true, archived: false });
     assert.equal(saved.original.pinned, true, 'the original keeps its own settings');
     assert.equal(engine.session.sessionId, 'retry');
   } finally { rmSync(directory, { recursive: true, force: true }); }

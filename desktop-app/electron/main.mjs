@@ -25,6 +25,7 @@ import { QueueStore } from './queue-store.mjs';
 import { BACKUP_EXTENSION } from './backup.mjs';
 import { TrustedFiles } from './file-access.mjs';
 import { appVersion } from './app-version.mjs';
+import { LocalVoice, voicePaths } from './local-voice.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appIcon = path.join(root, 'electron', 'assets', 'handwork.png');
@@ -84,15 +85,7 @@ function syncTray(enabled) {
 }
 
 function createWindow() {
-  // Voice dictation is delegated to Wispr Flow when it is installed; the mic stays hidden otherwise.
-  const voice = {
-    status: async () => {
-      const name = app.getApplicationNameForProtocol('wispr-flow://');
-      return name ? { available: true, name } : { available: false };
-    },
-    start: () => shell.openExternal('wispr-flow://start-hands-free'),
-    stop: () => shell.openExternal('wispr-flow://stop-hands-free'),
-  };
+  const voice = new LocalVoice(voicePaths({ root, packaged: app.isPackaged, resourcesPath: process.resourcesPath }));
   const settings = new DesktopSettings(path.join(app.getPath('userData'), 'desktop-settings.json'));
   const settingsService = new SettingsService({ settings, version: appVersion, host: {
     chooseFolder: async () => { const result = await dialog.showOpenDialog(window, { title: 'Allow an additional project folder', properties: ['openDirectory'] }); return result.canceled ? null : result.filePaths[0]; },

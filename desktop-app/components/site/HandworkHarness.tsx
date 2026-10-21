@@ -17,11 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { IconFileText, IconSettings, IconMic, IconPlus, IconClose } from "@/components/atoms/Icons";
 import { ComposerOptions, HandworkTheme, chooseTheme } from "@/components/site/HandworkControls";
-import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, VoiceStatus, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult, SavedDraft } from "@/lib/desktop-api";
+import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult, SavedDraft } from "@/lib/desktop-api";
+import { useLocalDictation } from '@/lib/use-local-dictation';
 import { applyUpdate, availableCommands, configOptions, emptyConversation, withSavedUsage, permissionFromEvent, providerList, record, text, type Command, type ConfigOption, type Conversation, type Entry, type Permission, type ProviderInfo } from "@/lib/desktop-state";
 import { chatTitle, isPlaceholderTitle } from '@/electron/chat-title.mjs';
 import { mergeSidebarChats, sortChatsByRecency } from '@/lib/chat-order';
-import { versionPosition, versionTurns } from '@/lib/chat-versions';
+import { chatVersionIds, collapseChatVersions, versionPosition, versionTurns } from '@/lib/chat-versions';
 import { modelShortcuts, type ModelShortcut } from '@/lib/model-shortcuts';
 import { desktopSlashCommands, parseSlashCommand, resolveSlashCommand } from '@/lib/slash-commands.mjs';
 import { HandworkSidebarContent } from "@/components/site/HandworkSidebarContent";
@@ -124,7 +125,7 @@ export default function HandworkHarness() {
   const [recoveringDraft, setRecoveringDraft] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState<{ session: string; key: string }>();
   // Actions stored with a notice run against the newest chat state, not the state when they were created.
-  const latest = useRef<{ retryLast: () => Promise<void>; openChat: (chat: SavedSession) => void }>({ retryLast: async () => {}, openChat: () => {} });
+  const latest = useRef<{ retryLast: () => Promise<void>; openVersion: (id: string) => void }>({ retryLast: async () => {}, openVersion: () => {} });
   const activeWorkspace = useRef("");
   const [sessions, setSessions] = useState<SavedSession[]>(initialSidebar.sessions);
   const [tabs, setTabs] = useState<SavedSession[]>([]);
@@ -164,8 +165,6 @@ export default function HandworkHarness() {
   const [, setBackgroundVersion] = useState(0);
   const [attentionFocus, setAttentionFocus] = useState<{ id: string; kind: AttentionKind }>();
   const closedTabs = useRef<SavedSession[]>([]);
-  const [voice, setVoice] = useState<VoiceStatus>({ available: false });
-  const [listening, setListening] = useState(false);
   const [narrowSidebar, setNarrowSidebar] = useState(false);
   const [narrowSidebarOpen, setNarrowSidebarOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -190,6 +189,7 @@ export default function HandworkHarness() {
   const pendingChatRef = useRef<SavedSession | undefined>(undefined);
   const [navigating, setNavigating] = useState(false);
   const [configuring, setConfiguring] = useState(false);
+  const dictation = useLocalDictation({ api, composerKey: `${pendingChat?.id ?? sessionId}:${workspace}:${working}:${navigating}`, onText: text => setDraft(current => current.trim() ? `${current.trimEnd()} ${text}` : text), onError: setError });
   const configPending = useRef(false);
   const configVersion = useRef(0);
   const configTail = useRef<Promise<boolean>>(Promise.resolve(true));
@@ -277,7 +277,6 @@ export default function HandworkHarness() {
     const bridge = window.handwork;
     setApi(bridge);
     if (!bridge) return;
-    bridge.voiceStatus().then(status => setVoice(status)).catch(() => setVoice({ available: false }));
     bridge.listPrompts?.().then(setPrompts).catch(cause => setNotice(cause instanceof Error ? cause.message : String(cause)));
     // Model shortcuts are optional; without them the picker lists every model as before.
     bridge.getModelPreferences?.().then(setModelPreferences).catch(() => {});
@@ -459,6 +458,7 @@ export default function HandworkHarness() {
   async function sessionAction(action: "open" | "connect" | "new" | "load" | "chat" | "project", id?: string) {
     if (configPending.current) await configTail.current;
     if (!api || lock.current) return;
+    dictation.cancel();
     lock.current = true;
     setError(""); setNotice("");
     drafts.current.set(activeSession.current, { text: draft, files: attachments });
@@ -558,11 +558,6 @@ export default function HandworkHarness() {
       if (Array.isArray(picked)) stageFiles(picked);
       else if (picked.files.length || picked.rejected.length) stageFiles(picked.files, picked.rejected);
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
-  }
-  async function toggleVoice() {
-    if (!api) return;
-    try { if (listening) await api.stopVoice(); else await api.startVoice(); setListening(value => !value); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
   function touchChat(id: string) {
     const updatedAt = new Date().toISOString();
@@ -714,7 +709,7 @@ export default function HandworkHarness() {
     }
   }
   const openFind = (query?: string) => setFind(current => ({ open: true, query: query ?? current.query, focus: current.focus + 1 }));
-  /** Edit and Try again both branch the chat: the earlier version stays as its own chat. */
+  /** Edit and Try again save another version within the same chat. */
   async function regenerate(id: string, editedText: string, reason: "edit" | "retry") {
     if (!api || lock.current || busy || !sessionId) throw new Error("Wait for the current response to finish before editing.");
     const users = conversation.entries.filter(entry => entry.kind === "user");
@@ -722,7 +717,6 @@ export default function HandworkHarness() {
     if (index < 0) throw new Error("This message is no longer in the active chat.");
     const previous = conversation;
     const oldSession = sessionId;
-    const oldChat = { id: oldSession, label: chatPreferences[oldSession]?.title || conversation.title || "Previous version", workspace: activeWorkspace.current };
     lock.current = true;
     setWorking(true); setError(""); setPermissions([]);
     activeSession.current = "";
@@ -732,7 +726,10 @@ export default function HandworkHarness() {
       // The new version takes the original's tab; the original stays one click away.
       setTabs(current => current.map(tab => tab.id === oldSession ? { ...tab, id: result.sessionId, updatedAt: new Date().toISOString() } : tab));
       const branch = result.branch;
-      if (branch) setChatPreferences(current => ({ ...current, [result.sessionId]: { ...current[result.sessionId], branch, ...(current[oldSession]?.title ? { title: current[oldSession].title } : {}) } }));
+      if (branch) setChatPreferences(current => {
+        const { title, pinned, archived } = current[oldSession] ?? {};
+        return { ...current, [result.sessionId]: { ...current[result.sessionId], branch, title, pinned, archived } };
+      });
       acceptSession(result);
 
     } catch (cause) {
@@ -748,12 +745,12 @@ export default function HandworkHarness() {
       if (activeSession.current !== branch) return;
       const message = reason === "retry" ? "The previous reply is saved as another version. Switch versions with the arrows under your message. File changes and commands it made remain." : "Your previous message is saved as another version. Switch versions with the arrows under it. Earlier file changes and commands remain.";
       setNotice(message);
-      setNoticeAction({ notice: message, label: "Open previous version", run: () => latest.current.openChat(oldChat) });
+      setNoticeAction({ notice: message, label: "Open previous version", run: () => latest.current.openVersion(oldSession) });
     };
     await send(editedText, []).then(announce, cause => { announce(); throw cause; }).finally(() => setAttachments(stagedFiles));
   }
   const editMessage = (id: string, editedText: string) => regenerate(id, editedText, "edit");
-  useEffect(() => { latest.current = { retryLast, openChat }; });
+  useEffect(() => { latest.current = { retryLast, openVersion }; });
   const lastUserEntry = conversation.entries.findLast(entry => entry.kind === "user");
   // The engine regenerates text-only turns; attachments have to be sent again.
   const canRegenerate = !!lastUserEntry && !lastUserEntry.attachments?.length;
@@ -809,16 +806,19 @@ export default function HandworkHarness() {
     catch (cause) { setError(String(cause)); }
   }
   async function deleteSession(id: string) {
-    if (!api || lock.current || running.current.has(id)) throw new Error("Handwork is busy. Try again when it finishes.");
+    const ids = chatIds(id);
+    if (!api || lock.current || [...ids].some(target => running.current.has(target))) throw new Error("Handwork is busy. Try again when it finishes.");
     lock.current = true; setWorking(true); setError(""); setNotice("");
     try {
-      await api.deleteSession(id);
-      chatCache.current.delete(id);
-      editQueue(id, () => []);
-      clearIssue(id);
-      setTabs(current => current.filter(tab => tab.id !== id));
-      setSessions(current => current.filter(session => session.id !== id));
-      if (id === sessionId) {
+      for (const target of ids) {
+        await api.deleteSession(target);
+        chatCache.current.delete(target);
+        editQueue(target, () => []);
+        clearIssue(target);
+        setTabs(current => current.filter(tab => tab.id !== target));
+        setSessions(current => current.filter(session => session.id !== target));
+      }
+      if (ids.has(sessionId)) {
         // The engine released the deleted session; continue in a fresh one.
         activeSession.current = ""; setSessionId(""); setConversation(emptyConversation()); setPermissions([]);
         activeWorkspace.current = ''; setWorkspace('');
@@ -836,21 +836,31 @@ export default function HandworkHarness() {
     } catch (cause) { setProjectDeleteError(cause instanceof Error ? cause.message : String(cause)); }
     finally { setDeletingProject(false); }
   }
+  function chatIds(id: string) {
+    const workspace = recents.find(chat => chat.id === id)?.workspace;
+    return chatVersionIds(chatPreferences, id, new Set(recents.filter(chat => chat.workspace === workspace).map(chat => chat.id)));
+  }
+  async function updateChatVersions(id: string, changes: { title?: string; pinned?: boolean; archived?: boolean }) {
+    if (!api) return;
+    for (const target of chatIds(id)) {
+      const preference = await api.updateChat(target, changes);
+      setChatPreferences(current => ({ ...current, [target]: preference }));
+    }
+  }
   async function pinChat(chat: SavedSession) {
     if (!api || blocked) return;
     try {
-      const preference = await api.updateChat(chat.id, { pinned: !chat.pinned });
-      setChatPreferences(current => ({ ...current, [chat.id]: preference }));
+      await updateChatVersions(chat.id, { pinned: !chat.pinned });
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
   /** Archived chats leave the sidebar lists but stay searchable. An open chat stays open. */
   async function archiveChat(chat: SavedSession, archived: boolean) {
     if (!api) return;
-    if (archived && running.current.has(chat.id)) { setNotice("Wait for this chat to finish before archiving it."); return; }
+    const ids = chatIds(chat.id);
+    if (archived && [...ids].some(id => running.current.has(id))) { setNotice("Wait for this chat to finish before archiving it."); return; }
     try {
-      const preference = await api.updateChat(chat.id, { archived });
-      setChatPreferences(current => ({ ...current, [chat.id]: preference }));
-      if (archived && chat.id !== shownSession) setTabs(current => current.filter(tab => tab.id !== chat.id));
+      await updateChatVersions(chat.id, { archived });
+      if (archived) setTabs(current => current.filter(tab => !ids.has(tab.id) || tab.id === shownSession));
       const message = archived ? `Archived “${chat.label}”. Find it under Archived or search with ${shortcutLabel("Mod+K")}.` : `Restored “${chat.label}”.`;
       setNotice(message);
       setNoticeAction(archived ? { notice: message, label: "Undo", run: () => void archiveChat(chat, false) } : undefined);
@@ -884,8 +894,7 @@ export default function HandworkHarness() {
     try {
       if (chatAction.kind === "delete") await deleteSession(chatAction.chat.id);
       else {
-        const preference = await api.updateChat(chatAction.chat.id, { title: chatName.trim() });
-        setChatPreferences(current => ({ ...current, [chatAction.chat.id]: preference }));
+        await updateChatVersions(chatAction.chat.id, { title: chatName.trim() });
       }
       setChatAction(undefined);
     } catch (cause) { setChatActionError(cause instanceof Error ? cause.message : String(cause)); }
@@ -989,6 +998,7 @@ export default function HandworkHarness() {
     tabs.map(tab => isPlaceholderTitle(tab.label) ? { ...tab, label: sessions.find(session => session.id === tab.id)?.label ?? tab.label } : tab),
     sessions, projects,
   ).map(chat => ({ ...chat, label: chatPreferences[chat.id]?.title || chatTitle(chat.label, (chat.id === sessionId ? conversation : chatCache.current.get(chat.id))?.entries.find(entry => entry.kind === 'user')?.text), pinned: chatPreferences[chat.id]?.pinned ?? chat.pinned ?? false, archived: chatPreferences[chat.id]?.archived ?? chat.archived ?? false })));
+  const chatRows = collapseChatVersions(recents, chatPreferences, shownSession);
   const workspaceName = workspace.split("/").filter(Boolean).pop() || workspace;
   const landing = !pendingChat && conversation.entries.length === 0 && !busy;
   const suggestionRoute = JSON.stringify(options.filter(option => ["provider", "model", "effort", "fast_mode"].includes(option.id)).map(option => [option.id, option.currentValue]));
@@ -1363,6 +1373,7 @@ export default function HandworkHarness() {
     {viewedChat?.archived && <div className="handwork-archived-banner" role="status"><Archive aria-hidden width={14} height={14} /><span>This chat is archived. Sending a message restores it.</span><Button size="xs" variant="outline" onClick={() => void archiveChat(viewedChat, false)}><ArchiveRestore aria-hidden width={12} height={12} />Restore</Button></div>}
     <PromptBar sendKey={preferences?.app.sendKey} value={draft} onValueChange={setDraft} hasExternalAttachments={attachments.length > 0} placeholder={busy && !pendingChat ? "Queue a follow-up…" : conversation.entries.length ? "Reply to Handwork…" : workspaceName ? `Ask about ${workspaceName}…` : "Ask Handwork…"}
       onQueue={busy && !pendingChat ? ({ text: queued }) => {
+        dictation.cancel();
         const target = sessionId;
         editQueue(target, items => [...items, { id: crypto.randomUUID(), text: queued, files: attachments, queuedAt: Date.now() }]);
         setAttachments([]); setRejectedFiles([]);
@@ -1391,6 +1402,7 @@ export default function HandworkHarness() {
         void stageDroppedFiles(files).catch(cause => setError(String(cause)));
       }}
       onSubmit={({ text }) => {
+        dictation.cancel();
         const command = attachments.length ? null : parseSlashCommand(text);
         if (command) { void runCommand(command.name, command.args).catch(cause => { setError(String(cause)); setDraft(current => current || text); }); return; }
         const target = sessionId;
@@ -1410,7 +1422,11 @@ export default function HandworkHarness() {
       actions={<>
         <ComposerOptions options={composerOptions} disabled={busy || working || picking || navigating || unavailable} syncing={configuring} onChange={(id, value) => void configure(id, value)}
           shortcuts={shortcuts} onChooseModel={model => void chooseModel(model)} onFavorite={api?.setModelFavorite ? favorite => void favoriteModel(favorite) : undefined} />
-        {voice.available && <Button size="icon-sm" variant="ghost" aria-label={listening ? "Stop dictation" : "Dictate"} title={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening} onClick={() => void toggleVoice()}><IconMic size={16} /></Button>}
+        {dictation.status.available && <>
+          <Button size="icon-sm" variant="ghost" aria-label={dictation.phase === 'recording' ? "Stop dictation" : dictation.phase === 'transcribing' ? "Transcribing…" : "Dictate offline"} title={dictation.phase === 'recording' ? "Stop dictation (maximum 2 minutes)" : "Dictate offline · English"} aria-pressed={dictation.phase === 'recording'} disabled={unavailable || blocked || dictation.phase === 'starting' || dictation.phase === 'transcribing'} onClick={() => void dictation.toggle()}><IconMic size={16} /></Button>
+          {dictation.phase !== 'idle' && <span role="status">{dictation.phase === 'starting' ? 'Opening microphone…' : dictation.phase === 'recording' ? 'Listening…' : 'Transcribing…'}</span>}
+          {dictation.phase !== 'idle' && <Button size="icon-sm" variant="ghost" aria-label="Cancel dictation" title="Cancel dictation" onClick={dictation.cancel}><IconClose size={14} /></Button>}
+        </>}
       </>} />
   </div>;
   return <main className={`handwork-app ${desktopWindows ? 'handwork-windows' : ''} ${desktopMac ? "handwork-mac" : ""}`}>
@@ -1435,7 +1451,7 @@ export default function HandworkHarness() {
         </form>
       </DialogPopup>
     </Dialog>
-    <HandworkCommandPalette open={paletteOpen} initialPage={palettePage} onOpenChange={open => { setPaletteOpen(open); if (!open) setPalettePage(''); }} api={api} chats={recents} projects={projects} prompts={prompts} actions={paletteActions} pages={palettePages}
+    <HandworkCommandPalette open={paletteOpen} initialPage={palettePage} onOpenChange={open => { setPaletteOpen(open); if (!open) setPalettePage(''); }} api={api} chats={chatRows} projects={projects} prompts={prompts} actions={paletteActions} pages={palettePages}
       models={shortcuts} onChooseModel={model => void chooseModel(model)}
       onOpenChat={(chat, query) => { openChat(chat); if (query) openFind(query); }} onNewProjectChat={project => { if (!blocked) void sessionAction("project", project); }}
       onUsePrompt={usePrompt} onChoose={(id, value) => { if (id === "theme") void chooseTheme(value as "system" | "light" | "dark"); else void configure(id, value); }} />
@@ -1448,7 +1464,7 @@ export default function HandworkHarness() {
     <SidebarNav collapsed={narrowSidebar ? !narrowSidebarOpen : undefined} onCollapsedChange={collapsed => { if (narrowSidebar) setNarrowSidebarOpen(!collapsed); }} collapsedFooter={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} compact prepareRestart={prepareUpdateRestart} /><Button variant="ghost" size="icon-sm" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /></Button></div>} className="handwork-sidebar" header={<div className="handwork-sidebar-heading"><h1 data-slot="handwork-brand" className="handwork-brand">Handwork</h1></div>}
       items={[{ id: 'search', label: 'Search chats', icon: <Search aria-hidden width={16} height={16} /> }]} onNavigate={() => setPaletteOpen(true)} threads={[]} onThreadSelect={() => {}}
       onNewChat={() => { if (!blocked && api) void sessionAction(workspace ? 'project' : 'chat', workspace || undefined); }}
-      content={<HandworkSidebarContent attention={attentionKinds} projects={projects} sessions={recents} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={blocked || !api} chatDisabled={picking || !api}
+      content={<HandworkSidebarContent attention={attentionKinds} projects={projects} sessions={chatRows} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={blocked || !api} chatDisabled={picking || !api}
         onDismissIssue={clearIssue} onDeleteProject={project => { setProjectToDelete(project); setProjectDeleteError(""); }}
         onAdd={openProject} onNewProjectChat={project => void sessionAction("project", project)} onChat={chat => { const item = attention.find(item => item.id === chat.id); if (item) openAttention(item); else openChat(chat); }} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)} onArchive={(chat, archived) => void archiveChat(chat, archived)}
         onRename={chat => { setChatAction({ kind: "rename", chat }); setChatName(chat.label); setChatActionError(""); }} onDelete={chat => { setChatAction({ kind: "delete", chat }); setChatActionError(""); }} />}

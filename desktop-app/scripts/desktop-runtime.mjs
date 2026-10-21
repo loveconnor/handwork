@@ -14,7 +14,7 @@ export async function desktopRuntime() {
   const distribution = path.dirname(source);
   const version = (await readFile(path.join(distribution, 'version'), 'utf8')).trim();
   const cache = path.resolve(distribution, '../../.cache/handwork-desktop');
-  const destination = path.join(cache, `${version}-v1`);
+  const destination = path.join(cache, `${version}-v2`);
   const executable = path.join(destination, 'Handwork.app/Contents/MacOS/Electron');
   try {
     await access(executable, constants.X_OK);
@@ -36,6 +36,9 @@ export async function desktopRuntime() {
     })) {
       await exec('/usr/libexec/PlistBuddy', ['-c', `Set :${key} ${value}`, plist]);
     }
+    const microphoneDescription = 'Handwork uses your microphone for offline dictation. Audio stays on your device.';
+    await exec('/usr/libexec/PlistBuddy', ['-c', `Set :NSMicrophoneUsageDescription ${microphoneDescription}`, plist])
+      .catch(() => exec('/usr/libexec/PlistBuddy', ['-c', `Add :NSMicrophoneUsageDescription string ${microphoneDescription}`, plist]));
     // Changing bundle metadata invalidates the original signature; sign this local copy.
     await exec('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', bundle]);
     await rename(temporary, destination);

@@ -20,6 +20,7 @@
     "desktop:dev": "node scripts/build-genui-prompt.mjs && node scripts/desktop-dev.mjs",
     "desktop:build": "node scripts/desktop-build.mjs",
     "desktop:icons": "node scripts/build-desktop-icons.mjs",
+    "desktop:voice": "node scripts/desktop-voice.mjs",
     "desktop:package": "node scripts/desktop-package.mjs",
     "desktop:package:win": "node scripts/desktop-package.mjs win32 x64",
     "desktop:package:win:arm64": "node scripts/desktop-package.mjs win32 arm64",
@@ -46,9 +47,19 @@
       {
         "from": "resources/${os}-${arch}/handwork",
         "to": "handwork"
+      },
+      {
+        "from": "resources/${os}-${arch}/voice",
+        "to": "voice"
       }
     ],
     "mac": {
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist",
+      "binaries": ["Contents/Resources/voice/whisper-cli"],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Handwork uses your microphone for offline dictation. Audio stays on your device."
+      },
       "icon": "electron/assets/Handwork.icon",
       "category": "public.app-category.developer-tools",
       "target": "dir",

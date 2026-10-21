@@ -1,12 +1,14 @@
 import './build-genui-prompt.mjs';
 import { build } from 'vite';
 import { desktopTarget, stageEngine } from './desktop-engine.mjs';
+import { stageVoice } from './desktop-voice.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildDesktop(target = desktopTarget()) {
   const destination = await stageEngine(root, target);
+  await stageVoice(root, target);
   await build({ configFile: path.join(root, 'vite.config.ts') });
   console.log(`Desktop renderer built; ${target.platform}-${target.arch} engine staged in ${destination}`);
 }

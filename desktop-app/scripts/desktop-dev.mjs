@@ -2,6 +2,7 @@ import { desktopDevProcess } from './desktop-dev-process.mjs';
 import { createServer } from 'vite';
 import { desktopRuntime } from './desktop-runtime.mjs';
 import { enginePath } from '../electron/engine-path.mjs';
+import { stageVoice } from './desktop-voice.mjs';
 import { spawn } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
@@ -11,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const binary = enginePath({ root, packaged: false });
 await access(binary, constants.X_OK);
+await stageVoice(root);
 const electron = await desktopRuntime();
 const server = await createServer({ configFile: path.join(root, 'vite.config.ts'), server: { host: '127.0.0.1', port: 5173, strictPort: true } });
 const native = desktopDevProcess({

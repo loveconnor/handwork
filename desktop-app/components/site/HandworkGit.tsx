@@ -212,8 +212,20 @@ export function CommitComposer({ state, git, api, workspace, modelLabel, modelPe
   const canCommit = !!draft.summary.trim() && (staged > 0 || state.operation === 'merge') && !blocker && !git.busy && !writing;
   const commit = async () => {
     if (!canCommit) return;
-    const result = await git.run('commit', () => api.gitCommit(workspace, { summary: draft.summary.trim(), description: draft.description }, reviewedCommit(state)), result => `Committed ${result.commit?.short} to ${state.head.branch}.`);
-    if (result?.ok) { setDraft({ summary: '', description: '' }); setWritten(undefined); setEditorOpen(false); setDescriptionOpen(false); }
+    await git.run('commit', async () => {
+      const result = await api.gitCommit(workspace, { summary: draft.summary.trim(), description: draft.description }, reviewedCommit(state));
+      if (result.ok) {
+        // Clear storage before the refreshed repository can unmount this editor.
+        // Keeping cleanup in the action also covers a successful Retry.
+        try { localStorage.removeItem(draftKey(state.repository)); } catch { /* Storage may be unavailable. */ }
+        setDraft({ summary: '', description: '' });
+        setWritten(undefined);
+        setWriteError('');
+        setEditorOpen(false);
+        setDescriptionOpen(false);
+      }
+      return result;
+    }, result => `Committed ${result.commit?.short} to ${state.head.branch}.`);
   };
   const write = async () => {
     if (writing || !staged || modelPending || git.busy) return;

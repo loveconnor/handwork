@@ -68,7 +68,7 @@ export function promptBlocks(text, attachments = []) {
 const genuiPrompt = JSON.parse(await readFile(new URL('./genui-prompt.json', import.meta.url), 'utf8'));
 const standalonePrompt = JSON.parse(await readFile(new URL('./standalone-prompt.json', import.meta.url), 'utf8'));
 
-const noVoice = { status: async () => ({ available: false }), start: async () => {}, stop: async () => {} };
+const noVoice = { status: async () => ({ available: false }), transcribe: async () => { throw new Error('Offline dictation is unavailable.'); }, cancel: async () => {}, dispose: async () => {} };
 
 // A keyless local provider (Ollama) counts as connected only while its server answers.
 export async function localProviderRunning(baseUrl) {
@@ -239,10 +239,10 @@ export class DesktopBackend extends EventEmitter {
     };
   }
 
-  // Voice comes from a system dictation app the host detected; the renderer only sees availability.
+  // The renderer captures bounded PCM audio; transcription stays on this device.
   voiceStatus() { return this.voice.status(); }
-  startVoice() { return this.voice.start(); }
-  stopVoice() { return this.voice.stop(); }
+  transcribeVoice(audio) { return this.voice.transcribe(audio); }
+  cancelVoice() { return this.voice.cancel(); }
 
   selectProject(path) {
     return this.exclusive(async () => {
@@ -807,8 +807,12 @@ export class DesktopBackend extends EventEmitter {
       const branch = { from: original, turn: turnIndex, at: Date.now() };
       try {
         // A chat the person renamed keeps its name in every version.
-        const title = this.chatPreferences.list()[original]?.title;
-        this.chatPreferences.update(result.sessionId, { branch, ...(title ? { title } : {}) });
+        const { title, pinned, archived } = this.chatPreferences.list()[original] ?? {};
+        this.chatPreferences.update(result.sessionId, { branch,
+          ...(title !== undefined ? { title } : {}),
+          ...(pinned !== undefined ? { pinned } : {}),
+          ...(archived !== undefined ? { archived } : {}),
+        });
       }
       catch { return result; /* The new chat still works without a version link. */ }
       return { ...result, branch };
@@ -988,6 +992,6 @@ export class DesktopBackend extends EventEmitter {
     this.engines.clear();
     this.client = null;
     this.session = null;
-    return Promise.allSettled([...this.children]);
+    return Promise.allSettled([...this.children, this.voice.dispose?.()]);
   }
 }

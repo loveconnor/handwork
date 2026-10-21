@@ -9,6 +9,28 @@ Native web search is available with the Codex provider; other current adapters
 can read known URLs but do not advertise search. Search sources appear as links
 in the response. No separate search account or key is required.
 
+The composer microphone provides free, offline English dictation using whisper.cpp
+and the quantized `base.en` model (59.7 MB, plus a small native executable). Click
+the mic, speak, then click again to insert the transcript into the draft. Recording
+stops after two minutes. Cancel, switching chats, hiding the app, and closing the
+window stop capture; cancelled results never enter another chat. Audio is processed
+locally, temporary files are deleted after transcription, and the native process
+exits to release model memory. This replaces the Wispr Flow dependency. Dictation
+does not require an account, network, or separate app; model quality and speed
+depend on the microphone and hardware. Other app features still depend on their
+configured providers; offline dictation does not make cloud chat providers offline.
+
+`npm run desktop:voice` prepares dictation for development, and desktop dev/build
+commands run it automatically. The first build needs Git, CMake, internet for pinned
+source/model downloads, and a C++ compiler (Xcode Command Line Tools on Mac;
+Visual Studio 2022 C++ tools with the relevant x64/ARM64 toolchain on Windows).
+Subsequent builds reuse local assets. The installer bundles everything so the first
+dictation works offline. Windows builds select the target via CMake's Visual Studio
+generator, including ARM64 from an x64 host. For cross-OS packaging, provide a
+statically linked target executable with `HANDWORK_WHISPER_BINARY`; no shared
+Whisper libraries are required. Model downloads are SHA-256 verified and license
+notices ship with the voice resources.
+
 Attachments accept any file extension through the file picker or drag and drop.
 Supported PNG, JPEG, GIF, and WebP images are sent as images; UTF-8 picker files
 are inlined as text. Other files retain their original bytes in private local
@@ -344,8 +366,10 @@ and optional runtime adapters were not exercised; the installers remain unsigned
 Message actions match the Honest AI playground: icon-only Copy and, on the
 latest reply, Regenerate. User-message Copy and Edit appear on hover, keyboard
 focus, and touch. Save & regenerate uses the native `session/rewind` extension
-to seed a durable replacement chat with the canonical turns before the selected
-message, then submits the revision. The old version stays in saved chats. This
+to seed a durable version with the canonical turns before the selected
+message, then submits the revision. Edits and retries share one chat entry in
+the sidebar and chat picker; message arrows reopen earlier versions in the same
+tab. Names, pins, archive state, and deletion apply to the whole chat. This
 rewinds model context, not workspace file changes or command effects. Stale
 message targets are rejected. Editing image-bearing messages is currently
 unavailable; their Copy action remains available.

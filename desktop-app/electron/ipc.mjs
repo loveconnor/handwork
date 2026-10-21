@@ -1,6 +1,7 @@
 import { validSettingsPatch } from './desktop-settings.mjs';
 import { validPromptInput } from './saved-prompts.mjs';
 import { validObjectId, validRefName, validRepositoryPath } from './git-service.mjs';
+import { validVoiceAudio } from './local-voice.mjs';
 export const CHANNEL_PREFIX = 'handwork:';
 export const EVENT_CHANNEL = 'handwork:event';
 const text = (value, max = 4096) => typeof value === 'string' && value.length > 0 && Buffer.byteLength(value) <= max && !value.includes('\0');
@@ -70,7 +71,7 @@ const signatures = {
   gitLog: [text, value => Number.isSafeInteger(value) && value >= 1 && value <= 200], gitCommitDetails: [text, validObjectId], gitCommitFileDiff: [text, validObjectId, validRepositoryPath, diffContext],
   gitOpenTerminal: [text],
   projectSuggestions: [], projectChanges: [], projectFileDiff: [value => text(value), value => text(value), value => Number.isSafeInteger(value) && value >= 0 && value <= 1000000], listProjects: [], removeProject: [value => text(value)], selectProject: [(value) => text(value)], selectChat: [], newChat: [],
-  chooseWorkspace: [], chooseFiles: [value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_ATTACHMENTS], chatDetails: [], voiceStatus: [], startVoice: [], stopVoice: [], connect: [], cancel: [], continueResponse: [], newSession: [], listSessions: [],
+  chooseWorkspace: [], chooseFiles: [value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_ATTACHMENTS], chatDetails: [], voiceStatus: [], transcribeVoice: [validVoiceAudio], cancelVoice: [], connect: [], cancel: [], continueResponse: [], newSession: [], listSessions: [],
   prompt: [(value) => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0'), attachments],
   rewindSession: [(value) => Number.isSafeInteger(value) && value >= 0 && value <= 100000, (value) => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0')],
   loadSession: [(value) => text(value)],
@@ -96,7 +97,12 @@ export function isTrustedSender(event, webContents, rendererURL) {
 }
 
 export function allowsDesktopPermission(webContents, expectedWindow, rendererURL, permission, details) {
-  if (permission !== 'clipboard-sanitized-write' || !details?.isMainFrame || webContents !== expectedWindow) return false;
+  if (!['clipboard-sanitized-write', 'media'].includes(permission) || !details?.isMainFrame || webContents !== expectedWindow) return false;
+  if (permission === 'media') {
+    // Request handlers report mediaTypes; permission checks report mediaType.
+    const audioOnly = Array.isArray(details.mediaTypes) ? details.mediaTypes.length === 1 && details.mediaTypes[0] === 'audio' : details.mediaType === 'audio';
+    if (!audioOnly) return false;
+  }
   if (!isTrustedSender({ sender: webContents, senderFrame: webContents?.mainFrame }, expectedWindow, rendererURL)) return false;
   try { const actual = new URL(details.requestingUrl); const expected = new URL(rendererURL); actual.hash = ''; expected.hash = ''; return actual.href === expected.href; } catch { return false; }
 }

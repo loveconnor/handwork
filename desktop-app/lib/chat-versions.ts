@@ -5,6 +5,47 @@ type Preferences = Record<string, { branch?: ChatBranch } | undefined>;
 const branchOf = (preferences: Preferences, id: string): ChatBranch | undefined =>
   Object.hasOwn(preferences, id) ? preferences[id]?.branch : undefined;
 
+function versionNeighbours(preferences: Preferences, available: Set<string>) {
+  const neighbours = new Map<string, string[]>();
+  for (const id of available) {
+    const from = branchOf(preferences, id)?.from;
+    if (!from || !available.has(from)) continue;
+    neighbours.set(id, [...(neighbours.get(id) ?? []), from]);
+    neighbours.set(from, [...(neighbours.get(from) ?? []), id]);
+  }
+  return neighbours;
+}
+
+function linkedVersions(chatId: string, neighbours: Map<string, string[]>) {
+  const family = new Set([chatId]);
+  for (const id of family) for (const neighbour of neighbours.get(id) ?? []) family.add(neighbour);
+  return family;
+}
+
+/** All saved sessions belonging to one chat, across edits of any turn. */
+export function chatVersionIds(preferences: Preferences, chatId: string, available: Set<string>): Set<string> {
+  return linkedVersions(chatId, versionNeighbours(preferences, available));
+}
+
+/** One row per chat. Keep the viewed version selected; otherwise use the newest. */
+export function collapseChatVersions<T extends { id: string; workspace?: string }>(chats: T[], preferences: Preferences, current: string): T[] {
+  const remaining = new Map(chats.map(chat => [chat.id, chat]));
+  const workspaces = new Map<string | undefined, Set<string>>();
+  for (const chat of chats) {
+    if (!workspaces.has(chat.workspace)) workspaces.set(chat.workspace, new Set());
+    workspaces.get(chat.workspace)!.add(chat.id);
+  }
+  const neighbours = new Map([...workspaces].map(([workspace, ids]) => [workspace, versionNeighbours(preferences, ids)]));
+  const result: T[] = [];
+  for (const chat of chats) {
+    if (!remaining.has(chat.id)) continue;
+    const family = linkedVersions(chat.id, neighbours.get(chat.workspace)!);
+    result.push(family.has(current) ? remaining.get(current) ?? chat : chat);
+    for (const id of family) remaining.delete(id);
+  }
+  return result;
+}
+
 /**
  * Every saved version of one user turn, oldest first: the original chat, then each
  * edit or retry of that turn. Chats outside `available` (deleted, or in a removed

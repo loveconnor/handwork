@@ -46,7 +46,7 @@ export type EngineEvent = { method: string; id?: string | number; params?: unkno
 export type SessionResult = { sessionId: string; configOptions?: unknown; availableCommands?: unknown[]; historyReplayed?: boolean; branch?: ChatBranch };
 /** A file attached to a prompt: raw bytes as base64, or valid UTF-8 text. */
 export type Attachment = { name: string; mimeType: string; size: number; uri?: string; data?: string; text?: string };
-export type VoiceStatus = { available: boolean; name?: string };
+export type VoiceStatus = { available: boolean; name?: string; language?: string; reason?: string };
 export type ProjectSuggestion = { label: string; prompt: string };
 /** The context window as last reported for a chat: tokens used and the model's limit. */
 export type ChatUsage = { used: number; size?: number; at: number };
@@ -177,8 +177,8 @@ export interface DesktopAPI {
   chooseFiles(room?: number): Promise<{ files: Attachment[]; rejected: { name: string; reason: string }[] }>;
   chatDetails(): Promise<ChatDetails>;
   voiceStatus(): Promise<VoiceStatus>;
-  startVoice(): Promise<void>;
-  stopVoice(): Promise<void>;
+  transcribeVoice(audio: Uint8Array): Promise<{ text: string }>;
+  cancelVoice(): Promise<void>;
   connect(): Promise<SessionResult>;
   prompt(text: string, attachments: Attachment[], sessionId?: string): Promise<unknown>;
   cancel(sessionId?: string): Promise<void>;
