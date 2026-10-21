@@ -82,29 +82,31 @@ export function ComposerOptions({ options, disabled, syncing = false, onChange, 
       </MenuTrigger>
       <MenuPopup side="top" align="end" sideOffset={10} className="handwork-model-options" aria-label="Model options">
         {provider && <><OptionSubmenu option={provider} disabled={disabled} onChange={value => onChange(provider.id, value)} /><MenuSeparator /></>}
-        {hasShortcuts && <>
-          <ModelShortcuts label="Favorites" items={shortcuts.favorites} provider={provider} currentKey={currentKey} disabled={disabled || syncing} onChoose={onChooseModel} />
-          <ModelShortcuts label="Frequently used" items={shortcuts.frequent} provider={provider} currentKey={currentKey} disabled={disabled || syncing} onChoose={onChooseModel} />
-          <MenuSeparator />
-        </>}
-        {model && <MenuGroup>
-          <MenuGroupLabel>{hasShortcuts ? 'All models' : 'Model'}</MenuGroupLabel>
-          <MenuRadioGroup className="handwork-model-list" value={model.currentValue} onValueChange={value => onChange(model.id, String(value))}>
-            {model.options.map(choice => {
-              const profile = modelProfile(provider?.currentValue || '', choice.value);
-              const presentation = profile ? modelProfiles[profile] : undefined;
-              return <HoverTooltip key={choice.value} content={presentation?.detail}><MenuRadioItem  value={choice.value} aria-label={modelDisplayName(choice.name)} aria-description={presentation ? `${presentation.label}: ${presentation.detail}` : choice.description} disabled={disabled || syncing} closeOnClick className="handwork-model-item" >
-                <span className="handwork-model-choice">
-                  <span className="handwork-option-name">{modelDisplayName(choice.name)}</span>
-                    {(presentation || choice.description) && <span className="handwork-option-description">{presentation?.label || choice.description}</span>}
-                </span>
-              </MenuRadioItem></HoverTooltip>;
-            })}
-          </MenuRadioGroup>
-          {onFavorite && <MenuCheckboxItem disabled={disabled || syncing} checked={!!shortcuts?.favorite} onCheckedChange={checked => onFavorite(checked)} closeOnClick={false} className="handwork-favorite-option" aria-label={`Favorite ${modelLabel}`}>
-            <span className="handwork-favorite-label"><Star aria-hidden /><span>Favorite</span><span className="handwork-option-value">{modelLabel}</span></span>
-          </MenuCheckboxItem>}
-        </MenuGroup>}
+        <div className="handwork-model-scroll">
+          {hasShortcuts && <>
+            <ModelShortcuts label="Favorites" items={shortcuts.favorites} provider={provider} currentKey={currentKey} disabled={disabled || syncing} onChoose={onChooseModel} />
+            <ModelShortcuts label="Frequently used" items={shortcuts.frequent} provider={provider} currentKey={currentKey} disabled={disabled || syncing} onChoose={onChooseModel} />
+            <MenuSeparator />
+          </>}
+          {model && <MenuGroup>
+            <MenuGroupLabel>{hasShortcuts ? 'All models' : 'Model'}</MenuGroupLabel>
+            <MenuRadioGroup className="handwork-model-list" value={model.currentValue} onValueChange={value => onChange(model.id, String(value))}>
+              {model.options.map(choice => {
+                const profile = modelProfile(provider?.currentValue || '', choice.value);
+                const presentation = profile ? modelProfiles[profile] : undefined;
+                return <HoverTooltip key={choice.value} content={presentation?.detail}><MenuRadioItem  value={choice.value} aria-label={modelDisplayName(choice.name)} aria-description={presentation ? `${presentation.label}: ${presentation.detail}` : choice.description} disabled={disabled || syncing} closeOnClick className="handwork-model-item" >
+                  <span className="handwork-model-choice">
+                    <span className="handwork-option-name">{modelDisplayName(choice.name)}</span>
+                      {(presentation || choice.description) && <span className="handwork-option-description">{presentation?.label || choice.description}</span>}
+                  </span>
+                </MenuRadioItem></HoverTooltip>;
+              })}
+            </MenuRadioGroup>
+            {onFavorite && <MenuCheckboxItem disabled={disabled || syncing} checked={!!shortcuts?.favorite} onCheckedChange={checked => onFavorite(checked)} closeOnClick={false} className="handwork-favorite-option" aria-label={`Favorite ${modelLabel}`}>
+              <span className="handwork-favorite-label"><Star aria-hidden /><span>Favorite</span><span className="handwork-option-value">{modelLabel}</span></span>
+            </MenuCheckboxItem>}
+          </MenuGroup>}
+        </div>
         {model && settings.length > 0 && <MenuSeparator />}
         {settings.map(option => option.id === 'fast_mode' && option.options.length === 2 && option.options.some(choice => choice.value === 'on') && option.options.some(choice => choice.value === 'off')
           ? <MenuCheckboxItem key={option.id} disabled={disabled || syncing} checked={option.currentValue === 'on'} onCheckedChange={checked => onChange(option.id, checked ? 'on' : 'off')} closeOnClick={false} className="handwork-fast-option" aria-label={option.name}>

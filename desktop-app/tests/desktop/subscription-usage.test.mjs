@@ -5,6 +5,21 @@ import { DesktopBackend } from '../../electron/backend.mjs';
 import { validateArguments } from '../../electron/ipc.mjs';
 import { usageResetLabel, usageWindowState } from '../../lib/subscription-usage.ts';
 
+test('sidebar usage is an icon in the settings row with hover and click details', () => {
+  const component = readFileSync(new URL('../../components/site/HandworkSubscriptionUsage.tsx', import.meta.url), 'utf8');
+  const harness = readFileSync(new URL('../../components/site/HandworkHarness.tsx', import.meta.url), 'utf8');
+  assert.match(component, /PopoverTrigger openOnHover delay=\{300\} closeDelay=\{150\}/);
+  assert.match(component, /size="icon-sm" className=\{styles.summary\} aria-label="Codex subscription usage and reset times"/);
+  assert.match(component, /<ProviderLogo provider="codex" size=\{18\}/);
+  const css = readFileSync(new URL('../../components/site/HandworkSubscriptionUsage.module.css', import.meta.url), 'utf8');
+  assert.match(css, /\.summary \{ margin-left: auto; flex-shrink: 0;/);
+  const logos = readFileSync(new URL('../../components/site/ProviderLogo.tsx', import.meta.url), 'utf8');
+  assert.match(logos, /codex: OpenAI/);
+  assert.doesNotMatch(component, /styles\.(summaryLabel|rings|ringValue)/);
+  assert.match(component, /if \(!active\) return null/);
+  assert.match(harness, /className="handwork-sidebar-footer"><Button[^\n]+Settings<\/Button><HandworkSubscriptionUsage[^\n]+compact \/><HandworkTheme/);
+});
+
 const now = Date.UTC(2026, 9, 18, 12);
 const window = (usedPercent, resetsAt = now + 60_000) => ({ id: 'weekly', label: 'Weekly', usedPercent, resetsAt, windowMinutes: 10080 });
 

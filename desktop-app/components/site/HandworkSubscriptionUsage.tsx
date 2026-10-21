@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ProviderLogo } from './ProviderLogo';
+import { Popover, PopoverTrigger, PopoverPopup } from '@/components/ui/popover';
 import type { DesktopAPI, SubscriptionUsage } from '@/lib/desktop-api';
 import { usageResetLabel, usageWindowState } from '@/lib/subscription-usage';
 import styles from './HandworkSubscriptionUsage.module.css';
 
-export function HandworkSubscriptionUsage({ api, active }: { api?: DesktopAPI; active: boolean }) {
+export function HandworkSubscriptionUsage({ api, active, compact = false }: { api?: DesktopAPI; active: boolean; compact?: boolean }) {
   const titleId = useId();
   const [usage, setUsage] = useState<SubscriptionUsage>();
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export function HandworkSubscriptionUsage({ api, active }: { api?: DesktopAPI; a
   const refresh = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!active || !api) return;
+    if (!active || !api) { setUsage(undefined); setError(''); setUpdatedAt(undefined); return; }
     let current = true;
     let pending = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -53,7 +55,7 @@ export function HandworkSubscriptionUsage({ api, active }: { api?: DesktopAPI; a
     };
   }, [api, active]);
 
-  return <section className={styles.usage} aria-labelledby={titleId} aria-busy={loading}>
+  const details = <section className={styles.usage} aria-labelledby={titleId} aria-busy={loading}>
     <div className={styles.header}>
       <span id={titleId} className={styles.title}>Subscription usage{usage?.plan && <span className={styles.plan}>{usage.plan.replaceAll('_', ' ')}</span>}</span>
       <Button size="sm" variant="ghost" className={styles.refresh} disabled={!api || !active || loading} onClick={() => refresh.current()} aria-label="Refresh Codex subscription usage">{loading ? 'Refreshing…' : 'Refresh'}</Button>
@@ -76,4 +78,13 @@ export function HandworkSubscriptionUsage({ api, active }: { api?: DesktopAPI; a
       {error ? <p className={styles.message} role="status">Could not update usage. {error}{usage && updatedAt ? ` Showing the last check from ${new Date(updatedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.` : ''}</p> : <p className={styles.message}>Shared across apps using your Codex subscription. Limits reset automatically.</p>}
     </div>
   </section>;
+
+  if (!compact) return details;
+  if (!active) return null;
+  return <Popover>
+    <PopoverTrigger openOnHover delay={300} closeDelay={150} render={<Button variant="ghost" size="icon-sm" className={styles.summary} aria-label="Codex subscription usage and reset times" />}>
+      <ProviderLogo provider="codex" size={18} />
+    </PopoverTrigger>
+    <PopoverPopup side="top" align="start" sideOffset={10} className={styles.popup}>{details}</PopoverPopup>
+  </Popover>;
 }
