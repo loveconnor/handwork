@@ -8,6 +8,36 @@ import { fileURLToPath } from 'node:url';
 import { mergeReleaseManifests, releaseTargets, sha256 } from './desktop-release-artifacts.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const version = '0.1.42';
+for (const [label, newline] of [['LF', '\n'], ['CRLF', '\r\n']]) {
+  test(`stamps every release version with ${label} line endings and can be rerun`, async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'handwork-version-test-'));
+    try {
+      await mkdir(path.join(dir, 'scripts'), { recursive: true });
+      await mkdir(path.join(dir, 'src-tauri'), { recursive: true });
+      await copyFile(path.join(root, 'scripts/bump-version.mjs'), path.join(dir, 'scripts/bump-version.mjs'));
+      const initial = '0.1.8';
+      const manifest = { name: 'handwork-desktop', version: initial };
+      const fixtures = {
+        'package.json': JSON.stringify(manifest, null, 2),
+        'package-lock.json': JSON.stringify({ ...manifest, lockfileVersion: 3, packages: {
+          '': manifest, 'node_modules/example': { version: '2.3.4' },
+        } }, null, 2),
+        'Cargo.toml': `[package]\nname = "handwork"\nversion = "${initial}"\n`,
+        'Cargo.lock': `version = 4\n\n[[package]]\nname = "handwork"\nversion = "${initial}"\n\n[[package]]\nname = "example"\nversion = "2.3.4"\n`,
+        'src-tauri/tauri.conf.json': JSON.stringify({ version: initial }, null, 2),
+      };
+      for (const [file, content] of Object.entries(fixtures)) {
+        await writeFile(path.join(dir, file), content.replaceAll('\n', newline));
+      }
+      for (let attempt = 0; attempt < 2; attempt++) {
+        execFileSync(process.execPath, [path.join(dir, 'scripts/bump-version.mjs'), version]);
+        for (const [file, content] of Object.entries(fixtures)) {
+          assert.equal(await readFile(path.join(dir, file), 'utf8'), content.replaceAll(initial, version).replaceAll('\n', newline), file);
+        }
+      }
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  });
+}
 const parts = Object.entries(releaseTargets).map(([target, spec]) => ({
   target, version, file: `Handwork-${version}-${spec.platform}${spec.extension}`, signature: 'signed', sha256: 'a'.repeat(64),
 }));
