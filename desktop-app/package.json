@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:stable": "vite --mode stable",
-    "build": "tsc && vite build",
+    "build": "tsc && node --max-old-space-size=4096 node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -57,6 +57,7 @@
     "@codemirror/merge": "^6.12.2",
     "@codemirror/search": "^6.5.11",
     "@lezer/highlight": "1.2.3",
+    "@lobehub/icons-static-svg": "^1.98.0",
     "@replit/codemirror-lang-svelte": "^6.0.0",
     "@streamdown/code": "^1.1.1",
     "@streamdown/mermaid": "^1.0.2",

@@ -33,6 +33,16 @@ const mock = vi.hoisted(() => {
     resolveGates: null as Array<() => void> | null,
     setupConfigOptions: null as unknown[] | null,
     setConfigResult: null as unknown,
+    providers: [] as { id: string; connected: boolean; baseUrl?: string }[],
+    http: vi.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({
+        models: [
+          { name: "gpt-oss:20b", capabilities: ["completion", "tools"] },
+          { name: "nomic-embed-text", capabilities: ["embedding"] },
+        ],
+      }),
+    })),
   };
 });
 vi.mock("../../../../platform/tauri/fs", () => ({
@@ -45,6 +55,7 @@ vi.mock("../../core/child", () => ({
     }
     return { path: "/fake/handwork", args: ["acp"] };
   },
+  harnessHttp: mock.http,
   spawnChild: mock.spawn,
   killChild: mock.kill,
   unwatchChild: (id: string) => {
@@ -130,7 +141,9 @@ vi.mock("../../core/child", () => ({
           : method === "session/set_config_option" &&
               mock.setConfigResult != null
             ? mock.setConfigResult
-            : {};
+            : method === "handwork/providers/list"
+              ? { providers: mock.providers }
+              : {};
       mock.listeners.get(thread)?.(
         JSON.stringify({ jsonrpc: "2.0", id: message.id, result }),
       );
@@ -216,6 +229,8 @@ describe.each(providers)("$id offline ACP transport", (provider) => {
     mock.resolveGates = null;
     mock.setupConfigOptions = null;
     mock.setConfigResult = null;
+    mock.providers = [];
+    mock.http.mockClear();
     mock.spawn.mockClear();
     mock.kill.mockClear();
     events = [];
@@ -425,6 +440,26 @@ describe.each(providers)("$id offline ACP transport", (provider) => {
       "m1",
       "m2",
     ]);
+    expect(mock.sent.some((m) => m.method === "authenticate")).toBe(false);
+  });
+
+  it("discovers installed Ollama chat models without requiring a saved login", async () => {
+    mock.providers = [
+      { id: "ollama", connected: false, baseUrl: "http://127.0.0.1:11434/v1" },
+    ];
+    await provider.refresh();
+    expect(modelsFor(provider.id)).toEqual([
+      expect.objectContaining({
+        id: "handwork:ollama/gpt-oss:20b",
+        nativeId: "ollama/gpt-oss:20b",
+        provider: { id: "ollama", name: "Ollama" },
+      }),
+    ]);
+    expect(mock.http).toHaveBeenCalledWith({
+      url: "http://127.0.0.1:11434/api/tags",
+      method: "GET",
+      timeoutMs: 3000,
+    });
     expect(mock.sent.some((m) => m.method === "authenticate")).toBe(false);
   });
 

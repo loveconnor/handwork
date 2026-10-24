@@ -2386,6 +2386,7 @@ function SidebarComponent({
     <>
       <div className="px-2 pt-1">
         <ChatNavigation
+          onOpenProject={onOpenProject}
           onOpenChats={onOpenChats}
           onNewChat={onNewChat}
           chatsActive={chatsActive}
@@ -2529,6 +2530,7 @@ function SidebarComponent({
           {!projectRailOpen && !compactRailVisible ? (
             <div className="px-2 py-1">
               <ChatNavigation
+                onOpenProject={onOpenProject}
                 onOpenChats={onOpenChats}
                 onNewChat={onNewChat}
                 chatsActive={chatsActive}
@@ -3523,6 +3525,7 @@ function CompactProjectRail({
           />
         ) : null}
         <ChatNavigation
+          onOpenProject={onOpenProject}
           compact
           onOpenChats={onOpenChats}
           onNewChat={onNewChat}

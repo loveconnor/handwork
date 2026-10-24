@@ -1,3 +1,4 @@
+import { HONEST_CHAT_SYSTEM_PROMPT } from "./honestChatPrompt";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -80,6 +81,8 @@ it("gives standalone conversations ordinary chat context while preserving attach
     harness: "handwork",
     cwd: "/home/chat-user",
   });
+  expect(prompt).toContain(HONEST_CHAT_SYSTEM_PROMPT);
+  expect(prompt).toContain("```honestai");
   expect(prompt).toContain("No project or repository is attached");
   expect(prompt).toContain("do not assume it is a coding task");
   expect(prompt.endsWith("Explain the attached image")).toBe(true);

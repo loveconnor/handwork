@@ -5,6 +5,7 @@ import {
 } from "../../../../features/sessions/model/models";
 import { AcpClient } from "../../core/acp";
 import {
+  harnessHttp,
   killChild,
   resolveHandworkBinary,
   spawnChild,
@@ -87,6 +88,7 @@ export async function discoverHandworkModels(workingDirectory?: string) {
         id: string;
         name?: string;
         connected?: boolean;
+        baseUrl?: string;
       }[];
     }>("handwork/providers/list", {}, REQUEST_TIMEOUT_MS);
     const sessionId = (
@@ -96,7 +98,39 @@ export async function discoverHandworkModels(workingDirectory?: string) {
     ).sessionId;
     const models: AgentModel[] = [];
     for (const provider of available.providers ?? []) {
-      if (!provider.connected) continue;
+      if (!provider.connected && provider.id !== "ollama") continue;
+      if (provider.id === "ollama") {
+        try {
+          const base = new URL(provider.baseUrl ?? "http://127.0.0.1:11434");
+          // Only ask the local server which models are actually installed.
+          const response = await harnessHttp({
+            url: new URL("/api/tags", base).href,
+            method: "GET",
+            timeoutMs: 3000,
+          });
+          if (response.status !== 200) continue;
+          const catalog = JSON.parse(response.body) as {
+            models?: { name?: string; capabilities?: string[] }[];
+          };
+          for (const model of catalog.models ?? []) {
+            if (
+              !model.name ||
+              (model.capabilities && !model.capabilities.includes("completion"))
+            )
+              continue;
+            models.push({
+              id: `handwork:ollama/${model.name}`,
+              harness: "handwork",
+              name: model.name,
+              nativeId: `ollama/${model.name}`,
+              provider: { id: "ollama", name: "Ollama" },
+            });
+          }
+        } catch (error) {
+          console.debug("[handwork] local Ollama catalog", error);
+        }
+        continue;
+      }
       try {
         const configured = await acp.request(
           "session/set_config_option",

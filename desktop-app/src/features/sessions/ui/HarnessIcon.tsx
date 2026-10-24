@@ -1,33 +1,43 @@
 import { ClaudeAI, OpenAI, Cursor, Grok } from "honestui/logos";
 import {
   AppWindow,
-  Code,
-  Sparkles,
   Terminal,
   type IconComponent,
 } from "../../../shared/ui/icons";
+import {
+  ProviderBrandLogo,
+  providerBrand,
+  type ProviderBrand,
+} from "./ProviderBrandLogo";
 import type { HarnessId } from "../model/session";
 
-// Use Honest UI brand marks where supplied. Neutral Honest UI icons represent
-// providers without a mark in the catalog, rather than unrelated brand artwork.
+// Use HonestUI brand marks first, LobeHub for additional provider logos, and
+// neutral HonestUI icons for providers that neither catalog identifies.
 const MARKS = { claude: ClaudeAI, codex: OpenAI, cursor: Cursor, grok: Grok };
+const EXTERNAL_MARKS: Partial<Record<HarnessId, ProviderBrand>> = {
+  opencode: "opencode",
+  hermes: "hermes",
+  antigravity: "antigravity",
+  devin: "devin",
+  pi: "pi",
+  omp: "omp",
+  fx: "fx",
+};
 const FALLBACKS: Partial<Record<HarnessId, IconComponent>> = {
   handwork: AppWindow,
-  opencode: Code,
-  pi: Terminal,
-  omp: Terminal,
-  fx: Code,
-  hermes: Terminal,
-  antigravity: Sparkles,
-  devin: Terminal,
 };
 export function HarnessIcon({
   harness,
+  provider,
   className = "size-3.5",
 }: {
   harness: HarnessId;
+  provider?: string;
   className?: string;
 }) {
+  const external = providerBrand(provider) ?? EXTERNAL_MARKS[harness];
+  if (external)
+    return <ProviderBrandLogo provider={external} className={className} />;
   const Logo = MARKS[harness as keyof typeof MARKS];
   if (Logo)
     return (

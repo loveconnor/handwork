@@ -9,6 +9,12 @@ export default defineConfig(async ({ mode }) => {
   const stable = mode === "stable";
 
   return {
+    // HonestUI's shared URL helper also ships in its browser renderer.
+    define: {
+      "process.env.NEXT_PUBLIC_APP_URL": JSON.stringify(
+        "https://ai.honestui.com",
+      ),
+    },
     plugins: [
       {
         name: "honestui-catalog-tree-shaking",

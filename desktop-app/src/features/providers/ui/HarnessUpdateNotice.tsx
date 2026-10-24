@@ -87,7 +87,7 @@ async function runUpdate(update: HarnessUpdate): Promise<RowState> {
     }
     return {
       status: "failed",
-      error: `Still on ${version ?? update.installed} after updating.`,
+      error: `The active installation is still ${version ?? update.installed}. Handwork uses ${after.path}. Update this installation or choose another agent path in Settings.`,
     };
   } catch (error) {
     return {

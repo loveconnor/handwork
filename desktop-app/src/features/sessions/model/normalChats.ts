@@ -1,3 +1,4 @@
+import { HONEST_CHAT_SYSTEM_PROMPT } from "./honestChatPrompt";
 import { getHomeDir, prettyCwd, pathKey } from "../../../shared/lib/paths";
 import { newDefaultSession, type Session } from "./session";
 
@@ -20,4 +21,6 @@ export const NORMAL_CHAT_CONTEXT = `<handwork_chat>
 This is a standalone, general-purpose conversation. No project or repository is attached.
 Answer the user's request naturally; do not assume it is a coding task or start inspecting the working directory.
 Use files the user attaches or explicitly asks you to access. Do not infer a project from the process working directory.
-</handwork_chat>`;
+</handwork_chat>
+
+${HONEST_CHAT_SYSTEM_PROMPT}`;

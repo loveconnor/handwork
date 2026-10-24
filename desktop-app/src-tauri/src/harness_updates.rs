@@ -1,3 +1,4 @@
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
@@ -21,8 +22,8 @@ fn npm_package(provider: &str) -> Option<&'static str> {
     }
 }
 
-/// Each CLI's own updater, which knows how it was installed (native, npm,
-/// Homebrew) better than Handwork could guess from the binary path.
+/// Native installations retain their CLI's own update mechanism. npm installs
+/// use an explicit package prefix so a different installation is not updated.
 fn update_args(provider: &str) -> Option<&'static [&'static str]> {
     match provider {
         "claude" => Some(&["update"]),
@@ -31,6 +32,76 @@ fn update_args(provider: &str) -> Option<&'static [&'static str]> {
         "pi" => Some(&["update", "--self"]),
         _ => None,
     }
+}
+
+/// npm self-updaters can update a different global prefix than the CLI the
+/// app launches. Install into the package's own prefix instead.
+fn npm_install_prefix(provider: &str, command: &Path) -> Option<PathBuf> {
+    let package = npm_package(provider)?;
+    let canonical = std::fs::canonicalize(command).ok()?;
+    for ancestor in canonical.ancestors() {
+        let manifest = ancestor.join("package.json");
+        let Ok(contents) = std::fs::read_to_string(manifest) else {
+            continue;
+        };
+        let Ok(body) = serde_json::from_str::<Value>(&contents) else {
+            continue;
+        };
+        if body.get("name").and_then(Value::as_str) != Some(package) {
+            continue;
+        }
+        let modules = ancestor
+            .ancestors()
+            .find(|path| path.file_name().is_some_and(|name| name == "node_modules"))?;
+        let parent = modules.parent()?;
+        return Some(if parent.file_name().is_some_and(|name| name == "lib") {
+            parent.parent()?.to_path_buf()
+        } else {
+            parent.to_path_buf()
+        });
+    }
+    // Vite+ package launchers point at `vp`, not at the installed package.
+    if command.parent()?.file_name()? == "bin" {
+        let root = command.parent()?.parent()?;
+        if root.file_name()? == ".vite-plus" {
+            let prefix = root.join("packages").join(package);
+            let manifest = prefix
+                .join("lib/node_modules")
+                .join(package)
+                .join("package.json");
+            let body: Value =
+                serde_json::from_str(&std::fs::read_to_string(manifest).ok()?).ok()?;
+            if body.get("name")?.as_str()? == package {
+                return Some(prefix);
+            }
+        }
+    }
+    None
+}
+
+fn update_command(provider: &str, command: &str) -> Result<(String, Vec<String>), String> {
+    if let Some(prefix) = npm_install_prefix(provider, Path::new(command)) {
+        let npm = crate::harness::resolve_gui_binary("npm")
+            .ok_or_else(|| "npm is required to update this installation. Install Node.js or choose a native agent binary in Settings.".to_string())?;
+        return Ok((
+            npm.to_string_lossy().into_owned(),
+            vec![
+                "install".into(),
+                "--global".into(),
+                "--prefix".into(),
+                prefix.to_string_lossy().into_owned(),
+                format!("{}@latest", npm_package(provider).unwrap()),
+                "--no-audit".into(),
+                "--no-fund".into(),
+            ],
+        ));
+    }
+    let args =
+        update_args(provider).ok_or_else(|| format!("No updater for harness: {provider}"))?;
+    Ok((
+        command.to_string(),
+        args.iter().map(|arg| arg.to_string()).collect(),
+    ))
 }
 
 /// A download plus, for npm installs, a full dependency install.
@@ -67,8 +138,7 @@ pub async fn harness_latest_version(provider: String) -> Result<String, String> 
     .map_err(|e| e.to_string())?
 }
 
-/// Runs the harness's self-update against the binary Handwork resolved for
-/// it. stdin is closed, so an updater that stops to ask fails instead of
+/// Updates the installation containing the binary Handwork resolved. stdin is closed, so an updater that stops to ask fails instead of
 /// hanging.
 #[tauri::command]
 pub async fn harness_update(
@@ -76,16 +146,12 @@ pub async fn harness_update(
     binary_provider: String,
     binary_path: Option<String>,
 ) -> Result<(), String> {
-    let args: Vec<String> = update_args(&binary_provider)
-        .ok_or_else(|| format!("No updater for harness: {binary_provider}"))?
-        .iter()
-        .map(|arg| arg.to_string())
-        .collect();
     tauri::async_runtime::spawn_blocking(move || {
         if !is_resolved_harness_binary(&command, Some(&binary_provider), binary_path.as_deref()) {
             return Err("harness_update: not a resolved harness CLI".to_string());
         }
-        let output = exec_output(&command, &args, None, UPDATE_TIMEOUT)?;
+        let (updater, args) = update_command(&binary_provider, &command)?;
+        let output = exec_output(&updater, &args, None, UPDATE_TIMEOUT)?;
         if output.status.success() {
             return Ok(());
         }
@@ -120,6 +186,47 @@ fn latest_version(body: &Value) -> Option<String> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn targets_the_npm_installation_containing_the_active_cli() {
+        let root = std::env::temp_dir().join(format!("handwork-update-{}", uuid::Uuid::new_v4()));
+        let prefix = root.join("node/24.21.0");
+        let package = prefix.join("lib/node_modules/@anthropic-ai/claude-code");
+        std::fs::create_dir_all(package.join("bin")).unwrap();
+        std::fs::write(
+            package.join("package.json"),
+            r#"{"name":"@anthropic-ai/claude-code"}"#,
+        )
+        .unwrap();
+        let binary = package.join("bin/claude");
+        std::fs::write(&binary, "fixture").unwrap();
+        assert_eq!(
+            npm_install_prefix("claude", &binary),
+            Some(std::fs::canonicalize(&prefix).unwrap())
+        );
+        assert_eq!(npm_install_prefix("codex", &binary), None);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolves_the_package_behind_a_vite_plus_launcher() {
+        let root = std::env::temp_dir().join(format!("handwork-update-{}", uuid::Uuid::new_v4()));
+        let vite = root.join(".vite-plus");
+        let prefix = vite.join("packages/@openai/codex");
+        let package = prefix.join("lib/node_modules/@openai/codex");
+        std::fs::create_dir_all(&package).unwrap();
+        std::fs::create_dir_all(vite.join("bin")).unwrap();
+        std::fs::create_dir_all(vite.join("current/bin")).unwrap();
+        std::fs::write(package.join("package.json"), r#"{"name":"@openai/codex"}"#).unwrap();
+        std::fs::write(vite.join("current/bin/vp"), "fixture").unwrap();
+        std::fs::write(vite.join("current/package.json"), r#"{"version":"1.0.0"}"#).unwrap();
+        let binary = vite.join("bin/codex");
+        std::os::unix::fs::symlink("../current/bin/vp", &binary).unwrap();
+        assert_eq!(npm_install_prefix("codex", &binary), Some(prefix));
+        assert_eq!(npm_install_prefix("claude", &binary), None);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn maps_only_npm_published_harnesses() {

@@ -1,3 +1,4 @@
+import { isNormalChat } from "../model/normalChats";
 import { GripVertical,X } from "../../../shared/ui/icons";
 import { useSessionSnapshot } from "../model/sessionStateStore";
 import {
@@ -866,6 +867,11 @@ const LocalSessionPane = memo(function LocalSessionPane({
                     }
                     busy={!!session.busy && !monoTranscript.viewingOlderPage}
                     visible={visible}
+                    onGeneratedMessage={
+                      isNormalChat(session.cwd) && !agent
+                        ? (text) => { onSubmit(session.id, text, []); }
+                        : undefined
+                    }
                     cwd={workCwd}
                     agentName={agent?.name}
                     onOpenArtifact={

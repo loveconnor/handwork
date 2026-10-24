@@ -30,7 +30,7 @@ import {
   subscribeModels,
   subscribePickerVisibility,
   type AgentModel,
-  type ModelPickerTab,
+  type ModelPickerTab as HarnessPickerTab,
   type ModelSetting,
 } from "../model/models";
 import {
@@ -47,6 +47,7 @@ import { useModelSource, type ModelSource } from "./modelSource";
 import { HARNESSES, HARNESS_TITLE, type HarnessId } from "../model/session";
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
 import { LAYER } from "../../../shared/lib/layers";
+import { ProviderBrandLogo, providerBrand } from "./ProviderBrandLogo";
 import { HarnessIcon } from "./HarnessIcon";
 import { Popover } from "../../../shared/ui/Popover";
 import { MOD } from "../../../platform/tauri/platform";
@@ -82,6 +83,7 @@ type Props = {
   onSettingsChange: (settings: Record<string, string>) => void;
   onClose?: () => void;
 };
+type ModelPickerTab = HarnessPickerTab | "ollama";
 type Variant = "pill" | "plain" | "text";
 type MenuEntry =
   | {
@@ -399,6 +401,10 @@ export function ModelPicker({
   ]
     .filter(Boolean)
     .join(" · ");
+  const handworkModels = source.modelsFor("handwork");
+  const localOpenCodeModels = handworkModels.filter(
+    (item) => item.provider?.id === "opencode",
+  );
   const pickerHarnesses = useMemo(() => {
     void availabilityVersion;
     void visibilityVersion;
@@ -407,20 +413,39 @@ export function ModelPicker({
       (id) =>
         (!allowedHarnesses || allowedHarnesses.includes(id)) &&
         !isProviderHidden(project, id) &&
-        showProviderInModelPicker(id, source.available(id), source.probed()),
+        showProviderInModelPicker(
+          id,
+          source.available(id) ||
+            (id === "opencode" &&
+              showProviderInModelPicker(
+                "handwork",
+                source.available("handwork"),
+                source.probed(),
+              ) &&
+              !isProviderHidden(project, "handwork") &&
+              localOpenCodeModels.length > 0),
+          source.probed(),
+        ),
     );
   }, [
     source,
     allowedHarnesses,
     availabilityVersion,
+    catalogVersion,
     visibilityVersion,
     projectVersion,
     project,
   ]);
   const providerKey = pickerHarnesses.join(",");
-  const visibleTab = coerceModelPickerTab(tab, (id) =>
-    pickerHarnesses.includes(id),
-  );
+  const showOllama =
+    pickerHarnesses.includes("handwork") &&
+    handworkModels.some((item) => item.provider?.id === "ollama");
+  const visibleTab: ModelPickerTab =
+    tab === "ollama"
+      ? showOllama
+        ? "ollama"
+        : "favorites"
+      : coerceModelPickerTab(tab, (id) => pickerHarnesses.includes(id));
   const visibleModels = useMemo(() => {
     void catalogVersion;
     const needle = query.trim().toLowerCase();
@@ -432,7 +457,11 @@ export function ModelPicker({
               (item): item is AgentModel =>
                 item != null && pickerHarnesses.includes(item.harness),
             )
-        : source.modelsFor(visibleTab);
+        : visibleTab === "ollama"
+          ? handworkModels.filter((item) => item.provider?.id === "ollama")
+          : visibleTab === "opencode" && pickerHarnesses.includes("handwork")
+            ? [...source.modelsFor("opencode"), ...localOpenCodeModels]
+            : source.modelsFor(visibleTab);
     const matches = needle
       ? pool.filter((item) =>
           `${item.name} ${HARNESS_TITLE[item.harness]} ${item.provider?.name ?? ""} ${item.provider?.id ?? ""}`
@@ -483,9 +512,15 @@ export function ModelPicker({
     if (!open) return;
     source.refresh([current.harness]);
     setTab(
-      coerceModelPickerTab(current.harness, (id) =>
-        pickerHarnesses.includes(id),
-      ),
+      current.provider?.id === "ollama" && showOllama
+        ? "ollama"
+        : coerceModelPickerTab(
+            current.provider?.id === "opencode" &&
+              pickerHarnesses.includes("handwork")
+              ? "opencode"
+              : current.harness,
+            (id) => pickerHarnesses.includes(id),
+          ),
     );
     setActive(0);
     // Beside-picker mode leaves only the Model row; open its list directly
@@ -502,7 +537,13 @@ export function ModelPicker({
     if (!open || submenu?.kind !== "models" || visibleTab === "favorites") {
       return;
     }
-    source.refresh([visibleTab]);
+    source.refresh(
+      visibleTab === "ollama"
+        ? ["handwork"]
+        : visibleTab === "opencode"
+          ? ["opencode", "handwork"]
+          : [visibleTab],
+    );
   }, [open, submenu?.kind, visibleTab]);
   useEffect(() => {
     if (!open) return;
@@ -735,6 +776,7 @@ export function ModelPicker({
       >
         <HarnessIcon
           harness={current.harness}
+          provider={current.provider?.id}
           className={`${variant === "pill" ? "size-4" : "size-3.5"} shrink-0`}
         />
         <span
@@ -764,6 +806,7 @@ export function ModelPicker({
           autoFocusSearch
           onDismiss={(reason) => dismiss(reason === "escape")}
           harnesses={pickerHarnesses}
+          showOllama={showOllama}
           tab={visibleTab}
           models={visibleModels}
           currentId={current.id}
@@ -824,6 +867,7 @@ export function ModelPicker({
                     <span className="flex min-w-0 max-w-36 items-center gap-1 text-content/55">
                       <HarnessIcon
                         harness={current.harness}
+                        provider={current.provider?.id}
                         className="size-3.5 shrink-0"
                       />
                       <span className="min-w-0 truncate">{current.name}</span>
@@ -957,6 +1001,7 @@ export function ModelPicker({
               anchor={activeRow}
               autoFocusSearch
               harnesses={pickerHarnesses}
+              showOllama={showOllama}
               tab={visibleTab}
               models={visibleModels}
               currentId={current.id}
@@ -1017,6 +1062,7 @@ export function ModelPicker({
               >
                 <HarnessIcon
                   harness={item.harness}
+                  provider={item.provider?.id}
                   className="size-4 shrink-0"
                 />
                 <span className="min-w-0 flex-1">
@@ -1414,6 +1460,7 @@ function ModelFlyout({
   autoFocusSearch = false,
   onDismiss,
   harnesses,
+  showOllama,
   tab,
   models,
   currentId,
@@ -1436,6 +1483,7 @@ function ModelFlyout({
   autoFocusSearch?: boolean;
   onDismiss?: (reason: "outside" | "escape") => void;
   harnesses: HarnessId[];
+  showOllama: boolean;
   tab: ModelPickerTab;
   models: AgentModel[];
   currentId: string;
@@ -1566,6 +1614,15 @@ function ModelFlyout({
             <HarnessIcon harness={harness} className="size-4" />
           </ProviderTabButton>
         ))}
+        {showOllama && (
+          <ProviderTabButton
+            title="Ollama"
+            selected={tab === "ollama"}
+            onSelect={() => onSelectTab("ollama")}
+          >
+            <ProviderBrandLogo provider="ollama" />
+          </ProviderTabButton>
+        )}
       </nav>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -1593,8 +1650,9 @@ function ModelFlyout({
             <div className="px-2 py-3 text-[12px] text-content/50">
               {tab === "favorites" && !query.trim()
                 ? "No favorite models"
-                : tab !== "favorites" && !source.available(tab)
-                  ? harnessUnavailableHint(tab)
+                : tab !== "favorites" &&
+                    !source.available(tab === "ollama" ? "handwork" : tab)
+                  ? harnessUnavailableHint(tab === "ollama" ? "handwork" : tab)
                   : tab === "handwork" && !query.trim()
                     ? "No models are available. Set up a provider in Settings."
                     : tab === "codex" && !query.trim()
@@ -1609,7 +1667,13 @@ function ModelFlyout({
                 aria-label={group.name}
               >
                 {group.name ? (
-                  <div className="px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-content/40">
+                  <div className="flex items-center gap-1.5 px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wide text-content/40">
+                    {providerBrand(group.id) && (
+                      <ProviderBrandLogo
+                        provider={providerBrand(group.id)!}
+                        className="size-3"
+                      />
+                    )}
                     {group.name}
                   </div>
                 ) : null}
