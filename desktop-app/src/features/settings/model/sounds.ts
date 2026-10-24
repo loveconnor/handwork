@@ -1,0 +1,127 @@
+import { play, setEnabled, setVolume, type SoundName } from "cuelume";
+import {
+  allowsProjectNotification,
+  type NotificationSubject,
+} from "../../notifications/model/notificationPreferences";
+const KEY = "handwork.sounds";
+const ENABLED_AT_KEY = "handwork.soundsEnabledAt";
+export const SOUNDS_DEFAULT = true;
+/** Soft enough to sit in the background while a turn runs in another app. */
+export const SOUNDS_VOLUME = 0.55;
+export const SOUNDS_CHANGE_EVENT = "handwork:sounds-change";
+export type SoundCue =
+  "turnFinished" | "inputRequested" | "updateAvailable" | "switch" | "copy";
+const CUES: Record<SoundCue, SoundName> = {
+  turnFinished: "success",
+  inputRequested: "arrival",
+  updateAvailable: "arrival",
+  switch: "toggle",
+  copy: "scan",
+};
+export function loadSoundsEnabled(): boolean {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw == null) return SOUNDS_DEFAULT;
+    return raw === "1" || raw === "true";
+  } catch {
+    return SOUNDS_DEFAULT;
+  }
+}
+export function saveSoundsEnabled(value: boolean) {
+  const resuming = value && !loadSoundsEnabled();
+  try {
+    localStorage.setItem(KEY, value ? "1" : "0");
+    if (resuming) localStorage.setItem(ENABLED_AT_KEY, String(Date.now()));
+  } catch {
+    // private mode / quota
+  }
+  applySoundEngine();
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<boolean>(SOUNDS_CHANGE_EVENT, { detail: value }),
+  );
+}
+function applySoundEngine() {
+  setEnabled(loadSoundsEnabled());
+  setVolume(SOUNDS_VOLUME);
+}
+/** Apply the stored mute/volume before the first cue. */
+export function initSounds() {
+  applySoundEngine();
+}
+type ProjectSoundCue = "turnFinished" | "inputRequested";
+/** Project cues require their subject so new sources cannot bypass project policy. */
+export function playCue(cue: Exclude<SoundCue, ProjectSoundCue>): boolean;
+export function playCue(
+  cue: ProjectSoundCue,
+  subject: NotificationSubject,
+): boolean;
+export function playCue(cue: SoundCue, subject?: NotificationSubject): boolean {
+  if (!loadSoundsEnabled()) return false;
+  if (subject && !allowsProjectNotification(subject)) return false;
+  if (subject?.occurredAt !== undefined) {
+    try {
+      if (subject.occurredAt < Number(localStorage.getItem(ENABLED_AT_KEY)))
+        return false;
+    } catch {
+      /* Audio can still play when storage is unavailable. */
+    }
+  }
+  applySoundEngine();
+  if (audioContext) play(CUES[cue]);
+  else captureAudioContext(() => play(CUES[cue]));
+  scheduleSuspend();
+  return true;
+}
+/** Past the longest cue's tail (arrival, ~1.75 s), with room to spare. */
+export const SOUNDS_SUSPEND_MS = 4000;
+let audioContext: AudioContext | undefined;
+let suspendTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * cuelume creates its shared AudioContext inside the first `play` and never
+ * suspends it, so a running context holds a CoreAudio stream open for the
+ * life of the app (a steady ~6% in coreaudiod). Swap the constructor for that
+ * one call to keep a handle; cuelume resumes a suspended context on its own.
+ */
+function captureAudioContext(run: () => void) {
+  const Native =
+    typeof window === "undefined" ? undefined : window.AudioContext;
+  if (!Native) return run();
+  window.AudioContext = class extends Native {
+    constructor(options?: AudioContextOptions) {
+      super(options);
+      audioContext = this;
+    }
+  };
+  try {
+    run();
+  } finally {
+    window.AudioContext = Native;
+  }
+}
+function scheduleSuspend() {
+  if (!audioContext) return;
+  clearTimeout(suspendTimer);
+  suspendTimer = setTimeout(() => {
+    if (audioContext?.state === "running") {
+      void audioContext.suspend().catch(() => undefined);
+    }
+  }, SOUNDS_SUSPEND_MS);
+}
+let announcedUpdate: string | undefined;
+/** One cue per available version, including a later probe of the same build. */
+export function announceUpdateAvailable(version: string | null) {
+  if (!version) {
+    announcedUpdate = undefined;
+    return;
+  }
+  if (announcedUpdate === version) return;
+  announcedUpdate = version;
+  playCue("updateAvailable");
+}
+/** Test helper: forget which notification cues already fired and the audio context. */
+export function resetSoundCues() {
+  announcedUpdate = undefined;
+  clearTimeout(suspendTimer);
+  audioContext = undefined;
+}

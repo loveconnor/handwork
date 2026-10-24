@@ -1,0 +1,156 @@
+# Synced to loveconnor/handwork/.github/workflows/desktop-release.yml.
+# This runs beside the engine source and uses that repository's signing secrets.
+name: Desktop release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: desktop-release-main
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Require signing credentials before starting platform builds
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: node desktop-app/scripts/prepare-desktop-release.mjs
+      - id: version
+        run: node desktop-app/scripts/release-version.mjs
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            platform: darwin
+            arch: arm64
+            target: aarch64-apple-darwin
+            zig: aarch64-macos
+            bundles: app,dmg
+          - runner: windows-latest
+            platform: win32
+            arch: x64
+            target: x86_64-pc-windows-msvc
+            zig: x86_64-windows-gnu
+            bundles: nsis
+          - runner: windows-11-arm
+            platform: win32
+            arch: arm64
+            target: aarch64-pc-windows-msvc
+            zig: aarch64-windows-gnu
+            bundles: nsis
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/desktop-app/target
+      ZIG_GLOBAL_CACHE_DIR: ${{ github.workspace }}/.zig-global-cache
+      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/bin/handwork${{ matrix.platform == 'win32' && '.exe' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop-app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop-app -> target
+          key: ${{ matrix.target }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: '0.16.0'
+      - run: npm ci
+        working-directory: desktop-app
+      - name: Set the same version in JavaScript, Rust, and Tauri
+        run: npm run set-version -- ${{ needs.prepare.outputs.version }}
+        working-directory: desktop-app
+      - name: Build the bundled engine and its runtime
+        run: zig build -Dtarget=${{ matrix.zig }} -Doptimize=ReleaseFast --prefix prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
+      - name: Configure updater signatures and platform signing
+        env:
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+        run: node scripts/configure-desktop-release.mjs
+        working-directory: desktop-app
+      - name: Build installers and signed updater packages
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run desktop:package -- --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/.release-build.json
+        working-directory: desktop-app
+      - name: Collect and validate platform artifacts
+        env:
+          DESKTOP_VERSION: ${{ needs.prepare.outputs.version }}
+          DESKTOP_TARGET: ${{ matrix.target }}
+        run: node scripts/collect-desktop-release.mjs
+        working-directory: desktop-app
+      - name: Verify the signed and notarized Mac app
+        if: matrix.platform == 'darwin'
+        run: |
+          codesign --verify --deep --strict desktop-app/target/${{ matrix.target }}/release/bundle/macos/Handwork.app
+          xcrun stapler validate desktop-app/target/${{ matrix.target }}/release/bundle/macos/Handwork.app
+      - name: Install and launch the exact Windows installer
+        if: matrix.platform == 'win32'
+        shell: pwsh
+        run: ./scripts/ci/test-windows-installer.ps1
+        working-directory: desktop-app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: desktop-app/release-assets/*
+          if-no-files-found: error
+      - name: Remove temporary Mac signing keychain
+        if: always() && matrix.platform == 'darwin'
+        run: node scripts/configure-desktop-release.mjs --cleanup
+        working-directory: desktop-app
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish all installers before promoting the update feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESKTOP_VERSION: ${{ needs.prepare.outputs.version }}
+        run: node desktop-app/scripts/publish-desktop.mjs release-assets

@@ -1,0 +1,110 @@
+/* Interaction rules from Honest UI 0.2.3 TabsTab and Button, bound to the
+   workspace theme. Keep tab backgrounds stable; hover changes emphasis. */
+:root {
+  --hui-duration-normal: 200ms;
+  --hui-duration-press: 100ms;
+  --hui-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --hui-scale-pressed: 0.98;
+}
+
+:where(.honest-tab, .honest-button) {
+  --hui-color-foreground-base-primary: var(--color-content);
+  --hui-color-foreground-base-secondary: color-mix(
+    in srgb,
+    var(--color-content) 72%,
+    transparent
+  );
+  --hui-color-background-base-primary-hover: var(--color-selection-subtle);
+  --hui-color-background-neutral-secondary: var(--color-selection);
+  --hui-focus-ring: 2px solid var(--color-accent);
+  outline: none;
+}
+
+.honest-tab {
+  opacity: 1;
+  transition:
+    color var(--hui-duration-normal) var(--hui-ease-out),
+    scale var(--hui-duration-press) var(--hui-ease-out);
+}
+
+.honest-tab:not([aria-selected="true"]):not([aria-pressed="true"]):not(
+    [data-title-tab-active]
+  ) {
+  background-color: transparent;
+  color: var(--hui-color-foreground-base-secondary);
+}
+
+.honest-tab:is(
+  [aria-selected="true"],
+  [aria-pressed="true"],
+  [data-title-tab-active]
+) {
+  color: var(--hui-color-foreground-base-primary);
+}
+
+.honest-button {
+  transition:
+    background-color var(--hui-duration-normal) var(--hui-ease-out),
+    border-color var(--hui-duration-normal) var(--hui-ease-out),
+    color var(--hui-duration-normal) var(--hui-ease-out),
+    box-shadow var(--hui-duration-normal) var(--hui-ease-out),
+    opacity var(--hui-duration-normal) var(--hui-ease-out),
+    scale var(--hui-duration-press) var(--hui-ease-out);
+}
+
+.honest-nav-item:not([data-active]) {
+  color: var(--hui-color-foreground-base-secondary);
+}
+
+@media (hover: hover) {
+  .honest-tab:not(:disabled):not([aria-disabled="true"]):hover,
+  .honest-nav-item:not(:disabled):not([aria-disabled="true"]):hover {
+    color: var(--hui-color-foreground-base-primary);
+  }
+
+  .honest-ghost:not(:disabled):not([aria-disabled="true"]):hover,
+  .honest-nav-item:not([data-active]):not(:disabled):not(
+      [aria-disabled="true"]
+    ):hover {
+    background-color: var(--hui-color-background-base-primary-hover);
+  }
+
+  .honest-secondary:not([data-active]):not(:disabled):not(
+      [aria-disabled="true"]
+    ):hover {
+    background-color: var(--color-selection-hover);
+  }
+}
+
+.honest-tab:not(:disabled):not([aria-disabled="true"]):focus-visible,
+.honest-button:not(:disabled):not([aria-disabled="true"]):focus-visible {
+  outline: var(--hui-focus-ring);
+  outline-offset: -2px;
+  opacity: 1;
+}
+
+.honest-tab:not(:disabled):not([aria-disabled="true"]):focus-visible {
+  color: var(--hui-color-foreground-base-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .honest-tab:not([aria-selected="true"]):not([aria-pressed="true"]):not(
+      [data-title-tab-active]
+    ):not(:disabled):not([aria-disabled="true"]):active,
+  .honest-button:not(:disabled):not([aria-disabled="true"]):active {
+    scale: var(--hui-scale-pressed);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honest-tab,
+  .honest-button {
+    transition: none;
+  }
+}
+
+.honest-tab:is(:disabled, [aria-disabled="true"]) {
+  color: var(--hui-color-foreground-base-secondary);
+  opacity: 0.4;
+  pointer-events: none;
+}

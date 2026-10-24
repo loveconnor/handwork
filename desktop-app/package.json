@@ -1,151 +1,119 @@
 {
   "name": "handwork-desktop",
   "private": true,
-  "type": "module",
-  "main": "electron/main.mjs",
   "version": "0.1.8",
-  "license": "MIT",
-  "description": "Handwork's native coding engine in the shared desktop harness",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:stable": "vite --mode stable",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:browser": "playwright test",
+    "host:build": "tsc --noEmit -p host/tsconfig.json && node host/build.mjs",
+    "host:package": "npm run host:build && node host/package.mjs",
+    "host": "node build/host/handwork-host.mjs",
+    "pretest:host": "npm run host:build",
+    "test:host": "vitest run --config host/vitest.config.ts",
+    "check": "npm run check:web && npm run check:rust",
+    "check:web": "vitest run && tsc --noEmit",
+    "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test",
+    "set-version": "node scripts/bump-version.mjs",
+    "tauri": "tauri",
+    "tauri:stable": "tauri dev --no-watch --config src-tauri/tauri.stable.conf.json",
+    "setup:linux:deb": "bash scripts/install-linux-deps-debian.sh",
+    "setup:linux:fedora": "bash scripts/install-linux-deps-fedora.sh",
+    "build:linux": "tauri build --bundles deb,appimage && bash scripts/repack-appimage.sh",
+    "build:fedora": "tauri build --bundles rpm",
+    "build:windows": "set \"RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc\" && tauri build --bundles nsis",
+    "desktop:icons": "node scripts/build-desktop-icons.mjs",
+    "desktop:dev": "node scripts/handwork-desktop.mjs dev",
+    "desktop:build": "node scripts/handwork-desktop.mjs build --no-bundle",
+    "desktop:package": "node scripts/handwork-desktop.mjs build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test:desktop": "vitest run src/integrations/harness/providers/handwork"
+  },
+  "dependencies": {
+    "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-less": "^6.0.2",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/lang-php": "^6.0.2",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-rust": "^6.0.2",
+    "@codemirror/lang-sass": "^6.0.2",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/lang-vue": "^0.1.3",
+    "@codemirror/lang-xml": "^6.1.0",
+    "@codemirror/lang-yaml": "^6.1.3",
+    "@codemirror/legacy-modes": "^6.5.4",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/merge": "^6.12.2",
+    "@codemirror/search": "^6.5.11",
+    "@lezer/highlight": "1.2.3",
+    "@replit/codemirror-lang-svelte": "^6.0.0",
+    "@streamdown/code": "^1.1.1",
+    "@streamdown/mermaid": "^1.0.2",
+    "@tauri-apps/api": "^2.7.0",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "codemirror": "^6.0.2",
+    "cuelume": "0.2.2",
+    "emojibase-data": "^17.0.0",
+    "frimousse": "^0.4.0",
+    "honestui": "0.2.3",
+    "mermaid": "^12.1.0",
+    "prettier": "^3.9.6",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "rehype-harden": "^1.1.8",
+    "remend": "^1.3.0",
+    "shiki": "^3.23.0",
+    "streamdown": "^2.5.0",
+    "@codemirror/language": "6.12.4",
+    "@codemirror/state": "6.7.1",
+    "@codemirror/view": "6.43.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "26.5.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.0",
+    "tailwindcss": "^4",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "vitest": "^3.2.4"
+  },
+  "description": "Handwork workspace powered by the Handwork native coding engine",
   "author": "Connor Love",
+  "license": "MIT",
   "engines": {
     "node": ">=24"
   },
-  "scripts": {
-    "dev": "next dev",
-    "registry": "node scripts/build-registry.mjs",
-    "build": "node scripts/build-genui-prompt.mjs && node scripts/build-registry.mjs && next build",
-    "start": "next start",
-    "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit",
-    "desktop:dev": "node scripts/build-genui-prompt.mjs && node scripts/desktop-dev.mjs",
-    "desktop:build": "node scripts/desktop-build.mjs",
-    "desktop:icons": "node scripts/build-desktop-icons.mjs",
-    "desktop:voice": "node scripts/desktop-voice.mjs",
-    "desktop:package": "node scripts/desktop-package.mjs",
-    "desktop:package:win": "node scripts/desktop-package.mjs win32 x64",
-    "desktop:package:win:arm64": "node scripts/desktop-package.mjs win32 arm64",
-    "test:desktop": "node --test tests/desktop/*.test.mjs"
-  },
   "overrides": {
-    "postcss": "^8.5.28",
-    "next": {
-      "sharp": "^0.35.4"
+    "honestui": {
+      "@codemirror/language": "$@codemirror/language",
+      "@codemirror/state": "$@codemirror/state",
+      "@codemirror/view": "$@codemirror/view",
+      "@lezer/highlight": "$@lezer/highlight"
     }
-  },
-  "build": {
-    "appId": "com.handwork.desktop",
-    "productName": "Handwork",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "resources/${os}-${arch}/handwork",
-        "to": "handwork"
-      },
-      {
-        "from": "resources/${os}-${arch}/voice",
-        "to": "voice"
-      }
-    ],
-    "mac": {
-      "entitlements": "electron/entitlements.mac.plist",
-      "entitlementsInherit": "electron/entitlements.mac.plist",
-      "binaries": ["Contents/Resources/voice/whisper-cli"],
-      "extendInfo": {
-        "NSMicrophoneUsageDescription": "Handwork uses your microphone for offline dictation. Audio stays on your device."
-      },
-      "icon": "electron/assets/Handwork.icon",
-      "category": "public.app-category.developer-tools",
-      "target": "dir",
-      "artifactName": "Handwork-${version}-${arch}.${ext}"
-    },
-    "win": {
-      "icon": "electron/assets/handwork.png",
-      "target": "nsis",
-      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Handwork",
-      "artifactName": "Handwork-Setup-${version}-${arch}.${ext}",
-      "useZip": true,
-      "differentialPackage": false
-    },
-    "dmg": {
-      "background": "electron/assets/dmg-background.png",
-      "window": {
-        "width": 540,
-        "height": 240
-      },
-      "iconSize": 80,
-      "iconTextSize": 14,
-      "contents": [
-        {
-          "x": 130,
-          "y": 110,
-          "type": "file"
-        },
-        {
-          "x": 410,
-          "y": 110,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
-    }
-  },
-  "devDependencies": {
-    "@base-ui-components/react": "^1.0.0-rc.0",
-    "@base-ui/react": "^1.6.0",
-    "@electron/notarize": "2.5.0",
-    "@tailwindcss/postcss": "^4.1.8",
-    "@types/mdast": "^4.0.4",
-    "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.1.1",
-    "@web-kits/audio": "^0.1.0",
-    "agentation": "^3.0.2",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "dialkit": "^1.4.3",
-    "electron": "^44.3.0",
-    "electron-builder": "^26.15.3",
-    "glimm": "^0.3.0",
-    "honestui": "^0.2.3",
-    "js-yaml": "4.3.2",
-    "katex": "0.18.2",
-    "liveline": "^0.0.7",
-    "mermaid": "12.1.0",
-    "motion": "^13.1.0",
-    "next": "^15.5.25",
-    "posthog-js": "^1.417.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-markdown": "^10.1.0",
-    "rehype-katex": "7.0.1",
-    "remark-gfm": "^4.0.1",
-    "remark-math": "6.0.0",
-    "remark-parse": "^11.0.0",
-    "shadow-plugin": "^2.1.0",
-    "simple-icons": "^16.31.0",
-    "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.1.8",
-    "typescript": "^5",
-    "unified": "^11.0.5",
-    "vite": "^8.3.0"
-  },
-  "dependencies": {
-    "electron-updater": "6.8.10"
   }
 }

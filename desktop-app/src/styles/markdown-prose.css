@@ -1,0 +1,80 @@
+/* Bind the original Honest Prose stylesheet to this app's theme. */
+.honest-prose.agent-markdown {
+  --prose-size: var(--text-sm, 0.875rem);
+  --prose-color: var(--color-content);
+  --prose-muted: color-mix(in srgb, var(--color-content) 72%, transparent);
+  --prose-surface: color-mix(in srgb, var(--color-content) 6%, transparent);
+  --prose-rule: color-mix(in srgb, var(--color-content) 10%, transparent);
+  --prose-rule-strong: color-mix(
+    in srgb,
+    var(--color-content) 20%,
+    transparent
+  );
+  --prose-font-mono: var(--font-mono);
+  --hui-color-background-base-primary: var(--color-background-base);
+}
+
+/* Match the heading scale and spacing in the previous Handwork transcript. */
+.honest-prose.agent-markdown :where(h1, h2, h3, h4, h5, h6) {
+  margin-block-start: calc(var(--_flow) * 1.25);
+}
+
+/* Streamdown gives each streamed block a direction-aware wrapper. Honest
+   Prose owns the element's flow; the wrappers must not add a second gap. */
+.honest-prose.agent-markdown > div {
+  margin-block: 0;
+}
+
+.honest-prose.agent-markdown > div:first-child > :first-child {
+  margin-block-start: 0;
+}
+
+.honest-prose.agent-markdown
+  > div:has(> :is(h1, h2, h3, h4, h5, h6))
+  + div
+  > :first-child {
+  margin-block-start: calc(var(--_flow) * 0.667);
+}
+
+/* Honest Prose draws the table frame; Streamdown keeps its horizontal
+   scroller and the existing minimum column width for narrow panes. */
+.honest-prose.agent-markdown [data-streamdown="table-wrapper"] {
+  margin-block: var(--_flow) 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.honest-prose.agent-markdown :where(thead, tbody, tr) {
+  border: 0;
+}
+
+.honest-prose.agent-markdown [data-streamdown="table-wrapper"] table {
+  margin-block-start: 0;
+}
+
+/* Remove Streamdown's extra prose utilities so Honest Prose controls the
+   density and emphasis, including nested and loose list paragraphs. */
+.honest-prose.agent-markdown [data-streamdown="list-item"] {
+  padding-block: 0;
+}
+
+.honest-prose.agent-markdown li > p {
+  display: block;
+}
+
+.honest-prose.agent-markdown [data-streamdown="blockquote"] {
+  font-style: normal;
+}
+
+.honest-prose.agent-markdown :where(th, td) {
+  font-size: inherit;
+}
+
+/* Leading blank Markdown can arrive as an empty streaming wrapper. */
+.honest-prose.agent-markdown
+  > div:first-child:not(:has(*))
+  + div
+  > :first-child {
+  margin-block-start: 0;
+}

@@ -36,3 +36,18 @@ next-env.d.ts
 
 # easter-egg video — kept on the deploy (via .vercelignore) but not published
 /public/subway-surfers.mp4
+
+# Handwork native workspace
+/target/
+/build/
+/src-tauri/gen/
+/mobile/node_modules/
+/mobile/target/
+/playwright-report/
+/test-results/
+
+/src-tauri/.handwork-build.json
+/src-tauri/.release-build.json
+/release-assets/
+
+/output/validation/

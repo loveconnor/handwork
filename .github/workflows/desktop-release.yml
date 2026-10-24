@@ -1,3 +1,5 @@
+# Synced to loveconnor/handwork/.github/workflows/desktop-release.yml.
+# This runs beside the engine source and uses that repository's signing secrets.
 name: Desktop release
 on:
   push:
@@ -13,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
-      mac: ${{ steps.signing.outputs.mac }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,154 +22,52 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Require signing credentials before starting platform builds
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: node desktop-app/scripts/prepare-desktop-release.mjs
       - id: version
         run: node desktop-app/scripts/release-version.mjs
-      - id: signing
-        env:
-          CERTIFICATE: ${{ secrets.MAC_CSC_LINK }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        shell: bash
-        run: |
-          if [[ -n "$CERTIFICATE" && -n "$CERTIFICATE_PASSWORD" && -n "$APPLE_ID" && -n "$APPLE_APP_SPECIFIC_PASSWORD" && -n "$APPLE_TEAM_ID" ]]; then
-            echo 'mac=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'mac=false' >> "$GITHUB_OUTPUT"
-            echo '::notice::Windows releases are enabled. Signed macOS releases require MAC_CSC_LINK, MAC_CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID.'
-          fi
-  windows:
+  build:
     needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x64, arm64]
-    runs-on: windows-latest
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: desktop-app
-    env:
-      ZIG_GLOBAL_CACHE_DIR: ${{ github.workspace }}/.zig-global-cache
-      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/win32-${{ matrix.arch }}/bin/handwork.exe
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: desktop-app/package-lock.json
-      - run: npm ci --ignore-scripts
-      - run: npm run test:desktop
-      - run: npm run typecheck
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .zig-cache
-            .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
-          restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
-      - run: node scripts/install-zig.mjs
-      - name: Build the bundled native engine
-        working-directory: .
-        run: node scripts/package-native.mjs --target=win32-${{ matrix.arch }}
-      - run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
-      - name: Build the installer and architecture-specific update metadata
-        env:
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-        run: node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --release
-      - name: Build an older updater-enabled version for an actual upgrade test
-        env:
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-        shell: pwsh
-        run: |
-          $version = '${{ needs.prepare.outputs.version }}'.Split('.')
-          $baseVersion = "$($version[0]).$($version[1]).$([int]$version[2] - 1)"
-          npm version $baseVersion --no-git-tag-version --ignore-scripts
-          node scripts/desktop-package.mjs win32 ${{ matrix.arch }} --fixture
-          "DESKTOP_TEST_BASE=$baseVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
-      - uses: actions/upload-artifact@v4
-        with:
-          name: desktop-build-windows-${{ matrix.arch }}
-          path: |
-            desktop-app/release/Handwork-Setup-${{ needs.prepare.outputs.version }}-*.exe
-            desktop-app/release/latest-*.yml
-            desktop-app/release-fixture/Handwork-Setup-*.exe
-  windows-test:
-    needs: [prepare, windows]
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: x64
-            runner: windows-latest
-          - arch: arm64
-            runner: windows-11-arm
+          - runner: macos-26
+            platform: darwin
+            arch: arm64
+            target: aarch64-apple-darwin
+            zig: aarch64-macos
+            bundles: app,dmg
+          - runner: windows-latest
+            platform: win32
+            arch: x64
+            target: x86_64-pc-windows-msvc
+            zig: x86_64-windows-gnu
+            bundles: nsis
+          - runner: windows-11-arm
+            platform: win32
+            arch: arm64
+            target: aarch64-pc-windows-msvc
+            zig: aarch64-windows-gnu
+            bundles: nsis
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
+    timeout-minutes: 60
     defaults:
       run:
-        working-directory: desktop-app
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - uses: actions/download-artifact@v4
-        with:
-          name: desktop-build-windows-${{ matrix.arch }}
-          path: desktop-app
-      - name: Install only the small test-driver dependencies
-        shell: pwsh
-        run: |
-          $tools = Join-Path $env:RUNNER_TEMP 'handwork-test-tools'
-          npm install --prefix $tools --ignore-scripts --no-audit --no-fund --package-lock=false js-yaml@4.3.2 @electron/asar@3.4.1
-          "HANDWORK_TEST_MODULES=$tools" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Test the exact release installer on its native architecture
-        shell: pwsh
-        run: ./scripts/windows-test/install.ps1 -Installer ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -Architecture ${{ matrix.arch }}
-      - name: Test sidebar download, real installation, and automatic relaunch
-        shell: pwsh
-        run: |
-          $version = '${{ needs.prepare.outputs.version }}'.Split('.')
-          $baseVersion = "$($version[0]).$($version[1]).$([int]$version[2] - 1)"
-          $baseInstaller = "./release-fixture/Handwork-Setup-$baseVersion-${{ matrix.arch }}.exe"
-          ./scripts/windows-test/install.ps1 -Installer $baseInstaller -Architecture ${{ matrix.arch }} -UpdateInstaller ./release/Handwork-Setup-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.exe -UpdateVersion ${{ needs.prepare.outputs.version }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: desktop-installer-windows-${{ matrix.arch }}
-          path: |
-            desktop-app/release/Handwork-Setup-${{ needs.prepare.outputs.version }}-*.exe
-            desktop-app/release/latest-*.yml
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: desktop-windows-test-${{ matrix.arch }}
-          path: |
-            desktop-app/windows-test-results-*/*.json
-            desktop-app/windows-test-results-*/*.txt
-            desktop-app/windows-test-results-*/*.log
-            desktop-app/windows-test-results-*/*.png
-  mac:
-    needs: prepare
-    if: needs.prepare.outputs.mac == 'true'
-    runs-on: macos-26
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: desktop-app
+        shell: bash
     env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/desktop-app/target
       ZIG_GLOBAL_CACHE_DIR: ${{ github.workspace }}/.zig-global-cache
-      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/darwin-arm64/bin/handwork
+      HANDWORK_BINARY: ${{ github.workspace }}/prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/bin/handwork${{ matrix.platform == 'win32' && '.exe' || '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -178,46 +77,63 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: desktop-app/package-lock.json
-      - run: npm ci --ignore-scripts
-      - run: npm run test:desktop
-      - run: npm run typecheck
-      - name: Import Mac signing identity into a temporary runner keychain
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop-app -> target
+          key: ${{ matrix.target }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: '0.16.0'
+      - run: npm ci
+        working-directory: desktop-app
+      - name: Set the same version in JavaScript, Rust, and Tauri
+        run: npm run set-version -- ${{ needs.prepare.outputs.version }}
+        working-directory: desktop-app
+      - name: Build the bundled engine and its runtime
+        run: zig build -Dtarget=${{ matrix.zig }} -Doptimize=ReleaseFast --prefix prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
+      - name: Configure updater signatures and platform signing
         env:
           MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
           MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
-        run: node scripts/ci-macos-keychain.mjs
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .zig-cache
-            .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
-          restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
-      - run: node scripts/install-zig.mjs
-      - working-directory: .
-        run: node scripts/package-native.mjs --target=darwin-arm64
-      - run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version --ignore-scripts
-      - name: Build, sign and notarize the macOS release
+        run: node scripts/configure-desktop-release.mjs
+        working-directory: desktop-app
+      - name: Build installers and signed updater packages
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: node scripts/desktop-package.mjs darwin arm64 --release
+        run: npm run desktop:package -- --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/.release-build.json
+        working-directory: desktop-app
+      - name: Collect and validate platform artifacts
+        env:
+          DESKTOP_VERSION: ${{ needs.prepare.outputs.version }}
+          DESKTOP_TARGET: ${{ matrix.target }}
+        run: node scripts/collect-desktop-release.mjs
+        working-directory: desktop-app
+      - name: Verify the signed and notarized Mac app
+        if: matrix.platform == 'darwin'
+        run: |
+          codesign --verify --deep --strict desktop-app/target/${{ matrix.target }}/release/bundle/macos/Handwork.app
+          xcrun stapler validate desktop-app/target/${{ matrix.target }}/release/bundle/macos/Handwork.app
+      - name: Install and launch the exact Windows installer
+        if: matrix.platform == 'win32'
+        shell: pwsh
+        run: ./scripts/ci/test-windows-installer.ps1
+        working-directory: desktop-app
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-mac
-          path: |
-            desktop-app/release/*.dmg
-            desktop-app/release/*.zip
-            desktop-app/release/*.blockmap
-            desktop-app/release/latest-mac.yml
-      - name: Remove the temporary Mac signing keychain
-        if: always()
-        run: node scripts/ci-macos-keychain.mjs --cleanup
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: desktop-app/release-assets/*
+          if-no-files-found: error
+      - name: Remove temporary Mac signing keychain
+        if: always() && matrix.platform == 'darwin'
+        run: node scripts/configure-desktop-release.mjs --cleanup
+        working-directory: desktop-app
   publish:
-    needs: [prepare, windows-test, mac]
-    if: always() && github.ref == 'refs/heads/main' && needs.prepare.result == 'success' && needs.windows-test.result == 'success' && (needs.mac.result == 'success' || needs.mac.result == 'skipped')
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -230,17 +146,10 @@ jobs:
           node-version: '24'
       - uses: actions/download-artifact@v4
         with:
-          pattern: desktop-installer-windows-*
+          pattern: desktop-*
           path: release-assets
           merge-multiple: true
-      - uses: actions/download-artifact@v4
-        if: needs.mac.result == 'success'
-        with:
-          name: desktop-mac
-          path: release-assets
-      - run: npm ci --ignore-scripts
-        working-directory: desktop-app
-      - name: Publish immutable installers, then promote the desktop update channel
+      - name: Publish all installers before promoting the update feed
         env:
           GH_TOKEN: ${{ github.token }}
           DESKTOP_VERSION: ${{ needs.prepare.outputs.version }}

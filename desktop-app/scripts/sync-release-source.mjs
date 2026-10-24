@@ -26,4 +26,7 @@ for (const file of files) {
   await copyFile(source, destination);
   await chmod(destination, (await stat(source)).mode);
 }
+// Keep signing credentials in the existing release repository. Its workflow
+// must migrate with the app so it does not try to run the removed Electron tools.
+await copyFile(path.join(root, 'scripts/ci/desktop-release.yml'), path.join(engine, '.github/workflows/desktop-release.yml'));
 console.log(`Synced ${files.length} tracked source files to ${engine}/desktop-app. Commit and push the changes to start the signed release pipeline.`);
