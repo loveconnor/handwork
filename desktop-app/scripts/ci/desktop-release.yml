@@ -43,19 +43,16 @@ jobs:
             platform: darwin
             arch: arm64
             target: aarch64-apple-darwin
-            zig: aarch64-macos
             bundles: app,dmg
           - runner: windows-latest
             platform: win32
             arch: x64
             target: x86_64-pc-windows-msvc
-            zig: x86_64-windows-gnu
             bundles: nsis
           - runner: windows-11-arm
             platform: win32
             arch: arm64
             target: aarch64-pc-windows-msvc
-            zig: aarch64-windows-gnu
             bundles: nsis
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
@@ -93,7 +90,7 @@ jobs:
         run: npm run set-version -- ${{ needs.prepare.outputs.version }}
         working-directory: desktop-app
       - name: Build the bundled engine and its runtime
-        run: zig build -Dtarget=${{ matrix.zig }} -Doptimize=ReleaseFast --prefix prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
+        run: node scripts/package-native.mjs --target=${{ matrix.platform }}-${{ matrix.arch }}
       - name: Configure updater signatures and platform signing
         env:
           MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}

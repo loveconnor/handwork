@@ -7,13 +7,17 @@ const png = @import("../images/codec/png.zig");
 const c = if (builtin.os.tag == .windows) @cImport({
     @cDefine("_FORTIFY_SOURCE", "0");
     @cDefine("WIN32_LEAN_AND_MEAN", "1");
+    // Handles are opaque tokens, not aligned pointers to the header's dummy structs.
+    @cDefine("NO_STRICT", "1");
     @cInclude("windows.h");
 }) else struct {};
 
-fn open(owner: ?*anyopaque) !void {
+const ClipboardOwner = if (builtin.os.tag == .windows) c.HWND else ?*anyopaque;
+
+fn open(owner: ClipboardOwner) !void {
     // Clipboard owners briefly hold an exclusive lock while publishing data.
     for (0..5) |attempt| {
-        if (c.OpenClipboard(@ptrCast(@alignCast(owner))) != 0) return;
+        if (c.OpenClipboard(owner) != 0) return;
         if (attempt < 4) c.Sleep(10);
     }
     return error.ClipboardBusy;
@@ -80,7 +84,7 @@ pub fn loadImagePng(alloc: std.mem.Allocator, limit: usize) ![]u8 {
         // Windows synthesizes CF_BITMAP for DIB/DIBV5 sources, including
         // screenshots. Request top-down 32-bit pixels to avoid row padding.
         if (c.IsClipboardFormatAvailable(c.CF_BITMAP) == 0) return error.NoClipboardImage;
-        const bitmap: c.HBITMAP = @ptrCast(@alignCast(c.GetClipboardData(c.CF_BITMAP) orelse return error.ClipboardReadFailed));
+        const bitmap = c.GetClipboardData(c.CF_BITMAP) orelse return error.ClipboardReadFailed;
         var object: c.BITMAP = undefined;
         if (c.GetObjectW(bitmap, @sizeOf(c.BITMAP), &object) == 0) return error.ClipboardReadFailed;
         if (object.bmWidth <= 0 or object.bmHeight <= 0) return error.InvalidClipboardData;
