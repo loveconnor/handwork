@@ -66,15 +66,15 @@ describe("starting mobile sessions", () => {
   let conversation: ReturnType<typeof useConversation> &
     ReturnType<typeof useConversationTurns>;
   let update: ReturnType<typeof deferred<object[]>>;
-  function Probe({ id }: { id: string | null }) {
+  function Probe({ id, native }: { id: string | null; native?: boolean }) {
     workspace = useWorkspace();
-    conversation = { ...useConversation(id), ...useConversationTurns(id) };
+    conversation = { ...useConversation(id, true, native), ...useConversationTurns(id) };
     return <output>{conversation.turns.flatMap((turn) => turn.items).map((item) =>
       item.type === "user" ? item.text : "",
     )}</output>;
   }
-  const render = (id: string | null = null) => act(() => root.render(
-    <WorkspaceProvider><Probe id={id} /></WorkspaceProvider>,
+  const render = (id: string | null = null, native?: boolean) => act(() => root.render(
+    <WorkspaceProvider><Probe id={id} native={native} /></WorkspaceProvider>,
   ));
   const frame = (value: object[]) => act(async () => {
     update.resolve(value);
@@ -163,6 +163,28 @@ describe("starting mobile sessions", () => {
     expect(conversation.busy).toBe(true);
     act(() => workspace.nativeTranscriptStatus("session", { ...status, userCount: 4 }));
     expect(conversation.turns).toEqual([]); // Confirmed turns remain native.
+  });
+
+  it("streams standalone Chats through React on iOS so generated UI remains interactive", async () => {
+    link.nativeTranscript = true;
+    await act(async () => { render("chat-session", false); });
+    expect(link.openWatch).toHaveBeenCalledWith(expect.anything(), "conversation.watch", {
+      conversationId: "chat-session", tail: 3, incremental: true,
+    });
+    const reply: Turn = {
+      id: "reply",
+      items: [{ type: "text", id: "answer", text: '```honestai\nroot = Stack([])\n```' }],
+    };
+    await frame([{ order: [reply.id], turns: [reply], busy: false }]);
+    expect(conversation.turns).toEqual([reply]);
+    link.command.mockImplementation(async (method: string) =>
+      method === "conversation.read" ? { turns: [reply], busy: false, messages: [] } : undefined,
+    );
+    await act(async () => { await workspace.sendMessage("chat-session", "Form response"); });
+    expect(link.command).toHaveBeenCalledWith("conversation.send", {
+      conversationId: "chat-session", text: "Form response",
+    }, "request-id");
+    expect(link.command).toHaveBeenCalledWith("conversation.read", { conversationId: "chat-session" });
   });
 
   it("keeps a new native session busy during its temporary routing error", async () => {

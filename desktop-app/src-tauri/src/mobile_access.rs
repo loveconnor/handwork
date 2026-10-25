@@ -70,6 +70,7 @@ struct Inner {
 #[derive(Clone)]
 pub struct MobileHost {
     inner: Arc<Mutex<Inner>>,
+    identity_loading: Arc<Mutex<()>>,
     gate: Gate,
     path: PathBuf,
 }
@@ -91,6 +92,7 @@ pub fn init(app: &AppHandle) -> Result<(), String> {
         gate.allow(device.fingerprint.clone(), None);
     }
     let host = MobileHost {
+        identity_loading: Arc::new(Mutex::new(())),
         inner: Arc::new(Mutex::new(Inner {
             config,
             identity: None,
@@ -129,13 +131,37 @@ fn save(host: &MobileHost, config: &Config) -> Result<(), String> {
     std::fs::rename(&temporary, &host.path).map_err(|e| e.to_string())
 }
 fn identity(host: &MobileHost) -> Result<Identity, String> {
-    let mut inner = host
-        .inner
+    cached_identity(host, |has_devices| load_identity(host, has_devices))
+}
+fn cached_identity(
+    host: &MobileHost,
+    load: impl FnOnce(bool) -> Result<Identity, String>,
+) -> Result<Identity, String> {
+    // Keychain access can wait for user authorization. Keep the workspace's
+    // status and catalog available while that prompt is open, but serialize
+    // identity creation so concurrent requests cannot create different keys.
+    let _loading = host
+        .identity_loading
         .lock()
         .map_err(|_| "Mobile service unavailable")?;
-    if let Some(identity) = &inner.identity {
-        return Ok(identity.clone());
-    }
+    let has_devices = {
+        let inner = host
+            .inner
+            .lock()
+            .map_err(|_| "Mobile service unavailable")?;
+        if let Some(identity) = &inner.identity {
+            return Ok(identity.clone());
+        }
+        !inner.config.devices.is_empty()
+    };
+    let identity = load(has_devices)?;
+    host.inner
+        .lock()
+        .map_err(|_| "Mobile service unavailable")?
+        .identity = Some(identity.clone());
+    Ok(identity)
+}
+fn load_identity(host: &MobileHost, has_devices: bool) -> Result<Identity, String> {
     let account = format!("desktop:{}", host.path.display());
     let entry = keyring::Entry::new("com.handwork.mobile", &account).map_err(|e| e.to_string())?;
     let identity = match entry.get_password() {
@@ -143,7 +169,7 @@ fn identity(host: &MobileHost) -> Result<Identity, String> {
             serde_json::from_str(&value).map_err(|_| "Saved desktop mobile identity is invalid")?
         }
         Err(keyring::Error::NoEntry) => {
-            if !inner.config.devices.is_empty() {
+            if has_devices {
                 return Err("Desktop mobile identity is missing. Remove paired devices before creating a new identity.".into());
             }
             let identity = Identity::generate()?;
@@ -154,7 +180,6 @@ fn identity(host: &MobileHost) -> Result<Identity, String> {
         }
         Err(error) => return Err(format!("Cannot read desktop mobile identity: {error}")),
     };
-    inner.identity = Some(identity.clone());
     Ok(identity)
 }
 fn addresses(inner: &Inner) -> Vec<Address> {
@@ -950,6 +975,7 @@ mod tests {
             },
         );
         let host = MobileHost {
+            identity_loading: Arc::new(Mutex::new(())),
             gate,
             path,
             inner: Arc::new(Mutex::new(Inner {
@@ -969,6 +995,27 @@ mod tests {
             })),
         };
         (host, join, phone)
+    }
+    #[test]
+    fn keychain_loading_does_not_lock_workspace_status_and_is_cached() {
+        let (host, _, _) = fixture();
+        host.inner.lock().unwrap().identity = None;
+        let expected = Identity::generate().unwrap();
+        let loaded = cached_identity(&host, |has_devices| {
+            assert!(!has_devices);
+            assert!(host.inner.try_lock().is_ok());
+            Ok(expected.clone())
+        })
+        .unwrap();
+        assert_eq!(
+            loaded.fingerprint().unwrap(),
+            expected.fingerprint().unwrap()
+        );
+        let cached = cached_identity(&host, |_| panic!("identity must be cached")).unwrap();
+        assert_eq!(
+            cached.fingerprint().unwrap(),
+            expected.fingerprint().unwrap()
+        );
     }
     #[test]
     fn invitation_is_consumed_once_and_only_public_device_metadata_is_persisted() {

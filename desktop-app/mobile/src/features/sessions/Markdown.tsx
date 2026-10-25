@@ -10,6 +10,8 @@ import {
 import { Linking, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { FileTypeIcon } from "@/features/files/FileTypeIcon";
+import { GeneratedChatContext } from "./GeneratedChatContext";
+import { GeneratedChatBlock } from "./GeneratedChatBlock";
 import { withAlpha, themedStyles, useColors } from "@/ui/theme";
 
 import {
@@ -25,6 +27,7 @@ const MONO = Platform.select({ ios: "Menlo", default: "monospace" });
 
 /** Prose inside a fold: the agent talking while it works, one notch quieter. */
 const Muted = createContext(false);
+const Streaming = createContext(false);
 
 /**
  * Opens a file a transcript names, as the desktop's FileOpenContext does.
@@ -65,12 +68,14 @@ export const Markdown = memo(function Markdown({
   const fade: Fade = { clock, now, ms: fadeMs, from };
   return (
     <Muted value={muted}>
+      <Streaming value={streaming}>
       <View style={styles.blocks}>
         {blocks.map((block, index) => (
           // Blocks with nothing fading keep their props, so they skip the frame.
           <BlockView key={index} block={block} fade={ranges[index][1] > from ? fade : undefined} />
         ))}
       </View>
+      </Streaming>
     </Muted>
   );
 });
@@ -112,6 +117,8 @@ function sameBlock(
 const BlockView = memo(function BlockView({ block, fade }: { block: MarkdownBlock; fade?: Fade }) {
   const styles = useStyles();
   const muted = use(Muted);
+  const chat = use(GeneratedChatContext);
+  const streaming = use(Streaming);
   switch (block.type) {
     case "paragraph":
       return (
@@ -133,6 +140,8 @@ const BlockView = memo(function BlockView({ block, fade }: { block: MarkdownBloc
         </Text>
       );
     case "code":
+      if (chat && block.lang.toLowerCase() === "honestai")
+        return <GeneratedChatBlock program={block.text} streaming={streaming} />;
       return (
         <ScrollView
           horizontal

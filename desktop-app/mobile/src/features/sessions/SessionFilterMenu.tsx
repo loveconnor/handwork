@@ -25,6 +25,7 @@ export type SessionFilter = {
 export const NO_FILTER: SessionFilter = { working: false, harness: null };
 
 const HARNESS_NAMES: Record<Harness, string> = {
+  handwork: "Handwork",
   claude: "Claude",
   codex: "Codex",
   cursor: "Cursor",

@@ -1,36 +1,62 @@
 {
-  "fill" : {
-    "solid" : "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+  "fill": {
+    "solid": "srgb:0.94000,0.94000,0.94000,1.00000"
   },
-  "groups" : [
+  "fill-specializations": [
     {
-      "layers" : [
-        {
-          "blend-mode" : "normal",
-          "fill" : "none",
-          "glass" : false,
-          "hidden" : false,
-          "image-name" : "icon.png",
-          "name" : "icon",
-          "opacity" : 1,
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [0, 0]
-          }
-        }
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
+      "appearance": "dark",
+      "value": {
+        "solid": "srgb:0.10000,0.10000,0.10000,1.00000"
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : ["watchOS"],
-    "squares" : "shared"
+  "groups": [
+    {
+      "layers": [
+        {
+          "name": "Handwork",
+          "image-name": "handwork.svg",
+          "position": {
+            "scale": 1.25,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "glass": true,
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.07000,0.07000,0.07000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.94000,0.94000,0.94000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared",
+    "circles": []
   }
 }

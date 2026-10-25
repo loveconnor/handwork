@@ -5,10 +5,11 @@ import {
   useOffline,
 } from "@/features/connection/ConnectionNotice";
 import { hasNativeTranscript } from "@/features/connection/nativeLink";
+import { GeneratedChatContext } from "@/features/sessions/GeneratedChatContext";
 import { useProjectChanges } from "@/features/connection/useProjectChanges";
 import { useProjectWorktrees } from "@/features/connection/useProjectWorktrees";
 import type { Project, SessionSummary } from "@/features/workspace/types";
-import { use, useCallback, useEffect, useState, type ReactNode } from "react";
+import { use, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Platform, Pressable, StyleSheet } from "react-native";
 import Animated, {
   Easing,
@@ -44,7 +45,10 @@ import {
   markStartedHere,
   markViewing,
 } from "@/features/sessions/activityStore";
-import { SessionContent, SessionScreen } from "@/features/sessions/SessionScreen";
+import {
+  SessionContent,
+  SessionScreen,
+} from "@/features/sessions/SessionScreen";
 import { SessionsPage } from "@/features/sessions/SessionsPage";
 import {
   SessionTitle,
@@ -91,19 +95,26 @@ export function ProjectScreen({
   sessionId: string | undefined;
 }) {
   const { startSession, sendMessage, stop } = useWorkspace();
+  const normalChat = project.kind === "chats";
   const [openAfterStarting] = useOpenSessionAfterStarting();
   const colors = useColors();
   const blurTarget = use(GlassBlurTarget);
   // What it runs with, as the model picker, a route over it, sets it.
-  const { session, chosen, startAccess, accounts } = useSessionChoice(project, sessionId);
+  const { session, chosen, startAccess, accounts } = useSessionChoice(
+    project,
+    sessionId,
+  );
   useForgetChoiceOnLeave(project.id, sessionId);
   // Open, however it was reached, a session is off the finished deck, and
   // stays off it as it finishes in front of the user.
-  useEffect(() => (sessionId ? markViewing(sessionId) : undefined), [sessionId]);
+  useEffect(
+    () => (sessionId ? markViewing(sessionId) : undefined),
+    [sessionId],
+  );
   // The session's watch opens as its push starts: its first turns, landing
   // before, would hold the slide back.
   const pushStarted = usePushStarted(!!sessionId);
-  const conversation = useConversation(sessionId ?? null, pushStarted);
+  const conversation = useConversation(sessionId ?? null, pushStarted, hasNativeTranscript && !normalChat);
 
   // Where a new session works, shared by the header and expanded composer.
   const [workspace, setWorkspace] = useState<Workspace>({ mode: "current" });
@@ -119,7 +130,10 @@ export function ProjectScreen({
   // A session's reads from the desktop wait for its push, so their replies
   // don't re-render it as it slides in; meanwhile it shows the last ones.
   const pushedIn = usePushedIn(!!sessionId);
-  const { worktrees, loaded } = useProjectWorktrees(project.id, pushedIn);
+  const { worktrees, loaded } = useProjectWorktrees(
+    project.id,
+    pushedIn && !normalChat,
+  );
   const { catalog } = useModelCatalog(
     pushedIn ? project.id : undefined,
     sessionId,
@@ -157,7 +171,7 @@ export function ProjectScreen({
   // wait for the worktree list rather than read the checkout's and throw them away.
   const changesState = useProjectChanges(
     project.id,
-    sessionId ? pushedIn && (loaded || !offCheckout) : !fresh,
+    !normalChat && (sessionId ? pushedIn && (loaded || !offCheckout) : !fresh),
     worktreePath,
   );
   const changes = fresh ? [] : (changesState.result?.files ?? []);
@@ -268,25 +282,32 @@ export function ProjectScreen({
   );
   const projectAvatar = (
     <ProjectHeaderButton
-      label={`Switch project, ${project.name}`}
-      onPress={() => router.push({
-        pathname: "/projects",
-        params: { current: project.id },
-      })}
+      label={
+        normalChat
+          ? "Switch chats or project, Chats"
+          : `Switch project, ${project.name}`
+      }
+      onPress={() =>
+        router.push({
+          pathname: "/projects",
+          params: { current: project.id },
+        })
+      }
     >
-      <ProjectMascot
-        project={project.path}
-        name={project.mascot}
-        color={project.color}
-        size={20}
-      />
+      {normalChat ? (
+        <Icon name="chat" size={20} color={colors.content} />
+      ) : (
+        <ProjectMascot
+          project={project.path}
+          name={project.mascot}
+          color={project.color}
+          size={20}
+        />
+      )}
     </ProjectHeaderButton>
   );
   const settingsButton = (
-    <ProjectHeaderButton
-      label="Settings"
-      onPress={openSettings}
-    >
+    <ProjectHeaderButton label="Settings" onPress={openSettings}>
       <Icon name="settings" size={22} color={colors.content} />
     </ProjectHeaderButton>
   );
@@ -294,7 +315,11 @@ export function ProjectScreen({
   const sessionTitle = sessionId ? (
     <SessionTitle
       title={session?.title ?? "Session"}
-      subtitle={[project.name, branch].filter(Boolean).join(" · ")}
+      subtitle={
+        normalChat
+          ? "Chats"
+          : [project.name, branch].filter(Boolean).join(" · ")
+      }
     />
   ) : null;
   const sessionToolbar = sessionId ? (
@@ -305,6 +330,7 @@ export function ProjectScreen({
       worktreePath={worktreePath}
       harness={harness}
       changed={changes.length}
+      showChanges={!normalChat}
       onSettings={openSettings}
     />
   ) : null;
@@ -314,7 +340,7 @@ export function ProjectScreen({
       // Where a new session will work, under the tabs and in view across its
       // pages; a session's composer shows where it does.
       below={
-        sessionId ? undefined : offline ? (
+        sessionId || normalChat ? undefined : offline ? (
           // Nothing to pick from while the desktop can't be reached.
           <ReconnectingStatus />
         ) : (
@@ -348,7 +374,13 @@ export function ProjectScreen({
           key={sessionId ?? project.id}
           notice={sessionNotice}
           context={project.name}
-          branch={sessionId ? (session?.branch ?? project.branch) : branch}
+          branch={
+            normalChat
+              ? ""
+              : sessionId
+                ? (session?.branch ?? project.branch)
+                : branch
+          }
           model={model}
           effort={effort}
           harness={harness}
@@ -369,7 +401,7 @@ export function ProjectScreen({
                   markStartedHere(sessionId);
                   return sendMessage(sessionId, text, attachments);
                 },
-                workspace: (
+                workspace: normalChat ? undefined : (
                   <WorkspaceLine
                     current={!worktreePath}
                     branch={branch}
@@ -379,7 +411,7 @@ export function ProjectScreen({
               }
             : {
                 onSend: start,
-                workspace: (
+                workspace: normalChat ? undefined : (
                   <ComposerWorkspace
                     value={workspace}
                     onChange={setWorkspace}
@@ -441,6 +473,7 @@ export function ProjectScreen({
       <SessionContent>
         {sessionId ? (
           <SessionTranscript
+            normalChat={normalChat}
             sessionId={sessionId}
             projectId={project.id}
             worktreePath={worktreePath}
@@ -525,6 +558,7 @@ function SessionTranscript({
   worktreePath,
   busy,
   failed,
+  normalChat,
 }: {
   sessionId: string;
   projectId: string;
@@ -532,11 +566,21 @@ function SessionTranscript({
   worktreePath?: string;
   busy: boolean;
   failed: boolean;
+  normalChat: boolean;
 }) {
+  const { sendMessage } = useWorkspace();
+  const native = hasNativeTranscript && !normalChat;
+  const generatedChat = useMemo(() => normalChat ? {
+    busy,
+    send: async (text: string) => {
+      markStartedHere(sessionId);
+      await sendMessage(sessionId, text);
+    },
+  } : null, [normalChat, busy, sendMessage, sessionId]);
   const { turns, hasOlder, loadOlder } = useConversationTurns(sessionId);
   // The latest error, for the composer; the native transcript reports its own.
   useReportSessionError(
-    hasNativeTranscript ? undefined : sessionId,
+    native ? undefined : sessionId,
     busy ? undefined : latestSessionError(turns),
   );
   // A file the agent names opens in the file sheet, as written; the desktop
@@ -552,23 +596,33 @@ function SessionTranscript({
   // Mounted with the screen, ahead of the spinner over it, so its scroll
   // view is the one iOS finds to blur under the native header.
   return (
-    <FileOpener value={openFile}>
-      {hasNativeTranscript ? <NativeTranscript key={sessionId} conversationId={sessionId} pushed /> : <Transcript
-        key={sessionId}
-        pushed
-        busy={busy}
-        turns={turns}
-        hasOlder={hasOlder}
-        loadOlder={loadOlder}
-      />}
-      {!hasNativeTranscript && turns.length === 0 && !failed ? (
+    <GeneratedChatContext value={generatedChat}>
+    <FileOpener value={normalChat ? undefined : openFile}>
+      {native ? (
+        <NativeTranscript key={sessionId} conversationId={sessionId} pushed />
+      ) : (
+        <Transcript
+          key={sessionId}
+          pushed
+          busy={busy}
+          turns={turns}
+          hasOlder={hasOlder}
+          loadOlder={loadOlder}
+        />
+      )}
+      {!native && turns.length === 0 && !failed ? (
         <TranscriptLoading key={`loading:${sessionId}`} />
       ) : null}
     </FileOpener>
+    </GeneratedChatContext>
   );
 }
 
-function ProjectHeaderButton({ label, onPress, children }: {
+function ProjectHeaderButton({
+  label,
+  onPress,
+  children,
+}: {
   label: string;
   onPress: () => void;
   children: ReactNode;

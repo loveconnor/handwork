@@ -23,6 +23,22 @@ describe("mobile workspace choices", () => {
     expect(selected.monos).toEqual([]);
     expect(selected.sessions.map((session) => session.id)).toEqual(["s1"]);
   });
+  it("always includes normal chats and their history without selecting a project", () => {
+    const chats = { id: "home", kind: "chats" as const };
+    const withChats = {
+      ...catalog,
+      projects: [...catalog.projects, chats],
+      sessions: [...catalog.sessions, { id: "chat", projectId: "home" }],
+    };
+    expect(
+      selectedWorkspace(withChats, { projectIds: ["a"], monoIds: [] }).projects,
+    ).toEqual([chats, { id: "a" }]);
+    for (const selection of [null, { projectIds: [], monoIds: [] }]) {
+      const selected = selectedWorkspace(withChats, selection);
+      expect(selected.projects).toEqual([chats]);
+      expect(selected.sessions.map((session) => session.id)).toEqual(["chat"]);
+    }
+  });
   it("preserves an explicit empty choice on restore", () => {
     const restored = normalizeSelection(
       JSON.parse(JSON.stringify({ projectIds: [], monoIds: [] })),

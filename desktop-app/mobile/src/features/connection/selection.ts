@@ -20,16 +20,23 @@ export function normalizeSelection(value: unknown): MobileSelection | null {
 }
 export function selectedWorkspace<
   T extends {
-    projects: { id: string }[];
+    projects: { id: string; kind?: "chats" }[];
     monos: { id: string }[];
     sessions: { projectId: string; monoId?: string }[];
   },
 >(catalog: T, selection: MobileSelection | null) {
-  const projects = new Set(selection?.projectIds ?? []);
+  const projects = new Set([
+    ...(selection?.projectIds ?? []),
+    ...catalog.projects
+      .filter((project) => project.kind === "chats")
+      .map((project) => project.id),
+  ]);
   const monos = new Set(MONOS_ENABLED ? (selection?.monoIds ?? []) : []);
   return {
     ...catalog,
-    projects: catalog.projects.filter((project) => projects.has(project.id)),
+    projects: catalog.projects
+      .filter((project) => projects.has(project.id))
+      .sort((a, b) => Number(b.kind === "chats") - Number(a.kind === "chats")),
     monos: catalog.monos.filter((mono) => monos.has(mono.id)),
     sessions: catalog.sessions.filter(
       (session) =>

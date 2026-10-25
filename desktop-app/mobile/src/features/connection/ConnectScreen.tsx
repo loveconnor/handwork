@@ -97,15 +97,16 @@ export function ConnectScreen() {
             onLayout={colliders.layout("title")}
             onTextLayout={colliders.lines("title")}
           >
-            Keep coding,{"\n"}wherever you are.
+            Your workspace,{"\n"}on your phone.
           </Text>
           <Text
             style={styles.subtitle}
             onLayout={colliders.layout("subtitle")}
             onTextLayout={colliders.lines("subtitle")}
           >
-            Pair this phone with Handwork on your desktop to pick up your
-            sessions on the go.
+            Follow your coding sessions and send messages from your phone.
+            To connect, open Handwork on your desktop and go to Settings →
+            Connections → Pair phone.
           </Text>
         </Animated.View>
         <Animated.View
@@ -122,13 +123,13 @@ export function ConnectScreen() {
             <LiquidView
               onPress={() => void scan()}
               disabled={connection.working}
-              accessibilityLabel="Connect to desktop"
+              accessibilityLabel="Scan QR code"
               pressedScale={1.03}
               tintColor={colors.inverseSurface}
               style={styles.button}
               innerStyle={styles.buttonSurface}
             >
-              <Text style={styles.primaryLabel}>Connect to desktop</Text>
+              <Text style={styles.primaryLabel}>Scan QR code</Text>
             </LiquidView>
           </View>
           <View onLayout={colliders.layout("secondary")}>
@@ -171,7 +172,8 @@ export function ConnectScreen() {
           ) : null}
           <View style={{ padding: 24, paddingBottom: insets.bottom + 24 }}>
             <Text style={[connectionStyles.subtitle, { textAlign: "center" }]}>
-              Scan the code in desktop Settings → Connections
+              In Handwork on your desktop, open Settings → Connections → Pair
+              phone, then scan the QR code.
             </Text>
             <Pressable onPress={() => setScanning(false)}>
               <Text style={connectionStyles.secondary}>Cancel</Text>

@@ -5,6 +5,7 @@ import type { MascotStatus } from "@/features/mascots/PixelMascot";
 
 // The desktop's HarnessId (src/features/sessions/model/session.ts).
 export type Harness =
+  | "handwork"
   | "claude"
   | "codex"
   | "cursor"
@@ -18,6 +19,8 @@ export type Harness =
   | "devin";
 
 export type Project = {
+  /** Standalone desktop chat history, always available without a project selection. */
+  kind?: "chats";
   id: string;
   name: string;
   path: string;
@@ -106,7 +109,8 @@ export type Mono = {
 };
 
 // The desktop's RuntimeMode (src/features/sessions/model/session.ts).
-export type RuntimeMode = "supervised" | "auto-accept-edits" | "auto" | "full-access";
+export type RuntimeMode =
+  "supervised" | "auto-accept-edits" | "auto" | "full-access";
 
 export type SessionSummary = {
   id: string;
@@ -136,16 +140,21 @@ export type Message = {
 
 // The desktop's MobileTurn (src/features/mobile/model/mobileTranscript.ts): a
 // transcript the desktop has already grouped and folded as AgentTranscript does.
-export type WorkKind = "research" | "edit" | "run" | "agent" | "other" | "think" | "note";
+export type WorkKind =
+  "research" | "edit" | "run" | "agent" | "other" | "think" | "note";
 
 export type WorkStep = { id: string; label: string; failed?: boolean };
 
-export type WorkPhase = { id: string; kind: WorkKind; title: string; steps: WorkStep[] };
+export type WorkPhase = {
+  id: string;
+  kind: WorkKind;
+  title: string;
+  steps: WorkStep[];
+};
 
 /** What an opened fold holds, in order: the agent's notes between its work. */
 export type FoldEntry =
-  | { type: "prose"; id: string; text: string }
-  | ({ type: "phase" } & WorkPhase);
+  { type: "prose"; id: string; text: string } | ({ type: "phase" } & WorkPhase);
 
 export type TurnItem =
   | {

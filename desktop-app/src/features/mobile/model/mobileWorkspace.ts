@@ -78,6 +78,7 @@ import {
   loadTabGroupColors,
   loadTabGroupMascots,
 } from "../../workspace/model/tabGroups";
+import { isNormalChat, normalChatCwd } from "../../sessions/model/normalChats";
 export const mobileProjectId = (path: string) => encodeURIComponent(path);
 /**
  * A session the phone starts in `cwd`, as a new desktop tab would start it:
@@ -97,11 +98,12 @@ export async function mobileCatalog(
   const roster = listMonos();
   const paths = [
     ...new Set([
+      normalChatCwd(),
       ...loadRecents().map((project) => project.path),
       ...loadPinnedProjects(),
       ...roster.flatMap((mono) => mono.projects),
     ]),
-  ].filter((path) => path && path !== "~");
+  ].filter((path) => path && (path !== "~" || path === normalChatCwd()));
   const colors = loadTabGroupColors();
   const mascots = loadTabGroupMascots();
   const projects = paths.map((path) => {
@@ -109,7 +111,8 @@ export async function mobileCatalog(
     return {
       id: mobileProjectId(path),
       path,
-      name: projectName(path),
+      name: isNormalChat(path) ? "Chats" : projectName(path),
+      ...(isNormalChat(path) ? { kind: "chats" as const } : {}),
       machine: "Desktop",
       branch: "",
       color: resolveTabGroupColor(path, colors),
@@ -308,7 +311,7 @@ export async function mobileModels(
       : undefined;
   }
   if (!current) {
-    const path = mobileProjectPaths().find(
+    const path = [normalChatCwd(), ...mobileProjectPaths()].find(
       (path) => mobileProjectId(path) === params.projectId,
     );
     if (!path) throw new Error("Project is no longer available");

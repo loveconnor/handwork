@@ -1,5 +1,36 @@
 import { expect, test } from "@playwright/test";
 
+test("mobile Chats use the desktop renderer and send generated form responses", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/tests/browser/mobile-generated-chat.html");
+  await page.getByRole("textbox", { name: "Destination" }).fill("Paris");
+  await page.getByRole("combobox", { name: "Transport" }).click();
+  await page.getByRole("option", { name: "Train", exact: true }).click();
+  await page.getByRole("button", { name: "Plan trip" }).click();
+  await expect(page.getByTestId("sent")).toContainText("Plan my trip");
+  await expect(page.getByTestId("sent")).toContainText('"destination":{"value":"Paris"}');
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Plan trip" })).toHaveCSS("border-radius", "4px");
+  await expect(page.getByRole("button", { name: "Plan trip" })).toHaveCSS("padding-left", "12px");
+  await expect(page.getByRole("option", { name: "Train", exact: true })).not.toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("mobile-interactive-chat.png") });
+});
+
+test("mobile generated menus follow the light chat theme", async ({ page }) => {
+  await page.goto("/tests/browser/mobile-generated-chat.html?light");
+  await expect(page.locator("html")).toHaveClass("theme-light");
+  await expect(page.locator(".generated-chat-ui")).toHaveAttribute("data-theme", "light");
+  await page.getByRole("combobox", { name: "Transport" }).click();
+  await expect(page.getByRole("option", { name: "Train", exact: true })).toBeVisible();
+});
+
+test("mobile generated UI waits until the current reply finishes", async ({ page }) => {
+  await page.goto("/tests/browser/mobile-generated-chat.html?busy");
+  await page.getByRole("button", { name: "Plan trip" }).click();
+  await expect(page.getByRole("alert")).toContainText("Wait for the current reply to finish");
+  await expect(page.getByTestId("sent")).toBeEmpty();
+});
+
 test("normal chats render interactive forms and send their values back to chat", async ({
   page,
 }) => {

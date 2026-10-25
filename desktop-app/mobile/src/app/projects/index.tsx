@@ -26,9 +26,7 @@ export default function ProjectsScreen() {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const shown = needle
-    ? projects.filter((project) =>
-        project.name.toLowerCase().includes(needle),
-      )
+    ? projects.filter((project) => project.name.toLowerCase().includes(needle))
     : projects;
   const pick = (id: string) => {
     if (switching) return;
@@ -53,7 +51,7 @@ export default function ProjectsScreen() {
       <Stack.Screen
         options={{
           headerSearchBarOptions: {
-            placeholder: "Search projects",
+            placeholder: "Search chats and projects",
             hideWhenScrolling: false,
             autoCapitalize: "none",
             onChangeText: (event) => setQuery(event.nativeEvent.text),
@@ -66,12 +64,16 @@ export default function ProjectsScreen() {
             {index > 0 ? <View style={styles.divider} /> : null}
             <SettingsRow
               icon={
-                <ProjectMascot
-                  project={project.path}
-                  name={project.mascot}
-                  color={project.color}
-                  size={20}
-                />
+                project.kind === "chats" ? (
+                  <Icon name="chat" size={20} />
+                ) : (
+                  <ProjectMascot
+                    project={project.path}
+                    name={project.mascot}
+                    color={project.color}
+                    size={20}
+                  />
+                )
               }
               label={project.name}
               accessory={

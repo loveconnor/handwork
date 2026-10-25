@@ -18,7 +18,17 @@ const app = vi.hoisted(() => ({
   rename: vi.fn(async () => {}),
 }));
 vi.mock("@/ui/LiquidView", () => ({
-  LiquidView: ({ children, innerStyle }: { children: ReactNode; innerStyle: object }) => <div data-glass style={innerStyle}>{children}</div>,
+  LiquidView: ({
+    children,
+    innerStyle,
+  }: {
+    children: ReactNode;
+    innerStyle: object;
+  }) => (
+    <div data-glass style={innerStyle}>
+      {children}
+    </div>
+  ),
 }));
 vi.mock("expo-router", () => ({
   router: { push: app.push, back: app.back },
@@ -190,6 +200,31 @@ it("keeps the title start visible with end truncation and no iOS negative margin
   )!;
   expect(subtitle.dataset.ellipsis).toBe("middle");
 });
+it("keeps normal chat actions without a Changes button or badge", async () => {
+  act(() =>
+    root.render(
+      <SessionToolbar
+        projectId="home"
+        sessionId="session"
+        session={session}
+        changed={14}
+        showChanges={false}
+        onSettings={settings}
+      />,
+    ),
+  );
+  expect(button("Changes, 14 files")).toBeUndefined();
+  expect(container.textContent).not.toContain("14");
+  await click("Session actions");
+  for (const label of [
+    "Rename",
+    "Copy Session ID",
+    "Settings",
+    "Archive",
+    "Delete",
+  ])
+    expect(button(label)).toBeDefined();
+});
 it("shows changes/count and opens the correct working copy", async () => {
   render();
   const badgeText = [...container.querySelectorAll("span")].find(
@@ -204,7 +239,9 @@ it("shows changes/count and opens the correct working copy", async () => {
     false,
   );
   expect(toolbar.style.paddingTop).toBe("6px");
-  expect(button("Changes, 14 files").parentElement!.hasAttribute("data-glass")).toBe(true);
+  expect(
+    button("Changes, 14 files").parentElement!.hasAttribute("data-glass"),
+  ).toBe(true);
   await click("Changes, 14 files");
   expect(app.push).toHaveBeenCalledWith({
     pathname: "/changes",

@@ -35,6 +35,10 @@ Workspace lists refresh while the phone is active. Opening a conversation reads 
 
 The transport is an Expo local native module in `modules/handwork-link`, built by `scripts/build-native-link.mjs`. **Expo Go cannot load it**; rebuild the development app after changing native code. `npm run native:ios` and `npm run native:android` build the library separately. Generated native libraries and platform folders are ignored by Git.
 
+## Normal chats
+
+The app opens to **Chats**, the same general-purpose conversations as desktop, without attaching a project. Start a chat with the composer or swipe to the history page to resume one. The project switcher includes **Chats** even when no projects are selected. Models, attachments and session actions work as they do for project conversations. The paired desktop must be running and updated to support Chats.
+
 ## Switch provider accounts
 
 Tap the model in the composer, then **Account**, to choose a Claude Code or Codex profile saved on your desktop. Each provider keeps its own selection. Choosing another account from an existing chat opens a new conversation with the same model and permissions; the original stays in history. Add accounts and complete sign-in in desktop **Settings → Accounts**.

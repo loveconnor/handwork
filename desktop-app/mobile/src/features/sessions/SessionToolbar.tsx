@@ -86,6 +86,7 @@ export function SessionToolbar({
   worktreePath,
   harness,
   changed,
+  showChanges = true,
   onSettings,
 }: {
   projectId: string;
@@ -97,6 +98,7 @@ export function SessionToolbar({
   harness?: string;
   /** Files changed in the session's working copy. */
   changed: number;
+  showChanges?: boolean;
   onSettings: () => void;
 }) {
   const { archiveSession, deleteSession, renameSession } = useWorkspace();
@@ -159,21 +161,23 @@ export function SessionToolbar({
     return (
       <View style={styles.androidToolbar}>
         <LiquidView borderRadius={24} innerStyle={styles.androidActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Changes, ${changed} ${changed === 1 ? "file" : "files"}`}
-            onPress={openChanges}
-            style={styles.androidButton}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path
-                d="M3 7h8M7 3v8M5 21 19 3M15 17h6"
-                stroke={colors.content}
-                strokeWidth={1.8}
-                strokeLinecap="round"
-              />
-            </Svg>
-          </Pressable>
+          {showChanges ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Changes, ${changed} ${changed === 1 ? "file" : "files"}`}
+              onPress={openChanges}
+              style={styles.androidButton}
+            >
+              <Svg width={24} height={24} viewBox="0 0 24 24">
+                <Path
+                  d="M3 7h8M7 3v8M5 21 19 3M15 17h6"
+                  stroke={colors.content}
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                />
+              </Svg>
+            </Pressable>
+          ) : null}
           <ChoiceMenu
             label="Session actions"
             actions={[
@@ -217,7 +221,7 @@ export function SessionToolbar({
           </ChoiceMenu>
         </LiquidView>
         {/* Keep the overhang outside both the pill and the button's clip bounds. */}
-        {changed > 0 ? (
+        {showChanges && changed > 0 ? (
           <View pointerEvents="none" style={styles.badge}>
             <Text style={styles.badgeText}>{changed}</Text>
           </View>
@@ -273,15 +277,17 @@ export function SessionToolbar({
 
   return (
     <Stack.Toolbar placement="right">
-      <Stack.Toolbar.Button
-        icon="plus.forwardslash.minus"
-        accessibilityLabel={`Changes, ${changed} ${changed === 1 ? "file" : "files"}`}
-        onPress={openChanges}
-      >
-        {changed > 0 ? (
-          <Stack.Toolbar.Badge>{String(changed)}</Stack.Toolbar.Badge>
-        ) : null}
-      </Stack.Toolbar.Button>
+      {showChanges ? (
+        <Stack.Toolbar.Button
+          icon="plus.forwardslash.minus"
+          accessibilityLabel={`Changes, ${changed} ${changed === 1 ? "file" : "files"}`}
+          onPress={openChanges}
+        >
+          {changed > 0 ? (
+            <Stack.Toolbar.Badge>{String(changed)}</Stack.Toolbar.Badge>
+          ) : null}
+        </Stack.Toolbar.Button>
+      ) : null}
       <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Session actions">
         <Stack.Toolbar.MenuAction
           icon="pencil"
