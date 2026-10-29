@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+default-members = ["crates/mobile-link"]
 members = ["src-tauri", "crates/mobile-link"]
 exclude = ["vendor/portable-pty"]
 

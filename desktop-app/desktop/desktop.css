@@ -1,0 +1,1203 @@
+@import "tailwindcss";
+@import "honestui/theme.css";
+@import "honestui/ai.css";
+@import "honestui/charts.css";
+@import "./honest-compat.css";
+@import "honestui/prose.css";
+@import "honestui/syntax.css";
+@import "./fonts.css";
+
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: var(--hui-font-family-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif); background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); }
+button:disabled { cursor: not-allowed; }
+.app-drag { -webkit-app-region: drag; }
+.handwork-app { display: flex; height: 100dvh; min-width: 0; overflow: hidden; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); }
+.handwork-mac { height: 100dvh; box-sizing: border-box; }
+.handwork-mac .handwork-sidebar { padding-top: 6px; box-sizing: border-box; }
+.handwork-mac .handwork-sidebar:not([data-collapsed]) > :first-child { padding-left: 72px; }
+.handwork-mac .handwork-sidebar[data-collapsed] { padding-top: 44px; }
+.handwork-mac .handwork-sidebar[data-collapsed] { position: relative; border-inline-end: 0; border-right: 0; }
+.handwork-mac .handwork-sidebar[data-collapsed]::after { content: ""; position: absolute; top: 44px; right: 0; bottom: 0; width: 1px; background: var(--hui-color-border-base-primary); pointer-events: none; }
+.handwork-mac:has(.handwork-sidebar[data-collapsed]) .handwork-header { background: var(--hui-color-background-base-secondary); }
+.handwork-titlebar { position: absolute; top: 0; left: 0; width: 80px; height: 40px; }
+.handwork-sidebar { flex-shrink: 0; border-right: 1px solid var(--hui-color-border-base-primary); }
+.handwork-sidebar [data-slot="sidebar-content"] {
+  scrollbar-width: none;
+  padding-block: 16px;
+  scroll-padding-block: 16px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+.handwork-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar { display: none; }
+.handwork-projects { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.handwork-projects h1 { font-size: 18px; font-weight: 600; margin: 0; }
+.handwork-projects > button { justify-content: flex-start; white-space: normal; overflow-wrap: anywhere; }
+.handwork-projects [role="status"] { font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.handwork-toolbar > :first-child { margin-right: auto; }
+.handwork-workspace { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+.handwork-header { min-height: 52px; padding: 8px 16px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-title { min-width: 0; overflow-wrap: anywhere; }
+.handwork-thread { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1; overflow: hidden; }
+.handwork-thread > [role="log"], .handwork-message-content { padding: 24px clamp(16px, 4vw, 48px); }
+.handwork-message-scroller { flex: 1; min-width: 0; min-height: 0; }
+.handwork-message-scroller [data-slot="preview-rail-card"] { background-color: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); border-color: var(--hui-color-border-base-primary); box-shadow: var(--hui-shadow-lifted); }
+.handwork-message-scroller [data-slot="preview-rail-title"] { color: var(--hui-color-foreground-base-primary); }
+.handwork-message-scroller [data-slot="preview-rail-description"] { color: var(--hui-color-foreground-base-secondary); }
+.handwork-message-content { display: flex; flex-direction: column; gap: var(--hui-space-5); min-height: 100%; box-sizing: border-box; }
+.handwork-thread > [data-slot="chat-thread-footer"] { flex-shrink: 0; padding: var(--hui-space-3); padding-top: 0; }
+/* Like the playground, only the input has a surface; messages scroll behind its transparent wrapper. */
+.handwork-thread:not(.is-landing) > [data-slot="chat-thread-footer"] { position: absolute; inset-inline: 0; bottom: 0; z-index: 10; background: transparent; pointer-events: none; }
+.handwork-thread:not(.is-landing) .handwork-message-content { padding-bottom: calc(var(--handwork-composer-height, 0px) + 24px); }
+.handwork-composer { width: 100%; max-width: 800px; margin: 0 auto; padding: 12px 16px 20px; box-sizing: border-box; pointer-events: auto; }
+.handwork-attachments { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 4px; }
+.handwork-attachments button { max-width: 100%; box-shadow: none; }
+.handwork-attachments span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-transcript { display: flex; flex-direction: column; gap: 24px; max-width: 860px; width: 100%; margin: 0 auto; }
+.handwork-response-activity { min-width: 0; color: var(--hui-color-foreground-base-secondary); font-size: var(--hui-font-size-small, 13px); }
+.handwork-response-activity > summary { display: flex; align-items: center; gap: 8px; min-height: 32px; width: fit-content; max-width: 100%; padding: 4px 8px; margin-inline-start: -8px; border-radius: var(--hui-radius-2); cursor: pointer; list-style: none; box-sizing: border-box; }
+.handwork-response-activity > summary::-webkit-details-marker { display: none; }
+.handwork-response-activity > summary > svg { width: 14px; height: 14px; flex-shrink: 0; transform: rotate(-90deg); }
+.handwork-response-activity[open] > summary > svg { transform: rotate(0); }
+.handwork-response-activity > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-response-activity > summary:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-response-activity > summary:focus-visible { outline: var(--hui-focus-ring); outline-offset: 2px; }
+.handwork-activity-history { display: flex; flex-direction: column; gap: 16px; padding: 12px 0 4px 16px; border-inline-start: 1px solid var(--hui-color-border-base-primary); margin: 8px 0 0 6px; }
+.handwork-activity-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.handwork-user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.handwork-submission { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.handwork-submission > p { margin: 0; }
+.handwork-submission-fields { display: flex; flex-direction: column; gap: 12px; margin: 0; padding-top: 14px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-submission-fields > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: baseline; }
+.handwork-submission-fields dt { color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 20px; }
+.handwork-submission-fields dd { margin: 0; min-width: 0; font-size: 13px; line-height: 20px; }
+.handwork-submission-empty { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-empty { width: 100%; max-width: 768px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; text-align: center; }
+.handwork-empty h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.025em; line-height: 32px; margin: 0; overflow-wrap: anywhere; }
+.handwork-greeting-project { text-decoration-line: underline; text-decoration-style: dotted; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.handwork-empty p { margin: 10px 0 16px; font-size: 13px; color: var(--hui-color-foreground-base-secondary); line-height: 20px; }
+.handwork-thread.is-landing { justify-content: safe center; overflow-y: auto; scrollbar-width: none; padding: 24px 0 clamp(24px, 12vh, 120px); box-sizing: border-box; }
+.handwork-thread.is-landing::-webkit-scrollbar { display: none; }
+.handwork-thread.is-landing > [role="log"] { flex: none; overflow: visible; padding: 0; }
+.handwork-thread.is-landing > [data-slot="chat-thread-footer"] { padding: 0; margin-top: 12px; }
+.handwork-thread.is-landing .handwork-composer { padding-bottom: 12px; }
+.handwork-suggestion-status { font-size: 12px; line-height: 32px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 16px; }
+.handwork-suggestions button { height: auto; min-height: 32px; padding: 6px 10px; gap: 6px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 18px; background: transparent; box-shadow: none; font-size: 12px; line-height: 18px; font-weight: 400; color: var(--hui-color-foreground-base-secondary); white-space: normal; }
+@media (max-width: 700px) { .handwork-empty h2 { font-size: 22px; line-height: 30px; } .handwork-suggestions { gap: 6px; } }
+.handwork-notice { display: flex; gap: 8px; padding: 12px 16px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.handwork-draft-recovery { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 28px; padding: 0 8px 6px; color: var(--hui-color-foreground-base-secondary); font-size: calc(var(--hui-font-size-regular, 14px) - 2px); line-height: var(--hui-line-height-small, 16px); }
+.handwork-draft-recovery-status { display: inline-flex; align-items: center; gap: 6px; }
+.handwork-draft-recovery-status > svg { flex-shrink: 0; }
+.handwork-draft-recovery .handwork-draft-recovery-trigger { min-height: 28px; gap: 6px; color: inherit; font: inherit; box-shadow: none; }
+.handwork-draft-recovery-menu { width: 300px; max-width: calc(100vw - 24px); }
+.handwork-draft-recovery-hint { margin: 0; padding: 8px; color: var(--hui-color-foreground-base-secondary); font-size: calc(var(--hui-font-size-regular, 14px) - 2px); line-height: 1.5; }
+.handwork-draft-recovery-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-settings section + section { margin-top: 24px; }
+.handwork-settings h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+.handwork-provider-list { list-style: none; margin: 0; padding: 0; }
+.handwork-provider-list li { padding: 12px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-provider-list p { font-size: 13px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-key-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; font-size: 13px; }
+@media (max-width: 700px) { .handwork-sidebar { display: flex; } .handwork-sidebar:not([data-collapsed]) { position: absolute; inset: 0 auto 0 0; z-index: 30; } .handwork-header { padding: 8px; } .handwork-header .handwork-title { flex-basis: 100%; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+@media (forced-colors: active) { .handwork-app, .handwork-review-panel { background: Canvas; color: CanvasText; } }
+
+
+.handwork-model-trigger { max-width: 200px; }
+.handwork-model-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-model-options { display: flex; flex-direction: column; overflow: hidden; width: 300px; max-width: calc(100vw - 24px); max-height: min(480px, var(--available-height), 75dvh); padding: 6px; border-radius: 12px; }
+.handwork-model-options > * { flex-shrink: 0; }
+.handwork-model-options > .handwork-model-scroll { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.handwork-model-options [data-slot="menu-label"] { padding: 6px 10px; font-size: var(--hui-font-size-mini, 11px); line-height: var(--hui-line-height-small, 16px); font-weight: 500; color: var(--hui-color-foreground-base-secondary); }
+.handwork-model-options [data-slot="menu-separator"] { margin: 6px 4px; }
+.handwork-model-options [role^="menuitem"], .handwork-option-submenu [role^="menuitem"] { min-height: 36px; padding: 8px 10px; border-radius: 7px; font-size: var(--hui-font-size-control, 13px); line-height: calc(var(--hui-line-height-control, 16px) + 2px); }
+.handwork-model-item { grid-template-columns: 1fr 16px; }
+.handwork-model-item > :first-child { grid-column: 2; grid-row: 1; }
+.handwork-model-item > :last-child { grid-column: 1; grid-row: 1; min-width: 0; }
+.handwork-model-choice { display: block; min-width: 0; }
+.handwork-provider-logo { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--hui-color-foreground-base-primary); }
+.handwork-provider-logo[data-brand] svg path { fill: currentColor; }
+.handwork-provider-choice { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.handwork-provider-info strong { display: flex; align-items: center; gap: 8px; }
+.handwork-option-name { display: block; overflow-wrap: anywhere; }
+.handwork-option-description { display: block; margin-top: 2px; font-size: calc(var(--hui-font-size-regular, 14px) - 2px); line-height: calc(var(--hui-line-height-regular, 20px) - 3px); color: var(--hui-color-foreground-base-secondary); }
+.handwork-option-row { gap: 8px; }
+.handwork-option-value { margin-left: auto; min-width: 0; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: calc(var(--hui-font-size-regular, 14px) - 2px); }
+.handwork-option-row > svg { margin-left: 0; width: 14px; height: 14px; }
+.handwork-option-submenu { width: 230px; max-width: calc(100vw - 24px); border-radius: 10px; }
+.handwork-fast-option > :last-child { display: flex; align-items: center; gap: 8px; }
+.handwork-fast-option { grid-template-columns: 1fr 16px; }
+.handwork-fast-option > :first-child { grid-column: 2; grid-row: 1; }
+.handwork-fast-option > :last-child { grid-column: 1; grid-row: 1; }
+.handwork-composer [data-slot="prompt-bar-field"] { gap: 8px; padding: 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 22px; box-shadow: none; }
+.handwork-composer [data-slot="prompt-bar-field"]:focus-within { border-color: var(--hui-color-border-base-primary); }
+.handwork-composer [data-slot="prompt-bar-input"] { min-height: 52px; padding: 4px 8px; font-size: 14px; line-height: 22px; }
+.handwork-composer [data-slot="prompt-bar-controls"] { flex-wrap: nowrap; gap: 4px; }
+.handwork-composer [data-slot="prompt-bar-actions"] { min-width: 0; gap: 4px; }
+.handwork-composer [data-slot="prompt-bar-controls"] button { height: 32px; border: 0; box-shadow: none; }
+.handwork-composer .handwork-attach,
+.handwork-composer [data-slot="prompt-bar-actions"] > button[aria-pressed] { width: 32px; border-radius: 50%; background: transparent; }
+.handwork-composer .handwork-model-trigger,
+.handwork-composer [data-slot="select-trigger"] { min-width: 0; padding: 0 8px; gap: 6px; border-radius: 16px; background: transparent; color: var(--hui-color-foreground-base-secondary); font-size: calc(var(--hui-font-size-regular, 14px) - 2px); font-weight: 500; }
+.handwork-composer [data-slot="prompt-bar-controls"] button:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-composer [data-slot="prompt-bar-actions"] > button:last-child { width: 32px; border-radius: 50%; background: var(--hui-color-foreground-base-primary); color: var(--hui-color-background-base-primary); }
+.handwork-composer [data-slot="prompt-bar-actions"] > button:last-child:not(:disabled):hover { background: var(--hui-color-foreground-base-secondary); }
+.handwork-composer [data-slot="prompt-bar-actions"] > button:last-child:disabled { background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-tertiary); }
+@media (max-width: 700px) { .handwork-model-trigger { max-width: 120px; } .handwork-composer { padding: 8px 12px 12px; } }
+@media (forced-colors: active) { .handwork-composer [data-slot="prompt-bar-actions"] > button:last-child { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; } }
+
+/* The drag rectangle must end before the caption controls. Padding alone still overlaps them. */
+.handwork-windows .handwork-workspace > .handwork-header { margin-right: 138px; padding-right: 8px; -webkit-app-region: drag; }
+.handwork-windows .handwork-workspace > .handwork-header button,
+.handwork-windows .handwork-workspace > .handwork-header .handwork-tab { -webkit-app-region: no-drag; }
+.handwork-mac .handwork-workspace > .handwork-header { -webkit-app-region: drag; }
+.handwork-mac .handwork-workspace > .handwork-header button { -webkit-app-region: no-drag; }
+/* A whole tab is interactive: hovering anywhere on it reveals its close button. */
+.handwork-mac .handwork-workspace > .handwork-header .handwork-tab { -webkit-app-region: no-drag; }
+/* Tabs start just past the traffic lights (about 80px from the window edge). A collapsed
+   sidebar already covers 48px of that; an open sidebar on a narrow window floats over the
+   workspace, which then starts at the window edge. */
+.handwork-mac:has(.handwork-sidebar[data-collapsed]) .handwork-workspace > :first-child { padding-left: 32px; }
+@media (max-width: 700px) { .handwork-mac:not(:has(.handwork-sidebar[data-collapsed])) .handwork-workspace > :first-child { padding-left: 80px; } }
+
+.handwork-sidebar:not([data-collapsed]) { width: 272px; padding-inline: 10px; gap: 12px; }
+.handwork-sidebar { transition: none; }
+.handwork-sidebar > ul { flex-shrink: 0; }
+.handwork-sidebar > ul button { --hui-scale-pressed: 0.96; }
+.handwork-sidebar > :first-child { min-height: 32px; }
+.handwork-brand { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+.handwork-projects { gap: 4px; }
+.handwork-projects .handwork-toolbar { font-size: 12px; color: var(--hui-color-foreground-base-secondary); padding-left: 8px; }
+.handwork-projects > .handwork-project-item { display: flex; gap: 8px; width: 100%; height: 32px; justify-content: flex-start; box-shadow: none; }
+.handwork-project-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-projects [role="status"] { padding: 4px 8px 0; font-size: 11px; }
+.handwork-sidebar > ul button { min-height: 32px; }
+.handwork-theme-switcher { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--hui-color-border-base-primary); border-radius: var(--hui-radius-2); background: var(--hui-color-background-base-primary); }
+.handwork-theme-switcher button { box-shadow: none; }
+.handwork-settings { width: min(720px, calc(100vw - 40px)); max-width: calc(100vw - 40px); height: auto; max-height: min(760px, 88dvh); top: 50%; transform: translate(-50%, -50%); translate: none; display: flex; flex-direction: column; overflow: hidden; }
+.handwork-settings > [data-slot="dialog-header"] { flex-shrink: 0; }
+.handwork-settings > [data-slot="dialog-body"] { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; }
+.handwork-appearance-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-appearance-row h3 { margin-bottom: 4px; }
+.handwork-appearance-row p { margin: 0; font-size: 13px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-provider-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; }
+.handwork-provider-info strong { font-size: 14px; font-weight: 500; }
+.handwork-provider-info p { margin: 4px 0 0; line-height: 1.5; }
+.handwork-provider-actions { display: flex; align-items: center; gap: 8px; }
+.handwork-provider-actions > button { min-width: 84px; }
+.handwork-provider-list li { padding: 16px 0; }
+@media (max-width: 540px) { .handwork-settings { width: calc(100vw - 24px); max-width: calc(100vw - 24px); } .handwork-settings > [data-slot="dialog-body"] { padding: 16px; } .handwork-provider-row { grid-template-columns: 1fr; gap: 10px; } .handwork-provider-actions { justify-content: flex-end; } .handwork-appearance-row { flex-wrap: wrap; } }
+
+.handwork-sidebar .handwork-brand { font-size: 15px; line-height: 24px; font-weight: 600; }
+.handwork-header { display: flex; align-items: center; gap: 8px; min-height: 44px; height: 44px; padding: 0 8px; flex-shrink: 0; }
+/* Open chats, as the native app showed them: tabs share the row equally, shrink
+   together to a floor, then the strip scrolls. The strip is only as wide as its
+   tabs, so the rest of the title row still drags the window. */
+.handwork-tabs { display: flex; align-items: center; gap: 2px; flex: 0 1 auto; min-width: 0; padding: 0; border: 0; overflow-x: auto; scrollbar-width: none; -webkit-app-region: no-drag; }
+.handwork-tabs::-webkit-scrollbar { display: none; }
+/* Where tabs run past an edge, the strip fades out there, as the sidebar does
+   at its ends. The fade grows in as scrolling reveals the edge. */
+@property --handwork-tabs-fade-start { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --handwork-tabs-fade-end { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.handwork-tabs {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--handwork-tabs-fade-start), #000 calc(100% - var(--handwork-tabs-fade-end)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--handwork-tabs-fade-start), #000 calc(100% - var(--handwork-tabs-fade-end)), transparent);
+  transition: --handwork-tabs-fade-start 200ms ease, --handwork-tabs-fade-end 200ms ease;
+}
+.handwork-tabs:not([data-fade-start], [data-fade-end]) { -webkit-mask-image: none; mask-image: none; }
+.handwork-tabs[data-fade-start] { --handwork-tabs-fade-start: 40px; }
+.handwork-tabs[data-fade-end] { --handwork-tabs-fade-end: 40px; }
+@media (prefers-reduced-motion: reduce) { .handwork-tabs { transition: none; } }
+.handwork-header-drag { flex: 1; align-self: stretch; min-width: 24px; }
+.handwork-tab { position: relative; display: flex; align-items: center; flex: 0 1 224px; width: 224px; min-width: 112px; height: calc(var(--hui-line-height-regular, 20px) + 8px); border-radius: 6px; color: var(--hui-color-foreground-base-secondary); transition: background-color 150ms ease, color 150ms ease, opacity 200ms ease, min-width 200ms ease, flex-basis 200ms ease; }
+@starting-style { .handwork-tabs[data-ready] .handwork-tab { opacity: 0; min-width: 0; flex-basis: 0; } }
+.handwork-tab:hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-tab[data-tab-active] { background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); }
+/* Room for the close button is held at all times, so titles never jump on hover.
+   Long titles fade out at their end, like the strip at its edges. */
+.handwork-tab-button { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; height: 100%; padding: 0 26px 0 9px; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: start; cursor: default; outline: none; }
+.handwork-tab-button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-tab-label { display: block; flex: 1; min-width: 0; height: calc(var(--hui-line-height-regular, 20px) + 8px); overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent); font-size: calc(var(--hui-font-size-regular, 14px) - 1.5px); line-height: calc(var(--hui-line-height-regular, 20px) + 8px); letter-spacing: -0.003em; }
+.handwork-tab[data-tab-active] .handwork-tab-label { font-weight: 500; }
+.handwork-tab-icon { display: inline-grid; place-items: center; width: 14px; height: 14px; flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-tab-icon svg { width: 14px; height: 14px; }
+.handwork-tab[data-tab-active] .handwork-tab-icon:not([data-kind]) { color: var(--hui-color-foreground-base-secondary); }
+.handwork-tab-icon[data-kind="running"] { color: var(--hui-color-foreground-base-secondary); }
+.handwork-tab-icon[data-kind="unread"] { color: var(--hui-color-foreground-base-primary); }
+.handwork-tab-icon:is([data-kind="approval"], [data-kind="queue"]) { color: var(--hui-color-foreground-warning-primary, #b46b12); }
+.handwork-tab-icon:is([data-kind="failed"], [data-kind="interrupted"]) { color: var(--hui-color-foreground-danger-primary); }
+.handwork-tab-close { position: absolute; top: 50%; right: 4px; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--hui-color-foreground-base-tertiary); transform: translateY(-50%); opacity: 0; cursor: default; transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease; }
+.handwork-tab:is(:hover, :focus-within) .handwork-tab-close { opacity: 1; }
+.handwork-tab-close:not(:disabled):is(:hover, :focus-visible) { background: var(--hui-color-background-neutral-secondary-hover, var(--hui-color-background-neutral-secondary)); color: var(--hui-color-foreground-base-primary); }
+.handwork-tab-close:focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+@media (hover: none) { .handwork-tab[data-tab-active] .handwork-tab-close { opacity: 1; } }
+/* New chat sits at the end of the strip, plated like a resting tab. */
+.handwork-new-tab { display: grid; place-items: center; flex-shrink: 0; width: calc(var(--hui-line-height-regular, 20px) + 8px); height: calc(var(--hui-line-height-regular, 20px) + 8px); margin-left: 2px; padding: 0; border: 0; border-radius: 6px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 4%, transparent); color: var(--hui-color-foreground-base-tertiary); cursor: default; transition: background-color 150ms ease, color 150ms ease; }
+.handwork-new-tab:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-new-tab:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-new-tab:disabled { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { .handwork-tab, .handwork-tab-close, .handwork-new-tab { transition: none; } }
+.handwork-header-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.handwork-header-actions > button, .handwork-new-tab { border-color: transparent; box-shadow: none; }
+.handwork-title { padding: 0 8px; font-size: 13px; }
+.handwork-thread { border: 0; border-radius: 0; }
+@media (max-width: 700px) { .handwork-header { height: auto; min-height: 44px; flex-wrap: wrap; padding-block: 6px; } .handwork-header-actions { margin-left: auto; } }
+
+.handwork-loading { width: 100%; max-width: 860px; margin-inline: auto; }
+@media (forced-colors: active) { [data-slot="loading-state"] .beui-text-shimmer { background: none; color: CanvasText; } }
+
+/* Keep document headings on Honest Prose's scale instead of page-title tokens. */
+.handwork-transcript .honest-prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: var(--hui-font-weight-semibold, 600);
+  line-height: 1.43;
+  margin-block: calc(var(--_flow) * 1.25) 0;
+}
+.handwork-transcript .honest-prose :is(h1, h2) {
+  font-size: var(--_heading, 1.143em);
+  line-height: 1.5;
+}
+
+.handwork-message-actions { display: flex; align-items: center; gap: 4px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-message-actions button { border: 0; background: transparent; box-shadow: none; }
+.handwork-message-actions [role="status"] { font-size: 12px; }
+.handwork-editable-message > [data-slot="chat-message-footer"] { opacity: 0; transition: opacity 120ms ease; }
+.handwork-editable-message:hover > [data-slot="chat-message-footer"], .handwork-editable-message:has(:focus-visible) > [data-slot="chat-message-footer"] { opacity: 1; }
+@media (hover: none) { .handwork-editable-message > [data-slot="chat-message-footer"] { opacity: 1; } }
+
+.handwork-sidebar-heading, .handwork-sidebar-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.handwork-sidebar-heading .handwork-brand { margin-right: auto; }
+.handwork-sidebar-groups { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.handwork-sidebar-collapse { display: none; }
+.handwork-sidebar-collapse[data-open="true"] { display: block; }
+.handwork-sidebar-collapse-content { min-height: 0; overflow: hidden; }
+.handwork-section-chevron { transform: rotate(-90deg); flex-shrink: 0; }
+:is(.handwork-recents-heading, .handwork-project-name)[aria-expanded="true"] .handwork-section-chevron { transform: rotate(0deg); }
+.handwork-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; padding-left: 8px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-project-heading { display: flex; align-items: center; gap: 2px; }
+.handwork-project-menu-trigger { flex-shrink: 0; width: 26px; height: 28px; }
+.handwork-project-heading > button:last-child { width: 26px; height: 28px; }
+@media (hover: hover) and (pointer: fine) {
+  .handwork-project-heading > :is(.handwork-project-menu-trigger, button:last-child) { opacity: 0; }
+  .handwork-project-heading:is(:hover, :focus-within, :has([data-popup-open])) > :is(.handwork-project-menu-trigger, button:last-child) { opacity: 1; }
+}
+.handwork-project-menu-trigger[data-popup-open] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-project-name { flex: 1; min-width: 0; justify-content: flex-start; padding-inline: 8px; gap: 6px; font-size: 11.5px; font-weight: 500; min-height: 28px; height: 28px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-group-signal { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: 4px; flex-shrink: 0; font-size: 10px; font-variant-numeric: tabular-nums; }
+.handwork-group-mark { display: inline-block; flex-shrink: 0; }
+.handwork-group-mark:not([data-kind="needs"]) { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+.handwork-group-signal[data-needs] { color: var(--hui-color-foreground-warning-primary, #b46b12); }
+.handwork-project-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-project-chats { display: flex; flex-direction: column; gap: 1px; margin-top: 3px; }
+.handwork-opening { width: 100%; max-width: 860px; margin: 0 auto; }
+.handwork-opening h2 { margin: 0 0 16px; font-size: 16px; line-height: 24px; font-weight: 500; }
+.handwork-recent-chats { display: flex; flex-direction: column; gap: 2px; }
+.handwork-chat-row { width: 100%; height: 30px; min-width: 0; justify-content: flex-start; gap: 8px; padding-inline: 8px; font-size: 13px; font-weight: 400; border: 0; box-shadow: none; background: transparent; }
+.handwork-chat-row > .handwork-chat-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; }
+.handwork-chat-status { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 16px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-status[data-kind="unread"] { color: var(--hui-color-foreground-base-primary); }
+.handwork-chat-status:is([data-kind="approval"], [data-kind="queue"]) { color: var(--hui-color-foreground-warning-primary, #b46b12); }
+.handwork-chat-status[data-kind="failed"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-chat-time { margin-left: auto; flex-shrink: 0; font-size: 10px; color: var(--hui-color-foreground-base-secondary); font-variant-numeric: tabular-nums; }
+.handwork-chat-pin { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-item[data-unread] .handwork-chat-label { font-weight: 500; }
+.handwork-chat-item[data-needs] { background: color-mix(in srgb, var(--hui-color-foreground-warning-primary, #b46b12) 8%, transparent); }
+.handwork-chat-item[data-needs] .handwork-chat-time { color: var(--hui-color-foreground-warning-primary, #b46b12); }
+.handwork-chat-item:is(:hover, :focus-within, :has([data-popup-open])) .handwork-chat-time:not([data-status]) { visibility: hidden; }
+@media (hover: none) { .handwork-chat-time:not([data-status]) { display: none; } }
+.handwork-chat-item { position: relative; display: flex; align-items: center; min-width: 0; border-radius: 8px; }
+.handwork-chat-item:hover, .handwork-chat-item:has([data-popup-open]) { background: color-mix(in srgb, var(--hui-color-background-neutral-secondary) 55%, transparent); }
+.handwork-chat-item.is-active { background: var(--hui-color-background-neutral-secondary); }
+.handwork-chat-item.is-active .handwork-chat-label { font-weight: 500; }
+.handwork-chat-item .handwork-chat-row { flex: 1; width: auto; min-width: 0; background: transparent; }
+.handwork-chat-menu-trigger { position: absolute; right: 4px; width: 24px; height: 24px; flex-shrink: 0; opacity: 0; pointer-events: none; }
+.handwork-chat-item .handwork-chat-row { padding-right: 32px; }
+.handwork-chat-item:hover .handwork-chat-menu-trigger, .handwork-chat-item:focus-within .handwork-chat-menu-trigger, .handwork-chat-menu-trigger[data-popup-open] { opacity: 1; pointer-events: auto; }
+.handwork-chat-menu { min-width: 174px; border-radius: 10px; padding: 4px; }
+.handwork-chat-menu [data-slot="menu-item"] { min-height: 32px; gap: 10px; }
+.handwork-chat-dialog { width: 420px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-chat-dialog [data-slot="dialog-description"] { overflow-wrap: anywhere; }
+.handwork-chat-dialog label { display: block; margin-bottom: 8px; font-size: 13px; }
+.handwork-chat-dialog [data-slot="dialog-footer"] { gap: 8px; }
+/* Restore preview: one checkable row per part of the backup. */
+.handwork-restore-dialog { width: 480px; }
+.handwork-restore-options { display: grid; gap: 4px; }
+.handwork-chat-dialog label.handwork-restore-option { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 8px; border-radius: 10px; cursor: pointer; }
+.handwork-restore-option:not([data-disabled]):hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-restore-option[data-disabled] { cursor: default; }
+.handwork-restore-option[data-disabled] .handwork-setting-title { color: var(--hui-color-foreground-base-secondary); }
+.handwork-restore-option [data-slot="checkbox"] { margin-top: 2px; }
+.handwork-restore-option p { margin: 2px 0 0; font-size: 12px; line-height: 18px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-action-error { padding: 0 24px; font-size: 13px; color: var(--hui-color-foreground-danger-primary); }
+@media (hover: none) {
+  .handwork-chat-menu-trigger { opacity: 1; pointer-events: auto; }
+  .handwork-chat-item .handwork-chat-row { padding-right: 36px; }
+}
+.handwork-recents-heading { justify-content: flex-start; gap: 6px; width: 100%; min-height: 28px; height: 28px; padding-inline: 8px; border: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11.5px; }
+.handwork-recents-heading .handwork-section-chevron { margin-inline: 4px; }
+.handwork-show-more, .handwork-sidebar-empty { justify-content: flex-start; font-size: 12px; color: var(--hui-color-foreground-base-secondary); padding-inline: 8px; }
+.handwork-show-more { align-self: flex-start; width: fit-content; margin-inline-start: 24px; min-height: 30px; height: 30px; text-align: start; }
+.handwork-chat-running { display: flex; align-items: center; width: 14px; height: 14px; flex-shrink: 0; }
+/* Messages waiting to send in a chat, shown in the sidebar while it runs in the background. */
+.handwork-chat-queued { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.handwork-chat-queued svg { width: 12px; height: 12px; }
+.handwork-chat-unread { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--hui-color-foreground-base-primary); }
+.handwork-message[data-role="assistant"] [data-slot="reply-actions"] { opacity: 0; transition: opacity 120ms ease; }
+.handwork-message[data-role="assistant"]:hover [data-slot="reply-actions"], .handwork-message[data-role="assistant"]:has(:focus-visible) [data-slot="reply-actions"] { opacity: 1; }
+@media (hover: none) { .handwork-message[data-role="assistant"] [data-slot="reply-actions"] { opacity: 1; } }
+.handwork-sidebar button { border-color: transparent; box-shadow: none; }
+.handwork-sidebar .handwork-project-name, .handwork-sidebar .handwork-recents-heading { background: transparent; }
+.handwork-chat-search { width: 560px; max-width: calc(100vw - 32px); max-height: min(520px, 80dvh); border: 1px solid var(--hui-color-border-base-primary); border-radius: 16px; }
+.handwork-search-heading { display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-search-heading [data-slot="command-input-container"] { flex: 1; min-width: 0; padding: 8px; }
+.handwork-search-heading [data-slot="command-input"] { height: 40px; font-size: 14px; }
+.handwork-search-heading > button { border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-chat-search [data-slot="command-content"] { max-height: 360px; min-height: 120px; }
+.handwork-chat-search [data-slot="command-label"] { font-size: 11px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-search [data-slot="command-item"] { min-height: 48px; padding: 8px 12px; }
+.handwork-search-title { display: block; font-size: 13px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; }
+.handwork-search-project { display: block; font-size: 11px; line-height: 16px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-search-footer { display: flex; gap: 16px; padding: 10px 20px; border-top: 1px solid var(--hui-color-border-base-primary); font-size: 11px; color: var(--hui-color-foreground-base-secondary); }
+
+/* Settings share the app's quiet surfaces and compact control rhythm. */
+.handwork-settings-v2 { width: min(860px, calc(100vw - 48px)); max-width: calc(100vw - 48px); height: min(670px, 88dvh); }
+.handwork-settings-v2 > [data-slot="dialog-header"] { padding: 22px 26px 18px; }
+.handwork-settings-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.handwork-settings-nav { flex: 0 0 190px; padding: 16px 10px; background: var(--hui-color-background-base-secondary); border-right: 1px solid var(--hui-color-border-base-primary); display: flex; flex-direction: column; gap: 4px; }
+.handwork-settings-nav button { width: 100%; justify-content: flex-start; gap: 10px; font-size: 12px; min-height: 34px; font-weight: 400; }
+.handwork-settings-layout > .handwork-settings-panel { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 24px 28px; scrollbar-width: thin; }
+.handwork-settings-panel h2 { font-size: 17px; line-height: 24px; font-weight: 600; margin: 0 0 18px; }
+.handwork-settings-panel h3 { font-size: 13px; margin: 26px 0 10px; }
+.handwork-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 15px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-setting-row:last-child { border-bottom: 0; }
+.handwork-setting-row > div:first-child { min-width: 0; }
+.handwork-setting-title { font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.handwork-setting-row p, .handwork-settings-note, .handwork-settings-path, .handwork-settings-scope p { margin: 4px 0 0; font-size: 12px; line-height: 19px; color: var(--hui-color-foreground-base-secondary); overflow-wrap: anywhere; }
+.handwork-setting-control { display: flex; flex-shrink: 0; align-items: center; max-width: 55%; font-size: 12px; }
+.handwork-setting-control [data-slot="select-trigger"] { max-width: 220px; min-width: 90px; }
+.handwork-setting-control [data-slot="select-value"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-setting-control [data-slot="switch"]::before { content: ''; position: absolute; inset: -5px; }
+.handwork-setting-control [data-slot="switch"] { position: relative; }
+.handwork-settings-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.handwork-settings-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 12px; }
+.handwork-settings-scope > p { flex-basis: 100%; }
+.handwork-settings-panel [data-slot="textarea"] { margin-top: 12px; min-height: 180px; max-height: 300px; resize: vertical; }
+.handwork-settings-status { margin-bottom: 16px; font-size: 12px; line-height: 20px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-settings-status:empty { display: none; }
+.handwork-settings-status [role="alert"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-settings-callout { padding: 12px; background: var(--hui-color-background-base-secondary); border-radius: 8px; margin-top: 16px; font-size: 12px; line-height: 18px; }
+.handwork-settings-callout p { margin: 0 0 8px; }
+.handwork-settings-v2 .handwork-provider-list > li { padding: 14px 0; }
+.handwork-settings-v2 .handwork-provider-actions { gap: 4px; }
+.handwork-settings-v2 .handwork-provider-info p { font-size: calc(var(--handwork-ui-font-size, 14px) - 2px); line-height: 1.5; }
+.handwork-settings-v2 .handwork-provider-row { gap: 8px; }
+.handwork-about-brand { font-size: 24px; font-weight: 600; margin-bottom: 20px; }
+.handwork-about-brand span { display: block; font-size: 12px; font-weight: 400; color: var(--hui-color-foreground-base-secondary); margin-top: 6px; }
+.handwork-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.handwork-transcript .honest-prose { font-size: var(--handwork-ui-font-size, 14px); }
+.handwork-transcript .handwork-thought-prose { --prose-color: var(--hui-color-foreground-base-secondary); font-size: inherit; line-height: inherit; letter-spacing: inherit; }
+.handwork-thought-prose > :first-child { margin-block-start: 0; }
+.handwork-transcript :is(pre, pre code), .handwork-transcript .honest-syntax { font-size: var(--handwork-code-font-size, 13px); }
+.handwork-app .handwork-composer [data-slot="prompt-bar-input"] { font-size: var(--handwork-ui-font-size, 14px); }
+@media (max-width: 700px) {
+  .handwork-settings-v2 { width: calc(100vw - 24px); max-width: calc(100vw - 24px); height: 90dvh; max-height: 90dvh; }
+  .handwork-settings-layout { flex-direction: column; }
+  .handwork-settings-nav { flex: 0 0 auto; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--hui-color-border-base-primary); padding: 8px; }
+  .handwork-settings-nav button { width: auto; flex-shrink: 0; }
+  .handwork-settings-layout > .handwork-settings-panel { padding: 18px; }
+  .handwork-setting-row { gap: 12px; }
+  .handwork-setting-control { max-width: 60%; }
+  .handwork-settings-v2 .handwork-theme-switcher span { display: none; }
+}
+.handwork-settings-nav button { border-color: transparent; box-shadow: none; background: transparent; }
+.handwork-settings-nav button[aria-current="page"] { background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); }
+.handwork-settings-nav button:hover { background: var(--hui-color-background-neutral-secondary-hover); }
+.handwork-settings-v2 .handwork-setting-title, .handwork-app .handwork-chat-row { font-size: calc(var(--handwork-ui-font-size, 14px) - 1px); }
+.handwork-settings-v2 :is(.handwork-settings-note,.handwork-setting-row p,.handwork-settings-scope,.handwork-settings-nav button,.handwork-settings-status) { font-size: calc(var(--handwork-ui-font-size, 14px) - 2px); line-height: 1.5; }
+.handwork-settings-v2 .handwork-settings-panel h2 { font-size: calc(var(--handwork-ui-font-size, 14px) + 3px); }
+.handwork-settings-v2 .handwork-settings-panel h3 { font-size: calc(var(--handwork-ui-font-size, 14px) - 1px); }
+@media (max-width: 500px) { .handwork-setting-row { flex-wrap: wrap; } .handwork-setting-control { max-width: 100%; } }
+
+.handwork-workspace-body { display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.handwork-review-panel { position: relative; display: flex; flex-direction: column; flex: 0 0 clamp(340px, 38%, 520px); min-width: 0; min-height: 0; border-inline-start: 1px solid var(--hui-color-border-base-primary); background: var(--hui-color-background-base-primary); outline: none; }
+.handwork-review-panel[data-sized] { flex-basis: min(var(--handwork-review-width), calc(100% - 360px)); }
+.handwork-resize-handle { position: relative; z-index: 3; flex-shrink: 0; touch-action: none; outline: none; }
+.handwork-resize-handle::after { content: ""; position: absolute; background: transparent; transition: background-color 120ms ease 80ms; pointer-events: none; }
+.handwork-resize-handle:hover::after, .handwork-resize-handle[data-dragging]::after, .handwork-resize-handle:focus-visible::after { background: var(--hui-color-border-base-focus, var(--hui-color-foreground-info-primary, #6b9eea)); }
+.handwork-resize-handle[data-orientation="vertical"] { cursor: col-resize; }
+.handwork-resize-handle[data-orientation="horizontal"] { cursor: row-resize; }
+.handwork-review-resize { position: absolute; top: 0; bottom: 0; left: -4px; width: 8px; }
+.handwork-review-resize::after { top: 0; bottom: 0; left: 3px; width: 2px; }
+.handwork-files-resize { height: 7px; margin-block: -3px -4px; background: var(--hui-color-background-base-primary); }
+.handwork-files-resize::after { left: 0; right: 0; top: 3px; height: 2px; }
+:root[data-resizing] { user-select: none; }
+:root[data-resizing="vertical"], :root[data-resizing="vertical"] * { cursor: col-resize !important; }
+:root[data-resizing="horizontal"], :root[data-resizing="horizontal"] * { cursor: row-resize !important; }
+.handwork-review-panel:focus-visible { outline: var(--hui-focus-ring); outline-offset: -3px; }
+.handwork-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; padding: 10px 16px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-panel-header h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.handwork-panel-content { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 12px; scrollbar-width: thin; }
+.handwork-panel-content > p, .handwork-changes-note, .handwork-changes-empty { margin: 0 0 12px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.handwork-change-counts { display: inline-flex; flex-shrink: 0; gap: 7px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.handwork-added { color: color-mix(in oklab, var(--hui-color-foreground-success-primary) 70%, var(--hui-color-foreground-base-primary)); }
+.handwork-removed { color: color-mix(in oklab, var(--hui-color-foreground-danger-primary) 70%, var(--hui-color-foreground-base-primary)); }
+.handwork-header-actions > .handwork-changes-trigger { min-height: 32px; gap: 6px; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; font-size: 12px; line-height: 18px; font-weight: 400; transition: background-color 120ms ease; }
+.handwork-header-actions > .handwork-changes-trigger:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-header-actions > .handwork-changes-trigger[aria-expanded="true"] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-changes-trigger .handwork-changes-icon { width: 14px; height: 14px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-changes-totals { display: inline-flex; align-items: center; margin-inline-start: 4px; }
+.handwork-changes-trigger .handwork-change-counts { gap: 6px; font-family: inherit; font-size: 11px; line-height: 18px; font-weight: 400; }
+.handwork-changes-trigger[aria-expanded="true"] .handwork-changes-icon { color: var(--hui-color-foreground-base-primary); }
+@media (max-width: 540px) { .handwork-changes-trigger .handwork-changes-label { display: none; } }
+.handwork-review-panel[data-panel="changes"] > .handwork-panel-content { display: flex; overflow: hidden; padding: 0; }
+.handwork-changes { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.handwork-changes > p { flex-shrink: 0; margin: 8px 12px; font-size: 12px; line-height: 1.5; }
+.handwork-changes > p.handwork-changes-empty { margin: 12px; }
+.handwork-changes-clean { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px; text-align: center; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-changes-clean svg { width: 20px; height: 20px; margin-bottom: 4px; }
+.handwork-changes-clean p { margin: 0; color: var(--hui-color-foreground-base-primary); font-size: 13px; font-weight: 500; }
+.handwork-changes-summary { display: flex; flex-shrink: 0; align-items: center; gap: 6px; width: 100%; padding: 8px 12px; border: 0; background: transparent; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: 11px; line-height: 16px; text-align: start; cursor: pointer; }
+.handwork-changes-summary:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-changes-summary:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-changes-summary > span:first-of-type { flex: 1; }
+.handwork-changes-summary .handwork-change-counts { gap: 6px; font-size: 11px; }
+.handwork-changes-chevron { width: 12px; height: 12px; flex-shrink: 0; transition: transform 120ms ease; }
+.handwork-changes-summary[aria-expanded="false"] .handwork-changes-chevron { transform: rotate(-90deg); }
+.handwork-changes-summary[aria-expanded="false"] { border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-changes[data-sized] .handwork-changed-files { flex: 0 0 auto; height: var(--handwork-files-height); max-height: calc(100% - 160px); }
+.handwork-changed-files { flex: 0 1 auto; min-height: 64px; max-height: clamp(112px, 28dvh, 232px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 0 6px 6px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-changed-files > button { display: flex; width: 100%; min-width: 0; min-height: 28px; height: 28px; justify-content: flex-start; text-align: start; gap: 8px; padding: 0 6px; border: 0; border-radius: 5px; box-shadow: none; color: var(--hui-color-foreground-base-primary); font-size: 12px; font-weight: 400; text-decoration: none; }
+.handwork-changed-files > button:hover { background: var(--hui-color-background-base-primary-hover); text-decoration: none; }
+.handwork-changed-files > button[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-changed-files > button[aria-current] .handwork-change-filename { font-weight: 500; }
+.handwork-change-path { display: flex; align-items: baseline; flex: 1; gap: 6px; min-width: 0; white-space: nowrap; }
+.handwork-change-filename { flex-shrink: 0; max-width: 70%; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.handwork-change-directory { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: start; color: var(--hui-color-foreground-base-tertiary, var(--hui-color-foreground-base-secondary)); font-size: 11px; }
+.handwork-changed-files .handwork-change-counts { gap: 5px; font-size: 11px; }
+.handwork-change-meta { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 10px; }
+.handwork-file-status, .handwork-file-review-status { --status-color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-file-status { flex-shrink: 0; width: 6px; height: 6px; margin-inline: 3px 1px; border-radius: 50%; background: var(--status-color); opacity: 0.85; }
+:is(.handwork-file-status, .handwork-file-review-status)[data-status="Added"] { --status-color: var(--hui-color-foreground-success-primary); }
+:is(.handwork-file-status, .handwork-file-review-status):is([data-status="Deleted"], [data-status="Conflict"]) { --status-color: var(--hui-color-foreground-danger-primary); }
+:is(.handwork-file-status, .handwork-file-review-status)[data-status="Renamed"] { --status-color: var(--hui-color-foreground-info-primary, #6b9eea); }
+.handwork-file-review-status { color: var(--status-color); }
+.handwork-changed-files > button[aria-label$=", Deleted"] .handwork-change-filename { text-decoration: line-through; text-decoration-color: color-mix(in oklab, currentColor 50%, transparent); color: var(--hui-color-foreground-base-secondary); }
+.handwork-file-review { flex: 1; min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; outline: none; }
+.handwork-file-review:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-file-review-header { position: sticky; top: 0; left: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); background: var(--hui-color-background-base-primary); }
+.handwork-file-review-title { flex: 1; min-width: 0; }
+.handwork-file-review-header h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 18px; font-weight: 500; }
+.handwork-file-review-header p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-file-review-header > .handwork-change-counts { font-size: 11px; gap: 5px; }
+.handwork-file-review-actions { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
+.handwork-file-review-actions > button { width: 26px; height: 26px; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-file-review-actions > button:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-file-review-actions > button[aria-pressed="true"] { background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); }
+.handwork-file-review > p { margin: 12px; font-size: 12px; }
+.handwork-recorded-edit { min-width: 0; }
+.handwork-recorded-edit + .handwork-recorded-edit { border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-recorded-edit h4 { margin: 0; padding: 8px 12px 4px; font-size: 11px; font-weight: 500; color: var(--hui-color-foreground-base-secondary); }
+.handwork-recorded-edit > p { margin: 8px 12px; font-size: 12px; }
+.handwork-diff { --diff-added: var(--hui-color-foreground-success-primary); --diff-removed: var(--hui-color-foreground-danger-primary); display: grid; grid-template-columns: auto auto 16px 1fr; width: max-content; min-width: 100%; padding-bottom: 8px; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-diff-font-size, 11.5px); line-height: 18px; tab-size: 2; }
+.handwork-diff[data-wrap] { width: 100%; }
+.handwork-diff-line, .handwork-diff-hunk { display: contents; }
+.handwork-diff-line > span { padding-block: 0; }
+.handwork-diff-number { min-width: 3ch; padding-inline: 8px 4px; text-align: end; color: var(--hui-color-foreground-base-secondary); opacity: 0.6; font-variant-numeric: tabular-nums; user-select: none; }
+.handwork-diff-number + .handwork-diff-number { padding-inline: 4px 6px; }
+.handwork-diff-sign { text-align: center; user-select: none; }
+.handwork-diff-code { padding-inline-end: 16px; white-space: pre; }
+.handwork-diff[data-wrap] .handwork-diff-code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.handwork-diff-line[data-kind="added"] > span { background: color-mix(in oklab, var(--diff-added) 12%, transparent); }
+.handwork-diff-line[data-kind="removed"] > span { background: color-mix(in oklab, var(--diff-removed) 12%, transparent); }
+.handwork-diff-line[data-kind="added"] > .handwork-diff-number { background: color-mix(in oklab, var(--diff-added) 18%, transparent); color: var(--diff-added); opacity: 0.9; }
+.handwork-diff-line[data-kind="removed"] > .handwork-diff-number { background: color-mix(in oklab, var(--diff-removed) 18%, transparent); color: var(--diff-removed); opacity: 0.9; }
+.handwork-diff-line[data-kind="added"] > .handwork-diff-sign { color: var(--diff-added); }
+.handwork-diff-line[data-kind="removed"] > .handwork-diff-sign { color: var(--diff-removed); }
+.handwork-diff-hunk > span { grid-column: 1 / -1; margin-block: 6px 2px; padding: 3px 12px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.handwork-diff-hunk:first-child > span { margin-top: 0; }
+.handwork-diff-hunk-context { opacity: 0.75; }
+.handwork-diff-hunk-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-diff-hunk > span:has(> .handwork-diff-expand) { padding: 0; }
+.handwork-diff-expand { display: flex; align-items: center; gap: 8px; width: 100%; padding: 3px 12px 3px 10px; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.handwork-diff-expand svg { flex-shrink: 0; opacity: 0.8; }
+.handwork-diff-expand:hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-diff-expand:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-diff-more { margin: 4px 12px 12px; }
+/* Git: repository, sync, commit composer, staged and unstaged groups, branch picker and history. */
+.handwork-repo { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-repo-row { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 24px; }
+.handwork-repo-icon { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-name { flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 18px; font-weight: 500; }
+.handwork-repo-scope { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-repo-row > .handwork-repo-terminal { width: 24px; height: 24px; margin-inline-start: auto; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-row > .handwork-repo-terminal:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+:is(.handwork-repo-row, .handwork-repo-context) > .handwork-branch-trigger { flex-shrink: 1; min-width: 0; max-width: 62%; height: 24px; gap: 5px; margin-inline-start: -6px; padding: 0 6px; border: 0; border-radius: 6px; box-shadow: none; font-size: 12px; line-height: 18px; font-weight: 500; }
+.handwork-branch-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-branch-trigger > svg { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-trigger[data-popup-open] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-repo-sync { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-note { display: flex; gap: 6px; margin: 2px 4px 0 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-note > svg { flex-shrink: 0; margin-top: 1.5px; }
+.handwork-repo-note strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; overflow-wrap: anywhere; }
+.handwork-repo-note[data-tone="warning"], .handwork-repo-note[data-tone="warning"] > svg { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+
+.handwork-sync { flex-shrink: 0; display: flex; flex-direction: column; padding: 4px 8px 6px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-repo .handwork-sync { padding: 0; border: 0; }
+.handwork-repo-context { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.handwork-repo-context > .handwork-branch-trigger { margin-inline-start: -6px; }
+.handwork-repo-context > .handwork-sync-inline { flex: 1; min-width: 0; }
+.handwork-repo-context > .handwork-sync:not(.handwork-sync-inline) { flex-basis: 100%; }
+.handwork-sync-inline .handwork-sync-row { flex-wrap: wrap; }
+.handwork-sync-inline .handwork-sync-text { font-size: 10.5px; }
+.handwork-repo .handwork-sync-row { min-height: 24px; font-size: 11px; }
+.handwork-sync-row { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 28px; color: var(--hui-color-foreground-base-secondary); font-size: 11.5px; line-height: 16px; }
+.handwork-sync-row > button { flex-shrink: 0; height: 22px; padding-block: 0; font-size: 11px; }
+.handwork-sync-icon { flex-shrink: 0; }
+.handwork-sync-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.handwork-sync-text strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; }
+.handwork-sync-text code { padding: 1px 5px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; white-space: nowrap; }
+.handwork-sync-text .handwork-sync-destination { font-weight: 600; }
+.handwork-sync-row[data-tone="warning"] { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-sync-row[data-tone="warning"] strong { color: inherit; }
+.handwork-sync-row[data-progress] { color: var(--hui-color-foreground-base-primary); }
+.handwork-sync-meter { flex-shrink: 0; width: 64px; height: 4px; overflow: hidden; border-radius: 2px; background: var(--hui-color-background-neutral-secondary); }
+.handwork-sync-meter > span { display: block; width: var(--handwork-progress); height: 100%; border-radius: inherit; background: var(--hui-color-foreground-info-primary, #6b9eea); transition: width 150ms ease; }
+.handwork-git-spinner { flex-shrink: 0; }
+.handwork-publish-remote { display: flex; flex-direction: column; min-width: 0; }
+.handwork-publish-remote > span:last-child { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+
+.handwork-changes > .handwork-git-success { display: flex; flex-shrink: 0; align-items: center; gap: 6px; margin: 8px 12px 0; color: var(--hui-color-foreground-success-primary); font-size: 11.5px; line-height: 16px; }
+.handwork-changes > .handwork-git-stale { flex-shrink: 0; margin: 8px 12px 0; color: var(--hui-color-foreground-warning-primary, #d2a54a); font-size: 11.5px; }
+.handwork-git-error { display: flex; flex-shrink: 0; gap: 8px; margin: 8px 12px 0; padding: 8px 6px 8px 10px; border: 1px solid color-mix(in oklab, var(--hui-color-foreground-danger-primary) 35%, transparent); border-radius: 8px; background: color-mix(in oklab, var(--hui-color-foreground-danger-primary) 6%, transparent); font-size: 12px; line-height: 17px; }
+.handwork-git-error-icon { flex-shrink: 0; margin-top: 1.5px; color: var(--hui-color-foreground-danger-primary); }
+.handwork-git-error-body { flex: 1; min-width: 0; }
+.handwork-git-error-body > strong { display: block; font-weight: 500; }
+.handwork-git-error-body > p { margin: 2px 0 0; color: var(--hui-color-foreground-base-secondary); overflow-wrap: anywhere; }
+.handwork-git-error-body details { margin-top: 6px; }
+.handwork-git-error-body summary { width: fit-content; color: var(--hui-color-foreground-base-secondary); font-size: 11px; cursor: pointer; }
+.handwork-git-error-body summary:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-git-error-body pre { max-height: 160px; margin: 4px 0 0; padding: 6px 8px; overflow: auto; border-radius: 6px; background: var(--hui-color-background-neutral-secondary); font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; scrollbar-width: thin; }
+.handwork-git-error-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.handwork-git-error > .handwork-git-error-close { flex-shrink: 0; width: 22px; height: 22px; margin: -3px 0 0; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+
+.handwork-changes-tabs { display: flex; flex-shrink: 0; gap: 2px; padding: 4px 8px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-changes-tabs > button { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 7px; border: 0; background: transparent; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: calc(var(--hui-font-size-regular, 14px) - 2px); line-height: var(--hui-line-height-small, 16px); cursor: pointer; }
+.handwork-changes-tabs > button:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-changes-tabs > button[aria-selected="true"] { color: var(--hui-color-foreground-base-primary); font-weight: 500; }
+.handwork-changes-tabs > button[aria-selected="true"]::after { content: ""; position: absolute; right: 6px; bottom: -1px; left: 6px; height: 2px; border-radius: 1px; background: var(--hui-color-foreground-base-primary); }
+.handwork-changes-tabs > button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; border-radius: 4px; }
+.handwork-changes-tab-count, .handwork-change-group-count { min-width: 16px; padding: 0 5px; border-radius: 8px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: calc(var(--hui-font-size-regular, 14px) - 3.5px); line-height: var(--hui-line-height-small, 16px); font-weight: 400; text-align: center; font-variant-numeric: tabular-nums; }
+.handwork-changes-tab-count[data-kind="outgoing"] { color: var(--hui-color-foreground-info-primary, #6b9eea); }
+.handwork-changes-view, .handwork-working, .handwork-history { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+:is(.handwork-working, .handwork-history)[data-sized] .handwork-changed-files { flex: 0 0 auto; height: var(--handwork-files-height); max-height: calc(100% - 160px); }
+
+.handwork-commit { position: relative; z-index: 2; background: var(--hui-color-background-base-primary); display: flex; flex-shrink: 0; flex-direction: column; gap: 8px; padding: 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-commit-editor { overflow: hidden; border: 1px solid var(--hui-color-border-base-secondary); border-radius: 10px; background: var(--hui-color-background-base-primary); transition: border-color 150ms ease; }
+.handwork-commit-editor:focus-within { border-color: var(--hui-color-border-base-focus); }
+.handwork-commit-summary { position: relative; }
+.handwork-commit-summary > input { box-sizing: border-box; width: 100%; min-width: 0; height: 38px; padding: 10px 48px 8px 12px; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.handwork-commit-summary > input::placeholder, .handwork-commit-description::placeholder { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-commit-length { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: var(--hui-color-foreground-base-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.handwork-commit-summary[data-long] .handwork-commit-length { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit textarea.handwork-commit-description { display: block; box-sizing: border-box; width: 100%; min-height: 50px; max-height: 140px; margin: 0; padding: 0 12px 8px; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); field-sizing: content; resize: vertical; font: inherit; font-size: 12px; line-height: 18px; }
+.handwork-commit-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 30px; padding: 0 6px 6px; }
+.handwork-commit-tools > button { height: 24px; min-width: 0; padding: 0 6px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-commit-tools > .handwork-commit-generate { margin-inline-start: auto; }
+.handwork-commit-model { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-tertiary); font-size: 10px; }
+.handwork-commit-hint { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-commit-hint > button { flex-shrink: 0; height: 20px; margin-inline-start: auto; padding: 0 6px; border: 0; font-size: 11px; }
+.handwork-commit-hint[data-tone="warning"], .handwork-commit-hint > svg { color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit-hint[data-tone="error"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-commit-footer { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.handwork-commit-footer > button { flex-shrink: 0; height: 28px; padding: 0 10px; font-size: 11.5px; }
+.handwork-commit-staging { flex: 1; min-width: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-repo-row > .handwork-branch-trigger { margin-inline-start: auto; max-width: 40%; color: var(--hui-color-foreground-base-secondary); }
+.handwork-repo-row > .handwork-repo-terminal { flex-shrink: 0; margin-inline-start: 0; }
+.handwork-sync-row > button { border: 0; box-shadow: none; }
+.handwork-sync-row > .handwork-sync-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.handwork-change-groups { padding-top: 0; isolation: isolate; }
+.handwork-working > .handwork-change-groups { flex: 0 1 38%; min-height: 112px; max-height: min(38dvh, 360px); }
+.handwork-commit-collapsed { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; padding: 7px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-commit-collapsed > button { height: 24px; padding: 0 6px; font-size: 11px; }
+.handwork-repo-name { flex: 1; max-width: none; min-width: 0; }
+.handwork-change-groups > .handwork-changes-note { margin: 6px; }
+.handwork-change-group + .handwork-change-group { margin-top: 4px; }
+.handwork-change-group-header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; background: var(--hui-color-background-base-primary); }
+.handwork-change-group-header > button:not(.handwork-change-group-toggle) { flex-shrink: 0; height: 22px; padding: 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-change-group-header > button:not(.handwork-change-group-toggle):not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-group-toggle { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 0; padding: 3px 6px; border: 0; border-radius: 4px; background: transparent; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: 11px; line-height: 16px; font-weight: 500; text-align: start; cursor: pointer; }
+.handwork-change-group-toggle:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-group-toggle:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-change-group-toggle[aria-expanded="false"] .handwork-changes-chevron { transform: rotate(-90deg); }
+.handwork-change-group-empty { margin: 0 6px 6px 24px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-change-list { margin: 0; padding: 0; list-style: none; }
+.handwork-change-row { position: relative; display: flex; align-items: center; border-radius: 5px; }
+.handwork-change-row:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-change-row[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-change-select { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; height: 28px; padding: 0 32px 0 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; text-align: start; cursor: pointer; }
+.handwork-change-select:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-change-select .handwork-change-counts { gap: 5px; font-size: 11px; }
+.handwork-change-row[aria-current] .handwork-change-filename { font-weight: 500; }
+.handwork-change-select[aria-label*=", Deleted,"] .handwork-change-filename { text-decoration: line-through; text-decoration-color: color-mix(in oklab, currentColor 50%, transparent); color: var(--hui-color-foreground-base-secondary); }
+.handwork-change-row > .handwork-change-action { position: absolute; right: 3px; width: 24px; height: 24px; padding: 0; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); opacity: 0; transition: opacity 100ms ease; }
+.handwork-change-row:hover > .handwork-change-action, .handwork-change-row:focus-within > .handwork-change-action, .handwork-change-row[aria-current] > .handwork-change-action { opacity: 1; }
+.handwork-change-row > .handwork-change-action:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-change-tag { flex-shrink: 0; padding: 0 5px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 10px; line-height: 15px; }
+.handwork-change-tag[data-kind="outside"] { background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 12%, transparent); color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-file-review-actions > button.handwork-file-review-stage { width: auto; height: 24px; margin-inline-end: 4px; padding: 0 8px; border: 0.5px solid var(--hui-color-border-base-tertiary); font-size: 11px; color: var(--hui-color-foreground-base-primary); }
+
+[data-slot="popover-content"].handwork-branch-popup { width: 300px; max-width: min(340px, calc(100vw - 24px)); padding: 0; border-radius: 10px; }
+.handwork-branch-search { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-search > input { flex: 1; min-width: 0; padding: 0; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12.5px; line-height: 18px; }
+.handwork-branch-search > input::placeholder { color: var(--hui-color-foreground-base-tertiary, var(--hui-color-foreground-base-secondary)); }
+.handwork-branch-list { max-height: 280px; padding: 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.handwork-branch-list > p { margin: 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-branch-option { display: flex; align-items: flex-start; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
+.handwork-branch-option[aria-selected="true"] { background: var(--hui-color-background-base-primary-hover); }
+.handwork-branch-check { display: flex; flex-shrink: 0; width: 14px; padding-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-branch-text { display: flex; flex-direction: column; min-width: 0; }
+.handwork-branch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 18px; }
+.handwork-branch-option[aria-current] .handwork-branch-name, .handwork-branch-name strong { font-weight: 500; }
+.handwork-branch-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+.handwork-branch-note { margin: 0; padding: 8px 10px; border-top: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+
+.handwork-commit-list { padding-top: 0; }
+.handwork-history .handwork-change-group-title { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 6px; margin: 0; padding: 8px 6px 4px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
+.handwork-change-group-title > span { min-width: 16px; padding: 0 5px; border-radius: 8px; background: var(--hui-color-background-neutral-secondary); font-size: 10.5px; font-weight: 400; text-align: center; }
+.handwork-changed-files > .handwork-commit-row { display: flex; height: auto; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 5px 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; text-align: start; cursor: pointer; }
+.handwork-changed-files > .handwork-commit-row:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-changed-files > .handwork-commit-row[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-commit-row:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-commit-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--hui-color-foreground-base-secondary); opacity: 0.6; }
+.handwork-commit-dot[data-kind="local"] { border-color: var(--hui-color-foreground-info-primary, #6b9eea); background: var(--hui-color-foreground-info-primary, #6b9eea); opacity: 1; }
+.handwork-commit-dot[data-kind="incoming"] { border-color: var(--hui-color-foreground-warning-primary, #d2a54a); opacity: 1; }
+.handwork-commit-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.handwork-commit-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 17px; }
+.handwork-commit-row[aria-current] .handwork-commit-subject { font-weight: 500; }
+:is(.handwork-commit-text, .handwork-commit-details) .handwork-commit-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 15px; }
+.handwork-commit-meta code, .handwork-commit-details code { font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 10.5px; }
+.handwork-commit-badge { flex-shrink: 0; padding: 0 5px; border-radius: 4px; background: color-mix(in oklab, var(--hui-color-foreground-info-primary, #6b9eea) 14%, transparent); color: var(--hui-color-foreground-info-primary, #6b9eea); font-size: 10px; line-height: 15px; }
+.handwork-commit-badge[data-kind="incoming"] { background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 14%, transparent); color: var(--hui-color-foreground-warning-primary, #d2a54a); }
+.handwork-commit-details { padding: 10px 12px 8px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-history .handwork-commit-details > h3 { margin: 0; font-size: 13px; line-height: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.handwork-commit-body { max-height: 200px; margin: 6px 0 0; overflow: auto; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+.handwork-commit-details > .handwork-commit-meta { margin: 6px 0 0; white-space: normal; }
+.handwork-commit-files { margin: 8px -6px 0; padding: 0; list-style: none; }
+.handwork-commit-files button { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; text-align: start; cursor: pointer; }
+.handwork-commit-files button:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-commit-files button[aria-current] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-commit-files button[aria-current] .handwork-change-filename { font-weight: 500; }
+.handwork-commit-files button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-commit-files .handwork-change-counts { gap: 5px; font-size: 11px; }
+.handwork-commit-details > .handwork-changes-empty { margin: 8px 0 0; }
+.handwork-review-panel[data-panel="activity"] > .handwork-panel-content { padding: 0; }
+.handwork-activity { display: flex; flex-direction: column; min-width: 0; padding-bottom: 12px; font-size: 12px; }
+.handwork-activity-summary { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-activity-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-activity-stats strong { color: var(--hui-color-foreground-base-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+.handwork-activity-stats [data-tone="failed"] strong { color: var(--hui-color-foreground-danger-primary); }
+.handwork-activity-stats [data-tone="running"] strong { color: var(--hui-color-foreground-info-primary, #6b9eea); }
+.handwork-activity-context { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.handwork-activity-context-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-activity-context-tokens { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
+/* ContextMeter portals outside the activity panel, so scope its popup by its details slot. */
+[data-slot="popover-content"]:has(> [data-slot="context-meter-details"]) { width: 280px; max-width: calc(100vw - 32px); padding: 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-primary); box-shadow: var(--hui-shadow-lifted); color: var(--hui-color-foreground-base-primary); font-size: 12px; line-height: 18px; }
+[data-slot="context-meter-details"] { display: flex; flex-direction: column; gap: 12px; min-width: 0; font-variant-numeric: tabular-nums; }
+[data-slot="context-meter-details"] > p:first-child { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
+[data-slot="context-meter-details"] > div { display: flex; flex-direction: column; gap: 8px; }
+[data-slot="context-meter-details"] [role="meter"] { width: 100%; height: 6px; overflow: hidden; border-radius: 3px; background: var(--hui-color-background-neutral-secondary); }
+[data-slot="context-meter-details"] [role="meter"] > div { height: 100%; border-radius: inherit; }
+[data-slot="context-meter-details"] [role="meter"] + p { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin: 0; }
+[data-slot="context-meter-details"] [role="meter"] + p > span:first-child { font-size: 14px; line-height: 20px; font-weight: 500; }
+[data-slot="context-meter-details"] [role="meter"] + p > span:last-child { color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; }
+.handwork-activity-turn { padding: 10px 6px 0; }
+.handwork-activity-turn + .handwork-activity-turn { margin-top: 6px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-activity-prompt { margin: 0 8px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 16px; font-weight: 500; }
+.handwork-activity-list { margin: 0; padding: 0; list-style: none; }
+.handwork-activity-head { display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 0 8px; border-radius: 5px; color: var(--hui-color-foreground-base-primary); line-height: 18px; list-style: none; }
+.handwork-activity-head::-webkit-details-marker { display: none; }
+summary.handwork-activity-head { cursor: pointer; }
+summary.handwork-activity-head:hover, details[open] > summary.handwork-activity-head { background: var(--hui-color-background-base-primary-hover); }
+summary.handwork-activity-head:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-activity-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-activity-row[data-state="failed"] .handwork-activity-icon, .handwork-activity-row[data-state="failed"] .handwork-activity-state { color: var(--hui-color-foreground-danger-primary); }
+.handwork-activity-row[data-state="running"] .handwork-activity-icon { color: var(--hui-color-foreground-info-primary, #6b9eea); animation: handwork-spin 900ms linear infinite; }
+@keyframes handwork-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .handwork-activity-row[data-state="running"] .handwork-activity-icon { animation: none; } }
+.handwork-activity-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-activity-state { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-activity-chevron { width: 12px; height: 12px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); opacity: 0; transform: rotate(-90deg); transition: transform 120ms ease, opacity 120ms ease; }
+summary.handwork-activity-head:hover .handwork-activity-chevron, summary.handwork-activity-head:focus-visible .handwork-activity-chevron, details[open] > summary .handwork-activity-chevron { opacity: 1; }
+details[open] > summary .handwork-activity-chevron { transform: none; }
+.handwork-activity-detail { display: flex; flex-direction: column; gap: 6px; margin: 4px 8px 10px 30px; }
+.handwork-activity-caption { color: var(--hui-color-foreground-base-secondary); font-size: 10px; line-height: 14px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+.handwork-activity-detail pre { max-height: 220px; margin: 0; overflow: auto; padding: 8px 10px; border-radius: 6px; background: var(--hui-color-background-neutral-secondary); font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+.handwork-activity-files { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.handwork-activity-files > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.handwork-activity-files > li > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 11px; }
+.handwork-activity-files .handwork-change-counts { font-size: 11px; gap: 5px; }
+@media (max-width: 1100px) {
+  .handwork-workspace-body { flex-direction: column; }
+  .handwork-review-resize { display: none; }
+  .handwork-review-panel[data-sized] { flex-basis: auto; }
+  .handwork-review-panel { order: -1; flex: 0 1 auto; width: 100%; max-height: min(36dvh, 320px); border-inline-start: 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+  .handwork-panel-header { padding-block: 6px; }
+  .handwork-review-panel[data-panel="changes"] { flex: 0 0 min(60dvh, 560px); max-height: min(60dvh, 560px); }
+  .handwork-review-panel[data-panel="changes"] .handwork-changed-files { max-height: min(25dvh, 200px); }
+}
+@media (max-width: 700px) {
+  .handwork-header-actions { margin-left: auto; max-width: 100%; }
+  .handwork-header-actions > button { flex-shrink: 0; }
+}
+
+.handwork-panel-actions { display: flex; align-items: center; gap: 4px; }
+.handwork-panel-actions > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; box-shadow: none; }
+
+.handwork-sidebar-footer-stack { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.handwork-update { min-width: 0; }
+.handwork-update-button { width: 100%; justify-content: flex-start; gap: 8px; }
+.handwork-update-status { display: block; padding: 2px 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; overflow-wrap: anywhere; }
+
+/* Command palette: one surface for commands, chats, prompts, and message search. */
+.handwork-palette { width: 620px; max-height: min(560px, 82dvh); }
+.handwork-palette [data-slot="command-content"] { max-height: min(420px, 60dvh); }
+.handwork-palette [data-slot="command-item"] { min-height: 40px; padding: 8px 12px; }
+.handwork-palette [data-slot="command-item"] [data-slot="command-item-label"] { display: flex; align-items: baseline; gap: 8px; }
+.handwork-palette [data-slot="command-item"] .handwork-search-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-palette [data-slot="command-item"] .handwork-search-project { flex-shrink: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-palette [data-slot="command-item-leading-icon"] svg { width: 16px; height: 16px; }
+.handwork-palette [data-slot="command-item-trailing-icon"] { gap: 6px; color: var(--hui-color-foreground-base-tertiary); font-size: 12px; }
+.handwork-palette [data-slot="command-item-trailing-icon"] svg { width: 14px; height: 14px; }
+.handwork-palette .handwork-palette-message [data-slot="command-item-label"] { display: block; white-space: normal; }
+.handwork-palette .handwork-palette-message .handwork-search-title { display: block; }
+.handwork-palette-snippet { display: -webkit-box; margin-top: 2px; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.handwork-palette mark { padding: 0 1px; border-radius: 3px; background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 28%, transparent); color: inherit; }
+.handwork-palette-value { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); }
+.handwork-palette-check { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; color: var(--hui-color-foreground-base-primary); }
+.handwork-palette-check svg { width: 14px; height: 14px; }
+.handwork-palette-crumb { flex-shrink: 0; margin-left: 10px; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 6px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); font-size: 12px; box-shadow: none; }
+.handwork-palette-crumb + [data-slot="command-input-container"] { padding-left: 0; }
+.handwork-palette-searching { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-palette-note { margin: 0; padding: 4px 12px 12px; color: var(--hui-color-foreground-base-tertiary); font-size: 12px; }
+.handwork-search-footer { align-items: center; }
+.handwork-search-footer > span:last-child:not(:first-child) { margin-left: auto; }
+:is(.handwork-search-footer, .handwork-palette [data-slot="command-item-trailing-icon"], .handwork-quick-hint, [data-slot="dialog-description"]) kbd,
+.handwork-settings-v2 kbd { display: inline-flex; min-width: 18px; height: 18px; align-items: center; justify-content: center; margin-inline-end: 2px; padding: 0 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 4px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font: 500 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-sizing: border-box; }
+
+/* Find in chat floats over the transcript, below the toolbar. */
+.handwork-find { position: absolute; top: 10px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 2px; width: min(360px, calc(100% - 32px)); height: 36px; padding: 0 4px 0 10px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-primary); box-shadow: var(--hui-shadow-lifted); box-sizing: border-box; animation: handwork-find-in 160ms cubic-bezier(0.16, 1, 0.3, 1); }
+.handwork-find > svg { flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-find input { flex: 1; min-width: 0; height: 100%; margin-left: 6px; padding: 0; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 13px; }
+.handwork-find input::placeholder { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-find input::-webkit-search-cancel-button { appearance: none; }
+.handwork-find:focus-within { border-color: var(--hui-color-border-base-secondary); }
+.handwork-find-count { flex-shrink: 0; padding: 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.handwork-find button { width: 26px; height: 26px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-find button:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
+@keyframes handwork-find-in { from { opacity: 0; transform: translateY(-4px); } }
+::highlight(handwork-find) { background-color: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 30%, transparent); }
+::highlight(handwork-find-active) { background-color: var(--hui-color-foreground-warning-primary, #d2a54a); color: #1a1407; }
+@media (forced-colors: active) { ::highlight(handwork-find) { background-color: Mark; color: MarkText; } ::highlight(handwork-find-active) { background-color: Highlight; color: HighlightText; } }
+
+/* Composer additions. */
+.handwork-composer-menu { min-width: 220px; padding: 4px; border-radius: 10px; }
+.handwork-composer-menu [data-slot="menu-item"] { min-height: 32px; gap: 10px; border-radius: 6px; }
+.handwork-composer-menu [data-slot="menu-item"] > svg { width: 15px; height: 15px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-composer-menu [data-slot="menu-shortcut"] { font-size: calc(var(--hui-font-size-regular, 14px) - 2px); color: var(--hui-color-foreground-base-tertiary); }
+.handwork-attachment-thumb { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px var(--hui-color-border-base-primary); }
+
+/* Saved prompts reuse the settings dialog's two-pane layout. */
+.handwork-prompts > [data-slot="dialog-footer"] { flex-shrink: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--hui-color-border-base-primary); padding: 12px 20px; }
+.handwork-prompts > [data-slot="dialog-footer"] .handwork-settings-note { margin: 0; }
+.handwork-prompt-sidebar { display: flex; flex: 0 0 248px; width: 248px; min-width: 0; flex-direction: column; min-height: 0; background: var(--hui-color-background-base-secondary); border-right: 1px solid var(--hui-color-border-base-primary); }
+.handwork-prompt-search { display: flex; align-items: center; gap: 8px; margin: 12px 10px 6px; padding: 0 10px; height: 32px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-tertiary); }
+.handwork-prompt-search:focus-within { border-color: var(--hui-color-border-base-secondary); }
+.handwork-prompt-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; }
+.handwork-prompt-search input::-webkit-search-cancel-button { appearance: none; }
+.handwork-prompt-list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 10px 8px; scrollbar-width: thin; }
+.handwork-prompt-folder { padding: 12px 8px 4px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-prompt-item { display: flex; min-width: 0; box-sizing: border-box; flex-direction: column; gap: 2px; width: 100%; padding: 7px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; text-align: start; cursor: pointer; }
+.handwork-prompt-item:hover { background: var(--hui-color-background-neutral-secondary-hover); }
+.handwork-prompt-item[aria-selected="true"] { background: var(--hui-color-background-neutral-secondary); }
+.handwork-prompt-item:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-prompt-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; line-height: 18px; font-weight: 500; }
+.handwork-prompt-item-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 11.5px; line-height: 16px; }
+.handwork-prompt-empty-list { margin: 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-prompt-new:hover { background: var(--hui-color-background-neutral-secondary-hover); }
+.handwork-prompt-new { align-self: flex-start; border-color: transparent; background: transparent; justify-content: flex-start; gap: 8px; margin: 0 10px 12px; color: var(--hui-color-foreground-base-secondary); box-shadow: none; }
+.handwork-prompt-panel { display: flex; flex-direction: column; }
+.handwork-prompt-error { margin: 0 0 12px; color: var(--hui-color-foreground-danger-primary); font-size: 12px; }
+.handwork-prompt-editor { display: flex; flex-direction: column; gap: 10px; }
+.handwork-prompt-editor h2 { margin-bottom: 6px !important; }
+.handwork-prompt-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.handwork-prompt-fields label, .handwork-prompt-body-label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-body-label { margin-top: 4px; }
+.handwork-prompt-editor > [data-slot="textarea"] { margin-top: 0 !important; min-height: 200px; font-size: 13px; line-height: 20px; }
+.handwork-prompt-editor .handwork-settings-note svg { vertical-align: -1px; }
+.handwork-settings-v2 code { padding: 1px 4px; border-radius: 4px; background: var(--hui-color-background-neutral-secondary); font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 0.92em; }
+.handwork-prompt-variable { display: inline-block; margin: 2px 4px 0 0; padding: 0 6px; border-radius: 999px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-primary); font-size: 11px; line-height: 18px; }
+.handwork-prompt-detail header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.handwork-prompt-detail h2 { margin: 0 0 2px !important; overflow-wrap: anywhere; }
+.handwork-prompt-detail header p { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-prompt-detail-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.handwork-prompt-detail-actions button { width: 28px; height: 28px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-preview { padding: 12px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; scrollbar-width: thin; }
+/* An empty library is a compact, single-column introduction rather than an empty two-pane view. */
+.handwork-prompts[data-empty] { width: min(560px, calc(100vw - 48px)); height: auto; }
+/* Writing the first prompt has no list beside it, so the dialog fits the editor. */
+.handwork-prompts:not([data-empty]):not(:has(.handwork-prompt-sidebar)) { height: auto; }
+.handwork-prompt-blank > p { text-wrap: pretty; }
+.handwork-prompts[data-empty] .handwork-prompt-panel { padding: 8px 28px 28px; }
+.handwork-prompt-blank { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px 0 0; text-align: center; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-blank-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-blank h2 { margin: 0 !important; color: var(--hui-color-foreground-base-primary); font-size: 15px !important; font-weight: 500; }
+.handwork-prompt-blank > p { max-width: 380px; margin: 0 0 8px; font-size: 13px; line-height: 20px; }
+.handwork-prompt-blank kbd, .handwork-prompt-blank code { padding: 0 5px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 5px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-primary); font-size: 12px; }
+.handwork-prompt-starters { display: grid; gap: 8px; width: 100%; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--hui-color-border-base-primary); text-align: start; }
+.handwork-prompt-starters > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-prompt-starters ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.handwork-prompt-starter { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; text-align: start; cursor: pointer; transition: background-color var(--hui-duration-fast, 120ms) var(--hui-ease-out, ease-out), border-color var(--hui-duration-fast, 120ms) var(--hui-ease-out, ease-out); }
+.handwork-prompt-starter:hover:not(:disabled) { border-color: var(--hui-color-border-base-secondary); background: var(--hui-color-background-base-primary-hover); }
+.handwork-prompt-starter:focus-visible { outline: var(--hui-focus-ring); outline-offset: 1px; }
+.handwork-prompt-starter:disabled { cursor: not-allowed; opacity: 0.6; }
+.handwork-prompt-starter > svg { flex-shrink: 0; margin-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-prompt-starter > span { display: grid; gap: 2px; min-width: 0; }
+/* Prompt fields use the Honest AI form controls that generated replies use. */
+.handwork-prompt-form { text-align: start; }
+/* Dialog label rules must not restyle the Honest AI form's own labels. */
+/* Settings textarea sizing is for instruction files, not form fields. */
+.handwork-settings-panel .handwork-prompt-form [data-slot="textarea"] { margin-top: 0; min-height: 0; }
+.handwork-chat-dialog .handwork-prompt-form label, .handwork-prompt-form-preview label { display: inline-flex; margin: 0; font-size: 13px; font-weight: 500; }
+.handwork-prompt-form [data-slot="form"], .handwork-prompt-form form { margin: 0; }
+.handwork-prompt-form-preview { display: grid; gap: 8px; padding: 14px 16px; border: 1px dashed var(--hui-color-border-base-secondary); border-radius: 12px; background: var(--hui-color-background-base-secondary); }
+.handwork-prompt-form-preview > span, .handwork-prompt-fill-preview > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-prompt-fill { width: min(560px, calc(100vw - 32px)); }
+.handwork-prompt-fill-fields { display: flex; flex-direction: column; gap: 16px; padding-block: 20px; max-height: 60dvh; overflow-y: auto; }
+.handwork-prompt-fill-preview { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); }
+.handwork-prompt-fill-preview p { margin: 0; max-height: 160px; overflow-y: auto; font-size: 12.5px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--hui-color-foreground-base-secondary); scrollbar-width: thin; }
+.handwork-prompt-filled { padding: 1px 4px; border-radius: 4px; background: var(--hui-color-background-accent-primary, var(--hui-color-background-neutral-secondary)); color: var(--hui-color-foreground-base-primary); }
+.handwork-prompt-fill-count { margin: 0 auto 0 0 !important; }
+.handwork-prompt-fill [data-slot="dialog-footer"] { border-top: 1px solid var(--hui-color-border-base-primary); }
+@media (max-width: 700px) {
+  .handwork-prompt-sidebar { flex: 0 0 auto; max-height: 34dvh; border-right: 0; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+  .handwork-prompt-fields { grid-template-columns: 1fr; }
+}
+
+/* Quick entry: a floating composer in its own transparent window. */
+html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-root #root { height: auto; min-height: 0; background: transparent; overflow: hidden; }
+.handwork-quick { display: flex; flex-direction: column; gap: 6px; margin: 16px; padding: 12px 12px 10px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 18px; background: var(--hui-color-background-base-primary); box-shadow: var(--hui-shadow-floating); box-sizing: border-box; }
+.handwork-quick-brand { display: flex; align-items: center; height: 14px; padding: 0 6px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; letter-spacing: 0.01em; cursor: grab; }
+.handwork-quick textarea { display: block; width: 100%; min-height: 28px; margin: 0; padding: 4px 6px; border: 0; outline: none; resize: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 16px; line-height: 24px; box-sizing: border-box; }
+.handwork-quick textarea::placeholder { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-quick-files { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0 4px; list-style: none; }
+.handwork-quick-files li { display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 3px 3px 4px; border-radius: 8px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-quick-files img { width: 28px; height: 20px; border-radius: 4px; object-fit: cover; }
+.handwork-quick-files span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-quick-files button { width: 20px; height: 20px; box-shadow: none; }
+.handwork-quick-error { margin: 0; padding: 0 6px; color: var(--hui-color-foreground-danger-primary); font-size: 12px; }
+.handwork-quick-controls { display: flex; align-items: center; gap: 8px; }
+.handwork-quick-controls > button:first-child { gap: 6px; height: 30px; padding: 0 10px; border: 0; border-radius: 15px; box-shadow: none; color: var(--hui-color-foreground-base-secondary); font-size: 12px; font-weight: 500; }
+.handwork-quick-controls > button:first-child:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-quick-hint { margin-left: auto; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; white-space: nowrap; }
+.handwork-quick-send { width: 32px; height: 32px; border-radius: 50%; background: var(--hui-color-foreground-base-primary); color: var(--hui-color-background-base-primary); }
+.handwork-quick-send:not(:disabled):hover { background: var(--hui-color-foreground-base-secondary); }
+.handwork-quick-send:disabled { background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-tertiary); }
+@media (forced-colors: active) { .handwork-quick { border-color: CanvasText; } .handwork-quick-send { border: 1px solid ButtonText; } }
+.handwork-palette .handwork-palette-message { align-items: flex-start; }
+.handwork-palette .handwork-palette-message [data-slot="command-item-leading-icon"] { margin-top: 2px; }
+
+/* Notices can carry one follow-up action, such as Try again. */
+.handwork-notice { align-items: center; }
+.handwork-notice > span { min-width: 0; flex: 0 1 auto; }
+.handwork-notice-action { flex-shrink: 0; gap: 5px; margin-left: 4px; box-shadow: none; }
+
+/* Recovery is a quiet checkpoint in the conversation. */
+.handwork-response-error { container-type: inline-size; min-width: 0; padding: 16px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 2%, var(--hui-color-background-base-primary)); font-size: 12px; line-height: 18px; }
+.handwork-response-error-main { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: start; gap: 12px; }
+.handwork-response-error-icon { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 9px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-secondary); }
+.handwork-response-error-icon > svg { width: 15px; height: 15px; stroke-width: 1.5; }
+.handwork-response-error-copy { min-width: 0; }
+.handwork-response-error p { margin: 0; color: var(--hui-color-foreground-base-secondary); overflow-wrap: anywhere; }
+.handwork-response-error .handwork-response-error-title { margin-bottom: 3px; color: var(--hui-color-foreground-base-primary); font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.handwork-response-error .handwork-response-error-continue { min-height: 30px; height: 30px; padding: 0 10px; gap: 6px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); box-shadow: 0 1px 2px oklch(0 0 0 / 0.03); font-size: 12px; font-weight: 500; transition: background-color 150ms ease, border-color 150ms ease; }
+.handwork-response-error .handwork-response-error-continue > svg { width: 13px; height: 13px; stroke-width: 1.5; }
+.handwork-response-error .handwork-response-error-continue:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); border-color: var(--hui-color-border-base-secondary); }
+.handwork-response-error-details { margin-top: 8px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; line-height: 16px; }
+.handwork-response-error-details summary { display: flex; align-items: center; gap: 3px; width: fit-content; padding: 2px 0; cursor: pointer; border-radius: 3px; list-style: none; }
+.handwork-response-error-details summary::-webkit-details-marker { display: none; }
+.handwork-response-error-details summary > svg { width: 12px; height: 12px; transition: transform 150ms ease; }
+.handwork-response-error-details[open] summary > svg { transform: rotate(90deg); }
+.handwork-response-error-details summary:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-response-error-details summary:focus-visible { outline: var(--hui-focus-ring); outline-offset: 3px; }
+.handwork-response-error-details p { max-height: 240px; overflow: auto; margin-top: 8px; padding: 10px 12px; border-inline-start: 1px solid var(--hui-color-border-base-primary); white-space: pre-wrap; font-size: 12px; line-height: 18px; }
+@container (max-width: 380px) { .handwork-response-error-main { grid-template-columns: 28px minmax(0, 1fr); } .handwork-response-error-continue { grid-column: 2; justify-self: start; } }
+@media (prefers-reduced-motion: reduce) { .handwork-response-error-details summary > svg, .handwork-response-error .handwork-response-error-continue { transition: none; } }
+
+
+/* Files sent with a message open in the file viewer. */
+.handwork-message-files { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: min(100%, 520px); margin: 0 0 6px auto; padding: 0; list-style: none; }
+[data-from="assistant"] > .handwork-message-files { justify-content: flex-start; margin-inline: 0 auto; }
+/* Thumbnails keep one height; very wide or tall images are cropped to a sensible frame. */
+.handwork-message-image { display: block; padding: 0; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; overflow: hidden; background: var(--hui-color-background-base-secondary); cursor: zoom-in; }
+.handwork-message-image img { display: block; height: 112px; width: auto; min-width: 96px; max-width: 200px; object-fit: cover; transition: transform 160ms ease; }
+.handwork-message-files:has(> li:only-child) .handwork-message-image img { height: 140px; min-width: 112px; max-width: 240px; }
+.handwork-message-image:hover img { transform: scale(1.02); }
+.handwork-message-image:focus-visible, .handwork-file-chip:focus-visible, .handwork-response-file-open:focus-visible, .handwork-file-link:focus-visible { outline: var(--hui-focus-ring); outline-offset: 2px; }
+.handwork-file-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 280px; min-height: 30px; padding: 4px 10px 4px 8px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; cursor: pointer; }
+.handwork-file-chip:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-file-chip:disabled { cursor: default; color: var(--hui-color-foreground-base-secondary); }
+.handwork-file-chip svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-file-chip > span:first-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-file-chip-meta { flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-file-link { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); text-underline-offset: 3px; cursor: pointer; }
+.handwork-file-link:hover { text-decoration-color: currentColor; }
+
+/* Files a response created or changed. */
+.handwork-response-work { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.handwork-response-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; max-width: 760px; }
+.handwork-response-file { display: flex; align-items: center; min-width: 0; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-primary); transition: background-color 120ms ease; }
+.handwork-response-file:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-response-file-open { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 4px 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 12px; text-align: start; cursor: pointer; }
+.handwork-response-file-open svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-response-file-name { flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.handwork-response-file-folder { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: start; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-response-file > button:last-child { margin-right: 4px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); opacity: 0; transition: opacity 120ms ease; }
+.handwork-response-file:is(:hover, :focus-within) > button:last-child { opacity: 1; }
+.handwork-response-file > button:last-child svg { width: 14px; height: 14px; }
+.handwork-response-files-more { justify-self: start; color: var(--hui-color-foreground-base-secondary); box-shadow: none; }
+@media (hover: none) { .handwork-response-file > button:last-child { opacity: 1; } }
+
+/* Native presentation for read-only terminal command reports. */
+.handwork-command-report { width: min(640px, calc(100vw - 48px)); max-height: 86dvh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-command-report [data-slot="dialog-body"] { min-height: 0; overflow: auto; font-size: 12px; line-height: 18px; }
+.handwork-report-fields { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.handwork-report-fields > div { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 2fr); gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--hui-color-border-base-primary); }
+.handwork-report-fields dt { color: var(--hui-color-foreground-base-secondary); text-transform: capitalize; }
+.handwork-report-fields dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.handwork-report-fields .handwork-report-fields > div { display: flex; flex-direction: column; gap: 4px; }
+.handwork-report-list { margin: 0; padding-left: 16px; }
+.handwork-report-list > li + li { margin-top: 12px; }
+.handwork-report-muted { color: var(--hui-color-foreground-base-secondary); }
+.handwork-report-number { font-variant-numeric: tabular-nums; }
+.handwork-report-warning { color: var(--hui-color-foreground-warning-primary); }
+
+/* File viewer. */
+.handwork-file-viewer { width: min(720px, calc(100vw - 48px)); max-width: calc(100vw - 48px); max-height: 86dvh; top: 50%; transform: translate(-50%, -50%); translate: none; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-file-viewer.is-image { width: auto; min-width: min(420px, calc(100vw - 48px)); }
+.handwork-file-viewer > [data-slot="dialog-header"] { flex-shrink: 0; padding-right: 56px; }
+.handwork-file-viewer [data-slot="dialog-title"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-file-location { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.handwork-file-size { flex-shrink: 0; }
+.handwork-file-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.handwork-file-markdown > :first-child { margin-top: 0; }
+.handwork-file-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; background: var(--hui-color-background-base-secondary); scrollbar-width: thin; }
+.handwork-file-body > img { display: block; max-width: 100%; max-height: calc(86dvh - 150px); margin: auto; object-fit: contain; }
+.handwork-file-text { margin: 0; padding: 16px 20px; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-code-font-size, 12px); line-height: 1.6; white-space: pre; overflow: auto; tab-size: 2; }
+.handwork-file-markdown { padding: 16px 24px; background: var(--hui-color-background-base-primary); font-size: var(--handwork-ui-font-size, 14px); }
+.handwork-file-note { margin: 0; padding: 8px 20px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-file-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 180px; padding: 32px; text-align: center; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-file-empty svg { margin-bottom: 6px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-file-empty p { margin: 0; color: var(--hui-color-foreground-base-primary); font-size: 13px; font-weight: 500; }
+.handwork-file-error { margin: 0; padding: 8px 24px 0; color: var(--hui-color-foreground-danger-primary); font-size: 12px; }
+.handwork-file-actions { flex-shrink: 0; flex-direction: row !important; align-items: center; gap: 8px; border-top: 1px solid var(--hui-color-border-base-primary); padding-block: 12px; }
+.handwork-file-actions > button { gap: 6px; box-shadow: none; }
+.handwork-file-spacer { flex: 1; }
+
+/* Messages queued while a reply is running. */
+.handwork-queue { margin: 0 8px 8px; padding: 6px 6px 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; background: var(--hui-color-background-base-secondary); }
+.handwork-queue header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; padding: 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-queue header button { height: 22px; box-shadow: none; }
+.handwork-queue-actions { display: inline-flex; align-items: center; gap: 2px; }
+.handwork-queue ol { margin: 0; padding: 0; list-style: none; }
+.handwork-queue li { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 2px 0 6px; border-radius: 8px; font-size: 13px; }
+.handwork-queue li:hover { background: var(--hui-color-background-base-primary-hover); }
+.handwork-queue-marker { width: 13px; height: 13px; flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-queue-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-queue-files { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-queue-files svg { width: 12px; height: 12px; }
+.handwork-queue li button { width: 24px; height: 24px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-secondary); opacity: 0; }
+.handwork-queue li:is(:hover, :focus-within) button { opacity: 1; }
+.handwork-queue li button svg { width: 13px; height: 13px; }
+@media (hover: none) { .handwork-queue li button { opacity: 1; } }
+.handwork-composer [data-slot="prompt-bar-queue"] { width: 32px; border-radius: 50%; background: transparent; color: var(--hui-color-foreground-base-secondary); }
+
+/* Activity: the prompt that starts each turn is a small label, not a page heading. */
+.handwork-activity .handwork-activity-prompt { margin: 0 8px 6px; font: 500 11px/16px var(--hui-font-family-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif); letter-spacing: normal; color: var(--hui-color-foreground-base-secondary); }
+
+/* Reply actions sit a short step below the message and respond to the pointer. */
+.handwork-message [data-slot="message-content"] + .handwork-message-actions { margin-top: 10px; margin-inline-start: -6px; }
+.handwork-message-actions { gap: 2px; }
+.handwork-message-actions button { width: 28px; height: 28px; border-radius: 7px; color: var(--hui-color-foreground-base-secondary); transition: background-color 120ms ease, color 120ms ease; }
+.handwork-message-actions button svg { width: 15px; height: 15px; }
+.handwork-message-actions button:not(:disabled):hover { background: var(--hui-color-background-base-primary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-message-actions button:not(:disabled):active { background: var(--hui-color-background-neutral-secondary); }
+.handwork-message-actions button:focus-visible { outline: var(--hui-focus-ring); outline-offset: 1px; }
+
+/* Your messages wrap into a compact bubble on the trailing side, like a conversation. */
+[data-from="user"] [data-slot="chat-message-body"] { max-width: min(72%, 620px); }
+@media (max-width: 700px) { [data-from="user"] [data-slot="chat-message-body"] { max-width: 88%; } }
+
+/* Math typeset with KaTeX. Wide equations scroll instead of overflowing the reply. */
+.handwork-transcript .katex, .handwork-file-markdown .katex { font-size: 1.08em; }
+/* Leave room for raised glyphs inside the equation's scroll clipping boundary. */
+.handwork-transcript .katex-display, .handwork-file-markdown .katex-display { margin: 0.9em 0; padding: 0.4em 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.handwork-transcript .katex-error { color: var(--hui-color-foreground-danger-primary); font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 0.9em; }
+
+/* Mermaid diagrams. */
+.handwork-mermaid { margin: 12px 0; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-primary); overflow: hidden; }
+.handwork-mermaid figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--hui-color-border-base-primary); background: var(--hui-color-background-base-secondary); }
+.handwork-mermaid-label { display: inline-flex; align-items: center; gap: 6px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-mermaid-actions { display: inline-flex; gap: 2px; }
+.handwork-mermaid-actions button { gap: 5px; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-mermaid-actions button:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-mermaid-diagram { display: flex; justify-content: center; padding: 20px 16px; overflow-x: auto; scrollbar-width: thin; }
+.handwork-mermaid-diagram svg { max-width: 100%; height: auto; }
+.handwork-mermaid-source { margin: 0; padding: 14px 16px; overflow-x: auto; background: transparent; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-code-font-size, 12.5px); line-height: 1.6; white-space: pre; }
+.handwork-mermaid[data-state="streaming"] .handwork-mermaid-source { color: var(--hui-color-foreground-base-secondary); }
+.handwork-mermaid-note { margin: 0; padding: 8px 12px 10px; border-top: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+/* Diagrams share the app's flat surfaces instead of Mermaid's default shadows. */
+.handwork-mermaid-diagram svg :is(.node, .cluster, .label-container, rect, polygon, path) { filter: none !important; }
+
+/* Archive: a quiet section at the end of the sidebar, and a banner on an archived chat. */
+.handwork-archived-heading { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.handwork-archived-heading svg { width: 13px; height: 13px; }
+.handwork-archived-count { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.handwork-archived-banner { display: flex; align-items: center; gap: 8px; margin: 0 8px 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-archived-banner > svg { flex-shrink: 0; }
+.handwork-archived-banner > span { flex: 1; min-width: 0; }
+.handwork-archived-banner button { flex-shrink: 0; gap: 5px; box-shadow: none; }
+
+/* Versions of an edited or retried message. The switcher stays visible so other versions are discoverable. */
+.handwork-versions { display: inline-flex; align-items: center; margin-inline-end: 2px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.handwork-versions > span { min-width: 34px; text-align: center; }
+.handwork-message-actions .handwork-versions button:disabled { opacity: 0.4; }
+.handwork-editable-message:has(.handwork-versions) > [data-slot="chat-message-footer"] { opacity: 1; }
+
+/* Model shortcuts. */
+.handwork-favorite-star { fill: currentColor; color: var(--hui-color-foreground-warning-primary, #c99a2e); }
+/* The check sits on the right, matching the model list; it only renders while checked. */
+.handwork-favorite-option { grid-template-columns: 1fr 16px; }
+.handwork-favorite-option > :first-child { grid-column: 2; grid-row: 1; }
+.handwork-favorite-option > :last-child { grid-column: 1; grid-row: 1; min-width: 0; }
+.handwork-favorite-label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.handwork-favorite-label svg { width: 14px; height: 14px; }
+
+/* Keyboard shortcut reference. */
+.handwork-shortcuts { width: 680px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-shortcuts kbd { display: inline-flex; min-width: 20px; height: 20px; align-items: center; justify-content: center; padding: 0 5px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 5px; background: var(--hui-color-background-base-secondary); color: var(--hui-color-foreground-base-secondary); font: 500 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-sizing: border-box; }
+.handwork-shortcuts [data-slot="dialog-description"] kbd { margin-inline: 1px; }
+.handwork-shortcut-filter { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+.handwork-shortcut-filter > svg { position: absolute; z-index: 1; left: 10px; color: var(--hui-color-foreground-base-tertiary); pointer-events: none; }
+.handwork-shortcut-filter input { padding-left: 30px; }
+.handwork-shortcut-groups { columns: 2 280px; column-gap: 28px; }
+.handwork-shortcut-groups section { break-inside: avoid; margin-bottom: 20px; }
+.handwork-shortcut-groups h3 { margin: 0 0 6px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; font-weight: 500; }
+.handwork-shortcut-groups dl { margin: 0; }
+.handwork-shortcut-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--hui-color-border-base-primary); font-size: 13px; line-height: 20px; }
+.handwork-shortcut-row:last-child { border-bottom: 0; }
+.handwork-shortcut-row dt { min-width: 0; }
+.handwork-shortcut-row dt span { display: block; color: var(--hui-color-foreground-base-tertiary); font-size: 12px; line-height: 17px; }
+.handwork-shortcut-row dd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 0; flex-shrink: 0; }
+.handwork-shortcut-choice, .handwork-shortcut-keys { display: inline-flex; align-items: center; gap: 3px; }
+.handwork-shortcut-or { margin-inline-end: 1px; color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+
+/* Chats that need the person, then chats that are working, above the chat lists. */
+.handwork-attention { display: grid; gap: 2px; }
+.handwork-attention ul { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.handwork-attention-heading { display: flex; align-items: center; gap: 6px; min-height: 24px; padding-inline: 8px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-attention-heading kbd { margin-left: auto; padding: 0 4px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 4px; color: var(--hui-color-foreground-base-tertiary); font: 500 10px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.handwork-attention-item { position: relative; display: flex; align-items: center; border-radius: 8px; }
+.handwork-attention-item[data-active] { background: var(--hui-color-background-base-primary-hover); }
+.handwork-attention-row { flex: 1; min-width: 0; height: auto; min-height: 40px; justify-content: flex-start; align-items: flex-start; gap: 8px; padding: 6px 8px; border: 0; box-shadow: none; text-align: left; }
+.handwork-attention-icon { display: flex; flex-shrink: 0; margin-top: 2px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-attention-item[data-kind="approval"] .handwork-attention-icon { color: var(--hui-color-foreground-accent-primary); }
+.handwork-attention-item[data-kind="failed"] .handwork-attention-icon { color: var(--hui-color-foreground-danger-primary); }
+.handwork-attention-item[data-kind="interrupted"] .handwork-attention-icon, .handwork-attention-item[data-kind="queue"] .handwork-attention-icon { color: var(--hui-color-foreground-warning-primary); }
+.handwork-attention-text { display: grid; min-width: 0; line-height: 17px; }
+.handwork-attention-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-attention-text span:last-child { color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-attention-dismiss { position: absolute; top: 6px; right: 4px; width: 22px; height: 22px; border: 0; box-shadow: none; opacity: 0; }
+.handwork-attention-item:is(:hover, :focus-within) .handwork-attention-dismiss { opacity: 1; }
+@media (hover: none) { .handwork-attention-dismiss { opacity: 1; } }
+.handwork-chat-flag { display: flex; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-flag[data-kind="approval"] { color: var(--hui-color-foreground-accent-primary); }
+.handwork-chat-flag[data-kind="failed"] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-chat-flag[data-kind="interrupted"] { color: var(--hui-color-foreground-warning-primary); }
+
+/* Staged attachments: room left, and files that could not be added with their reasons. */
+.handwork-attachment-tray { display: grid; gap: 4px; }
+.handwork-attachment-allowance { margin: 0; padding: 0 8px; color: var(--hui-color-foreground-base-secondary); font-size: 11px; }
+.handwork-attachment-rejected { margin: 0 4px; padding: 6px 8px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-secondary); font-size: 12px; }
+.handwork-attachment-rejected-heading { display: flex; align-items: center; gap: 6px; color: var(--hui-color-foreground-base-primary); }
+.handwork-attachment-rejected-heading svg { flex-shrink: 0; color: var(--hui-color-foreground-danger-primary); }
+.handwork-attachment-rejected-heading span { flex: 1; }
+.handwork-attachment-rejected-heading button { width: 22px; height: 22px; border: 0; box-shadow: none; }
+.handwork-attachment-rejected ul { display: grid; gap: 2px; margin: 4px 0 0; padding: 0 0 0 19px; list-style: none; color: var(--hui-color-foreground-base-secondary); }
+.handwork-attachment-rejected li { display: flex; gap: 8px; min-width: 0; }
+.handwork-attachment-rejected-name { flex-shrink: 1; min-width: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-primary); }
+
+/* Chat details: what shapes the open chat's replies, as a stack of cards. */
+.handwork-details-trigger { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-chat-details { width: min(560px, calc(100vw - 32px)); max-height: min(780px, 90dvh); display: flex; flex-direction: column; border: 1px solid var(--hui-color-border-base-primary); border-radius: 14px; }
+.handwork-details-subtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-details-body { display: grid; gap: 10px; min-height: 0; overflow-y: auto; padding-block: 16px; scrollbar-width: thin; }
+.handwork-details-hero { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; background: var(--hui-color-background-base-secondary); }
+.handwork-details-model { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.handwork-details-logo { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); }
+.handwork-details-model-text { display: grid; gap: 1px; min-width: 0; }
+.handwork-details-model-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; line-height: 20px; }
+.handwork-details-model-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.handwork-details-badges:empty { display: none; }
+.handwork-details-context { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-context > span { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; font-weight: 500; }
+.handwork-details-meter { display: flex; align-items: center; gap: 10px; }
+.handwork-details-meter [data-slot] { flex-shrink: 0; }
+.handwork-details-context p { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-alert { margin: 0; padding: 10px 12px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 10px; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-details-card { display: grid; gap: 10px; padding: 12px 14px 14px; border: 1px solid var(--hui-color-border-base-primary); border-radius: 12px; }
+.handwork-details-card > header { display: flex; align-items: center; gap: 8px; }
+.handwork-details-card h3 { flex: 1; margin: 0; font-size: 12px; font-weight: 600; color: var(--hui-color-foreground-base-primary); }
+.handwork-details-card-icon { display: flex; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-details-count { min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--hui-color-background-neutral-secondary); color: var(--hui-color-foreground-base-secondary); font-size: 11px; line-height: 18px; text-align: center; }
+.handwork-details-note, .handwork-details-footnote { margin: 0; color: var(--hui-color-foreground-base-secondary); font-size: 12px; line-height: 18px; }
+.handwork-details-footnote { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-details-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.handwork-details-rows li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 0; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-rows li:first-child { border-top: 0; padding-top: 2px; }
+.handwork-details-rows li > svg { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); }
+.handwork-details-row-text { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.handwork-details-row-text > span { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.handwork-details-row-text code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hui-color-foreground-base-tertiary); font-family: var(--hui-font-mono, ui-monospace, monospace); font-size: 11px; }
+.handwork-details-meta { color: var(--hui-color-foreground-base-tertiary); font-size: 11px; }
+.handwork-details-reveal { flex-shrink: 0; width: 26px; height: 26px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-details-reveal:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-details-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; margin: 0; }
+.handwork-details-tools div { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+.handwork-details-tools dt { color: var(--hui-color-foreground-base-secondary); font-size: 12px; }
+.handwork-details-tools dd { margin: 0; }
+.handwork-details-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.handwork-details-thumbs button { display: block; width: 100%; aspect-ratio: 1; padding: 0; overflow: hidden; border: 1px solid var(--hui-color-border-base-primary); border-radius: 8px; background: var(--hui-color-background-base-secondary); cursor: zoom-in; }
+.handwork-details-thumbs button:hover { border-color: var(--hui-color-border-base-secondary); }
+.handwork-details-thumbs button:focus-visible { outline: var(--hui-focus-ring); outline-offset: 1px; }
+.handwork-details-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.handwork-details-more { justify-self: start; box-shadow: none; }
+.handwork-details-skeleton { display: grid; gap: 8px; padding: 2px 0; }
+.handwork-details-skeleton span { height: 10px; border-radius: 5px; background: var(--hui-color-background-neutral-secondary); }
+@media (prefers-reduced-motion: no-preference) { .handwork-details-skeleton span { animation: handwork-details-pulse 1.2s ease-in-out infinite; } }
+@keyframes handwork-details-pulse { 50% { opacity: 0.5; } }
+.handwork-details-footer { flex-direction: row; justify-content: space-between; gap: 8px; border-top: 1px solid var(--hui-color-border-base-primary); }
+.handwork-details-footer button:only-child { margin-left: auto; }
+@media (max-width: 520px) { .handwork-details-tools { grid-template-columns: minmax(0, 1fr); } }
+
+/* Custom Windows caption buttons use the same tooltip and colors as app controls. */
+.handwork-window-controls { position: fixed; top: 0; right: 0; z-index: 30; display: flex; height: 44px; -webkit-app-region: no-drag; }
+.handwork-window-controls::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--hui-color-border-base-primary); pointer-events: none; -webkit-app-region: no-drag; }
+.handwork-window-controls, .handwork-window-controls * { -webkit-app-region: no-drag; }
+.handwork-window-controls button { display: flex; align-items: center; justify-content: center; width: 46px; height: 44px; border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--hui-color-foreground-base-secondary); -webkit-app-region: no-drag; }
+.handwork-window-controls button:hover { background: var(--hui-color-background-neutral-secondary-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-window-controls button:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.handwork-window-controls .handwork-window-close:hover { background: #c42b1c; color: #fff; }

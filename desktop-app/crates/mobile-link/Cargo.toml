@@ -22,3 +22,14 @@ x509-parser = "0.18"
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "0.21"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["process"] }
+
+[features]
+desktop-host = ["tokio/io-std"]
+
+[[bin]]
+name = "handwork-mobile-host"
+path = "src/bin/handwork-mobile-host.rs"
+required-features = ["desktop-host"]

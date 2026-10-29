@@ -13,7 +13,21 @@ const remote = git(['remote', 'get-url', 'origin']);
 if (!/^https:\/\/github\.com\/loveconnor\/handwork(?:\.git)?$|^git@github\.com:loveconnor\/handwork(?:\.git)?$/.test(remote)) {
   throw new Error('The release checkout must point to loveconnor/handwork.');
 }
-const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(file => file && !file.startsWith('.github/'));
+const candidates = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], { cwd: root, encoding: 'utf8' }).split('\0');
+const files = [];
+for (const file of candidates) {
+  if (!file || file.startsWith('.github/')) continue;
+  const source = path.resolve(root, file);
+  // CI checks out the release repository inside this checkout. Never sync it
+  // into itself, even if Git lists individual files underneath it.
+  if (source === engine || source.startsWith(engine + path.sep)) continue;
+  try {
+    // Git can return directories for nested repositories and submodules.
+    if ((await stat(source)).isFile()) files.push(file);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 const sourceFiles = new Set(files);
 const previous = git(['ls-files', '-z', '--', 'desktop-app']).split('\0').filter(Boolean);
 for (const file of previous) {
@@ -26,7 +40,8 @@ for (const file of files) {
   await copyFile(source, destination);
   await chmod(destination, (await stat(source)).mode);
 }
-// Keep signing credentials in the existing release repository. Its workflow
-// must migrate with the app so it does not try to run the removed Electron tools.
-await copyFile(path.join(root, 'scripts/ci/desktop-release.yml'), path.join(engine, '.github/workflows/desktop-release.yml'));
 console.log(`Synced ${files.length} tracked source files to ${engine}/desktop-app. Commit and push the changes to start the signed release pipeline.`);
+
+const workflow = path.join(engine, '.github', 'workflows', 'desktop-release.yml');
+await mkdir(path.dirname(workflow), { recursive: true });
+await copyFile(path.join(root, 'scripts', 'ci', 'desktop-release.yml'), workflow);
