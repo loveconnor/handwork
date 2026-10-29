@@ -133,6 +133,8 @@ test('the bundled TypeScript server finds definitions across files in a real pro
     assert.ok(diagnostics.params.diagnostics.some(item => item.message === "Type 'number' is not assignable to type 'string'."));
     const definition = await request('textDocument/definition', { textDocument: { uri }, position: { line: 1, character: 23 } });
     const location = Array.isArray(definition) ? definition[0] : definition;
-    assert.equal(fileURLToPath(location.uri ?? location.targetUri), path.join(workspace, 'math.ts'));
+    // Windows drive-letter casing can differ in the server's URI for the same file.
+    const definitionPath = fileURLToPath(location.uri ?? location.targetUri);
+    assert.equal(path.relative(path.join(workspace, 'math.ts'), definitionPath), '');
   } finally { servers.closeAll(); }
 });
