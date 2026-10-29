@@ -10,6 +10,21 @@ import { searchDirectories } from './provider-updates.mjs';
 
 const option = (id, name, currentValue, values) => ({ id, name, type: 'select', currentValue, options: values.map(([value, name]) => ({ value, name })) });
 
+// Keep legacy IDs so saved Manual/Plan selections retain their meaning.
+const claudeModes = [
+  { value: 'auto', name: 'Auto', description: 'Claude handles permission decisions', permissionMode: 'auto' },
+  { value: 'code', name: 'Manual', description: 'Ask before making changes', permissionMode: 'default' },
+  { value: 'acceptEdits', name: 'Accept edits', description: 'Automatically accept file edits', permissionMode: 'acceptEdits' },
+  { value: 'ask', name: 'Plan', description: 'Create a plan before making changes', permissionMode: 'plan' },
+  { value: 'bypassPermissions', name: 'Bypass permissions', description: 'Run tools without approval prompts', permissionMode: 'bypassPermissions' },
+];
+
+function claudePermissionMode(value) {
+  const mode = claudeModes.find(mode => mode.value === value);
+  if (!mode) throw new Error('Unknown Claude Code permission mode.');
+  return mode.permissionMode;
+}
+
 export async function claudeBinary() {
   if (process.env.HANDWORK_CLAUDE_PATH) return process.env.HANDWORK_CLAUDE_PATH;
   for (const directory of searchDirectories()) {
@@ -112,7 +127,7 @@ export class ClaudeClient extends EventEmitter {
     const currentModel = session.model === 'default' ? models[0]?.value : session.model;
     const choices = models.map(row => ({ value: row.value, name: row.displayName, description: [row.description, row.resolvedModel && row.resolvedModel !== row.value ? row.resolvedModel : ''].filter(Boolean).join(' · ') }));
     if (!choices.some(row => row.value === currentModel)) choices.unshift({ value: currentModel, name: currentModel, description: 'Saved model; availability has not been confirmed.' });
-    const config = [option('provider', 'Provider', 'claude', [['claude', 'Claude Code']]), { id: 'model', name: 'Model', type: 'select', currentValue: currentModel, options: choices }, option('mode', 'Permissions', session.mode, [['code', 'Code · ask for approval'], ['ask', 'Plan only']])];
+    const config = [option('provider', 'Provider', 'claude', [['claude', 'Claude Code']]), { id: 'model', name: 'Model', type: 'select', currentValue: currentModel, options: choices }, { id: 'mode', name: 'Permissions · this session', type: 'select', currentValue: session.mode, options: claudeModes }];
     const model = models.find(row => row.value === currentModel);
     if (model?.supportsEffort && model.supportedEffortLevels?.length) config.push(option('effort', 'Effort', session.effort || 'auto', [['auto', 'Model default'], ...model.supportedEffortLevels.map(value => [value, value]) ]));
     if (model?.supportsFastMode) config.push(option('fast_mode', 'Fast mode', session.fast ? 'on' : 'off', [['off', 'Off'], ['on', 'On · may cost more']]));
@@ -195,7 +210,11 @@ export class ClaudeClient extends EventEmitter {
           if (!model?.supportsFastMode || !['on', 'off'].includes(params.value)) throw new Error('Fast mode is not supported by the selected model.');
           this.session.fast = params.value === 'on';
         }
-        else if (params.configId === 'mode' && ['code', 'ask'].includes(params.value)) this.session.mode = params.value;
+        else if (params.configId === 'mode') {
+          if (this.controller) throw new Error('Wait for Claude Code to finish before changing permissions.');
+          claudePermissionMode(params.value);
+          this.session.mode = params.value;
+        }
         else throw new Error('Start a new chat to use another provider.');
         this.save(); return { configOptions: this.config() };
       }
@@ -233,7 +252,8 @@ export class ClaudeClient extends EventEmitter {
       async function* input() { yield { type: 'user', message: { role: 'user', content }, parent_tool_use_id: null, session_id: session.resume || '' }; }
       this.activeQuery = query({ prompt: input(), options: {
         cwd: session.cwd, model: session.model, ...(session.effort ? { effort: session.effort } : {}), resume: session.resume, abortController: controller,
-        pathToClaudeCodeExecutable: binary, executable: 'node', permissionMode: session.mode === 'ask' ? 'plan' : 'default', includePartialMessages: true,
+        pathToClaudeCodeExecutable: binary, executable: 'node', permissionMode: claudePermissionMode(session.mode),
+        allowDangerouslySkipPermissions: session.mode === 'bypassPermissions', includePartialMessages: true,
         settingSources: ['user', 'project', 'local'],
         settings: { fastMode: session.fast === true },
         env: { ...process.env, PATH: searchDirectories().join(path.delimiter) },

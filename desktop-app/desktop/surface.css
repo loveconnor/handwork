@@ -277,17 +277,13 @@ html.is-mac, .handwork-mac { -webkit-font-smoothing: antialiased; }
 .handwork-suggestions button:not(:disabled):hover { background: var(--hw-hover); border-color: var(--hw-hairline-strong); color: var(--hui-color-foreground-base-primary); }
 
 /* The composer is the one raised object on the card: a hairline, a soft drop,
-   and on focus a darker edge with a faint halo instead of an outline. */
+   it looks the same focused, since the caret already shows where you are. */
 .handwork-composer [data-slot="prompt-bar-field"] {
   border: 1px solid var(--hw-hairline-strong);
   border-radius: 14px;
   background: var(--hw-panel);
   box-shadow: 0 1px 2px 0 oklch(0.2 0.01 60 / 0.04), 0 8px 24px -16px oklch(0.2 0.01 60 / 0.16);
   transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-.handwork-composer [data-slot="prompt-bar-field"]:focus-within {
-  border-color: var(--hw-field-focus);
-  box-shadow: var(--hw-halo), 0 8px 24px -16px oklch(0.2 0.01 60 / 0.2);
 }
 .handwork-composer [data-slot="prompt-bar-input"]::placeholder { color: var(--hui-color-foreground-base-tertiary); }
 .handwork-composer .handwork-attach,
@@ -669,7 +665,7 @@ details[open] > summary.handwork-activity-head { color: var(--hui-color-foregrou
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2px;
+  gap: 0;
   margin: 0 0 6px;
   padding: 2px;
   border-radius: 9px;
@@ -694,13 +690,21 @@ details[open] > summary.handwork-activity-head { color: var(--hui-color-foregrou
   line-height: 14px;
   letter-spacing: -0.003em;
   cursor: default;
-  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, border-radius 150ms ease;
 }
+/* Neighbouring selected tabs join into one segment; the later tab's ring
+   leaves a hairline at the seam. */
+.handwork-status-tab[aria-pressed="true"]:has(+ [aria-pressed="true"]) { border-start-end-radius: 0; border-end-end-radius: 0; }
+.handwork-status-tab[aria-pressed="true"] + [aria-pressed="true"] { border-start-start-radius: 0; border-end-start-radius: 0; }
 .handwork-status-tab > span:first-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .handwork-status-count { font-size: 12.5px; font-weight: 600; line-height: 16px; color: var(--hui-color-foreground-base-secondary); }
 .handwork-status-tab:hover { color: var(--hui-color-foreground-base-secondary); }
 .handwork-status-tab[aria-pressed="true"] { background: var(--hw-panel); color: var(--hui-color-foreground-base-secondary); box-shadow: 0 0 0 1px var(--hw-hairline), 0 1px 2px oklch(0 0 0 / 0.05); }
 .handwork-status-tab[aria-pressed="true"] .handwork-status-count { color: var(--hui-color-foreground-base-primary); }
+/* In dark the panel tone sits level with the track, so chips lift a step and
+   the track drops back to the chrome. */
+:root[data-theme="dark"] .handwork-status-tabs { background: var(--hw-chrome); box-shadow: inset 0 0 0 1px var(--hw-hairline); }
+:root[data-theme="dark"] .handwork-status-tab[aria-pressed="true"] { background: var(--hui-gray-5); color: var(--hui-color-foreground-base-primary); box-shadow: 0 0 0 1px var(--hw-hairline-strong), 0 1px 2px oklch(0 0 0 / 0.3); }
 .handwork-status-tab[data-empty] .handwork-status-count { color: var(--hui-color-foreground-base-tertiary); font-weight: 500; }
 /* The two tabs that ask for attention carry their colour in the count. */
 .handwork-status-tab[data-status="needs"]:not([data-empty]) .handwork-status-count { color: var(--hui-color-foreground-warning-primary, #b46b12); }
@@ -733,12 +737,8 @@ details[open] > summary.handwork-activity-head { color: var(--hui-color-foregrou
   border-radius: 18px;
   box-shadow: 0 1px 1px oklch(0.2 0.01 60 / 0.03), 0 10px 28px -14px oklch(0.2 0.01 60 / 0.16);
 }
-.handwork-composer [data-slot="prompt-bar-field"]:focus-within {
-  border-color: var(--hw-field-focus);
-  box-shadow: 0 0 0 4px oklch(0.2 0.01 60 / 0.045), 0 10px 28px -14px oklch(0.2 0.01 60 / 0.2);
-}
+.handwork-composer [data-slot="prompt-bar-field"]:focus-within { border-color: var(--hw-hairline-strong); }
 :root[data-theme="dark"] .handwork-composer [data-slot="prompt-bar-field"] { box-shadow: 0 1px 0 oklch(1 0 0 / 0.03) inset, 0 12px 32px -14px oklch(0 0 0 / 0.6); }
-:root[data-theme="dark"] .handwork-composer [data-slot="prompt-bar-field"]:focus-within { box-shadow: 0 0 0 4px oklch(1 0 0 / 0.04), 0 12px 32px -14px oklch(0 0 0 / 0.6); }
 .handwork-composer [data-slot="prompt-bar-input"] { min-height: 44px; padding: 2px 6px; line-height: 22px; }
 .handwork-composer [data-slot="prompt-bar-controls"] { align-items: center; gap: 2px; }
 .handwork-composer [data-slot="prompt-bar-actions"] { gap: 2px; }
@@ -948,6 +948,10 @@ details[open] > summary.handwork-activity-head { color: var(--hui-color-foregrou
 .handwork-editor-tab-close[data-dirty] .handwork-editor-dirty { display: block; }
 .handwork-editor-tab:hover .handwork-editor-tab-close[data-dirty] .handwork-editor-dirty { display: none; }
 .handwork-editor-tab-close:not([data-dirty]) .handwork-editor-dirty { display: none; }
+/* Tabs drag to reorder, so a press never starts a text selection. */
+.handwork-editor-tab { user-select: none; -webkit-user-select: none; }
+/* Code scrolled sideways passes under the line numbers, never through them. */
+.handwork-panel-content .cm-editor .cm-gutters { background-color: var(--hw-panel); }
 
 .handwork-editor-bar { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 14px; flex-shrink: 0; border-bottom: 1px solid var(--hw-hairline); font-size: 12px; color: var(--hui-color-foreground-base-tertiary); }
 .handwork-editor-path { display: flex; align-items: center; min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; }
@@ -955,6 +959,14 @@ details[open] > summary.handwork-activity-head { color: var(--hui-color-foregrou
 .handwork-editor-path > span:not(:last-child)::after { content: "/"; margin: 0 5px; opacity: 0.6; }
 .handwork-editor-path > span[data-last] { flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); font-weight: 500; }
 .handwork-editor-state { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; font-size: 11.5px; }
+.handwork-language-status { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; max-width: 45%; overflow: hidden; padding: 0 6px; height: 20px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-tertiary); font: inherit; font-size: 11.5px; white-space: nowrap; text-overflow: ellipsis; }
+.handwork-language-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--hui-color-foreground-base-tertiary); }
+.handwork-language-status[data-state="ready"] .handwork-language-dot { background: var(--hui-color-foreground-success-primary, #3fa36b); }
+:is(button).handwork-language-status { cursor: default; }
+:is(button).handwork-language-status:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-language-status[data-state="stopped"] .handwork-language-dot { background: var(--hui-color-foreground-danger-primary); }
+.handwork-language-status[data-state="unavailable"] .handwork-language-dot { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
+.handwork-language-status:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
 .handwork-review-panel .handwork-editor-save { height: 22px; padding: 0 9px; border-radius: 6px; font-size: 11.5px; }
 .handwork-editor-notice { display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--hw-hairline); background: color-mix(in srgb, var(--hui-color-foreground-warning-primary, #b46b12) 8%, transparent); font-size: 12px; color: var(--hui-color-foreground-warning-primary, #b46b12); }
 .handwork-editor-notice > span { flex: 1; min-width: 0; }
@@ -1055,6 +1067,35 @@ body[data-resizing="column"] { cursor: row-resize; }
 .handwork-file-tree-body { padding: 0 6px 10px; }
 .handwork-tree-row { height: 26px; gap: 5px; border-radius: 6px; font-size: 13px; letter-spacing: -0.003em; }
 .handwork-tree-icon { width: 15px; height: 15px; }
+.handwork-tree-row[data-menu] { background: var(--hw-hover); box-shadow: inset 0 0 0 1px var(--hw-field-focus); }
+/* A name being typed sits in the row it will become. */
+.handwork-tree-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 26px; padding-right: 2px; }
+.handwork-tree-edit input { flex: 1; min-width: 0; height: 22px; padding: 0 6px; border: 1px solid var(--hw-field-focus); border-radius: 5px; outline: none; background: var(--hui-color-background-base-primary); color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 13px; }
+.handwork-tree-edit input[aria-invalid] { border-color: var(--hui-color-foreground-danger-primary); }
+.handwork-tree-edit-error { flex-basis: 100%; margin: 2px 0 4px 34px; padding: 4px 7px; border-radius: 5px; background: color-mix(in srgb, var(--hui-color-foreground-danger-primary) 10%, transparent); color: var(--hui-color-foreground-danger-primary); font-size: 12px; line-height: 1.35; }
+.handwork-tree-menu { min-width: 200px; }
+
+/* Search in files: a field with match options, then results grouped by file. */
+.handwork-project-search { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.handwork-project-search-field { display: flex; align-items: center; gap: 1px; margin: 0 8px; padding: 0 3px 0 0; border: 1px solid var(--hw-hairline-strong); border-radius: 7px; background: var(--hui-color-background-base-primary); }
+.handwork-project-search-field:focus-within { border-color: var(--hw-field-focus); }
+.handwork-project-search-field input { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border: 0; outline: none; background: transparent; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 13px; }
+.handwork-project-search-field input::-webkit-search-cancel-button { display: none; }
+.handwork-search-flag { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border: 0; border-radius: 5px; background: transparent; color: var(--hui-color-foreground-base-tertiary); cursor: default; }
+.handwork-search-flag:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-search-flag[aria-pressed="true"] { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); box-shadow: inset 0 0 0 1px var(--hw-field-focus); }
+.handwork-search-flag:focus-visible { outline: var(--hui-focus-ring); outline-offset: -2px; }
+.handwork-project-search-summary { display: flex; align-items: center; gap: 6px; min-height: 26px; padding: 4px 14px; font-size: 12px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-project-search-summary [data-error] { color: var(--hui-color-foreground-danger-primary); }
+.handwork-project-search-results { flex: 1; min-height: 0; overflow: hidden auto; padding: 0 6px 10px; }
+.handwork-search-file { padding-left: 8px; }
+.handwork-search-file .handwork-tree-name { flex-shrink: 0; max-width: 70%; }
+.handwork-search-dir { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11.5px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-search-count { flex-shrink: 0; min-width: 18px; padding: 0 5px; border-radius: 999px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 7%, transparent); font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; color: var(--hui-color-foreground-base-secondary); }
+.handwork-search-match { height: 24px; padding-left: 28px; gap: 8px; }
+.handwork-search-line { flex-shrink: 0; min-width: 22px; font-size: 11px; font-variant-numeric: tabular-nums; text-align: end; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-search-preview { min-width: 0; overflow: hidden; white-space: pre; text-overflow: ellipsis; font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 11.5px; }
+.handwork-search-preview mark { padding: 0 1px; border-radius: 3px; background: color-mix(in oklab, var(--hui-color-foreground-warning-primary, #d2a54a) 30%, transparent); color: var(--hui-color-foreground-base-primary); }
 
 /* Pane headers: tabs as soft chips rather than ruled cells. */
 .handwork-pane-header { height: 40px; align-items: center; padding: 0 4px 0 6px; }
@@ -1140,3 +1181,209 @@ body[data-resizing="column"] { cursor: row-resize; }
 @container sidebar-footer (max-width: 280px) {
   .handwork-sidebar-footer > button:first-child [data-sidebar-fade] { display: none; }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Settings: a full-window view. The sidebar lists sections, the card is the   */
+/* page, so it reads as part of the app rather than a box on top of it.        */
+/* -------------------------------------------------------------------------- */
+
+.handwork-workspace[hidden] { display: none; }
+
+/* Section list, in the sidebar where the chats were. */
+.handwork-settings-rail { display: contents; }
+.handwork-settings-nav { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 12px; }
+.handwork-settings-nav button {
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-color: transparent;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--hui-color-foreground-base-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.003em;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.handwork-settings-nav button svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); transition: color 150ms ease; }
+.handwork-settings-nav button:not(:disabled):hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-settings-nav button[aria-current="page"] { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); font-weight: 500; }
+.handwork-settings-nav button:is(:hover, [aria-current="page"]) svg { color: var(--hui-color-foreground-base-primary); }
+.handwork-settings-nav .handwork-settings-back { margin-bottom: 10px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-settings-label {
+  margin: 0 0 4px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.005em;
+  color: var(--hui-color-foreground-base-tertiary);
+}
+
+/* The page sits on the same card as a conversation, under a drag strip that
+   stands in for the tab bar. */
+.handwork-settings-page { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; }
+.handwork-settings-page::before { content: ""; flex: 0 0 44px; -webkit-app-region: drag; }
+.handwork-settings-page > .handwork-settings-panel {
+  flex: 1;
+  min-height: 0;
+  margin: 0 8px 8px 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border: 1px solid var(--hw-hairline);
+  border-radius: 10px;
+  background: var(--hw-panel);
+  box-shadow: var(--hw-card-shadow);
+}
+.handwork-settings-column { width: min(640px, 100%); margin: 0 auto; padding: 56px 32px 96px; box-sizing: border-box; }
+.handwork-settings-column > h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--hui-color-foreground-base-primary);
+  outline: none;
+}
+.handwork-settings-page .handwork-settings-status { min-height: 20px; margin-bottom: 16px; }
+.handwork-settings-page .handwork-settings-status:empty { display: block; }
+.handwork-settings-page .handwork-settings-panel h3 {
+  margin: 36px 0 4px;
+  font-size: 11.5px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: var(--hui-color-foreground-base-tertiary);
+}
+
+/* Rows: label on the left, a flat control on the right, a hairline between. */
+.handwork-settings-page .handwork-setting-row { gap: 32px; min-height: 60px; padding: 12px 0; border-bottom-color: var(--hw-hairline); }
+.handwork-settings-page .handwork-setting-title { font-weight: 500; letter-spacing: -0.003em; color: var(--hui-color-foreground-base-primary); }
+.handwork-settings-page :is(.handwork-setting-row p, .handwork-settings-note, .handwork-settings-path, .handwork-settings-scope p) { margin-top: 2px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-settings-page .handwork-settings-callout { padding: 14px 16px; border: 1px solid var(--hw-hairline); border-radius: 10px; background: var(--hw-chrome); }
+.handwork-settings-page .handwork-setting-control [data-slot="select-trigger"] {
+  height: 30px;
+  min-width: 128px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--hw-hairline-strong);
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  font-size: calc(var(--handwork-ui-font-size, 14px) - 1.5px);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.handwork-settings-page .handwork-setting-control [data-slot="select-trigger"]:hover { background: var(--hw-hover); }
+.handwork-settings-page .handwork-setting-control [data-slot="select-trigger"] svg { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-settings-page .handwork-theme-switcher { gap: 2px; padding: 2px; border: 1px solid var(--hw-hairline); border-radius: 9px; background: var(--hw-chrome); }
+.handwork-settings-page .handwork-theme-switcher button { height: 26px; padding: 0 10px; gap: 6px; border-color: transparent; border-radius: 7px; background: transparent; font-size: calc(var(--handwork-ui-font-size, 14px) - 1.5px); }
+.handwork-settings-page .handwork-theme-switcher button svg { width: 14px; height: 14px; }
+.handwork-settings-page .handwork-theme-switcher button:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-settings-page .handwork-theme-switcher button[aria-pressed="true"] { background: var(--hw-panel); color: var(--hui-color-foreground-base-primary); box-shadow: 0 0 0 1px var(--hw-hairline-strong), 0 1px 2px oklch(0 0 0 / 0.08); }
+:root[data-theme="dark"] .handwork-settings-page .handwork-theme-switcher button[aria-pressed="true"] { background: var(--hui-gray-4); }
+
+/* With the sidebar collapsed, the section list moves to the top of the page. */
+.handwork-settings-page[data-inline-nav] > .handwork-settings-nav { flex-direction: row; gap: 2px; padding: 0 8px 8px 0; overflow-x: auto; scrollbar-width: none; }
+.handwork-settings-page[data-inline-nav] > .handwork-settings-nav button { width: auto; flex-shrink: 0; }
+.handwork-settings-page[data-inline-nav] .handwork-settings-label { display: none; }
+.handwork-settings-page[data-inline-nav] .handwork-settings-back { margin: 0 6px 0 0; }
+
+@media (max-width: 700px) {
+  .handwork-settings-page > .handwork-settings-panel { margin-left: 8px; }
+  .handwork-settings-column { padding: 28px 18px 48px; }
+}
+
+.handwork-permission-options { max-width: min(420px, calc(100vw - 24px)); }
+.handwork-permission-choice { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.handwork-permission-options .handwork-effort-label { padding: 6px 8px; }
+.handwork-permission-choice .handwork-option-description { white-space: normal; font-size: 12px; line-height: 17px; color: var(--hui-color-foreground-base-secondary); }
+
+/* -------------------------------------------------------------------------- */
+/* Editor find bar: a small raised card floating over the code                 */
+/* -------------------------------------------------------------------------- */
+
+.handwork-code-find {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(400px, 100%);
+  padding: 4px;
+  pointer-events: auto;
+  border-radius: 10px;
+  background: var(--hw-raised);
+  box-shadow: var(--hw-pop-shadow);
+  font-family: var(--hui-font-family-sans, inherit);
+  font-size: 12.5px;
+  animation: handwork-code-find-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes handwork-code-find-in { from { opacity: 0; transform: translateY(-4px); } }
+.handwork-code-find-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.handwork-code-find-row[hidden] { display: none; }
+/* Without the expander, the replace field lines up under the find field. */
+.handwork-code-find[data-replace] .handwork-code-find-row + .handwork-code-find-row { padding-left: 26px; }
+.handwork-code-find-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 3px 0 8px;
+  border: 1px solid var(--hw-hairline-strong);
+  border-radius: 7px;
+  background: var(--hw-panel);
+  cursor: text;
+  transition: border-color 150ms ease;
+}
+.handwork-code-find-field[data-invalid] { border-color: color-mix(in srgb, var(--hui-color-foreground-danger-primary, #d24b3c) 55%, var(--hw-hairline-strong)); }
+.handwork-code-find-field > .handwork-code-find-icon { margin-right: 4px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-code-find-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--hui-color-foreground-base-primary);
+  font: inherit;
+}
+.handwork-code-find-input::placeholder { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-code-find-count {
+  flex-shrink: 0;
+  padding: 0 6px;
+  color: var(--hui-color-foreground-base-tertiary);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.handwork-code-find-field[data-invalid] .handwork-code-find-count { color: var(--hui-color-foreground-danger-primary, #d24b3c); }
+.handwork-code-find-icon { display: grid; place-items: center; }
+.handwork-code-find :is(.handwork-code-find-button, .handwork-code-find-option, .handwork-code-find-text) {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hui-color-foreground-base-secondary);
+  font: inherit;
+  cursor: default;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.handwork-code-find .handwork-code-find-button { width: 26px; }
+.handwork-code-find .handwork-code-find-option { width: 22px; height: 20px; border-radius: 5px; font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 11px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-code-find .handwork-code-find-option[data-option="wholeWord"] { text-decoration: underline; text-underline-offset: 2px; }
+.handwork-code-find .handwork-code-find-text { height: 28px; padding: 0 10px; font-size: 12px; font-weight: 500; }
+.handwork-code-find :is(.handwork-code-find-button, .handwork-code-find-option, .handwork-code-find-text):not(:disabled):hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-code-find .handwork-code-find-option[aria-pressed="true"] { background: color-mix(in srgb, var(--hui-color-foreground-info-primary, #3b7be0) 16%, transparent); color: var(--hui-color-foreground-info-primary, #3b7be0); }
+.handwork-code-find :is(button):disabled { opacity: 0.4; }
+.handwork-code-find :is(button):focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+.handwork-code-find-expand .handwork-code-find-icon { transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1); }
+.handwork-code-find[data-replace] .handwork-code-find-expand .handwork-code-find-icon { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .handwork-code-find, .handwork-code-find-expand .handwork-code-find-icon { animation: none; transition: none; } }

@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
-export const settingDefaults = Object.freeze({ theme: 'system', uiFontSize: 14, codeFontSize: 13, sendKey: 'enter', restoreChats: true, sidebarLayout: 'projects', preferredEditor: 'system', defaultProvider: '', defaultModel: '', defaultMode: 'code', suggestions: true, notifyComplete: false, notifyApproval: false, notifyError: true, notificationSound: false, notificationsBackgroundOnly: true, keepRunning: false, quickEntryShortcut: process.platform === 'darwin' ? 'Alt+Space' : 'Control+Alt+Space' });
+export const settingDefaults = Object.freeze({ theme: 'system', uiFontSize: 14, codeFontSize: 13, sendKey: 'enter', restoreChats: true, sidebarLayout: 'projects', preferredEditor: 'system', defaultProvider: '', defaultModel: '', defaultMode: 'code', suggestions: true, notifyComplete: false, notifyApproval: false, notifyError: true, notificationSound: false, notificationsBackgroundOnly: true, keepRunning: false, languageServers: true, quickEntryShortcut: process.platform === 'darwin' ? 'Alt+Space' : 'Control+Alt+Space' });
 const choices = { theme: ['system', 'light', 'dark'], sidebarLayout: ['projects', 'status'], sendKey: ['enter', 'modifier-enter'], preferredEditor: ['system', 'vscode', 'cursor', 'zed'], defaultMode: ['ask', 'code'], quickEntryShortcut: ['off', 'Alt+Space', 'Control+Alt+Space', 'CommandOrControl+Shift+Space'] };
 const projectKeys = ['defaultProvider', 'defaultModel', 'defaultMode', 'suggestions'];
 export function validSettingsPatch(scope, value) {

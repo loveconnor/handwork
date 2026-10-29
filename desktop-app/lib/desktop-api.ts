@@ -9,6 +9,8 @@ export type DesktopPreferences = {
   quickEntryShortcut: QuickEntryShortcut;
   /** Closing the window hides it; only Quit stops Handwork. */
   keepRunning: boolean;
+  /** The editor may run language servers for go-to-definition, hover and type errors. */
+  languageServers: boolean;
 };
 export type QuickEntryShortcut = 'off' | 'Alt+Space' | 'Control+Alt+Space' | 'CommandOrControl+Shift+Space';
 export type SavedPrompt = { id: string; title: string; folder: string; text: string; createdAt: number; updatedAt: number };
@@ -45,6 +47,9 @@ export type ProjectFileEntry = { name: string; path: string; kind: 'file' | 'dir
 export type ProjectDirectory = { path: string; entries: ProjectFileEntry[]; truncated: boolean };
 /** `text` is null for binary or oversized files; `revision` guards saves against changes on disk. */
 export type ProjectFile = { path: string; size: number; binary?: boolean; tooLarge: boolean; revision: string | null; text: string | null };
+/** One occurrence found by project search; `column` is 1-based, `offset` is where it starts in `preview`. */
+export type ProjectSearchMatch = { path: string; line: number; column: number; length: number; preview: string; offset: number };
+export type ProjectSearchOptions = { caseSensitive: boolean; wholeWord: boolean; regex: boolean };
 export type CodexResetOutcome = 'reset' | 'nothingToReset' | 'noCredit' | 'alreadyRedeemed';
 /** Local software behind a provider that is behind its latest release. `installed` is null when it no longer runs. */
 export type ProviderUpdate = { provider: string; name: string; installed: string | null; latest: string; action: 'update' | 'reinstall' | 'download' };
@@ -55,6 +60,7 @@ export type SettingsSnapshot = { app: DesktopPreferences; project: Partial<Deskt
 export type InstructionsFile = { text: string; revision: string; path: string };
 export type StartupState = { tabs: { id: string; label: string; workspace: string }[]; active: string };
 export type SettingsInfo = { appVersion: string; engineVersion: string; platform: string; architecture: string; historyPath: string; updatesConfigured: boolean; attachments: { count: number; bytes: number; path: string }; enginePreferences: { global: Record<string, unknown>; project: Record<string, unknown>; directories: string[]; path: string } };
+export type LanguageServerKind = 'typescript' | 'python' | 'rust' | 'go' | 'c' | 'swift';
 export type EngineEvent = { method: string; id?: string | number; params?: unknown };
 export type SessionResult = { sessionId: string; configOptions?: unknown; availableCommands?: unknown[]; historyReplayed?: boolean; branch?: ChatBranch };
 /** A file attached to a prompt: raw bytes as base64, or valid UTF-8 text. */
@@ -146,6 +152,21 @@ export interface DesktopAPI {
   readProjectFile(workspace: string, file: string): Promise<ProjectFile>;
   /** `revision` is the one the file was read at (null for a new file); a mismatch rejects as changed on disk. */
   writeProjectFile(workspace: string, file: string, text: string, revision: string | null): Promise<{ path: string; revision: string; size: number }>;
+  /** Missing parent folders are made too; an existing path is never replaced. */
+  createProjectPath(workspace: string, file: string, kind: 'file' | 'directory'): Promise<{ path: string; kind: 'file' | 'directory' }>;
+  renameProjectPath(workspace: string, from: string, to: string): Promise<{ path: string }>;
+  /** Moves the file or folder to the system trash. */
+  deleteProjectPath(workspace: string, file: string): Promise<{ path: string }>;
+  /** Every file in the project that git does not ignore, for quick open. */
+  indexProjectFiles(workspace: string): Promise<{ files: string[]; truncated: boolean }>;
+  searchProjectFiles(workspace: string, query: string, options: ProjectSearchOptions): Promise<{ matches: ProjectSearchMatch[]; truncated: boolean }>;
+  /** The file as last staged in git, or null when git does not track it. */
+  projectFileBase(workspace: string, file: string): Promise<{ path: string; text: string | null }>;
+  /** Starts the language server for `kind` in the project. Its messages arrive as `desktop/lsp-message` events, its end as `desktop/lsp-exit`. */
+  lspStart(workspace: string, kind: LanguageServerKind): Promise<{ id: string; name: string }>;
+  /** One JSON-RPC message, without LSP headers. */
+  lspSend(id: string, message: string): Promise<void>;
+  lspStop(id: string): Promise<void>;
   /** Starts the person's shell in the project folder. Output arrives as `desktop/terminal-data` events, the end as `desktop/terminal-exit`. */
   openTerminal(workspace: string, cols: number, rows: number): Promise<{ id: string; shell: string }>;
   writeTerminal(id: string, data: string): Promise<void>;

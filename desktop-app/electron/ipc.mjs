@@ -3,6 +3,7 @@ import { validSettingsPatch } from './desktop-settings.mjs';
 import { validPromptInput } from './saved-prompts.mjs';
 import { validObjectId, validRefName, validRepositoryPath } from './git-service.mjs';
 import { validVoiceAudio } from './local-voice.mjs';
+import { MAX_MESSAGE_BYTES, validLanguageServer } from './language-servers.mjs';
 export const CHANNEL_PREFIX = 'handwork:';
 export const EVENT_CHANNEL = 'handwork:event';
 const text = (value, max = 4096) => typeof value === 'string' && value.length > 0 && Buffer.byteLength(value) <= max && !value.includes('\0');
@@ -63,10 +64,16 @@ const signatures = {
   listProjectFiles: [text, value => validProjectPath(value, { allowRoot: true })],
   readProjectFile: [text, value => validProjectPath(value)],
   writeProjectFile: [text, value => validProjectPath(value), value => typeof value === 'string' && Buffer.byteLength(value) <= MAX_EDIT_BYTES, value => value === null || (typeof value === 'string' && /^[a-f0-9]{64}$/.test(value))],
+  createProjectPath: [text, value => validProjectPath(value), value => ['file', 'directory'].includes(value)],
+  renameProjectPath: [text, value => validProjectPath(value), value => validProjectPath(value)],
+  deleteProjectPath: [text, value => validProjectPath(value)],
+  indexProjectFiles: [text], projectFileBase: [text, value => validProjectPath(value)],
+  searchProjectFiles: [text, value => text(value, 1000), value => plain(value, ['caseSensitive', 'wholeWord', 'regex']) && Object.values(value).every(flag => typeof flag === 'boolean')],
   openTerminal: [text, value => Number.isInteger(value) && value >= 2 && value <= 1000, value => Number.isInteger(value) && value >= 2 && value <= 500],
   writeTerminal: [terminalId, value => typeof value === 'string' && value.length <= 64 * 1024],
   resizeTerminal: [terminalId, value => Number.isInteger(value) && value >= 2 && value <= 1000, value => Number.isInteger(value) && value >= 2 && value <= 500],
   closeTerminal: [terminalId], terminalHistory: [terminalId],
+  lspStart: [text, validLanguageServer], lspSend: [terminalId, value => typeof value === 'string' && Buffer.byteLength(value) <= MAX_MESSAGE_BYTES], lspStop: [terminalId],
   codexResets: [], useCodexReset: [value => value === null || (text(value, 256) && /^[\w.:-]+$/.test(value))],
   exportChats: [value => ['current', 'all'].includes(value), value => ['json', 'markdown'].includes(value)],
   saveDraft: [draftKey, value => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0'), value => value === null || attachments(value)],

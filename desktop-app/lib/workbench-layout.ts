@@ -82,3 +82,26 @@ export function closeFile(layout: Layout, paneId: string, path: string): Layout 
 export function filesInUse(layout: Layout): Set<string> {
   return new Set(Object.values(layout.panes).flatMap(pane => pane.kind === 'editor' ? pane.files : []));
 }
+
+/** `path`, or a path inside the folder `path`. */
+export const isWithin = (file: string, path: string) => file === path || file.startsWith(`${path}/`);
+/** Where `file` ends up when `from` is renamed to `to`; files elsewhere stay put. */
+export const movedPath = (file: string, from: string, to: string) => isWithin(file, from) ? to + file.slice(from.length) : file;
+
+/** Tabs follow a renamed file, or every file in a renamed folder. */
+export function renameInLayout(layout: Layout, from: string, to: string): Layout {
+  const panes = Object.fromEntries(Object.entries(layout.panes).map(([id, pane]) => [id, pane.kind === 'editor'
+    ? { ...pane, files: pane.files.map(file => movedPath(file, from, to)), active: pane.active && movedPath(pane.active, from, to) }
+    : pane]));
+  return { ...layout, panes };
+}
+
+/** Close every tab showing `path`, or a file inside the folder `path`. */
+export function closeWithin(layout: Layout, path: string): Layout {
+  let next = layout;
+  for (const pane of Object.values(layout.panes)) {
+    if (pane.kind !== 'editor') continue;
+    for (const file of pane.files) if (isWithin(file, path)) next = closeFile(next, pane.id, file);
+  }
+  return next;
+}

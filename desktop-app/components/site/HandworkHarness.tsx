@@ -158,6 +158,7 @@ export default function HandworkHarness() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsNavHost, setSettingsNavHost] = useState<HTMLDivElement | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   // Files read asynchronously are checked against what is attached when they arrive.
   const attachmentsRef = useRef(attachments);
@@ -1588,20 +1589,20 @@ export default function HandworkHarness() {
     <HandworkProviderUpdates api={api} ready={providersReady} providers={providers.filter(provider => provider.connected).map(provider => provider.id)} />
     <HandworkShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} preferences={preferences?.app} desktop={!!api} />
     <SidebarNav collapsed={narrowSidebar ? !narrowSidebarOpen : undefined} onCollapsedChange={collapsed => { if (narrowSidebar) setNarrowSidebarOpen(!collapsed); }} collapsedFooter={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} compact prepareRestart={prepareUpdateRestart} /><Button variant="ghost" size="icon" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /></Button></div>} className="handwork-sidebar" header={<div className="handwork-sidebar-heading"><h1 data-slot="handwork-brand" className="handwork-brand">Handwork</h1></div>}
-      items={[{ id: 'search', label: 'Search chats', icon: <Search aria-hidden width={16} height={16} /> }]} onNavigate={() => setPaletteOpen(true)} threads={[]} onThreadSelect={() => {}}
-      onNewChat={() => openNewTab(workspace)}
+      items={settingsOpen ? [] : [{ id: 'search', label: 'Search chats', icon: <Search aria-hidden width={16} height={16} /> }]} onNavigate={() => setPaletteOpen(true)} threads={[]} onThreadSelect={() => {}}
+      onNewChat={settingsOpen ? undefined : () => openNewTab(workspace)}
       collapsedNewChat={<MenuGroup>
         <MenuGroupLabel>New chat in</MenuGroupLabel>
         <MenuItem disabled={picking || !api} onClick={() => openNewTab()}><MessageSquare aria-hidden width={14} height={14} />General</MenuItem>
         {projects.length > 0 && <MenuSeparator />}
         {projects.map(project => <MenuItem key={project} disabled={picking || !api} title={project} onClick={() => openNewTab(project)}><Folder aria-hidden width={14} height={14} /><span className="handwork-new-chat-project">{project.split(/[\\/]/).filter(Boolean).pop() || project}</span></MenuItem>)}
       </MenuGroup>}
-      content={<HandworkSidebarContent layout={preferences?.app.sidebarLayout} attention={attentionKinds} projects={projects} sessions={chatRows} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={picking || !api} chatDisabled={picking || !api}
+      content={settingsOpen ? <div className="handwork-settings-rail" ref={setSettingsNavHost} /> : <HandworkSidebarContent layout={preferences?.app.sidebarLayout} attention={attentionKinds} projects={projects} sessions={chatRows} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={picking || !api} chatDisabled={picking || !api}
         onDismissIssue={clearIssue} onDeleteProject={project => setProjectToDelete(project)}
         onAdd={openProject} onNewProjectChat={project => openNewTab(project)} onChat={chat => { const item = attention.find(item => item.id === chat.id); if (item) openAttention(item); else openChat(chat); }} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)} onArchive={(chat, archived) => void archiveChat(chat, archived)}
         onRename={chat => { setChatAction({ kind: "rename", chat }); setChatName(chat.label); setChatActionError(""); }} onDelete={chat => { setChatAction({ kind: "delete", chat }); setChatActionError(""); }} />}
-      footer={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /><span data-sidebar-fade>Settings</span></Button><div className="handwork-provider-usage-icons">{providers.filter(provider => provider.connected && ['codex', 'claude'].includes(provider.id)).map(provider => <HandworkSubscriptionUsage key={provider.id} api={api} active provider={provider.id === 'claude' ? 'claude' : 'codex'} compact />)}</div><HandworkTheme /></div></div>} />
-    <section className="handwork-workspace" aria-label="Conversation workspace">
+      footer={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" aria-label="Settings" title="Settings" aria-pressed={settingsOpen} onClick={() => setSettingsOpen(true)}><IconSettings size={16} /><span data-sidebar-fade>Settings</span></Button><div className="handwork-provider-usage-icons">{providers.filter(provider => provider.connected && ['codex', 'claude'].includes(provider.id)).map(provider => <HandworkSubscriptionUsage key={provider.id} api={api} active provider={provider.id === 'claude' ? 'claude' : 'codex'} compact />)}</div><HandworkTheme /></div></div>} />
+    <section className="handwork-workspace" aria-label="Conversation workspace" hidden={settingsOpen}>
       <header className="handwork-header" aria-label="Conversation toolbar">
         <HandworkTabs tabs={tabs} activeId={shownSession} titleOf={tab => chatPreferences[tab.id]?.title || tab.label} running={runningSessions} unread={unreadSessions} attention={attentionKinds}
           selectDisabled={picking || !api} closeDisabled={picking || !api} newDisabled={picking || !api}
@@ -1651,7 +1652,7 @@ export default function HandworkHarness() {
       </aside></>}
       </div>
     </section>
-    <SettingsModal initialSection={settingsSection} api={api} preferences={preferences} onPreferences={receivePreferences} workspace={workspace} busy={busy || working || configuring} hasMessages={conversation.entries.length > 0} onReconnect={async () => {
+    <SettingsModal navHost={settingsNavHost} initialSection={settingsSection} api={api} preferences={preferences} onPreferences={receivePreferences} workspace={workspace} busy={busy || working || configuring} hasMessages={conversation.entries.length > 0} onReconnect={async () => {
       const previous = activeSession.current;
       await sessionAction('connect', workspace);
       if (!activeSession.current) throw new Error('Could not reconnect. Try opening the project again.');

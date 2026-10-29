@@ -210,3 +210,27 @@ test('default alias is hidden and existing selections migrate to its concrete mo
   assert.equal(client.session.model, 'opus', 'legacy desktop preferences restore the migrated model');
   assert.equal(concreteClaudeModels([rows[0]])[0].value, 'claude-opus-test');
 });
+
+
+test('each Claude permission choice reaches the SDK and survives reload', async t => {
+  const sent = [];
+  const { client } = fixture(t, ({ options }) => {
+    sent.push(options);
+    return stream(async function* () { yield { type: 'result' }; });
+  });
+  const config = (await select(client)).configOptions.find(option => option.id === 'mode');
+  assert.deepEqual(config.options.map(option => option.name), ['Auto', 'Manual', 'Accept edits', 'Plan', 'Bypass permissions']);
+  for (const [value, permissionMode] of [['auto', 'auto'], ['code', 'default'], ['acceptEdits', 'acceptEdits'], ['ask', 'plan'], ['bypassPermissions', 'bypassPermissions']]) {
+    await client.request('session/set_config_option', { sessionId: 'fixture', configId: 'mode', value });
+    await client.request('session/load', { sessionId: 'fixture' });
+    assert.equal(client.config().find(option => option.id === 'mode').currentValue, value);
+    await client.request('session/prompt', { sessionId: 'fixture', prompt: [{ type: 'text', text: 'Test mode' }] });
+    assert.equal(sent.at(-1).permissionMode, permissionMode);
+    assert.equal(sent.at(-1).allowDangerouslySkipPermissions, value === 'bypassPermissions');
+  }
+  await assert.rejects(client.request('session/set_config_option', { sessionId: 'fixture', configId: 'mode', value: 'invalid' }), /Unknown.*permission mode/);
+  assert.equal(client.session.mode, 'bypassPermissions');
+  client.session.mode = 'invalid';
+  await assert.rejects(client.request('session/prompt', { sessionId: 'fixture', prompt: [{ type: 'text', text: 'No tool access' }] }), /Unknown.*permission mode/);
+  assert.equal(sent.length, 5, 'invalid saved permissions must not start a query');
+});

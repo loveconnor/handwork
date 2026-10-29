@@ -199,7 +199,21 @@ export function ComposerOptions({ options, disabled, browsingOnly = false, synci
         </div>}
       </MenuPopup>
     </Menu>}
-    {mode && <ConfigChoice option={mode} compact disabled={disabled || syncing} onChange={value => onChange(mode.id, value)} />}
+    {mode && <Menu>
+      <MenuTrigger render={<Button type="button" variant="ghost" size="sm" disabled={disabled || syncing} aria-label={`Permissions: ${choiceLabel(mode)}`} />}>
+        <span>{choiceLabel(mode)}</span><ChevronDown aria-hidden width={14} height={14} />
+      </MenuTrigger>
+      <MenuPopup side="top" align="end" sideOffset={10} aria-label="Permissions" className="handwork-permission-options">
+        <MenuGroup aria-label="Permissions for this session">
+          <span className="handwork-effort-label">Permissions · this session</span>
+          <MenuRadioGroup value={mode.currentValue} onValueChange={value => onChange(mode.id, String(value))}>
+            {mode.options.map(choice => <MenuRadioItem key={choice.value} value={choice.value} disabled={disabled || syncing} closeOnClick aria-label={choice.name} aria-description={choice.description}>
+              <span className="handwork-permission-choice"><span>{choice.name}</span>{choice.description && <span className="handwork-option-description">{choice.description}</span>}</span>
+            </MenuRadioItem>)}
+          </MenuRadioGroup>
+        </MenuGroup>
+      </MenuPopup>
+    </Menu>}
   </>;
 }
 

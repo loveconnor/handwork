@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, statSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, statSync, readFileSync, readdirSync, realpathSync, existsSync, lstatSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ProjectFiles, validProjectPath, MAX_EDIT_BYTES } from '../../electron/project-files.mjs';
@@ -93,4 +94,115 @@ test('entries the project ignores are flagged, and a failed lookup leaves the tr
   assert.equal(asked[0][0], root);
   const broken = new ProjectFiles({ ignored: async () => { throw new Error('not a git repository'); } });
   assert.ok((await broken.list(root, '')).entries.every(entry => !entry.ignored));
+});
+
+function repository() {
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'project-repo-')));
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { stdio: 'ignore' });
+  try { git('init', '-q'); } catch { return null; }
+  mkdirSync(path.join(root, 'src'));
+  mkdirSync(path.join(root, 'node_modules'));
+  writeFileSync(path.join(root, '.gitignore'), 'node_modules\n');
+  writeFileSync(path.join(root, 'src/app.ts'), 'const Foo = 1;\nfoo(Foo, food);\n');
+  writeFileSync(path.join(root, 'node_modules/dep.js'), 'foo\n');
+  writeFileSync(path.join(root, 'logo.png'), Buffer.from([0x66, 0x6f, 0x6f, 0x00]));
+  git('add', '.');
+  git('commit', '-qm', 'start');
+  writeFileSync(path.join(root, 'notes.md'), 'foo is untracked\n');
+  writeFileSync(path.join(root, 'src/app.ts'), 'const Foo = 2;\nfoo(Foo, food);\n');
+  return root;
+}
+
+test('new files and folders are made with their parents, never over something that exists, and never outside', async () => {
+  const { root } = project();
+  const files = new ProjectFiles();
+  assert.deepEqual(await files.create(root, 'src/new/deep/one.ts', 'file'), { path: 'src/new/deep/one.ts', kind: 'file' });
+  assert.equal(readFileSync(path.join(root, 'src/new/deep/one.ts'), 'utf8'), '');
+  await files.create(root, 'docs', 'directory');
+  assert.ok(statSync(path.join(root, 'docs')).isDirectory());
+  await assert.rejects(files.create(root, 'README.md', 'file'), /already exists/);
+  await assert.rejects(files.create(root, 'README.md/inner.ts', 'file'), /is a file, not a folder/);
+  await assert.rejects(files.create(root, '../out.ts', 'file'), /not inside the project/);
+  // A link that leads out of the project cannot be made into a folder to write through.
+  await assert.rejects(files.create(root, 'escape.txt/x', 'file'));
+});
+
+test('renames move files and folders within the project, allow a change of case, and never replace a file', async () => {
+  const { root, outside } = project();
+  const files = new ProjectFiles();
+  await files.rename(root, 'src/app.ts', 'src/lib/main.ts');
+  assert.ok(existsSync(path.join(root, 'src/lib/main.ts')) && !existsSync(path.join(root, 'src/app.ts')));
+  await files.rename(root, 'src/lib/main.ts', 'src/lib/Main.ts');
+  assert.ok(readdirSync(path.join(root, 'src/lib')).includes('Main.ts'));
+  await assert.rejects(files.rename(root, 'src/file2.ts', 'src/file10.ts'), /already exists/);
+  await assert.rejects(files.rename(root, 'src', 'src/lib/src'), /inside itself/);
+  await assert.rejects(files.rename(root, 'gone.ts', 'here.ts'), /no longer exists/);
+  await assert.rejects(files.rename(root, 'src/file2.ts', 'missing/file2.ts'), /does not exist/);
+  // A link is renamed itself; what it points to stays put.
+  await files.rename(root, 'escape.txt', 'escape-2.txt');
+  assert.ok(lstatSync(path.join(root, 'escape-2.txt')).isSymbolicLink());
+  assert.equal(readFileSync(path.join(outside, 'secret.txt'), 'utf8'), 'nope');
+});
+
+test('deletes go to the trash, a link and not what it points to', async () => {
+  const { root, outside } = project();
+  const trashed = [];
+  const files = new ProjectFiles({ trash: async target => { trashed.push(target); } });
+  await files.remove(root, 'src');
+  await files.remove(root, 'escape.txt');
+  assert.deepEqual(trashed, [path.join(root, 'src'), path.join(root, 'escape.txt')]);
+  assert.ok(existsSync(path.join(outside, 'secret.txt')));
+  await assert.rejects(files.remove(root, 'nothing.txt'), /no longer exists/);
+  await assert.rejects(new ProjectFiles().remove(root, 'README.md'), /not available/);
+});
+
+test('quick open lists tracked and untracked files git does not ignore, or walks a folder outside git', async () => {
+  const root = repository();
+  if (root) {
+    const { files, truncated } = await new ProjectFiles().index(root);
+    assert.deepEqual(files.sort(), ['.gitignore', 'logo.png', 'notes.md', 'src/app.ts']);
+    assert.equal(truncated, false);
+  }
+  const plain = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'project-plain-')));
+  mkdirSync(path.join(plain, 'node_modules/x'), { recursive: true });
+  mkdirSync(path.join(plain, 'lib'));
+  writeFileSync(path.join(plain, 'node_modules/x/i.js'), '');
+  writeFileSync(path.join(plain, 'lib/a.js'), '');
+  writeFileSync(path.join(plain, '.DS_Store'), '');
+  assert.deepEqual((await new ProjectFiles().index(plain)).files, ['lib/a.js']);
+});
+
+test('search finds each occurrence with its line and column, honours case, words and expressions, and skips binaries', async () => {
+  const root = repository();
+  if (!root) return;
+  const files = new ProjectFiles();
+  const found = await files.search(root, 'foo');
+  assert.deepEqual(found.matches.map(match => `${match.path}:${match.line}:${match.column}`), ['notes.md:1:1', 'src/app.ts:1:7', 'src/app.ts:2:1', 'src/app.ts:2:5', 'src/app.ts:2:10']);
+  const first = found.matches[1];
+  assert.equal(first.preview.slice(first.offset, first.offset + first.length), 'Foo');
+  assert.deepEqual((await files.search(root, 'Foo', { caseSensitive: true })).matches.map(match => match.column), [7, 5]);
+  assert.equal((await files.search(root, 'foo', { wholeWord: true })).matches.length, 4);
+  assert.equal((await files.search(root, 'fo+d', { regex: true })).matches.length, 1);
+  await assert.rejects(files.search(root, '(', { regex: true }), /not valid/);
+});
+
+test('the staged copy of a file backs its change bars; untracked files have none', async () => {
+  const root = repository();
+  if (!root) return;
+  const files = new ProjectFiles();
+  assert.equal((await files.base(root, 'src/app.ts')).text, 'const Foo = 1;\nfoo(Foo, food);\n');
+  assert.equal((await files.base(root, 'notes.md')).text, null);
+  assert.equal((await files.base(root, 'logo.png')).text, null);
+});
+
+test('IPC for making, renaming, deleting and searching takes only project paths and known options', () => {
+  validateArguments('createProjectPath', ['/w', 'src/a.ts', 'file']);
+  validateArguments('renameProjectPath', ['/w', 'a.ts', 'b/a.ts']);
+  validateArguments('deleteProjectPath', ['/w', 'a']);
+  validateArguments('indexProjectFiles', ['/w']);
+  validateArguments('projectFileBase', ['/w', 'a.ts']);
+  validateArguments('searchProjectFiles', ['/w', 'foo', { caseSensitive: true, wholeWord: false, regex: false }]);
+  for (const [method, args] of [['createProjectPath', ['/w', 'a', 'link']], ['createProjectPath', ['/w', '../a', 'file']], ['renameProjectPath', ['/w', 'a', '']], ['deleteProjectPath', ['/w', '']],
+    ['searchProjectFiles', ['/w', '', { caseSensitive: true, wholeWord: false, regex: false }]], ['searchProjectFiles', ['/w', 'x', { caseSensitive: 1, wholeWord: false, regex: false }]], ['searchProjectFiles', ['/w', 'x', { caseSensitive: true }]]])
+    assert.throws(() => validateArguments(method, args), /Invalid desktop API arguments/, `${method} ${JSON.stringify(args)}`);
 });

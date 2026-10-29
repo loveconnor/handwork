@@ -12,6 +12,7 @@ import { ClaudeClient, claudeStatus } from './claude-client.mjs';
 import { CodexResets } from './codex-resets.mjs';
 import { ProjectFiles } from './project-files.mjs';
 import { Terminals } from './terminals.mjs';
+import { LanguageServers } from './language-servers.mjs';
 import { createRequire } from 'node:module';
 
 /**
@@ -123,7 +124,8 @@ export class DesktopBackend extends EventEmitter {
     this.deletingSessions = new Map();
     this.resets = codexResets;
     // Ignored files come from git itself, so the tree follows the project's real .gitignore rules.
-    this.projectFiles = new ProjectFiles({ ignored: gitIgnored });
+    this.projectFiles = new ProjectFiles({ ignored: gitIgnored, trash: shell ? target => shell.trashItem(target) : null });
+    this.languageServers = new LanguageServers({ emit: event => this.emit('event', event) });
     this.terminals = new Terminals({ emit: event => this.emit('event', event), spawn: (...args) => loadPty().spawn(...args) });
     this.updates = providerUpdates;
     this.settingsService = settingsService;
@@ -215,11 +217,24 @@ export class DesktopBackend extends EventEmitter {
   listProjectFiles(workspace, directory) { return this.projectFiles.list(this.gitProject(workspace), directory); }
   readProjectFile(workspace, file) { return this.projectFiles.read(this.gitProject(workspace), file); }
   writeProjectFile(workspace, file, text, revision) { return this.projectFiles.write(this.gitProject(workspace), file, text, revision); }
+  createProjectPath(workspace, file, kind) { return this.projectFiles.create(this.gitProject(workspace), file, kind); }
+  renameProjectPath(workspace, from, to) { return this.projectFiles.rename(this.gitProject(workspace), from, to); }
+  deleteProjectPath(workspace, file) { return this.projectFiles.remove(this.gitProject(workspace), file); }
+  indexProjectFiles(workspace) { return this.projectFiles.index(this.gitProject(workspace)); }
+  searchProjectFiles(workspace, query, options) { return this.projectFiles.search(this.gitProject(workspace), query, options); }
+  projectFileBase(workspace, file) { return this.projectFiles.base(this.gitProject(workspace), file); }
   /** Terminals start in the selected project's folder; later calls name a terminal this service opened. */
   openTerminal(workspace, cols, rows) { return this.terminals.open(this.gitProject(workspace), cols, rows); }
   writeTerminal(id, data) { this.terminals.write(id, data); }
   resizeTerminal(id, cols, rows) { this.terminals.resize(id, cols, rows); }
   closeTerminal(id) { this.terminals.close(id); }
+  /** Language servers run in the selected project, only while the person allows them. */
+  lspStart(workspace, kind) {
+    if (!this.settingsService.snapshot(this.workspace).effective.languageServers) throw new Error('Language servers are turned off in Settings.');
+    return this.languageServers.start(this.gitProject(workspace), kind);
+  }
+  lspSend(id, message) { this.languageServers.send(id, message); }
+  lspStop(id) { this.languageServers.close(id); }
   terminalHistory(id) { return this.terminals.history(id); }
   gitFileDiff(workspace, file, area, context) { return this.git.fileDiff(this.gitProject(workspace), file, area, context); }
   gitStage(workspace, paths) { return this.git.stage(this.gitProject(workspace), paths); }
@@ -618,6 +633,7 @@ export class DesktopBackend extends EventEmitter {
   updateSettings(scope, patch) {
     const result = this.settingsService.settings.update(scope, patch, this.workspace);
     if (!result.effective.suggestions) { this.cancelSuggestions(); this.suggestionCache.clear(); }
+    if (!result.effective.languageServers) this.languageServers.closeAll();
     this.emit('event', { method: 'desktop/settings', params: result });
     return result;
   }
@@ -1081,6 +1097,7 @@ export class DesktopBackend extends EventEmitter {
   dispose() {
     this.disposed = true;
     this.terminals.closeAll();
+    this.languageServers.closeAll();
     this.historyClient?.dispose();
     this.cancelSuggestions();
     this.commitMessageClient?.dispose();

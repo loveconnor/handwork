@@ -1,13 +1,14 @@
 "use client";
 import { MobileSettings } from './MobileSettings';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter } from '@/components/ui/dialog';
+import { createPortal } from 'react-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Monitor, Plug, Shield, UserRound, Bell, Database, Info } from 'honestui/icons';
+import { Monitor, Plug, Shield, UserRound, Bell, Database, Info, Smartphone, ArrowLeft } from 'honestui/icons';
 import { ProviderLogo } from './ProviderLogo';
 import { HandworkTheme } from './HandworkControls';
 import { HandworkBackup } from './HandworkBackup';
@@ -17,7 +18,7 @@ import { modelDisplayName } from '@/lib/model-presentation';
 import { shortcutLabel } from '@/lib/saved-prompts';
 import type { DesktopAPI, DesktopPreferences, InstructionsFile, RestoreResult, SettingsInfo, SettingsScope, SettingsSnapshot } from '@/lib/desktop-api';
 
-const sections = [{ id: 'general', label: 'General', icon: Monitor }, { id: 'models', label: 'Models & providers', icon: Plug }, { id: 'agent', label: 'Agent & projects', icon: Shield }, { id: 'personalization', label: 'Personalization', icon: UserRound }, { id: 'notifications', label: 'Notifications', icon: Bell }, { id: 'data', label: 'Data & privacy', icon: Database }, { id: 'mobile', label: 'Mobile', icon: Plug }, { id: 'about', label: 'About', icon: Info }] as const;
+const sections = [{ id: 'general', label: 'General', icon: Monitor }, { id: 'models', label: 'Models & providers', icon: Plug }, { id: 'agent', label: 'Agent & projects', icon: Shield }, { id: 'personalization', label: 'Personalization', icon: UserRound }, { id: 'notifications', label: 'Notifications', icon: Bell }, { id: 'data', label: 'Data & privacy', icon: Database }, { id: 'mobile', label: 'Mobile', icon: Smartphone }, { id: 'about', label: 'About', icon: Info }] as const;
 type Section = typeof sections[number]['id'];
 export type SettingsModalProps = {
   open: boolean; initialSection?: Section; onClose: () => void; providers: ProviderInfo[]; providersReady: boolean;
@@ -29,6 +30,8 @@ export type SettingsModalProps = {
   onUse?: (provider: string) => void; currentProvider?: string;
   onShowShortcuts?: () => void;
   onRestored?: (result: RestoreResult) => void;
+  /** Where the section list renders, usually the app sidebar. Without one it sits beside the page. */
+  navHost?: HTMLElement | null;
 };
 function Choice({ label, value, items, disabled, onChange }: { label: string; value: string; items: { value: string; label: string }[]; disabled?: boolean; onChange: (value: string) => void }) {
   return <Select value={value || '__default'} onValueChange={next => { if (next) onChange(next === '__default' ? '' : next); }} disabled={disabled}>
@@ -44,7 +47,7 @@ const mac = typeof navigator !== 'undefined' && /Macintosh/.test(navigator.userA
 const quickEntryShortcuts = [{ value: 'Alt+Space', label: mac ? '⌥ Space' : 'Alt + Space' }, { value: 'Control+Alt+Space', label: mac ? '⌃⌥ Space' : 'Ctrl + Alt + Space' }, { value: 'CommandOrControl+Shift+Space', label: mac ? '⇧⌘ Space' : 'Ctrl + Shift + Space' }, { value: 'off', label: 'Off' }];
 const sizes = Array.from({ length: 10 }, (_, index) => ({ value: String(index + 11), label: `${index + 11} px` }));
 export default function SettingsModal(props: SettingsModalProps) {
-  const { open, onClose, providers, providersReady, busyProvider, error, onConnect, onSignIn, onDisconnect, onUse, currentProvider, api, preferences, onPreferences, workspace, busy, hasMessages, onReconnect } = props;
+  const { open, onClose, navHost, providers, providersReady, busyProvider, error, onConnect, onSignIn, onDisconnect, onUse, currentProvider, api, preferences, onPreferences, workspace, busy, hasMessages, onReconnect } = props;
   const [section, setSection] = useState<Section>(props.initialSection || 'general');
   useEffect(() => { if (open && props.initialSection) setSection(props.initialSection); }, [open, props.initialSection]);
   const [scope, setScope] = useState<SettingsScope>('app');
@@ -100,6 +103,16 @@ export default function SettingsModal(props: SettingsModalProps) {
   const toggle = (name: keyof DesktopPreferences, label: string, detail: string, target: SettingsScope = 'app') => <Row title={label} detail={detail}><Switch aria-label={label} checked={Boolean((target === 'project' ? preferences?.effective : preferences?.app)?.[name])} disabled={disabled} onCheckedChange={value => save({ [name]: value }, target)} /></Row>;
   const scopeControl = <div className="handwork-settings-scope"><span>Applies to</span><Choice label="Settings scope" value={scope} items={[{ value: 'app', label: 'All projects' }, { value: 'project', label: projectName }]} disabled={disabled || dirty || !workspace} onChange={value => { setScope(value as SettingsScope); setFailure(''); setMessage(''); }} />{scope === 'project' && <Button variant="ghost" size="sm" disabled={disabled || busy || dirty} onClick={() => setConfirmation('reset')}>Reset overrides</Button>}<p>{scope === 'project' ? 'Project overrides take priority over app defaults.' : 'App defaults apply unless a project has an override.'}</p></div>;
   const requestClose = () => { if (pending) return; if (dirty) setConfirmation('discard'); else onClose(); };
+  const closeRef = useRef(requestClose); closeRef.current = requestClose;
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (open) heading.current?.focus({ preventScroll: true }); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    // Escape leaves settings unless a menu, select, or dialog has it.
+    const leave = (event: KeyboardEvent) => { if (event.key === 'Escape' && !event.defaultPrevented && !document.querySelector('[role="dialog"], [role="alertdialog"], [role="listbox"], [role="menu"]')) closeRef.current(); };
+    window.addEventListener('keydown', leave);
+    return () => window.removeEventListener('keydown', leave);
+  }, [open]);
   async function confirm() {
     if (confirmation === 'discard') { setConfirmation(undefined); setInstructions(undefined); onClose(); return; }
     const result = await run(async () => {
@@ -110,13 +123,18 @@ export default function SettingsModal(props: SettingsModalProps) {
     });
     if (result !== undefined) { setConfirmation(undefined); setMessage(result); }
   }
-  return <><Dialog open={open} onOpenChange={value => { if (!value) requestClose(); }}>
-    <DialogContent className="handwork-settings handwork-settings-v2" showCloseButton={!pending}>
-      <DialogHeader><DialogTitle>Settings</DialogTitle><DialogDescription>Make Handwork work the way you do.</DialogDescription></DialogHeader>
-      <div className="handwork-settings-layout">
-        <nav className="handwork-settings-nav" aria-label="Settings sections">{sections.map(item => <Button key={item.id} variant={section === item.id ? 'secondary' : 'ghost'} size="sm" aria-current={section === item.id ? 'page' : undefined} onClick={() => { setSection(item.id); setMessage(''); }}><item.icon width={16} height={16} aria-hidden />{item.label}</Button>)}</nav>
-        <DialogBody className="handwork-settings-panel">
-          <h2>{sections.find(item => item.id === section)?.label}</h2>
+  const nav = <nav className="handwork-settings-nav" aria-label="Settings sections">
+    <Button className="handwork-settings-back" variant="ghost" size="sm" disabled={pending} onClick={requestClose}><ArrowLeft width={15} height={15} aria-hidden />Back to app</Button>
+    <p className="handwork-settings-label" aria-hidden>Settings</p>
+    {sections.map(item => <Button key={item.id} variant="ghost" size="sm" aria-current={section === item.id ? 'page' : undefined} onClick={() => { setSection(item.id); setMessage(''); }}><item.icon width={16} height={16} aria-hidden />{item.label}</Button>)}
+  </nav>;
+  return <>{open && <>
+    {navHost && createPortal(nav, navHost)}
+    <section className="handwork-settings-page" aria-label="Settings" data-inline-nav={!navHost || undefined}>
+      {!navHost && nav}
+      <div className="handwork-settings-panel">
+        <div className="handwork-settings-column">
+          <h1 ref={heading} tabIndex={-1}>{sections.find(item => item.id === section)?.label}</h1>
           <div className="handwork-settings-status" aria-live="polite">{failure ? <span role="alert">{failure}</span> : pending ? pendingLabel || 'Saving…' : message}</div>
           {!api && <p>Open the desktop app to manage settings.</p>}
           {section === 'mobile' && <MobileSettings api={api} />}
@@ -124,6 +142,7 @@ export default function SettingsModal(props: SettingsModalProps) {
             <Row title="Appearance" detail="System follows your device’s color theme."><HandworkTheme compact={false} /></Row>
             <Row title="Interface text size" detail="Adjust controls and conversation text."><Choice label="Interface text size" value={String(preferences?.app.uiFontSize || 14)} items={sizes} disabled={disabled} onChange={value => save({ uiFontSize: Number(value) })} /></Row>
             <Row title="Code text size"><Choice label="Code text size" value={String(preferences?.app.codeFontSize || 13)} items={sizes} disabled={disabled} onChange={value => save({ codeFontSize: Number(value) })} /></Row>
+            {toggle('languageServers', 'Language servers', 'Go to definition, hover info, type errors and smarter completions in the editor. TypeScript is built in; Python, Rust, Go, C and Swift use servers installed on this computer, which can run a project’s build scripts.')}
             <Row title="Send messages with" detail="Shift + Enter always adds a new line."><Choice label="Send messages with" value={preferences?.app.sendKey || 'enter'} items={[{ value: 'enter', label: 'Enter' }, { value: 'modifier-enter', label: '⌘ / Ctrl + Enter' }]} disabled={disabled} onChange={value => save({ sendKey: value as DesktopPreferences['sendKey'] })} /></Row>
             <Row title="Sidebar layout" detail={preferences?.app.sidebarLayout === 'status' ? 'Tabs filter chats by what they need, grouped by project. Select every tab for all chats.' : 'Every chat under its project.'}><Choice label="Sidebar layout" value={preferences?.app.sidebarLayout || 'projects'} items={[{ value: 'projects', label: 'By project' }, { value: 'status', label: 'By status' }]} disabled={disabled} onChange={value => save({ sidebarLayout: value as DesktopPreferences['sidebarLayout'] })} /></Row>
             {toggle('restoreChats', 'Restore open chats', 'Reopen your tabs when Handwork starts.')}
@@ -202,10 +221,10 @@ export default function SettingsModal(props: SettingsModalProps) {
             <h3>Troubleshooting</h3><p className="handwork-settings-note">If a provider fails, test its connection in Models & providers. If the engine stops, reconnect your project. Diagnostics include versions, platform, default provider, and attachment totals. They exclude keys, file paths, and chat content.</p>
             <div className="handwork-settings-buttons"><Button size="sm" variant="outline" disabled={disabled} onClick={() => void run(async () => { await navigator.clipboard.writeText(await api!.diagnostics()); }, 'Diagnostics copied')}>Copy diagnostics</Button><Button size="sm" variant="ghost" disabled={disabled} onClick={() => void run(() => api!.openSettingsTarget('engineSettings'))}>Open engine settings</Button></div>
           </>}
-        </DialogBody>
+        </div>
       </div>
-    </DialogContent>
-  </Dialog>
+    </section>
+  </>}
   <Dialog open={!!confirmation} onOpenChange={value => { if (!value && !pending) setConfirmation(undefined); }}><DialogContent className="handwork-chat-dialog" showCloseButton={!pending}><DialogHeader><DialogTitle>{confirmation === 'discard' ? 'Discard unsaved instructions?' : confirmation === 'reset' ? 'Reset project overrides?' : confirmation === 'attachments' ? 'Remove saved attachments?' : 'Remove additional folder?'}</DialogTitle><DialogDescription>{confirmation === 'discard' ? 'Your unsaved instruction changes will be lost.' : confirmation === 'reset' ? 'This project will use app defaults for its model, mode, and suggestions. Tool permissions and instruction files stay unchanged.' : confirmation === 'attachments' ? 'All saved attachment snapshots will be permanently removed. Attachments referenced by older chats will no longer be available. Chat text stays saved.' : 'The engine will stop granting access to this additional folder after reconnecting. No files will be deleted.'}</DialogDescription></DialogHeader><DialogFooter><Button variant="ghost" disabled={pending} onClick={() => setConfirmation(undefined)}>Cancel</Button><Button variant={confirmation === 'reset' ? 'default' : 'destructive'} disabled={pending} onClick={() => void confirm()}>{confirmation === 'discard' ? 'Discard changes' : confirmation === 'reset' ? 'Reset overrides' : 'Remove'}</Button></DialogFooter></DialogContent></Dialog>
   </>;
 }
