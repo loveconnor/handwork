@@ -7,8 +7,8 @@ import { ProjectFiles, validProjectPath, MAX_EDIT_BYTES } from '../../electron/p
 import { validateArguments } from '../../electron/ipc.mjs';
 
 function project() {
-  const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'project-files-')));
-  const outside = realpathSync(mkdtempSync(path.join(tmpdir(), 'outside-')));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'project-files-')));
+  const outside = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'outside-')));
   mkdirSync(path.join(root, 'src/lib'), { recursive: true });
   mkdirSync(path.join(root, '.git'));
   writeFileSync(path.join(root, 'README.md'), '# Hi\n');
@@ -57,10 +57,12 @@ test('saves are atomic, keep the file mode, and refuse to overwrite a change mad
   const files = new ProjectFiles();
   const file = path.join(root, 'src/app.ts');
   chmodSync(file, 0o755);
+  // Windows exposes read/write attributes rather than POSIX executable bits.
+  const originalMode = statSync(file).mode & 0o777;
   const opened = await files.read(root, 'src/app.ts');
   const saved = await files.write(root, 'src/app.ts', 'export const a = 2;\n', opened.revision);
   assert.equal(readFileSync(file, 'utf8'), 'export const a = 2;\n');
-  assert.equal(statSync(file).mode & 0o777, 0o755);
+  assert.equal(statSync(file).mode & 0o777, originalMode);
   assert.notEqual(saved.revision, opened.revision);
   assert.ok(!readdirSync(path.join(root, 'src')).some(name => name.endsWith('.handwork-tmp')), 'no temporary file is left behind');
   // Someone else edits the file; a save from the stale revision is refused and changes nothing.

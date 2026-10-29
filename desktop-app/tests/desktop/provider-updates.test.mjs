@@ -11,17 +11,20 @@ const feed = versions => async url => {
   return { ok: latest != null, json: async () => url.includes('github') ? { tag_name: `v${latest}` } : { version: latest } };
 };
 
+const executableName = name => process.platform === 'win32' ? `${name}.cmd` : name;
+const commandName = command => path.basename(command).replace(/\.cmd$/, '');
+
 /** A bin directory of executables, plus an npm-style install whose launcher is a symlink. */
 function installs() {
-  // Real path: on macOS the temp directory is a symlink into /private.
-  const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'provider-updates-')));
+  // Native real paths also expand Windows short names, matching fs/promises.realpath.
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'provider-updates-')));
   const bin = path.join(root, 'bin');
   const pkg = path.join(root, 'lib/node_modules/@openai/codex');
   mkdirSync(bin, { recursive: true }); mkdirSync(path.join(pkg, 'bin'), { recursive: true });
   writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name: '@openai/codex' }));
   writeFileSync(path.join(pkg, 'bin/codex.js'), ''); chmodSync(path.join(pkg, 'bin/codex.js'), 0o755);
-  symlinkSync(path.join(pkg, 'bin/codex.js'), path.join(bin, 'codex'));
-  for (const name of ['opencode', 'ollama', 'npm']) { writeFileSync(path.join(bin, name), ''); chmodSync(path.join(bin, name), 0o755); }
+  symlinkSync(path.join(pkg, 'bin/codex.js'), path.join(bin, executableName('codex')));
+  for (const name of ['opencode', 'ollama', 'npm']) { writeFileSync(path.join(bin, executableName(name)), ''); chmodSync(path.join(bin, executableName(name)), 0o755); }
   return { root, bin };
 }
 
@@ -39,7 +42,7 @@ test('only connected providers with newer releases are offered, a broken npm ins
   const { root, bin } = installs();
   const versions = { codex: null, opencode: '1.19.4', ollama: '0.40.10' };
   const execFile = (command, args, options, done) => {
-    const name = path.basename(command);
+    const name = commandName(command);
     if (name === 'codex') return done(new Error('exit 1'), '', 'Error: Missing optional dependency @openai/codex-darwin-arm64');
     done(null, name === 'ollama' ? `ollama version is ${versions.ollama}` : versions[name], '');
   };
@@ -51,7 +54,7 @@ test('only connected providers with newer releases are offered, a broken npm ins
     { provider: 'ollama', name: 'Ollama', latest: '0.40.12', action: 'download', installed: '0.40.10' },
   ]);
   assert.equal(await updates.check(['codex']), found, 'one check per launch');
-  assert.equal(await updates.npmPrefix({ npm: '@openai/codex' }, path.join(bin, 'codex')), root);
+  assert.equal(await updates.npmPrefix({ npm: '@openai/codex' }, path.join(bin, executableName('codex'))), root);
 });
 
 test('current software and failed release lookups offer nothing', async () => {
@@ -68,9 +71,9 @@ test('npm installs update into their own prefix; native installs run their updat
   const calls = [];
   let opencode = '1.19.4', codex = null;
   const execFile = (command, args, options, done) => {
-    calls.push([path.basename(command), ...args]);
-    if (args[0] === '--version') return path.basename(command) === 'codex' ? (codex ? done(null, codex, '') : done(new Error('broken'), '', 'broken')) : done(null, opencode, '');
-    if (path.basename(command) === 'npm') codex = '0.165.0';
+    calls.push([commandName(command), ...args]);
+    if (args[0] === '--version') return commandName(command) === 'codex' ? (codex ? done(null, codex, '') : done(new Error('broken'), '', 'broken')) : done(null, opencode, '');
+    if (commandName(command) === 'npm') codex = '0.165.0';
     if (args[0] === 'upgrade') opencode = '1.19.5';
     done(null, '', '');
   };
