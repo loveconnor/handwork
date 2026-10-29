@@ -40,14 +40,11 @@ next-env.d.ts
 # Handwork native workspace
 /target/
 /build/
-/src-tauri/gen/
 /mobile/node_modules/
 /mobile/target/
 /playwright-report/
 /test-results/
 
-/src-tauri/.handwork-build.json
-/src-tauri/.release-build.json
 /release-assets/
 
 /output/validation/

@@ -15,7 +15,7 @@ import { gitGutter, hasGitBase, setGitBase } from './editorGitGutter';
 const chrome = EditorView.theme({
   '&': { height: '100%', fontSize: 'var(--handwork-code-font-size, 13px)', color: 'var(--_syntax-plain)', backgroundColor: 'transparent' },
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { fontFamily: 'var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace)', lineHeight: '1.6', overscrollBehavior: 'contain' },
+  '.cm-scroller': { fontFamily: 'var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace)', lineHeight: '1.5', overscrollBehavior: 'contain' },
   '.cm-content': { padding: '10px 0', caretColor: 'var(--hui-color-foreground-base-primary)' },
   '.cm-line': { padding: '0 16px 0 6px' },
   // Opaque so code scrolled sideways passes under the line numbers, not through them.
@@ -65,13 +65,29 @@ const wordCompletions = EditorState.languageData.of(() => [{
   autocomplete: (context: CompletionContext) => context.state.languageDataAt('autocomplete', context.pos).length > 1 ? null : completeAnyWord(context),
 }]);
 
-function baseExtensions(onChange: (text: string) => void, onSave: () => void, language: Compartment, support: Compartment, readOnly: Compartment, editable: boolean): Extension[] {
+/** Where the cursor is, as a 1-based line and column, so it can be put back after a restart. */
+export type EditorCursor = { line: number; column: number };
+/** The selected text's range, by offset and by 1-based line, when anything is selected. */
+export type EditorSelection = { from: number; to: number; fromLine: number; toLine: number };
+
+function baseExtensions(onChange: (text: string) => void, onSave: () => void, onCursor: (cursor: EditorCursor, selection: EditorSelection | null) => void, language: Compartment, support: Compartment, readOnly: Compartment, editable: boolean): Extension[] {
   return [
     lineNumbers(), gitGutter(), highlightActiveLineGutter(), foldGutter(), highlightSpecialChars(), history(), drawSelection(), dropCursor(),
     EditorState.allowMultipleSelections.of(true), indentOnInput(), syntaxHighlighting(editorHighlightStyle, { fallback: true }),
     bracketMatching(), closeBrackets(), autocompletion({ activateOnTyping: true }), wordCompletions, rectangularSelection(), highlightActiveLine(), highlightSelectionMatches(), search({ top: true, createPanel: findPanel }),
     keymap.of([{ key: 'Mod-s', preventDefault: true, run: () => { onSave(); return true; } }, ...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...historyKeymap, ...foldKeymap, indentWithTab]),
-    EditorView.updateListener.of(update => { if (update.docChanged) onChange(update.state.doc.toString()); }),
+    EditorView.updateListener.of(update => {
+      if (update.docChanged) onChange(update.state.doc.toString());
+      if (update.selectionSet || update.docChanged) {
+        const { head, from, to } = update.state.selection.main, line = update.state.doc.lineAt(head);
+        // A selection ending at the start of a line covers only the lines before it.
+        const last = update.state.doc.lineAt(to > from && update.state.doc.lineAt(to).from === to ? to - 1 : to);
+        onCursor({ line: line.number, column: head - line.from + 1 }, from === to ? null : { from, to, fromLine: update.state.doc.lineAt(from).number, toLine: last.number });
+      }
+    }),
+    // Writing assistants (Grammarly, the spellchecker) treat code as prose and draw over it; this keeps them out.
+    EditorView.contentAttributes.of({ spellcheck: 'false', autocorrect: 'off', autocapitalize: 'off', 'data-gramm': 'false', 'data-gramm_editor': 'false', 'data-enable-grammarly': 'false' }),
+    EditorView.editorAttributes.of({ 'data-gramm': 'false', 'data-gramm_editor': 'false', 'data-enable-grammarly': 'false' }),
     language.of([]), support.of([]), readOnly.of(EditorState.readOnly.of(!editable)), chrome,
   ];
 }
@@ -82,7 +98,7 @@ function baseExtensions(onChange: (text: string) => void, onSave: () => void, la
  */
 export type EditorReveal = { line: number; column?: number; length?: number; token: number };
 
-export function HandworkCodeEditor({ path, text, editable, states, base, reveal, onRevealed, support, supportVersion, onChange, onSave }: {
+export function HandworkCodeEditor({ path, text, editable, states, base, reveal, onRevealed, support, supportVersion, cursorOf, onCursor, onChange, onSave }: {
   path: string; text: string; editable: boolean;
   /** Language features for a file beyond highlighting: its language server, or a syntax check. */
   support?: (path: string) => Promise<Extension>;
@@ -92,6 +108,9 @@ export function HandworkCodeEditor({ path, text, editable, states, base, reveal,
   base?: string | null;
   /** Move the cursor here and scroll it into view; a new token asks again. */
   reveal?: EditorReveal; onRevealed?: () => void;
+  /** Where a file with no editor state yet puts its cursor, as it was left last time. */
+  cursorOf?: (path: string) => EditorCursor | undefined;
+  onCursor?: (path: string, cursor: EditorCursor, selection: EditorSelection | null) => void;
   /** Editor states by path, owned by the caller so they outlive tab switches. */
   states: Map<string, EditorState>;
   onChange: (path: string, text: string) => void; onSave: (path: string) => void;
@@ -99,20 +118,29 @@ export function HandworkCodeEditor({ path, text, editable, states, base, reveal,
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const current = useRef(path);
-  const handlers = useRef({ onChange, onSave });
-  handlers.current = { onChange, onSave };
+  const handlers = useRef({ onChange, onSave, onCursor, cursorOf });
+  handlers.current = { onChange, onSave, onCursor, cursorOf };
   const compartments = useRef({ language: new Compartment(), support: new Compartment(), readOnly: new Compartment() });
 
   const stateFor = (file: string, doc: string, canEdit: boolean) => {
     const saved = states.get(file);
     if (saved && saved.doc.toString() === doc) return saved;
     const { language, support, readOnly } = compartments.current;
-    return EditorState.create({ doc, extensions: baseExtensions(next => handlers.current.onChange(current.current, next), () => handlers.current.onSave(current.current), language, support, readOnly, canEdit) });
+    const extensions = baseExtensions(next => handlers.current.onChange(current.current, next), () => handlers.current.onSave(current.current), (cursor, selection) => handlers.current.onCursor?.(current.current, cursor, selection), language, support, readOnly, canEdit);
+    const state = EditorState.create({ doc, extensions });
+    const cursor = handlers.current.cursorOf?.(file);
+    if (!cursor) return state;
+    const line = state.doc.line(Math.min(Math.max(1, cursor.line), state.doc.lines));
+    return state.update({ selection: { anchor: Math.min(line.to, line.from + Math.max(0, cursor.column - 1)) } }).state;
   };
+  // A file opened at a remembered cursor shows it.
+  const showCursor = (editor: EditorView) => { if (handlers.current.cursorOf?.(current.current)) editor.dispatch({ effects: EditorView.scrollIntoView(editor.state.selection.main.head, { y: 'center' }) }); };
 
   useEffect(() => {
     if (!host.current) return;
+    const fresh = !states.get(path);
     view.current = new EditorView({ parent: host.current, state: stateFor(path, text, editable) });
+    if (fresh) showCursor(view.current);
     return () => { if (view.current) states.set(current.current, view.current.state); view.current?.destroy(); view.current = null; };
     // The view is created once; file switches are handled below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,7 +153,9 @@ export function HandworkCodeEditor({ path, text, editable, states, base, reveal,
     if (current.current !== path) {
       states.set(current.current, editor.state);
       current.current = path;
+      const fresh = !states.get(path);
       editor.setState(stateFor(path, text, editable));
+      if (fresh) showCursor(editor);
     } else if (editor.state.doc.toString() !== text) {
       // The text was replaced from outside (reloaded from disk): take it, keeping undo.
       editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: text } });

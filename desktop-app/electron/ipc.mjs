@@ -47,6 +47,8 @@ const signatures = {
   mobileStatus: [], mobileInvite: [], mobileCancelInvite: [], mobileRevoke: [value => text(value, 256)],
   mobileConfigure: [value => plain(value, ['enabled', 'remoteAddress']) && typeof value.enabled === 'boolean' && typeof value.remoteAddress === 'string' && value.remoteAddress.length <= 253],
   windowAction: [value => ['minimize', 'toggle-maximize', 'close', 'state'].includes(value)],
+  setMenuMode: [value => typeof value === 'boolean'],
+  editAction: [value => ['cut', 'copy', 'paste'].includes(value)],
   commandReport: [value => ['status', 'usage', 'doctor', 'version'].includes(value)],
   getUpdateState: [], downloadUpdate: [], installUpdate: [validUpdateDrafts], getUpdateDrafts: [],
   geocodePlace: [value => text(value, 800) && value.trim().length >= 2 && value.length <= 200 && !/[\x00-\x1f]/.test(value)],

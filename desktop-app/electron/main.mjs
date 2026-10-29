@@ -3,6 +3,7 @@ import { MobileWorkspace } from './mobile-workspace.mjs';
 import { safeStorage, app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, session, shell, Tray } from 'electron';
 import path from 'node:path';
 import { windowAction, windowState } from './window-controls.mjs';
+import { ideMenus } from './ide-menu.mjs';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DesktopSettings } from './desktop-settings.mjs';
@@ -44,6 +45,9 @@ let trayHintShown = false;
 let desktopUpdater;
 let updateDrafts;
 let quickEntry;
+/** Whether the menu bar shows the IDE view's menus; the menu is built once the app is ready. */
+let menuIde = false;
+let applyMenu = () => {};
 const liveNotifications = new Set();
 const shortcutLabels = { 'Alt+Space': process.platform === 'darwin' ? '⌥ Space' : 'Alt+Space', 'Control+Alt+Space': process.platform === 'darwin' ? '⌃⌥ Space' : 'Ctrl+Alt+Space', 'CommandOrControl+Shift+Space': process.platform === 'darwin' ? '⇧⌘ Space' : 'Ctrl+Shift+Space' };
 const cleanups = new Set();
@@ -189,6 +193,8 @@ function createWindow() {
   currentBackend.mobileInvite = () => mobile.invite();
   currentBackend.mobileCancelInvite = () => mobile.cancelInvite();
   currentBackend.mobileRevoke = id => mobile.revoke(id);
+  currentBackend.setMenuMode = ide => { if (ide !== menuIde) { menuIde = ide; applyMenu(ide); } };
+  currentBackend.editAction = action => { if (!wc.isDestroyed()) wc[action](); };
   currentWindow.once('closed', () => { mobile.dispose(); mobileWorkspace.dispose(); });
   const unregister = registerIpc({
     ipcMain, webContents: wc, rendererURL, backend: currentBackend,
@@ -300,7 +306,16 @@ const updateMenuIcon = process.platform === 'darwin'
   ? nativeImage.createFromNamedImage('arrow.triangle.2.circlepath').resize({ width: 12, height: 12 })
   : undefined;
 updateMenuIcon?.setTemplateImage(true);
-Menu.setApplicationMenu(Menu.buildFromTemplate([
+// IDE actions from the menu run in the main window's workbench.
+function sendIdeAction(action) {
+  if (!window || window.isDestroyed()) return;
+  showMainWindow();
+  window.webContents.send(EVENT_CHANNEL, { method: 'desktop/ide', params: { action } });
+}
+/** The menu bar; the IDE view adds File, Go and Terminal menus and its own View items. */
+applyMenu = (ide = false) => {
+  const menus = ide ? ideMenus(sendIdeAction) : null;
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
   ...(process.platform === 'darwin' ? [{ role: 'appMenu', submenu: [
     { role: 'about' },
     { label: 'Check for Updates…', icon: updateMenuIcon, click: async () => {
@@ -323,12 +338,15 @@ Menu.setApplicationMenu(Menu.buildFromTemplate([
     { role: 'quit' },
   ] }] : []),
   { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: () => window?.webContents.send(EVENT_CHANNEL, { method: 'desktop/open-settings' }) },
+  ...(menus ? [menus.file] : []),
   { role: 'editMenu' },
   { label: 'View', submenu: [
+    ...(menus ? [...menus.view, { type: 'separator' }] : [{ label: 'IDE View', accelerator: 'CmdOrCtrl+Shift+E', registerAccelerator: false, click: () => sendIdeAction('ide-view') }, { type: 'separator' }]),
     { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' },
     { type: 'separator' }, { role: 'togglefullscreen' },
     ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),
   ] },
+  ...(menus ? [menus.go, menus.terminal] : []),
   // Close Tab and Close Window are separate: ⌘W closes the chat tab, ⇧⌘W the window.
   { label: 'Chat', submenu: [
     { label: 'New Chat', accelerator: 'CmdOrCtrl+N', click: () => sendTabAction('new') },
@@ -351,7 +369,9 @@ Menu.setApplicationMenu(Menu.buildFromTemplate([
     { label: 'Keyboard Shortcuts', accelerator: 'CmdOrCtrl+/', click: () => { if (!window || window.isDestroyed()) return; showMainWindow(); window.webContents.send(EVENT_CHANNEL, { method: 'desktop/open-shortcuts' }); } },
     { label: 'Handwork Help', click: () => void shell.openExternal('https://github.com/loveconnor/handwork#readme') },
   ] },
-]));
+  ]));
+};
+applyMenu();
 session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) => callback(allowsDesktopPermission(wc, window?.webContents, rendererURL, permission, details)));
 session.defaultSession.setPermissionCheckHandler((wc, permission, _origin, details) => allowsDesktopPermission(wc, window?.webContents, rendererURL, permission, details));
 session.defaultSession.webRequest.onHeadersReceived((details, callback) => {

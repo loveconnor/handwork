@@ -36,6 +36,9 @@ test('listed app shortcuts match the handlers that implement them', () => {
   assert.match(harness, /key === 'n'/);
   assert.match(harness, /key === '\/'/);
   assert.match(harness, /key === 'f'/);
+  for (const keys of ['Mod+Shift+E', 'Mod+J', 'Mod+P', 'Mod+Shift+F']) assert.ok(listed.has(keys), `${keys} is listed`);
+  assert.match(harness, /key === 'e' && showProjectTools/);
+  assert.match(harness, /key === 'j' && ideView/);
   assert.match(source('components/site/HandworkCommandPalette.tsx'), /event\.key\.toLowerCase\(\) === 'k'/);
   assert.match(source('components/site/HandworkFindBar.tsx'), /event\.key\.toLowerCase\(\) !== 'g'/);
   const main = source('electron/main.mjs');
@@ -56,4 +59,20 @@ test('keys render in each platform’s notation', () => {
   assert.deepEqual(shortcutKeys('Escape', true), ['Esc']);
   assert.deepEqual(shortcutKeys('Mod+Plus', false), ['Ctrl', '+']);
   assert.deepEqual(shortcutKeys('ArrowUp+ArrowDown', true), ['↑', '↓']);
+});
+
+test('the IDE view’s menus run actions the window handles, and leave the editor’s own keys to it', async () => {
+  const { ideMenus, IDE_ACTIONS } = await import('../../electron/ide-menu.mjs');
+  const ran = [];
+  const menus = ideMenus(action => ran.push(action), { mac: true });
+  const items = [...menus.file.submenu, ...menus.view, ...menus.go.submenu, ...menus.terminal.submenu].filter(item => item.click);
+  for (const item of items) item.click();
+  assert.ok(ran.every(action => IDE_ACTIONS.includes(action)), ran.filter(action => !IDE_ACTIONS.includes(action)).join());
+  const byLabel = label => items.find(item => item.label === label);
+  // The editor answers these keys itself; the menu only shows them.
+  for (const label of ['Go to Definition', 'Rename Symbol', 'Save', 'Go to File…']) assert.equal(byLabel(label).registerAccelerator, false, label);
+  // Nothing else handles these, so the menu takes the keys.
+  for (const label of ['Save All', 'New Terminal']) assert.equal(byLabel(label).registerAccelerator, true, label);
+  const harness = source('components/site/HandworkHarness.tsx'), workbench = source('components/site/HandworkWorkbench.tsx');
+  for (const action of IDE_ACTIONS) assert.ok(harness.includes(`'${action}'`) || workbench.includes(`case '${action}'`), `${action} is handled`);
 });

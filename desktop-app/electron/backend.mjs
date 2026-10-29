@@ -213,25 +213,32 @@ export class DesktopBackend extends EventEmitter {
     return workspace;
   }
   gitState(workspace) { return this.git.state(this.gitProject(workspace)); }
-  /** Browsing and editing act on the selected project's files only, like git. */
-  listProjectFiles(workspace, directory) { return this.projectFiles.list(this.gitProject(workspace), directory); }
-  readProjectFile(workspace, file) { return this.projectFiles.read(this.gitProject(workspace), file); }
-  writeProjectFile(workspace, file, text, revision) { return this.projectFiles.write(this.gitProject(workspace), file, text, revision); }
-  createProjectPath(workspace, file, kind) { return this.projectFiles.create(this.gitProject(workspace), file, kind); }
-  renameProjectPath(workspace, from, to) { return this.projectFiles.rename(this.gitProject(workspace), from, to); }
-  deleteProjectPath(workspace, file) { return this.projectFiles.remove(this.gitProject(workspace), file); }
-  indexProjectFiles(workspace) { return this.projectFiles.index(this.gitProject(workspace)); }
-  searchProjectFiles(workspace, query, options) { return this.projectFiles.search(this.gitProject(workspace), query, options); }
-  projectFileBase(workspace, file) { return this.projectFiles.base(this.gitProject(workspace), file); }
-  /** Terminals start in the selected project's folder; later calls name a terminal this service opened. */
-  openTerminal(workspace, cols, rows) { return this.terminals.open(this.gitProject(workspace), cols, rows); }
+  /**
+   * The workbench acts on any project the person has added, not just the one a chat is
+   * connected to, so switching projects shows that project's files at once.
+   */
+  workbenchProject(workspace) {
+    if (!workspace || (workspace !== this.workspace && !this.projects.list().includes(workspace))) throw new Error('Add this folder as a project first.');
+    return workspace;
+  }
+  listProjectFiles(workspace, directory) { return this.projectFiles.list(this.workbenchProject(workspace), directory); }
+  readProjectFile(workspace, file) { return this.projectFiles.read(this.workbenchProject(workspace), file); }
+  writeProjectFile(workspace, file, text, revision) { return this.projectFiles.write(this.workbenchProject(workspace), file, text, revision); }
+  createProjectPath(workspace, file, kind) { return this.projectFiles.create(this.workbenchProject(workspace), file, kind); }
+  renameProjectPath(workspace, from, to) { return this.projectFiles.rename(this.workbenchProject(workspace), from, to); }
+  deleteProjectPath(workspace, file) { return this.projectFiles.remove(this.workbenchProject(workspace), file); }
+  indexProjectFiles(workspace) { return this.projectFiles.index(this.workbenchProject(workspace)); }
+  searchProjectFiles(workspace, query, options) { return this.projectFiles.search(this.workbenchProject(workspace), query, options); }
+  projectFileBase(workspace, file) { return this.projectFiles.base(this.workbenchProject(workspace), file); }
+  /** Terminals start in a project's folder; later calls name a terminal this service opened. */
+  openTerminal(workspace, cols, rows) { return this.terminals.open(this.workbenchProject(workspace), cols, rows); }
   writeTerminal(id, data) { this.terminals.write(id, data); }
   resizeTerminal(id, cols, rows) { this.terminals.resize(id, cols, rows); }
   closeTerminal(id) { this.terminals.close(id); }
   /** Language servers run in the selected project, only while the person allows them. */
   lspStart(workspace, kind) {
     if (!this.settingsService.snapshot(this.workspace).effective.languageServers) throw new Error('Language servers are turned off in Settings.');
-    return this.languageServers.start(this.gitProject(workspace), kind);
+    return this.languageServers.start(this.workbenchProject(workspace), kind);
   }
   lspSend(id, message) { this.languageServers.send(id, message); }
   lspStop(id) { this.languageServers.close(id); }

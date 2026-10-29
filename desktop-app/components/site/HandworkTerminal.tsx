@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 import type { DesktopAPI } from '@/lib/desktop-api';
 
@@ -13,13 +14,19 @@ const ANSI_LIGHT = { black: '#383a42', red: '#e45649', green: '#50a14f', yellow:
 const isDark = () => document.documentElement.classList.contains('dark');
 function theme() {
   const dark = isDark();
-  const foreground = getComputedStyle(document.documentElement).getPropertyValue('--hui-color-foreground-base-primary').trim() || (dark ? '#eeeeec' : '#21201c');
+  const styles = getComputedStyle(document.documentElement);
+  const foreground = styles.getPropertyValue('--hui-color-foreground-base-primary').trim() || (dark ? '#eeeeec' : '#21201c');
+  // The GPU renderer paints its own background, so it takes the panel's colour.
+  const background = styles.getPropertyValue('--hw-panel').trim() || (dark ? '#1a1a19' : '#ffffff');
   return {
-    background: '#00000000', foreground, cursor: foreground, cursorAccent: dark ? '#000000' : '#ffffff',
+    background, foreground, cursor: foreground, cursorAccent: dark ? '#000000' : '#ffffff',
     selectionBackground: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)', selectionInactiveBackground: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
     ...(dark ? ANSI_DARK : ANSI_LIGHT),
   };
 }
+
+/** The editor's code size, so a terminal reads at the same scale as the file above it. */
+const codeFontSize = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--handwork-code-font-size')) || 13;
 
 /**
  * A shell in the project. It starts one when given no id, or reattaches to a
@@ -38,7 +45,7 @@ export function HandworkTerminal({ api, workspace, terminalId, focused, onOpened
   useEffect(() => {
     if (!host.current) return;
     const xterm = new Terminal({
-      cursorBlink: true, cursorStyle: 'bar', fontSize: 12.5, lineHeight: 1.15, scrollback: 4000, allowTransparency: true,
+      cursorBlink: true, cursorStyle: 'bar', cursorWidth: 2, fontSize: codeFontSize(), lineHeight: 1.35, scrollback: 4000,
       fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--hui-font-family-mono').trim() || 'ui-monospace, SFMono-Regular, Menlo, monospace',
       theme: theme(), macOptionIsMeta: navigator.platform.startsWith('Mac'),
     });
@@ -46,6 +53,13 @@ export function HandworkTerminal({ api, workspace, terminalId, focused, onOpened
     xterm.loadAddon(fit);
     xterm.loadAddon(new WebLinksAddon((_event, uri) => window.open(uri, '_blank', 'noopener,noreferrer')));
     xterm.open(host.current);
+    // Drawing on the GPU keeps a terminal coming back with its history, or a burst of output, from
+    // stalling the window; without WebGL it stays on the DOM renderer.
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      xterm.loadAddon(webgl);
+    } catch { /* The DOM renderer is the fallback. */ }
     term.current = xterm;
     let id = terminalId;
     let disposed = false;
@@ -85,9 +99,12 @@ export function HandworkTerminal({ api, workspace, terminalId, focused, onOpened
 
     const observer = new ResizeObserver(() => safeFit());
     observer.observe(host.current);
-    // Follow the app's theme as it changes.
-    const themeWatch = new MutationObserver(() => { xterm.options.theme = theme(); });
-    themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    // Follow the app's theme and code size as they change.
+    const themeWatch = new MutationObserver(() => {
+      xterm.options.theme = theme();
+      if (xterm.options.fontSize !== codeFontSize()) { xterm.options.fontSize = codeFontSize(); safeFit(); }
+    });
+    themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
 
     return () => {
       disposed = true;

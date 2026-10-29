@@ -1,6 +1,9 @@
 /** A pane is either an editor with its own tabs or one terminal. */
 export type EditorPane = { id: string; kind: 'editor'; files: string[]; active?: string };
-export type TerminalPane = { id: string; kind: 'terminal'; terminalId?: string; shell?: string; exited?: boolean; error?: string };
+/** One shell in a terminal pane; it starts once shown, and `terminalId` names it once it runs. `number` stays with it as others close. */
+export type TerminalTab = { id: string; number?: number; terminalId?: string; shell?: string; exited?: boolean; error?: string };
+/** A terminal pane holds shells as tabs, one shown at a time. */
+export type TerminalPane = { id: string; kind: 'terminal'; tabs: TerminalTab[]; active: string };
 export type Pane = EditorPane | TerminalPane;
 /** Panes are laid out by binary splits: `row` places a beside b, `column` places a above b. */
 export type LayoutNode = { type: 'pane'; id: string } | { type: 'split'; id: string; direction: 'row' | 'column'; ratio: number; a: LayoutNode; b: LayoutNode };
@@ -8,6 +11,38 @@ export type Layout = { root: LayoutNode; panes: Record<string, Pane>; focused: s
 
 let counter = 0;
 export const newId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(counter++).toString(36)}`;
+
+export function terminalPane(id = newId('pane')): TerminalPane {
+  const tab = newId('shell');
+  return { id, kind: 'terminal', tabs: [{ id: tab, number: 1 }], active: tab };
+}
+
+/** Open another shell as a tab in a terminal pane, and show it. */
+export function addTerminalTab(layout: Layout, paneId: string): Layout {
+  const pane = layout.panes[paneId];
+  if (pane?.kind !== 'terminal') return layout;
+  const tab = newId('shell');
+  const number = Math.max(0, ...pane.tabs.map((item, index) => item.number ?? index + 1)) + 1;
+  return { ...layout, focused: paneId, panes: { ...layout.panes, [paneId]: { ...pane, tabs: [...pane.tabs, { id: tab, number }], active: tab } } };
+}
+
+/** Close a shell's tab; its neighbour is shown, and a pane with no shells left closes. */
+export function closeTerminalTab(layout: Layout, paneId: string, tabId: string): Layout {
+  const pane = layout.panes[paneId];
+  if (pane?.kind !== 'terminal') return layout;
+  const index = pane.tabs.findIndex(tab => tab.id === tabId);
+  if (index < 0) return layout;
+  const tabs = pane.tabs.filter(tab => tab.id !== tabId);
+  if (!tabs.length) return removePane(layout, paneId);
+  const active = pane.active === tabId ? tabs[Math.min(index, tabs.length - 1)].id : pane.active;
+  return { ...layout, panes: { ...layout.panes, [paneId]: { ...pane, tabs, active } } };
+}
+
+export function updateTerminalTab(layout: Layout, paneId: string, tabId: string, change: Partial<TerminalTab>): Layout {
+  const pane = layout.panes[paneId];
+  if (pane?.kind !== 'terminal' || !pane.tabs.some(tab => tab.id === tabId)) return layout;
+  return { ...layout, panes: { ...layout.panes, [paneId]: { ...pane, tabs: pane.tabs.map(tab => tab.id === tabId ? { ...tab, ...change } : tab) } } };
+}
 
 export function emptyLayout(): Layout {
   const id = newId('pane');
@@ -104,4 +139,39 @@ export function closeWithin(layout: Layout, path: string): Layout {
     for (const file of pane.files) if (isWithin(file, path)) next = closeFile(next, pane.id, file);
   }
   return next;
+}
+
+/** The layout kept between launches. Terminals start a new shell in their place, so nothing about the old one is kept. */
+export function restorableLayout(layout: Layout): Layout {
+  const panes = Object.fromEntries(Object.entries(layout.panes).map(([id, pane]) => [id, pane.kind === 'terminal' ? { ...pane, tabs: pane.tabs.map(tab => ({ id: tab.id, number: tab.number })) } : pane])) as Record<string, Pane>;
+  return { ...layout, panes };
+}
+
+/** A saved layout read back, or null when it is not one this version can show. */
+export function readLayout(value: unknown): Layout | null {
+  if (!value || typeof value !== 'object') return null;
+  const { root, panes, focused } = value as Partial<Layout>;
+  if (!panes || typeof panes !== 'object') return null;
+  const seen = new Set<string>();
+  const valid = (node: unknown, depth: number): node is LayoutNode => {
+    if (!node || typeof node !== 'object' || depth > 32) return false;
+    const item = node as LayoutNode;
+    if (typeof item.id !== 'string') return false;
+    if (item.type === 'pane') {
+      const pane = (panes as Record<string, Pane>)[item.id];
+      if (!pane || pane.id !== item.id || seen.has(item.id)) return false;
+      seen.add(item.id);
+      if (pane.kind === 'terminal') {
+        // A terminal pane saved before it had tabs comes back with one.
+        if (!Array.isArray(pane.tabs) || !pane.tabs.length) Object.assign(pane, terminalPane(pane.id));
+        if (!pane.tabs.every(tab => tab && typeof tab.id === 'string')) return false;
+        if (!pane.tabs.some(tab => tab.id === pane.active)) pane.active = pane.tabs[0].id;
+        return true;
+      }
+      return pane.kind === 'editor' && Array.isArray(pane.files) && pane.files.every(file => typeof file === 'string') && (pane.active === undefined || pane.files.includes(pane.active));
+    }
+    return item.type === 'split' && (item.direction === 'row' || item.direction === 'column') && typeof item.ratio === 'number' && item.ratio > 0 && item.ratio < 1 && valid(item.a, depth + 1) && valid(item.b, depth + 1);
+  };
+  if (!valid(root, 0) || seen.size !== Object.keys(panes).length) return null;
+  return restorableLayout({ root, panes: panes as Record<string, Pane>, focused: typeof focused === 'string' && seen.has(focused) ? focused : [...seen][0] });
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { emptyLayout, splitPane, removePane, setRatio, openInEditor, closeFile, paneIds, filesInUse } from '../../lib/workbench-layout.ts';
 
-const terminal = id => ({ id, kind: 'terminal' });
+const terminal = id => ({ id, kind: 'terminal', tabs: [{ id: `${id}-shell` }], active: `${id}-shell` });
 
 test('splits place panes beside or below, and closing one gives its space to the sibling', () => {
   let layout = emptyLayout();

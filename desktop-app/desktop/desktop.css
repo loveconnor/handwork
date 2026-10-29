@@ -1037,8 +1037,9 @@ html.handwork-quick-root, html.handwork-quick-root body, html.handwork-quick-roo
 .handwork-mermaid-actions { display: inline-flex; gap: 2px; }
 .handwork-mermaid-actions button { gap: 5px; box-shadow: none; color: var(--hui-color-foreground-base-secondary); }
 .handwork-mermaid-actions button:hover { color: var(--hui-color-foreground-base-primary); }
-.handwork-mermaid-diagram { display: flex; justify-content: center; padding: 20px 16px; overflow-x: auto; scrollbar-width: thin; }
-.handwork-mermaid-diagram svg { max-width: 100%; height: auto; }
+.handwork-mermaid-diagram { display: flex; padding: 20px 16px; overflow-x: auto; scrollbar-width: thin; }
+/* The whole diagram fits the panel, never drawn larger than Mermaid laid it out. */
+.handwork-mermaid-diagram svg { width: min(100%, var(--handwork-mermaid-width, 100%)); max-width: none !important; height: auto; margin-inline: auto; }
 .handwork-mermaid-source { margin: 0; padding: 14px 16px; overflow-x: auto; background: transparent; font-family: var(--hui-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: var(--handwork-code-font-size, 12.5px); line-height: 1.6; white-space: pre; }
 .handwork-mermaid[data-state="streaming"] .handwork-mermaid-source { color: var(--hui-color-foreground-base-secondary); }
 .handwork-mermaid-note { margin: 0; padding: 8px 12px 10px; border-top: 1px solid var(--hui-color-border-base-primary); color: var(--hui-color-foreground-base-secondary); font-size: 12px; }

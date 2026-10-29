@@ -17,6 +17,16 @@ export function useStoredSize(key: string) {
   return [size, update] as const;
 }
 
+/** An on/off layout choice, remembered between launches. */
+export function useStoredFlag(key: string) {
+  const [flag, setFlag] = useState(() => { try { return localStorage.getItem(key) === '1'; } catch { return false; } });
+  const update = useCallback((value: boolean) => {
+    setFlag(value);
+    try { if (value) localStorage.setItem(key, '1'); else localStorage.removeItem(key); } catch { /* storage is optional */ }
+  }, [key]);
+  return [flag, update] as const;
+}
+
 /**
  * A drag handle that resizes a neighbouring element. `measure` returns the element's current size,
  * and `direction` is +1 when dragging right/down grows it and −1 when it shrinks it.

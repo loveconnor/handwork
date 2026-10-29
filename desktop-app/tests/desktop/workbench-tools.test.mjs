@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { EditorState } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { matchPath, rankPaths } from '../../lib/fuzzy-path.ts';
-import { closeWithin, emptyLayout, movedPath, openInEditor, renameInLayout, splitPane } from '../../lib/workbench-layout.ts';
+import { addTerminalTab, closeTerminalTab, closeWithin, emptyLayout, movedPath, openInEditor, paneIds, readLayout, renameInLayout, restorableLayout, splitPane, terminalPane, updateTerminalTab } from '../../lib/workbench-layout.ts';
 import { isLintable, syntaxDiagnostics } from '../../components/site/editorLint.ts';
 
 const files = ['lib/workbench-layout.ts', 'components/site/HandworkWorkbench.tsx', 'tests/desktop/workbench-layout.test.mjs', 'lib/fuzzy-path.ts', 'README.md', 'docs/layout/wide.md'];
@@ -63,4 +63,45 @@ test('change bars mark lines added, changed and deleted since the file was stage
   removed = removed.update({ changes: { from: 2, to: 4 } }).state;
   assert.deepEqual(changedLines(removed), [{ line: 2, kind: 'deleted' }]);
   assert.deepEqual(changedLines(state.update({ effects: setGitBase.of(null) }).state), [], 'an untracked file has no bars');
+});
+
+test('a saved layout comes back as it was left, with terminals ready for a new shell, and a damaged one is refused', () => {
+  let layout = openInEditor(openInEditor(emptyLayout(), 'src/a.ts'), 'README.md');
+  const editor = layout.focused;
+  layout = splitPane(layout, editor, { id: 'term', kind: 'terminal', tabs: [{ id: 's1', terminalId: '00000000-0000-0000-0000-000000000000', shell: 'zsh', exited: true }, { id: 's2' }], active: 's2' }, 'column', 0.6);
+  layout = { ...layout, focused: editor };
+  const restored = readLayout(JSON.parse(JSON.stringify(restorableLayout(layout))));
+  assert.deepEqual(restored.root, layout.root);
+  assert.deepEqual(restored.panes[editor], { id: editor, kind: 'editor', files: ['src/a.ts', 'README.md'], active: 'README.md' });
+  assert.deepEqual(restored.panes.term, { id: 'term', kind: 'terminal', tabs: [{ id: 's1', number: undefined }, { id: 's2', number: undefined }], active: 's2' });
+  // A terminal pane saved before panes had tabs comes back with one shell.
+  const legacy = readLayout({ ...layout, panes: { ...layout.panes, term: { id: 'term', kind: 'terminal', terminalId: 'x', shell: 'zsh' } } });
+  assert.equal(legacy.panes.term.tabs.length, 1);
+  assert.equal(legacy.panes.term.active, legacy.panes.term.tabs[0].id);
+  assert.equal(restored.focused, editor);
+  assert.equal(readLayout({ ...layout, focused: 'gone' }).focused, editor, 'a lost focus falls back to the first pane');
+  for (const damaged of [null, 'text', { root: layout.root }, { ...layout, panes: { [editor]: layout.panes[editor] } }, { ...layout, panes: { ...layout.panes, [editor]: { id: editor, kind: 'editor', files: ['a'], active: 'b' } } }, { ...layout, root: { ...layout.root, ratio: 4 } }])
+    assert.equal(readLayout(damaged), null, JSON.stringify(damaged)?.slice(0, 80));
+});
+
+test('a terminal pane keeps shells as tabs: new ones show, closing one shows its neighbour, and the last closes the pane', () => {
+  const start = emptyLayout();
+  const editor = start.focused;
+  let layout = splitPane(start, editor, terminalPane('term'), 'column');
+  const first = layout.panes.term.active;
+  layout = updateTerminalTab(layout, 'term', first, { terminalId: 'id-1', shell: 'zsh' });
+  layout = addTerminalTab(addTerminalTab(layout, 'term'), 'term');
+  const [, second, third] = layout.panes.term.tabs.map(tab => tab.id);
+  assert.equal(layout.panes.term.active, third, 'a new shell is shown');
+  assert.equal(layout.panes.term.tabs[0].terminalId, 'id-1', 'the first keeps its shell');
+  layout = closeTerminalTab(layout, 'term', third);
+  assert.equal(layout.panes.term.active, second, 'closing the shown shell shows its neighbour');
+  layout = closeTerminalTab(layout, 'term', first);
+  assert.deepEqual(layout.panes.term.tabs.map(tab => tab.id), [second]);
+  assert.equal(layout.panes.term.tabs[0].number, 2, 'a shell keeps its number as others close');
+  assert.equal(addTerminalTab(layout, 'term').panes.term.tabs.at(-1).number, 3, 'and new ones count on from the highest');
+  assert.equal(layout.panes.term.active, second);
+  layout = closeTerminalTab(layout, 'term', second);
+  assert.equal(layout.panes.term, undefined, 'closing the last shell closes the pane');
+  assert.deepEqual(paneIds(layout.root), [editor]);
 });

@@ -1,4 +1,4 @@
-import { LSPClient, LSPPlugin, Workspace, formatKeymap, hoverTooltips, jumpToDefinition, jumpToDefinitionKeymap, serverCompletion, serverDiagnostics, signatureHelp, type Transport, type WorkspaceFile } from '@codemirror/lsp-client';
+import { LSPClient, LSPPlugin, Workspace, formatDocument, formatKeymap, hoverTooltips, jumpToDefinition, jumpToDefinitionKeymap, serverCompletion, serverDiagnostics, signatureHelp, type Transport, type WorkspaceFile } from '@codemirror/lsp-client';
 import { ChangeSet, Prec, Text, type Extension } from '@codemirror/state';
 import { EditorView, keymap, showDialog, type Command } from '@codemirror/view';
 import type { DesktopAPI, LanguageServerKind, ProjectSearchMatch } from '@/lib/desktop-api';
@@ -255,6 +255,14 @@ export class LanguageSupport {
   private absolute(path: string) {
     const separator = this.workspace.includes('\\') && !this.workspace.includes('/') ? '\\' : '/';
     return `${this.workspace.replace(/[\\/]+$/, '')}${separator}${path.split('/').join(separator)}`;
+  }
+
+  /** Run a language command on an editor, as its key would; false when no server serves that editor. */
+  command(name: 'definition' | 'references' | 'rename' | 'format', view: EditorView): boolean {
+    if (!LSPPlugin.get(view)) return false;
+    const run = { definition: jumpToDefinition, references: this.referencesCommand, rename: this.renameCommand, format: formatDocument }[name];
+    view.focus();
+    return run(view);
   }
 
   private editorExtension(client: LSPClient, path: string, languageId: string): Extension {

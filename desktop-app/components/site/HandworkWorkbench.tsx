@@ -1,16 +1,25 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { toggleComment } from '@codemirror/commands';
+import { selectSelectionMatches } from '@codemirror/search';
 import { Reorder, useReducedMotion } from 'motion/react';
 import { ContextMenu } from '@base-ui/react/context-menu';
-import { ChevronRight, Copy, File, FilePlus, Folder, FolderOpen, FolderPlus, RefreshCw, X, LoaderCircle, Columns2, Rows2, Search, SquareTerminal, TextSearch, Pencil, Trash2, ExternalLink } from 'honestui/icons';
+import { ChevronRight, ChevronDown, Check, Copy, File, FilePlus, Folder, FolderOpen, FolderPlus, RefreshCw, X, LoaderCircle, Columns2, Rows2, Search, SquareTerminal, TextSearch, Pencil, Trash2, ExternalLink, Plus, Scissors, ClipboardPaste, CornerDownRight, ListTree, TextCursorInput, WandSparkles, Hash, ReplaceAll } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
 import { HoverTooltip } from '@/components/ui/tooltip';
-import { MenuItem, MenuPopup, MenuSeparator } from '@/components/ui/menu';
+import { Menu, MenuGroup, MenuGroupLabel, MenuItem, MenuPopup, MenuSeparator, MenuShortcut, MenuTrigger } from '@/components/ui/menu';
+import { shortcutLabel } from '@/lib/saved-prompts';
 import type { DesktopAPI, ProjectFileEntry, ProjectSearchMatch } from '@/lib/desktop-api';
-import { closeFile, closeWithin, emptyLayout, filesInUse, isWithin, movedPath, newId, openInEditor, removePane, renameInLayout, setRatio, splitPane, updatePane, type EditorPane, type Layout, type LayoutNode, type TerminalPane } from '@/lib/workbench-layout';
-import { HandworkCodeEditor, type EditorReveal } from './HandworkCodeEditor';
+import { addTerminalTab, closeFile, closeTerminalTab, closeWithin, emptyLayout, filesInUse, isWithin, movedPath, newId, openInEditor, readLayout, removePane, renameInLayout, restorableLayout, setRatio, splitPane, terminalPane, updatePane, updateTerminalTab, type EditorPane, type Layout, type LayoutNode, type TerminalPane } from '@/lib/workbench-layout';
+import { HandworkCodeEditor, type EditorCursor, type EditorReveal, type EditorSelection } from './HandworkCodeEditor';
 import { HandworkTerminal } from './HandworkTerminal';
+import { HandworkMark } from './HandworkMark';
+import { Markdown } from 'honestui/ai/markdown';
+import { mathPlugins } from 'honestui/ai/markdown-math';
+import { prepareMath } from '@/lib/markdown-math';
 import { HandworkQuickOpen } from './HandworkQuickOpen';
 import { HandworkProjectSearch, MatchList, groupMatches } from './HandworkProjectSearch';
 import { LanguageSupport, type ServerStatus } from './editorLanguageServer';
@@ -25,7 +34,8 @@ type OpenFile = {
   /** The file as last staged in git, for the editor's change bars; null when git does not track it. */
   base?: string | null;
 };
-type WorkbenchState = { layout: Layout; files: Record<string, OpenFile>; expanded: string[]; sidebar?: 'files' | 'search' | 'references' };
+/** `previews` are the Markdown files shown rendered rather than as source. */
+type WorkbenchState = { layout: Layout; files: Record<string, OpenFile>; expanded: string[]; sidebar?: 'files' | 'search' | 'references'; previews?: string[] };
 /** A name being typed in the tree: a new file or folder inside `parent`, or a new name for `path`. */
 type TreeEdit = { kind: 'file' | 'directory'; parent: string; error?: string } | { kind: 'rename'; path: string; error?: string };
 /** What a right-click in the tree acts on; '' is the project root. */
@@ -36,9 +46,16 @@ type MenuTarget = { path: string; kind: 'file' | 'directory' };
  * unsaved edits and running terminals, and reopening picks them all back up.
  */
 const saved = new Map<string, WorkbenchState>();
+/** Each project's folder listings, so its tree shows at once when it is opened again and refreshes behind. */
+type Listing = ProjectFileEntry[] | 'loading' | { error: string };
+const listings = new Map<string, Map<string, Listing>>();
 const editorStates = new Map<string, Map<string, EditorState>>();
-/** The open project's language servers; they outlive the panel, and stop when another project is opened. */
-let languages: LanguageSupport | null = null;
+/**
+ * Language servers by project; they outlive the panel. The two projects used last keep theirs,
+ * so switching back and forth finds them warm; older ones stop.
+ */
+const languages = new Map<string, LanguageSupport>();
+const KEPT_LANGUAGE_PROJECTS = 2;
 
 const cleanError = (cause: unknown) => cause instanceof Error ? cause.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(cause);
 const baseName = (file: string) => file.split('/').pop() || file;
@@ -46,34 +63,132 @@ const parentOf = (file: string) => file.includes('/') ? file.slice(0, file.lastI
 const joinPath = (parent: string, name: string) => parent ? `${parent}/${name}` : name;
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 const isDirty = (file?: OpenFile) => !!file && file.status === 'ready' && file.text !== file.saved;
+const isMarkdown = (path: string) => /\.(md|mdx|markdown)$/i.test(path);
+/** Where a link in a rendered Markdown file points inside the project, or null for the web or the page itself. */
+function projectLink(from: string, href: string): string | null {
+  if (!href || /^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('#') || href.startsWith('//')) return null;
+  const parts = (href.startsWith('/') ? href.slice(1) : `${parentOf(from) ? `${parentOf(from)}/` : ''}${href}`).split(/[?#]/)[0].split('/');
+  const resolved: string[] = [];
+  for (const part of parts) { if (part === '..') { if (!resolved.length) return null; resolved.pop(); } else if (part && part !== '.') resolved.push(decodeURIComponent(part)); }
+  return resolved.join('/') || null;
+}
 
-export type WorkbenchRequest = { kind: 'terminal' | 'file'; path?: string; at: number };
+/**
+ * Between launches each project keeps its layout, open folders, unsaved text and
+ * cursors in local storage; files are read from disk again when it opens.
+ * Unsaved text is capped so one large file cannot crowd out the rest.
+ */
+const storageKey = (workspace: string) => `handwork.workbench:${workspace}`;
+const MAX_DRAFT = 512_000, MAX_DRAFTS = 2_000_000;
+/** Unsaved text read back at launch, waiting for its file to load. */
+const pendingDrafts = new Map<string, Map<string, string>>();
+const cursors = new Map<string, Map<string, EditorCursor>>();
+const emptyState = (): WorkbenchState => ({ layout: emptyLayout(), files: {}, expanded: [''] });
+const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+function restore(workspace: string): WorkbenchState {
+  if (!workspace) return emptyState();
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey(workspace)) ?? 'null');
+    const layout = readLayout(stored?.layout);
+    if (!layout) return emptyState();
+    const record = (value: unknown) => value && typeof value === 'object' ? Object.entries(value as Record<string, unknown>) : [];
+    pendingDrafts.set(workspace, new Map(record(stored.drafts).filter((entry): entry is [string, string] => typeof entry[1] === 'string')));
+    cursors.set(workspace, new Map(record(stored.cursors).filter((entry): entry is [string, EditorCursor] => {
+      const cursor = entry[1] as EditorCursor | null;
+      return !!cursor && Number.isInteger(cursor.line) && Number.isInteger(cursor.column);
+    })));
+    return { layout, files: {}, expanded: [...new Set(['', ...strings(stored.expanded)])], sidebar: stored.sidebar === 'search' ? 'search' : 'files', previews: strings(stored.previews).filter(path => filesInUse(layout).has(path)) };
+  } catch { return emptyState(); }
+}
+
+function persist(workspace: string, state: WorkbenchState) {
+  if (!workspace) return;
+  const inUse = filesInUse(state.layout);
+  const drafts: Record<string, string> = {};
+  let total = 0;
+  const keep = (path: string, text: string) => { if (text.length <= MAX_DRAFT && total + text.length <= MAX_DRAFTS) { drafts[path] = text; total += text.length; } };
+  for (const file of Object.values(state.files)) if (isDirty(file)) keep(file.path, file.text);
+  // Text read back but not yet shown is kept until its file has loaded.
+  for (const [path, text] of pendingDrafts.get(workspace) ?? []) if (inUse.has(path) && !(path in drafts)) keep(path, text);
+  const kept = Object.fromEntries([...cursors.get(workspace) ?? []].filter(([path]) => inUse.has(path)));
+  try {
+    localStorage.setItem(storageKey(workspace), JSON.stringify({ layout: restorableLayout(state.layout), expanded: state.expanded, sidebar: state.sidebar === 'search' ? 'search' : 'files', previews: (state.previews ?? []).filter(path => inUse.has(path)), drafts, cursors: kept }));
+  } catch { /* storage is optional */ }
+}
+
+/** What the IDE view's menus ask of the workbench. */
+export type WorkbenchCommand = 'new-file' | 'new-folder' | 'quick-open' | 'save' | 'save-all' | 'close-editor' | 'reveal' | 'search'
+  | 'split-right' | 'split-down' | 'definition' | 'references' | 'rename' | 'format' | 'new-terminal' | 'split-terminal';
+export type WorkbenchRequest = { kind: 'terminal' | 'file' | 'command'; path?: string; line?: number; command?: WorkbenchCommand; at: number };
+/** The file being worked on, and what is selected in it, for the chat to send along; `text` reads it as it is now, unsaved edits included. */
+export type EditorContext = { path: string; absolute: string; selection: EditorSelection | null; text: () => string };
 
 /**
  * The project's files and shells beside the chat: a tree to browse, and panes
  * that split side by side or stacked, each an editor with tabs or a terminal.
  * Saving checks the file has not changed on disk since it was opened, so an
  * agent's edit is never overwritten without asking.
+ *
+ * Given `treeHost`, `tabsHost` and `actionsHost`, as the IDE view does, the tree
+ * moves into the app's sidebar, and the main editor's tabs and actions into the
+ * app's title row. `onContext` hears which file and selection are being worked
+ * on, and `onAsk` asks the chat about it; a new `refresh` reads open files again, as after an agent's reply.
+ * With `projects`, the project's name above the tree switches to another one.
  */
-export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: DesktopAPI; workspace: string; request?: WorkbenchRequest; onClose?: () => void }) {
-  const [state, setState] = useState<WorkbenchState>(() => saved.get(workspace) ?? { layout: emptyLayout(), files: {}, expanded: [''] });
-  const [directories, setDirectories] = useState<Map<string, ProjectFileEntry[] | 'loading' | { error: string }>>(new Map());
+export function HandworkWorkbench({ api, workspace, request, onClose, treeHost, tabsHost, actionsHost, onContext, onAsk, refresh, projects }: {
+  api?: DesktopAPI; workspace: string; request?: WorkbenchRequest; onClose?: () => void;
+  treeHost?: HTMLElement | null; tabsHost?: HTMLElement | null; actionsHost?: HTMLElement | null;
+  onContext?: (context: EditorContext | null) => void; onAsk?: () => void; refresh?: number;
+  projects?: { list: string[]; onSwitch: (project: string) => void; onOpen: () => void };
+}) {
+  const [state, setState] = useState<WorkbenchState>(() => saved.get(workspace) ?? restore(workspace));
+  const shownProject = useRef(workspace);
+  const [directories, setDirectoriesState] = useState<Map<string, Listing>>(() => listings.get(workspace) ?? new Map());
+  // A listing that arrives after another project took over is kept for its own project only.
+  const setDirectories = useCallback((change: Map<string, Listing> | ((current: Map<string, Listing>) => Map<string, Listing>)) => {
+    if (shownProject.current !== workspace) {
+      const current = listings.get(workspace) ?? new Map();
+      listings.set(workspace, typeof change === 'function' ? change(current) : change);
+      return;
+    }
+    setDirectoriesState(current => {
+      const next = typeof change === 'function' ? change(current) : change;
+      listings.set(workspace, next);
+      return next;
+    });
+  }, [workspace]);
   const stateRef = useRef(state);
   stateRef.current = state;
-  useEffect(() => { saved.set(workspace, state); }, [workspace, state]);
+  // For one render after the project changes, the state is still the last project's; it must not be saved as this one's.
+  const stateOwner = useRef(workspace);
+  // Written shortly after each change and as the window closes, so a quit keeps the latest.
+  const persistTimer = useRef<number | undefined>(undefined);
+  const persistNow = useCallback(() => { window.clearTimeout(persistTimer.current); persistTimer.current = undefined; if (stateOwner.current === workspace) persist(workspace, stateRef.current); }, [workspace]);
+  const persistSoon = useCallback(() => { window.clearTimeout(persistTimer.current); persistTimer.current = window.setTimeout(persistNow, 400); }, [persistNow]);
+  useEffect(() => { if (stateOwner.current !== workspace) return; saved.set(workspace, state); persistSoon(); }, [workspace, state, persistSoon]);
+  useEffect(() => {
+    window.addEventListener('beforeunload', persistNow);
+    return () => { window.removeEventListener('beforeunload', persistNow); if (persistTimer.current !== undefined) persistNow(); };
+  }, [persistNow]);
 
   const loadDirectory = useCallback(async (directory: string) => {
     if (!api?.listProjectFiles || !workspace) return;
-    setDirectories(current => new Map(current).set(directory, 'loading'));
+    // A folder already listed keeps showing while it is read again.
+    setDirectories(current => Array.isArray(current.get(directory)) ? current : new Map(current).set(directory, 'loading'));
     try { const result = await api.listProjectFiles(workspace, directory); setDirectories(current => new Map(current).set(directory, result.entries)); }
     catch (cause) { setDirectories(current => new Map(current).set(directory, { error: cleanError(cause) })); }
-  }, [api, workspace]);
+  }, [api, workspace, setDirectories]);
 
-  // Another project brings its own workbench, as it was left.
+  // Another project brings its own workbench, as it was left, even in an earlier launch.
   useEffect(() => {
-    const next = saved.get(workspace) ?? { layout: emptyLayout(), files: {}, expanded: [''] };
+    const next = saved.get(workspace) ?? restore(workspace);
+    stateOwner.current = workspace;
+    shownProject.current = workspace;
     setState(next);
-    setDirectories(new Map());
+    // Files still loading when this project was left are read again.
+    for (const path of filesInUse(next.layout)) if (!next.files[path] || next.files[path].status === 'loading') void loadFile(path);
+    setDirectoriesState(listings.get(workspace) ?? new Map());
     if (workspace) for (const directory of next.expanded) void loadDirectory(directory);
   }, [workspace, loadDirectory]);
 
@@ -81,28 +196,40 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
   const reduceMotion = useReducedMotion();
   // A drag ends with a click on whatever is under the pointer; that click must not close or switch tabs.
   const dragging = useRef(false);
+  // Each pane's tab strip; a dragged tab stays inside it, where the strip's clipping would otherwise hide it.
+  const tabStrips = useRef(new Map<string, { current: HTMLDivElement | null }>());
+  const tabStrip = (id: string) => { let strip = tabStrips.current.get(id); if (!strip) tabStrips.current.set(id, strip = { current: null }); return strip; };
   const updateFile = (path: string, change: Partial<OpenFile>) => setState(current => current.files[path] ? { ...current, files: { ...current.files, [path]: { ...current.files[path], ...change } } } : current);
 
   const loadBase = useCallback((path: string) => {
     if (!api?.projectFileBase) return;
     // Change bars are a nicety; without git they are simply not shown.
-    api.projectFileBase(workspace, path).then(result => updateFile(path, { base: result.text })).catch(() => {});
+    api.projectFileBase(workspace, path).then(result => { if (shownProject.current === workspace) updateFile(path, { base: result.text }); }).catch(() => {});
   }, [api, workspace]);
 
   // Where the next opened file puts its cursor, from a search result.
   const [reveal, setReveal] = useState<(EditorReveal & { path: string }) | null>(null);
   const revealToken = useRef(0);
+  /** Read a file into the workbench; unsaved text kept from the last launch goes back on top. */
+  const loadFile = useCallback(async (path: string) => {
+    if (!api) return;
+    setState(current => ({ ...current, files: { ...current.files, [path]: { path, text: '', saved: '', revision: null, status: 'loading' } } }));
+    try {
+      const result = await api.readProjectFile(workspace, path);
+      // Read for a project that is no longer shown: it is read again when that project returns.
+      if (shownProject.current !== workspace) return;
+      const editable = !result.tooLarge && !result.binary;
+      const draft = editable ? pendingDrafts.get(workspace)?.get(path) : undefined;
+      pendingDrafts.get(workspace)?.delete(path);
+      updateFile(path, { status: result.tooLarge ? 'tooLarge' : result.binary ? 'binary' : 'ready', text: draft ?? result.text ?? '', saved: result.text ?? '', revision: result.revision });
+      if (editable) loadBase(path);
+    } catch (cause) { if (shownProject.current === workspace) updateFile(path, { status: 'error', error: cleanError(cause) }); }
+  }, [api, workspace, loadBase]);
   const openFile = useCallback(async (path: string, at?: Omit<EditorReveal, 'token'>) => {
     setLayout(layout => openInEditor(layout, path));
     if (at) setReveal({ path, ...at, token: ++revealToken.current });
-    if (stateRef.current.files[path]) return;
-    setState(current => ({ ...current, files: { ...current.files, [path]: { path, text: '', saved: '', revision: null, status: 'loading' } } }));
-    try {
-      const result = await api!.readProjectFile(workspace, path);
-      updateFile(path, { status: result.tooLarge ? 'tooLarge' : result.binary ? 'binary' : 'ready', text: result.text ?? '', saved: result.text ?? '', revision: result.revision });
-      if (!result.tooLarge && !result.binary) loadBase(path);
-    } catch (cause) { updateFile(path, { status: 'error', error: cleanError(cause) }); }
-  }, [api, workspace, loadBase]);
+    if (!stateRef.current.files[path]) await loadFile(path);
+  }, [loadFile]);
 
   // Language servers reach back into the workbench to show a file or change one no editor shows.
   const [references, setReferences] = useState<{ symbol: string; matches: ProjectSearchMatch[]; collapsed: string[] } | null>(null);
@@ -124,21 +251,34 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
   const [supportVersion, setSupportVersion] = useState(0);
   useEffect(() => {
     if (!api?.lspStart || !workspace) { setSupport(null); return; }
-    if (languages?.workspace !== workspace) {
-      languages?.dispose();
-      languages = new LanguageSupport(api, workspace, { open: path => languageHooks.current.open(path), edit: (path, change) => languageHooks.current.edit(path, change), references: (symbol, matches) => languageHooks.current.references(symbol, matches) });
-    }
-    setSupport(languages);
-    return languages.subscribe(() => setSupportVersion(count => count + 1));
+    let project = languages.get(workspace);
+    if (project) languages.delete(workspace);
+    else project = new LanguageSupport(api, workspace, { open: path => languageHooks.current.open(path), edit: (path, change) => languageHooks.current.edit(path, change), references: (symbol, matches) => languageHooks.current.references(symbol, matches) });
+    // Most recent last; the oldest beyond the kept few stop.
+    languages.set(workspace, project);
+    for (const [other, support] of languages) if (languages.size > KEPT_LANGUAGE_PROJECTS && other !== workspace) { support.dispose(); languages.delete(other); }
+    setSupport(project);
+    return project.subscribe(() => setSupportVersion(count => count + 1));
   }, [api, workspace]);
   const editorSupport = useCallback((path: string) => support!.support(path), [support]);
 
   const newTerminal = useCallback((from?: string, direction?: 'row' | 'column') => setLayout(layout => {
     const target = from ?? layout.focused;
-    const pane: TerminalPane = { id: newId('pane'), kind: 'terminal' };
     // Below an editor by default, beside another terminal.
-    return splitPane(layout, target, pane, direction ?? (layout.panes[target]?.kind === 'terminal' ? 'row' : 'column'), direction ? 0.5 : 0.6);
+    return splitPane(layout, target, terminalPane(), direction ?? (layout.panes[target]?.kind === 'terminal' ? 'row' : 'column'), direction ? 0.5 : 0.6);
   }), []);
+  /** Another shell as a tab in the terminal pane last used, or a new pane when there is none. */
+  const newTerminalTab = useCallback(() => {
+    const { panes, focused } = stateRef.current.layout;
+    const pane = panes[focused]?.kind === 'terminal' ? panes[focused] : Object.values(panes).find(item => item.kind === 'terminal');
+    if (pane) setLayout(layout => addTerminalTab(layout, pane.id)); else newTerminal();
+  }, [newTerminal]);
+  const closeShell = (paneId: string, tabId: string) => {
+    const pane = stateRef.current.layout.panes[paneId];
+    const tab = pane?.kind === 'terminal' ? pane.tabs.find(item => item.id === tabId) : undefined;
+    if (tab?.terminalId) void api?.closeTerminal(tab.terminalId).catch(() => {});
+    setLayout(layout => closeTerminalTab(layout, paneId, tabId));
+  };
 
   const splitEditor = (from: string, direction: 'row' | 'column') => setLayout(layout => {
     const source = layout.panes[from];
@@ -153,7 +293,7 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
       const unsaved = pane.files.filter(path => !others.has(path) && isDirty(stateRef.current.files[path]));
       if (unsaved.length && !window.confirm(`Close ${unsaved.length === 1 ? baseName(unsaved[0]) : `${unsaved.length} files`} without saving your changes?`)) return;
     }
-    if (pane?.kind === 'terminal' && pane.terminalId) void api?.closeTerminal(pane.terminalId).catch(() => {});
+    if (pane?.kind === 'terminal') for (const tab of pane.tabs) if (tab.terminalId) void api?.closeTerminal(tab.terminalId).catch(() => {});
     editorStates.delete(id);
     setState(current => {
       const layout = removePane(current.layout, id);
@@ -320,13 +460,53 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
   // Requests from outside: the Terminal button, or a file named elsewhere in the app.
   useEffect(() => {
     if (!request) return;
-    if (request.kind === 'file' && request.path) void openFile(request.path);
+    if (request.kind === 'file' && request.path) void openFile(request.path, request.line ? { line: request.line } : undefined);
     if (request.kind === 'terminal') {
-      const existing = Object.values(stateRef.current.layout.panes).find(pane => pane.kind === 'terminal' && !pane.exited);
+      const existing = Object.values(stateRef.current.layout.panes).find(pane => pane.kind === 'terminal' && pane.tabs.some(tab => !tab.exited));
       if (existing) setLayout(layout => ({ ...layout, focused: existing.id })); else newTerminal();
     }
+    if (request.kind === 'command' && request.command) runCommand(request.command);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request]);
+
+  // After an agent's reply, open files it changed are read again; one with edits of its own is flagged instead.
+  useEffect(() => {
+    if (!refresh || !api) return;
+    void (async () => {
+      for (const file of Object.values(stateRef.current.files)) {
+        if (file.status !== 'ready' || file.saving) continue;
+        const read = await api.readProjectFile(workspace, file.path).catch(() => null);
+        const current = stateRef.current.files[file.path];
+        if (!read || !current || read.revision === current.revision) continue;
+        if (isDirty(current)) { updateFile(file.path, { conflict: true }); continue; }
+        updateFile(file.path, { status: read.tooLarge ? 'tooLarge' : read.binary ? 'binary' : 'ready', text: read.text ?? '', saved: read.text ?? '', revision: read.revision, conflict: false });
+        loadBase(file.path);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refresh]);
+
+  /** A menu command, acting on the editor last worked in, as a key in it would. */
+  const runCommand = (command: WorkbenchCommand) => {
+    const { layout, files } = stateRef.current;
+    const focused = layout.panes[layout.focused];
+    const editor = (focused?.kind === 'editor' ? focused : layout.panes[lastEditor.current]?.kind === 'editor' ? layout.panes[lastEditor.current] : Object.values(layout.panes).find(pane => pane.kind === 'editor')) as EditorPane | undefined;
+    const active = editor?.active;
+    const view = () => { const element = editor && document.querySelector(`.handwork-pane[data-pane="${editor.id}"] .cm-editor`); return element instanceof HTMLElement ? EditorView.findFromDOM(element) : null; };
+    switch (command) {
+      case 'new-file': case 'new-folder': startCreate(command === 'new-file' ? 'file' : 'directory', active ? parentOf(active) : ''); break;
+      case 'quick-open': setQuickOpen(true); break;
+      case 'search': showSearch(); break;
+      case 'save': if (active) void save(active); break;
+      case 'save-all': for (const file of Object.values(files)) if (isDirty(file)) void save(file.path); break;
+      case 'close-editor': if (editor && active) closeTab(editor.id, active); break;
+      case 'reveal': if (active) void api?.revealFile(absolute(active)).catch(cause => setTreeError(cleanError(cause))); break;
+      case 'split-right': case 'split-down': if (editor) splitEditor(editor.id, command === 'split-right' ? 'row' : 'column'); break;
+      case 'new-terminal': newTerminalTab(); break;
+      case 'split-terminal': newTerminal(focused?.kind === 'terminal' ? focused.id : undefined, focused?.kind === 'terminal' ? 'row' : undefined); break;
+      case 'definition': case 'references': case 'rename': case 'format': { const target = view(); if (target) support?.command(command, target); }
+    }
+  };
 
 
   const toggleDirectory = (directory: string) => {
@@ -337,6 +517,34 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
 
   const focusedPane = state.layout.panes[state.layout.focused];
   const activeFile = focusedPane?.kind === 'editor' ? focusedPane.active : undefined;
+  // The editor whose tabs sit in the title row: the one last worked in, kept while a terminal has focus.
+  const lastEditor = useRef('');
+  if (focusedPane?.kind === 'editor') lastEditor.current = focusedPane.id;
+  // The chat hears which file is being worked on, and the selection in it, as they change.
+  const selections = useRef(new Map<string, EditorSelection | null>());
+  const contextTimer = useRef<number | undefined>(undefined);
+  const contextKey = useRef('');
+  const reportContext = useRef(() => {});
+  reportContext.current = () => {
+    if (!onContext) return;
+    const { layout, files } = stateRef.current;
+    const pane = layout.panes[lastEditor.current]?.kind === 'editor' ? layout.panes[lastEditor.current] : Object.values(layout.panes).find(item => item.kind === 'editor');
+    const path = pane?.kind === 'editor' ? pane.active : undefined;
+    const ready = !!path && files[path]?.status === 'ready';
+    const selection = ready ? selections.current.get(path) ?? null : null;
+    const key = ready ? `${workspace}:${path}:${selection?.from ?? ''}-${selection?.to ?? ''}` : '';
+    if (key === contextKey.current) return;
+    contextKey.current = key;
+    onContext(ready ? { path, absolute: absolute(path), selection, text: () => { const text = stateRef.current.files[path]?.text ?? ''; return selection ? text.slice(selection.from, selection.to) : text; } } : null);
+  };
+  const onContextRef = useRef(onContext);
+  onContextRef.current = onContext;
+  useEffect(() => reportContext.current());
+  useEffect(() => () => { window.clearTimeout(contextTimer.current); contextKey.current = ''; onContextRef.current?.(null); }, []);
+
+  const mainEditor = tabsHost === undefined ? undefined
+    : state.layout.panes[lastEditor.current]?.kind === 'editor' ? lastEditor.current
+    : Object.values(state.layout.panes).find(pane => pane.kind === 'editor')?.id;
   const nameInput = (kind: 'file' | 'directory', depth: number, initial: string, error?: string) => <TreeNameInput key={edit?.kind === 'rename' ? `rename:${edit.path}` : `new:${kind}`} kind={kind} depth={depth} initial={initial} error={error}
     onCommit={value => void commitEdit(value)} onCancel={() => setEdit(null)} />;
   const tree = (directory: string, depth: number): ReactNode => {
@@ -370,27 +578,81 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
     {Object.keys(state.layout.panes).length > 1 && <HoverTooltip content={kind === 'terminal' ? 'Close terminal' : 'Close pane'}><Button size="icon-sm" variant="ghost" aria-label={kind === 'terminal' ? 'Close terminal' : 'Close pane'} onClick={() => closePane(id)}><X aria-hidden width={14} height={14} /></Button></HoverTooltip>}
   </div>;
 
+  // Right-click in an editor: what other editors offer, for the selection or the symbol under it.
+  const [editorMenu, setEditorMenu] = useState<{ paneId: string; path: string; selected: boolean } | null>(null);
+  const editorView = (paneId: string) => {
+    const element = document.querySelector(`.handwork-pane[data-pane="${paneId}"] .cm-editor`);
+    return element instanceof HTMLElement ? EditorView.findFromDOM(element) : null;
+  };
+  const inEditor = (run: (view: EditorView) => unknown) => () => {
+    const view = editorMenu && editorView(editorMenu.paneId);
+    if (!view) return;
+    // The menu hands focus back as it closes; the command runs once the editor has it again.
+    window.setTimeout(() => { view.focus(); run(view); });
+  };
+  const editorMenuItems = () => {
+    if (!editorMenu) return null;
+    const { path, selected } = editorMenu;
+    const served = support?.status(path)?.state === 'ready';
+    const language = (name: 'definition' | 'references' | 'rename' | 'format') => inEditor(view => { support?.command(name, view); });
+    const clipboard = (action: 'cut' | 'copy' | 'paste') => inEditor(() => { void api?.editAction?.(action).catch(() => {}); });
+    return <>
+      {served && <>
+        <MenuItem onClick={language('definition')}><CornerDownRight aria-hidden />Go to Definition<MenuShortcut>F12</MenuShortcut></MenuItem>
+        <MenuItem onClick={language('references')}><ListTree aria-hidden />Find References<MenuShortcut>{shortcutLabel('Shift+F12')}</MenuShortcut></MenuItem>
+        <MenuItem onClick={language('rename')}><TextCursorInput aria-hidden />Rename Symbol<MenuShortcut>F2</MenuShortcut></MenuItem>
+        <MenuSeparator />
+      </>}
+      {onAsk && <>
+        <MenuItem onClick={() => onAsk()}><HandworkMark className="handwork-menu-mark" />{selected ? 'Ask Handwork about Selection' : 'Ask Handwork about File'}<MenuShortcut>{shortcutLabel('Mod+L')}</MenuShortcut></MenuItem>
+        <MenuSeparator />
+      </>}
+      <MenuItem disabled={!selected} onClick={clipboard('cut')}><Scissors aria-hidden />Cut<MenuShortcut>{shortcutLabel('Mod+X')}</MenuShortcut></MenuItem>
+      <MenuItem disabled={!selected} onClick={clipboard('copy')}><Copy aria-hidden />Copy<MenuShortcut>{shortcutLabel('Mod+C')}</MenuShortcut></MenuItem>
+      <MenuItem onClick={clipboard('paste')}><ClipboardPaste aria-hidden />Paste<MenuShortcut>{shortcutLabel('Mod+V')}</MenuShortcut></MenuItem>
+      <MenuSeparator />
+      <MenuItem onClick={inEditor(view => { toggleComment(view); })}><Hash aria-hidden />Toggle Line Comment<MenuShortcut>{shortcutLabel('Mod+/')}</MenuShortcut></MenuItem>
+      {selected && <MenuItem onClick={inEditor(view => { selectSelectionMatches(view); })}><ReplaceAll aria-hidden />Select All Occurrences<MenuShortcut>{shortcutLabel('Shift+Mod+L')}</MenuShortcut></MenuItem>}
+      {served && <MenuItem onClick={language('format')}><WandSparkles aria-hidden />Format Document<MenuShortcut>{shortcutLabel('Shift+Alt+F')}</MenuShortcut></MenuItem>}
+      <MenuSeparator />
+      <MenuItem onClick={() => copyText(absolute(path))}><Copy aria-hidden />Copy Path</MenuItem>
+      <MenuItem onClick={() => copyText(path)}><Copy aria-hidden />Copy Relative Path</MenuItem>
+      {api?.revealFile && <MenuItem onClick={() => void api.revealFile(absolute(path)).catch(cause => setTreeError(cleanError(cause)))}><ExternalLink aria-hidden />{isMac ? 'Reveal in Finder' : 'Show in Folder'}</MenuItem>}
+    </>;
+  };
+
   const editorPane = (pane: EditorPane) => {
     const file = pane.active ? state.files[pane.active] : undefined;
+    const previewing = !!file && file.status === 'ready' && isMarkdown(file.path) && !!state.previews?.includes(file.path);
     let states = editorStates.get(pane.id);
     if (!states) editorStates.set(pane.id, states = new Map());
-    return <>
-      <div className="handwork-pane-header">
-        <Reorder.Group as="div" axis="x" layoutScroll values={pane.files} onReorder={files => setLayout(layout => updatePane(layout, pane.id, { files }))} className="handwork-editor-tabs" role="tablist" aria-label="Open files">{pane.files.map(path => {
+    const strip = tabStrip(pane.id);
+    const tabs = <Reorder.Group ref={strip} as="div" axis="x" layoutScroll values={pane.files} onReorder={files => setLayout(layout => updatePane(layout, pane.id, { files }))} className="handwork-editor-tabs" role="tablist" aria-label="Open files">{pane.files.map(path => {
           const on = path === pane.active;
           const dirty = isDirty(state.files[path]);
-          return <Reorder.Item as="div" key={path} value={path} className="handwork-editor-tab" data-active={on || undefined}
+          return <Reorder.Item as="div" key={path} value={path} className="handwork-editor-tab" data-active={on || undefined} dragConstraints={strip} dragElastic={0}
             transition={reduceMotion ? { duration: 0 } : SPRING_LAYOUT} whileDrag={{ zIndex: 2, boxShadow: '0 6px 16px -6px oklch(0 0 0 / 0.35)' }}
             onDragStart={() => { dragging.current = true; setLayout(layout => ({ ...updatePane(layout, pane.id, { active: path }), focused: pane.id })); }}
             onDragEnd={() => { setTimeout(() => { dragging.current = false; }); }}>
             <button type="button" role="tab" aria-selected={on} title={path} onClick={() => { if (!dragging.current) setLayout(layout => ({ ...updatePane(layout, pane.id, { active: path }), focused: pane.id })); }} onAuxClick={event => { if (event.button === 1) closeTab(pane.id, path); }}><span>{baseName(path)}</span></button>
             <button type="button" className="handwork-editor-tab-close" data-dirty={dirty || undefined} aria-label={dirty ? `Close ${baseName(path)}, unsaved changes` : `Close ${baseName(path)}`} onClick={() => { if (!dragging.current) closeTab(pane.id, path); }}><span className="handwork-editor-dirty" aria-hidden /><X aria-hidden width={12} height={12} /></button>
           </Reorder.Item>;
-        })}</Reorder.Group>
-        {paneActions(pane.id, 'editor')}
-      </div>
+        })}</Reorder.Group>;
+    // Raised into the title row, the tabs and the pane's actions leave the pane without a header.
+    const raised = pane.id === mainEditor;
+    return <>
+      {raised ? <>{tabsHost && createPortal(tabs, tabsHost)}{actionsHost && createPortal(paneActions(pane.id, 'editor'), actionsHost)}</>
+        : <div className="handwork-pane-header">{tabs}{paneActions(pane.id, 'editor')}</div>}
       {file && <div className="handwork-editor-bar">
         <span className="handwork-editor-path" title={file.path}>{file.path.split('/').map((part, index, parts) => <span key={index} data-last={index === parts.length - 1 || undefined}>{part}</span>)}</span>
+        {file.status === 'ready' && isMarkdown(file.path) && <div className="handwork-view-switch" role="radiogroup" aria-label="Show as">
+          {(['source', 'preview'] as const).map(mode => {
+            const on = (mode === 'preview') === previewing;
+            return <button key={mode} type="button" role="radio" aria-checked={on} data-on={on || undefined}
+              onClick={() => setState(current => ({ ...current, previews: mode === 'preview' ? [...new Set([...(current.previews ?? []), file.path])] : (current.previews ?? []).filter(path => path !== file.path) }))}>
+              {mode === 'preview' ? 'Preview' : 'Code'}</button>;
+          })}
+        </div>}
         {file.saving ? <span className="handwork-editor-state"><LoaderCircle aria-hidden width={12} height={12} className="motion-safe:animate-spin" />Saving</span>
           : isDirty(file) ? <Button size="xs" variant="outline" className="handwork-editor-save" onClick={() => void save(file.path)}>Save</Button>
           : file.status === 'ready' ? <span className="handwork-editor-state">Saved</span> : null}
@@ -402,30 +664,76 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
         <Button size="xs" variant="outline" onClick={() => void save(file.path, true)}>Overwrite</Button>
       </div>}
       {file?.error && <div className="handwork-editor-notice" role="alert" data-error><span>{file.error}</span></div>}
-      <div className="handwork-editor-body">
+      <ContextMenu.Root disabled={file?.status !== 'ready' || previewing} onOpenChange={open => { if (!open) setEditorMenu(null); }}>
+      <ContextMenu.Trigger className="handwork-editor-body" onContextMenuCapture={event => {
+        if (file?.status !== 'ready') return;
+        const element = event.currentTarget.querySelector('.cm-editor');
+        const view = element instanceof HTMLElement ? EditorView.findFromDOM(element) : null;
+        setEditorMenu({ paneId: pane.id, path: file.path, selected: !!view && !view.state.selection.main.empty });
+      }}>
         {!file ? <div className="handwork-workbench-empty handwork-editor-empty"><File aria-hidden width={22} height={22} /><strong>No file open</strong><span>Choose a file on the left, press {isMac ? '⌘P' : 'Ctrl+P'} to find one by name, or ⌃` for a terminal.</span></div>
           : file.status === 'loading' ? <div className="handwork-workbench-empty">Opening {baseName(file.path)}…</div>
           : file.status === 'binary' ? <div className="handwork-workbench-empty">{baseName(file.path)} is a binary file and can’t be edited here.</div>
           : file.status === 'tooLarge' ? <div className="handwork-workbench-empty">{baseName(file.path)} is larger than 2 MB, too large to edit here.</div>
           : file.status === 'error' ? <div className="handwork-workbench-empty">Could not open {baseName(file.path)}.</div>
+          : previewing ? <div className="handwork-markdown-preview" tabIndex={0} aria-label={`${baseName(file.path)}, rendered`}>
+            <Markdown className="handwork-file-markdown" syntaxHighlighting syntaxPalette="violet" remarkPlugins={mathPlugins.remarkPlugins} rehypePlugins={mathPlugins.rehypePlugins} components={{
+              // Links to the project's own files open here; the web opens in the browser.
+              a: ({ href, children }) => <a href={href} onClick={event => {
+                if (!href || href.startsWith('#')) return;
+                event.preventDefault();
+                const target = projectLink(file.path, href);
+                if (target) void openFile(target);
+                else if (/^https?:/i.test(href)) window.open(href, '_blank', 'noopener,noreferrer');
+              }}>{children}</a>,
+            }}>{prepareMath(file.text)}</Markdown>
+          </div>
           : <HandworkCodeEditor path={file.path} text={file.text} editable={!file.saving} states={states} base={file.base}
-            reveal={reveal?.path === file.path && state.layout.focused === pane.id ? reveal : undefined} onRevealed={() => setReveal(null)} support={support ? editorSupport : undefined} supportVersion={supportVersion}
+            reveal={reveal?.path === file.path && state.layout.focused === pane.id ? reveal : undefined} onRevealed={() => setReveal(null)}
+            cursorOf={path => cursors.get(workspace)?.get(path)} onCursor={(path, cursor, selection) => {
+              if (!cursors.has(workspace)) cursors.set(workspace, new Map());
+              cursors.get(workspace)!.set(path, cursor);
+              selections.current.set(path, selection);
+              persistSoon();
+              window.clearTimeout(contextTimer.current);
+              contextTimer.current = window.setTimeout(() => reportContext.current(), 120);
+            }} support={support ? editorSupport : undefined} supportVersion={supportVersion}
             onChange={(path, text) => updateFile(path, { text })} onSave={path => void save(path)} />}
-      </div>
+      </ContextMenu.Trigger>
+      <MenuPopup align="start" className="handwork-editor-menu">{editorMenu?.paneId === pane.id && editorMenuItems()}</MenuPopup>
+      </ContextMenu.Root>
     </>;
   };
 
-  const terminalPane = (pane: TerminalPane) => <>
+  // Each shell is a tab; the others keep running out of sight and are shown as they were left.
+  const terminalView = (pane: TerminalPane) => <>
     <div className="handwork-pane-header">
-      <span className="handwork-pane-title"><SquareTerminal aria-hidden width={13} height={13} />{pane.shell ?? 'Terminal'}{pane.exited && <span className="handwork-pane-note">exited</span>}</span>
+      <div className="handwork-terminal-tabs" role="tablist" aria-label="Terminals">
+        {pane.tabs.map((tab, index) => {
+          const on = tab.id === pane.active;
+          const number = tab.number ?? index + 1;
+          const label = `${tab.shell ?? 'Terminal'}${pane.tabs.length > 1 || number > 1 ? ` ${number}` : ''}`;
+          return <div key={tab.id} className="handwork-terminal-tab" data-active={on || undefined} data-exited={tab.exited || undefined}>
+            <button type="button" role="tab" aria-selected={on} title={tab.exited ? `${label} (exited)` : label}
+              onClick={() => setLayout(layout => ({ ...updatePane(layout, pane.id, { active: tab.id }), focused: pane.id }))}
+              onAuxClick={event => { if (event.button === 1) closeShell(pane.id, tab.id); }}>
+              <SquareTerminal aria-hidden width={13} height={13} /><span>{label}</span>
+            </button>
+            <button type="button" className="handwork-terminal-tab-close" aria-label={`Close ${label}`} onClick={() => closeShell(pane.id, tab.id)}><X aria-hidden width={12} height={12} /></button>
+          </div>;
+        })}
+        <HoverTooltip content="New terminal (⌃⇧`)"><Button size="icon-sm" variant="ghost" className="handwork-terminal-new" aria-label="New terminal" onClick={() => setLayout(layout => addTerminalTab(layout, pane.id))}><Plus aria-hidden width={14} height={14} /></Button></HoverTooltip>
+      </div>
       {paneActions(pane.id, 'terminal')}
     </div>
     <div className="handwork-terminal-body">
-      {pane.error ? <div className="handwork-workbench-empty">{pane.error}</div>
-        : api && <HandworkTerminal key={pane.id} api={api} workspace={workspace} terminalId={pane.terminalId} focused={state.layout.focused === pane.id}
-          onOpened={(terminalId, shell) => setLayout(layout => updatePane(layout, pane.id, { terminalId, shell }))}
-          onExit={() => setLayout(layout => updatePane(layout, pane.id, { exited: true }))}
-          onError={error => setLayout(layout => updatePane(layout, pane.id, { error }))} />}
+      {pane.tabs.map(tab => <div key={tab.id} className="handwork-terminal-shell" hidden={tab.id !== pane.active}>
+        {tab.error ? <div className="handwork-workbench-empty">{tab.error}</div>
+          : api && <HandworkTerminal api={api} workspace={workspace} terminalId={tab.terminalId} focused={state.layout.focused === pane.id && tab.id === pane.active}
+            onOpened={(terminalId, shell) => setLayout(layout => updateTerminalTab(layout, pane.id, tab.id, { terminalId, shell }))}
+            onExit={() => setLayout(layout => updateTerminalTab(layout, pane.id, tab.id, { exited: true }))}
+            onError={error => setLayout(layout => updateTerminalTab(layout, pane.id, tab.id, { error }))} />}
+      </div>)}
     </div>
   </>;
 
@@ -433,12 +741,12 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
     if (node.type === 'pane') {
       const pane = state.layout.panes[node.id];
       if (!pane) return null;
-      return <section key={pane.id} className="handwork-pane" data-kind={pane.kind} data-focused={state.layout.focused === pane.id || undefined} aria-label={pane.kind === 'terminal' ? 'Terminal' : 'Editor'}
+      return <section key={pane.id} className="handwork-pane" data-pane={pane.id} data-kind={pane.kind} data-focused={state.layout.focused === pane.id || undefined} aria-label={pane.kind === 'terminal' ? 'Terminal' : 'Editor'}
         onPointerDownCapture={() => { if (stateRef.current.layout.focused !== pane.id) setLayout(layout => ({ ...layout, focused: pane.id })); }}>
-        {pane.kind === 'editor' ? editorPane(pane) : terminalPane(pane)}
+        {pane.kind === 'editor' ? editorPane(pane) : terminalView(pane)}
       </section>;
     }
-    return <div key={node.id} className="handwork-split" data-direction={node.direction} style={{ gridTemplateColumns: node.direction === 'row' ? `${node.ratio}fr 1px ${1 - node.ratio}fr` : undefined, gridTemplateRows: node.direction === 'column' ? `${node.ratio}fr 1px ${1 - node.ratio}fr` : undefined }}>
+    return <div key={node.id} className="handwork-split" data-direction={node.direction} style={{ gridTemplateColumns: node.direction === 'row' ? `${node.ratio}fr var(--handwork-split-gap, 1px) ${1 - node.ratio}fr` : undefined, gridTemplateRows: node.direction === 'column' ? `${node.ratio}fr var(--handwork-split-gap, 1px) ${1 - node.ratio}fr` : undefined }}>
       {render(node.a, depth + 1)}
       <SplitDivider direction={node.direction} depth={depth} onRatio={ratio => setLayout(layout => setRatio(layout, node.id, ratio))} />
       {render(node.b, depth + 1)}
@@ -446,14 +754,28 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
   };
 
   if (!workspace) return <div className="handwork-workbench-empty">Open a project to browse its files and run a terminal.</div>;
-  return <div className="handwork-workbench">
-    <nav className="handwork-file-tree" aria-label={sidebar === 'search' ? 'Search in files' : sidebar === 'references' ? 'References' : 'Project files'}>
+  const navigation = <nav className="handwork-file-tree" aria-label={sidebar === 'search' ? 'Search in files' : sidebar === 'references' ? 'References' : 'Project files'}>
       <div className="handwork-file-tree-header">
         {sidebar !== 'files' ? <>
           <span className="handwork-file-tree-title"><TextSearch aria-hidden width={14} height={14} />{sidebar === 'references' ? `References to ${references?.symbol ?? ''}` : 'Search'}</span>
           <HoverTooltip content="Show files"><Button size="icon-sm" variant="ghost" aria-label="Show files" onClick={() => setState(current => ({ ...current, sidebar: 'files' }))}><FolderOpen aria-hidden width={14} height={14} /></Button></HoverTooltip>
         </> : <>
-          <span className="handwork-file-tree-title" title={workspace}><FolderOpen aria-hidden width={14} height={14} />{baseName(workspace)}</span>
+          {projects ? <Menu>
+            <MenuTrigger render={<button type="button" className="handwork-file-tree-title handwork-project-switch" title={`${workspace} — switch project`} />}>
+              <FolderOpen aria-hidden width={14} height={14} /><span>{baseName(workspace)}</span><ChevronDown aria-hidden width={12} height={12} className="handwork-project-switch-chevron" />
+            </MenuTrigger>
+            <MenuPopup align="start" className="handwork-project-menu">
+              <MenuGroup>
+              <MenuGroupLabel>Projects</MenuGroupLabel>
+              {projects.list.map(project => <MenuItem key={project} title={project} onClick={() => { if (project !== workspace) projects.onSwitch(project); }}>
+                <FolderOpen aria-hidden /><span className="handwork-project-menu-name">{baseName(project.replace(/[\\/]+$/, ''))}</span>{project === workspace && <Check aria-hidden className="handwork-project-menu-current" />}
+              </MenuItem>)}
+              </MenuGroup>
+              <MenuSeparator />
+              <MenuItem onClick={projects.onOpen}><FolderPlus aria-hidden />Open Folder…<MenuShortcut>{shortcutLabel('Mod+O')}</MenuShortcut></MenuItem>
+            </MenuPopup>
+          </Menu>
+          : <span className="handwork-file-tree-title" title={workspace}><FolderOpen aria-hidden width={14} height={14} />{baseName(workspace)}</span>}
           <HoverTooltip content="New file"><Button size="icon-sm" variant="ghost" aria-label="New file" onClick={() => startCreate('file', '')}><FilePlus aria-hidden width={14} height={14} /></Button></HoverTooltip>
           <HoverTooltip content="New folder"><Button size="icon-sm" variant="ghost" aria-label="New folder" onClick={() => startCreate('directory', '')}><FolderPlus aria-hidden width={14} height={14} /></Button></HoverTooltip>
           <HoverTooltip content={`Search in files (${isMac ? '⌘⇧F' : 'Ctrl+Shift+F'})`}><Button size="icon-sm" variant="ghost" aria-label="Search in files" onClick={showSearch}><TextSearch aria-hidden width={14} height={14} /></Button></HoverTooltip>
@@ -488,7 +810,9 @@ export function HandworkWorkbench({ api, workspace, request, onClose }: { api?: 
             {api?.revealFile && <MenuItem onClick={() => void api.revealFile(absolute(menuTarget.path)).catch(cause => setTreeError(cleanError(cause)))}><ExternalLink aria-hidden />{isMac ? 'Reveal in Finder' : 'Show in folder'}</MenuItem>}
           </MenuPopup>
         </ContextMenu.Root>}
-    </nav>
+    </nav>;
+  return <div className="handwork-workbench" data-tree={treeHost === undefined ? undefined : 'outside'}>
+    {treeHost === undefined ? navigation : treeHost && createPortal(navigation, treeHost)}
     <div className="handwork-panes">{render(state.layout.root)}</div>
     <HandworkQuickOpen open={quickOpen} onOpenChange={setQuickOpen} api={api} workspace={workspace}
       recent={Object.values(state.layout.panes).flatMap(pane => pane.kind === 'editor' ? pane.files : [])} onPick={path => void openFile(path)} />

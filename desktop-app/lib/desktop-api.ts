@@ -232,6 +232,10 @@ export interface DesktopAPI {
   removeProject(path: string): Promise<string[]>;
   selectProject(path: string): Promise<{ path: string }>;
   windowAction(action: 'minimize' | 'toggle-maximize' | 'close' | 'state'): Promise<{ fullscreen: boolean; maximized: boolean } | undefined>;
+  /** The IDE view's menus (File, Go, Terminal) are in the menu bar only while it shows. */
+  setMenuMode?(ide: boolean): Promise<void>;
+  /** Cut, copy or paste in the focused field, as the Edit menu does; the page itself may not read the clipboard. */
+  editAction?(action: 'cut' | 'copy' | 'paste'): Promise<void>;
   chooseWorkspace(): Promise<{ path: string } | null>;
   /** Reads up to `room` picked files; the rest, and any that cannot be attached, come back with reasons. */
   chooseFiles(room?: number): Promise<{ files: Attachment[]; rejected: { name: string; reason: string }[] }>;

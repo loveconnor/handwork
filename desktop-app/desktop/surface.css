@@ -459,7 +459,7 @@ html.is-mac, .handwork-mac { -webkit-font-smoothing: antialiased; }
 .handwork-empty { max-width: calc(720px + 32px); }
 
 /* Header actions are one family: same height, size, weight and ink. */
-.handwork-header-actions > :is(.handwork-changes-trigger, #handwork-activity-trigger, #handwork-files-trigger, #handwork-terminal-trigger) {
+.handwork-header-actions > :is(.handwork-changes-trigger, #handwork-activity-trigger, #handwork-files-trigger, #handwork-chat-trigger, #handwork-terminal-trigger) {
   min-height: 28px;
   height: 28px;
   gap: 6px;
@@ -474,7 +474,7 @@ html.is-mac, .handwork-mac { -webkit-font-smoothing: antialiased; }
   color: var(--hui-color-foreground-base-secondary);
   transition: background-color 150ms ease, color 150ms ease;
 }
-.handwork-header-actions > :is(.handwork-changes-trigger, #handwork-activity-trigger, #handwork-files-trigger, #handwork-terminal-trigger):not(:disabled):hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-header-actions > :is(.handwork-changes-trigger, #handwork-activity-trigger, #handwork-files-trigger, #handwork-chat-trigger, #handwork-terminal-trigger):not(:disabled):hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
 .handwork-header-actions > :is(.handwork-changes-trigger[aria-expanded="true"], #handwork-activity-trigger[aria-pressed="true"], #handwork-files-trigger[aria-pressed="true"]) { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); }
 
 /* The message rail is a way to jump, not content: faint until reached for. */
@@ -1387,3 +1387,216 @@ body[data-resizing="column"] { cursor: row-resize; }
 .handwork-code-find-expand .handwork-code-find-icon { transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1); }
 .handwork-code-find[data-replace] .handwork-code-find-expand .handwork-code-find-icon { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .handwork-code-find, .handwork-code-find-expand .handwork-code-find-icon { animation: none; transition: none; } }
+
+/* -------------------------------------------------------------------------- */
+/* IDE view: files in the sidebar, open files in the title row, chat beside   */
+/* -------------------------------------------------------------------------- */
+
+/* The body is a grid so the chat column can carry its own tab row while the
+   thread keeps its place in the DOM, and its scroll, whichever view is shown. */
+.handwork-workspace-body[data-layout="ide"] {
+  --handwork-ide-side: min(var(--handwork-ide-side-width, clamp(340px, 30vw, 460px)), calc(100% - 428px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8px var(--handwork-ide-side);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
+}
+.handwork-workspace-body[data-layout="ide"][data-side="none"] { grid-template-columns: minmax(0, 1fr); }
+.handwork-workspace-body[data-layout="ide"] > .handwork-ide-main { grid-column: 1; grid-row: 1 / -1; width: auto; min-width: 0; max-height: none; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-review-resize { grid-column: 2; grid-row: 1 / -1; margin: 0; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-review-panel:not(.handwork-ide-main) { grid-column: 3; grid-row: 1 / -1; width: auto; max-height: none; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-thread { grid-column: 3; grid-row: 2; border-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+.handwork-workspace-body[data-layout="ide"]:not([data-side="chat"]) > .handwork-thread { display: none; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-thread .handwork-empty h2 { font-size: 21px; line-height: 28px; }
+
+/* The chat trigger reads as the column's switch: an icon and a filled state while the chat shows. */
+#handwork-chat-trigger { gap: 6px; padding-inline: 8px; }
+#handwork-chat-trigger[aria-pressed="false"] { color: var(--hui-color-foreground-base-primary); box-shadow: inset 0 0 0 1px var(--hw-hairline); }
+#handwork-chat-trigger[aria-pressed="true"] { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); }
+.handwork-workspace-body[data-layout="ide"] { position: relative; }
+.handwork-ide-chat-reveal {
+  position: absolute; top: 50%; right: 0; z-index: 6; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 5px;
+  border: 1px solid var(--hw-hairline); border-right: 0; border-radius: 8px 0 0 8px;
+  background: var(--hw-panel); box-shadow: var(--hw-card-shadow);
+  color: var(--hui-color-foreground-base-secondary); font-size: 11.5px; font-weight: 500; cursor: pointer;
+}
+.handwork-ide-chat-reveal > span { writing-mode: vertical-rl; }
+.handwork-ide-chat-reveal:hover { color: var(--hui-color-foreground-base-primary); background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 4%, var(--hw-panel)); }
+.handwork-ide-chat-reveal:focus-visible { outline: var(--hui-focus-ring); outline-offset: 2px; }
+
+/* The chat column's tab row: its open chats, a new chat, and the chat's details. */
+.handwork-ide-chat-head {
+  grid-column: 3; grid-row: 1;
+  display: flex; align-items: center; gap: 4px; min-width: 0; height: 40px; padding: 0 6px;
+  border: 1px solid var(--hw-hairline); border-bottom-color: var(--hw-hairline);
+  border-radius: 10px 10px 0 0;
+  background: var(--hw-panel);
+}
+.handwork-ide-chat-head .handwork-tabs { flex: 1 1 auto; }
+.handwork-ide-chat-head .handwork-tab { flex-basis: 160px; width: 160px; min-width: 96px; }
+.handwork-ide-chat-head > .handwork-details-trigger { flex-shrink: 0; margin-left: auto; }
+
+/* The editor's tabs in the title row read as the app's tabs. */
+.handwork-ide-file-tabs { display: flex; flex: 0 1 auto; min-width: 0; height: 100%; align-items: center; -webkit-app-region: no-drag; }
+.handwork-ide-file-tabs .handwork-editor-tabs { flex: 0 1 auto; min-width: 0; height: auto; align-items: center; gap: 2px; border: 0; }
+.handwork-ide-file-tabs .handwork-editor-tab { height: 28px; max-width: 200px; border: 0; border-radius: 7px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-ide-file-tabs .handwork-editor-tab:hover { background: var(--hw-hover); }
+.handwork-ide-file-tabs .handwork-editor-tab[data-active] { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); }
+
+/* The tree fills the app sidebar in place of the chat list, right under the
+   title row. The footer floats over its foot on a fade, as the composer floats
+   over the chat, so the last files scroll out from under it. */
+.handwork-sidebar:has(.handwork-ide-tree):not([data-peek]) { position: relative; }
+.handwork-sidebar:has(.handwork-ide-tree) > ul:empty { display: none; }
+.handwork-sidebar:has(.handwork-ide-tree) [data-slot="sidebar-content"] { padding-block: 0; -webkit-mask-image: none; mask-image: none; }
+.handwork-sidebar:has(.handwork-ide-tree) > [data-slot="sidebar-footer"] {
+  position: absolute; inset-inline: 0; bottom: 0; z-index: 2;
+  padding: 28px 8px 8px;
+  background: linear-gradient(to bottom, transparent, var(--hw-chrome) 24px);
+  pointer-events: none;
+}
+.handwork-sidebar:has(.handwork-ide-tree) > [data-slot="sidebar-footer"] > * { pointer-events: auto; }
+.handwork-ide-tree .handwork-file-tree-body { padding-bottom: 64px; }
+.handwork-ide-tree { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0 -8px; }
+.handwork-ide-tree .handwork-file-tree { flex: 1; border: 0; background: transparent; }
+.handwork-ide-tree .handwork-file-tree-body { padding-inline: 6px; }
+.handwork-app:has(.handwork-ide-tree) .handwork-sidebar [data-slot="sidebar-content"] { overflow: hidden; }
+.handwork-workbench[data-tree="outside"] { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 1100px) {
+  .handwork-workspace-body[data-layout="ide"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto min(45dvh, 420px); }
+  .handwork-workspace-body[data-layout="ide"][data-side="none"] { grid-template-rows: minmax(0, 1fr); }
+  .handwork-workspace-body[data-layout="ide"] > .handwork-ide-main { grid-column: 1; grid-row: 1; margin-bottom: 8px; }
+  .handwork-workspace-body[data-layout="ide"] > .handwork-ide-chat-head { grid-column: 1; grid-row: 2; }
+  .handwork-workspace-body[data-layout="ide"] > .handwork-thread { grid-column: 1; grid-row: 3; }
+  .handwork-workspace-body[data-layout="ide"] > .handwork-review-panel:not(.handwork-ide-main) { grid-column: 1; grid-row: 2 / -1; }
+}
+
+/* A collapsed sidebar in the IDE view gives up its rail: only the pinned toggle
+   stays, Settings sits beside it in the title row, and a strip at the window's
+   edge, or the toggle, floats the whole sidebar over the code. */
+.handwork-app .handwork-sidebar[data-ide-rail] { width: 0; min-width: 0; padding: 0; border: 0; overflow: visible; }
+.handwork-sidebar[data-ide-rail]::after { display: none; }
+.handwork-sidebar[data-ide-rail] > :not([data-slot="sidebar-header"], [data-slot="sidebar-footer"]) { display: none; }
+.handwork-sidebar[data-ide-rail] > [data-slot="sidebar-footer"] { padding: 0; }
+.handwork-sidebar-edge { position: fixed; top: 44px; bottom: 0; left: 0; width: 8px; z-index: 39; }
+.handwork-app.handwork-app:has(.handwork-sidebar[data-ide-rail]) .handwork-workspace > .handwork-header { padding-left: calc(var(--handwork-toggle-left) + 34px); }
+.handwork-app:has(.handwork-sidebar[data-ide-rail]) .handwork-workspace-body { margin-left: 8px; }
+.handwork-ide-settings { flex-shrink: 0; width: 32px; min-width: 32px; height: 32px; border-color: transparent; border-radius: 6px; background: transparent; box-shadow: none; color: var(--hui-color-foreground-base-tertiary); -webkit-app-region: no-drag; }
+.handwork-ide-settings:hover { color: var(--hui-color-foreground-base-primary); background: var(--hw-hover); }
+.handwork-sidebar[data-peek] { position: absolute; inset-block: 0; left: 0; z-index: 40; background: var(--hui-color-background-base-secondary); box-shadow: 8px 0 24px -12px oklch(0 0 0 / 0.25); border-inline-end: 1px solid var(--hw-hairline); }
+.handwork-app:has(.handwork-sidebar[data-peek]) { position: relative; }
+.handwork-app.handwork-app:has(.handwork-sidebar[data-peek]) .handwork-workspace > .handwork-header { padding-left: calc(var(--handwork-toggle-left) + 34px); }
+.handwork-app:has(.handwork-sidebar[data-peek]) .handwork-workspace-body { margin-left: 8px; }
+
+/* The main editor's split and terminal buttons, with the other tools above the chat. */
+.handwork-ide-pane-actions { display: flex; align-items: center; }
+.handwork-ide-pane-actions:not(:empty) { margin-right: 4px; padding-right: 4px; border-inline-end: 1px solid var(--hw-hairline); }
+.handwork-ide-pane-actions .handwork-pane-actions { display: flex; gap: 2px; padding: 0; opacity: 1; }
+.handwork-ide-pane-actions .handwork-pane-actions button { color: var(--hui-color-foreground-base-tertiary); }
+
+/* Terminals: one surface with the editor above them, a slim title row with
+   each shell as a tab and a button for another, and the editor's type size. */
+.handwork-workbench .handwork-pane[data-kind="terminal"] { background: var(--hw-panel); }
+.handwork-pane[data-kind="terminal"] > .handwork-pane-header { height: 34px; padding: 0 4px 0 6px; border-bottom: 0; }
+.handwork-terminal-tabs { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.handwork-terminal-tabs::-webkit-scrollbar { display: none; }
+.handwork-terminal-tab { position: relative; display: flex; align-items: center; flex-shrink: 0; height: 24px; border-radius: 7px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-terminal-tab > button[role="tab"] { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 4px 0 9px; border: 0; background: none; color: inherit; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.handwork-terminal-tab > button[role="tab"] svg { color: var(--hui-color-foreground-base-tertiary); }
+.handwork-terminal-tab:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-terminal-tab[data-active] { background: var(--hw-selected); color: var(--hui-color-foreground-base-primary); }
+.handwork-pane[data-kind="terminal"]:not([data-focused]) .handwork-terminal-tab[data-active] { background: var(--hw-hover); }
+.handwork-terminal-tab[data-exited] > button[role="tab"] > span { text-decoration: line-through; text-decoration-color: var(--hui-color-foreground-base-tertiary); }
+.handwork-terminal-tab-close { display: grid; place-items: center; width: 18px; height: 18px; margin-right: 3px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--hui-color-foreground-base-tertiary); cursor: pointer; opacity: 0; }
+.handwork-terminal-tab:is(:hover, [data-active], :focus-within) .handwork-terminal-tab-close { opacity: 1; }
+.handwork-terminal-tab-close:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-terminal-tab :is(button):focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+.handwork-terminal-new { flex-shrink: 0; width: 24px; min-width: 24px; height: 24px; border: 0; box-shadow: none; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-terminal-new:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-terminal-body { padding: 2px 6px 6px 16px; }
+.handwork-terminal-shell { height: 100%; }
+.handwork-terminal-shell[hidden] { display: none; }
+/* xterm draws its own scrollbar; it shows as a thin rounded thumb only while the terminal is pointed at. */
+.handwork-terminal .xterm-scrollable-element > .scrollbar.vertical { width: 10px !important; opacity: 0; transition: opacity 150ms ease; }
+.handwork-terminal:hover .xterm-scrollable-element > .scrollbar.vertical { opacity: 1; }
+.handwork-terminal .xterm-scrollable-element > .scrollbar.vertical > .slider { left: 3px !important; width: 4px !important; border-radius: 999px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 18%, transparent) !important; }
+.handwork-terminal .xterm-scrollable-element > .scrollbar.vertical > .slider:hover { background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 32%, transparent) !important; }
+@media (prefers-reduced-motion: reduce) { .handwork-terminal .xterm-scrollable-element > .scrollbar.vertical { transition: none; } }
+
+/* In the IDE view each editor and terminal is its own card, the same 8px apart
+   as the app's other panels; the gap between them is the grip, showing a short
+   line when reached for. */
+.handwork-workspace-body[data-layout="ide"] > .handwork-ide-main { border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-ide-main > .handwork-panel-content { overflow: visible; }
+.handwork-ide-main .handwork-workbench { --handwork-split-gap: 8px; }
+.handwork-ide-main .handwork-workbench .handwork-pane { border: 1px solid var(--hw-hairline); border-radius: 10px; box-shadow: var(--hw-card-shadow); }
+.handwork-ide-main .handwork-split-divider, .handwork-ide-main .handwork-split-divider:is(:hover, :active) { background: transparent; }
+.handwork-ide-main .handwork-split-divider:is(:hover, :active)::before { content: ""; display: block; position: absolute; top: 50%; left: 3px; width: 2px; height: 40px; border-radius: 999px; background: var(--hw-field-focus); transform: translateY(-50%); }
+.handwork-ide-main .handwork-split-divider[data-direction="column"]:is(:hover, :active)::before { top: 3px; left: 50%; width: 40px; height: 2px; transform: translateX(-50%); }
+
+/* What goes with a message from the IDE view: the file being worked on, or the
+   lines selected in it, as one quiet chip above the composer's text. */
+.handwork-editor-context { display: inline-flex; align-items: center; align-self: flex-start; gap: 2px; max-width: 100%; margin: 2px 0 4px; padding: 0 2px 0 0; border: 1px solid var(--hw-hairline); border-radius: 7px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 2.5%, transparent); }
+.handwork-editor-context-chip { display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: 24px; padding: 0 4px 0 8px; font-size: 12px; color: var(--hui-color-foreground-base-secondary); }
+.handwork-editor-context-chip svg { flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-editor-context-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 11.5px; color: var(--hui-color-foreground-base-primary); }
+.handwork-editor-context-lines { flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-editor-context-remove { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--hui-color-foreground-base-tertiary); cursor: pointer; }
+.handwork-editor-context-remove:hover { background: var(--hw-hover); color: var(--hui-color-foreground-base-primary); }
+.handwork-editor-context-remove:focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+.handwork-editor-menu { min-width: 264px; }
+/* The logo is solid where line icons are drawn in strokes, so it is drawn a little smaller to sit at the same weight. */
+.handwork-menu-mark { transform: scale(0.76); opacity: 0.8; }
+
+/* Markdown files show as source or rendered, switched from the editor bar. The
+   rendered view uses the chat's prose, at a readable measure. */
+.handwork-view-switch { display: inline-flex; flex-shrink: 0; gap: 1px; margin-left: auto; padding: 2px; border-radius: 7px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 5%, transparent); }
+.handwork-view-switch + * { margin-left: 8px; }
+.handwork-view-switch > button { height: 20px; padding: 0 9px; border: 0; border-radius: 5px; background: none; color: var(--hui-color-foreground-base-secondary); font: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; }
+.handwork-view-switch > button:hover { color: var(--hui-color-foreground-base-primary); }
+.handwork-view-switch > button[data-on] { background: var(--hw-panel); color: var(--hui-color-foreground-base-primary); box-shadow: 0 0 0 0.5px var(--hw-hairline), 0 1px 2px oklch(0 0 0 / 0.06); }
+.handwork-view-switch > button:focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+.handwork-markdown-preview { height: 100%; overflow: auto; outline: none; }
+.handwork-markdown-preview > .handwork-file-markdown { max-width: 760px; margin: 0 auto; padding: 28px 32px 64px; background: transparent; }
+
+/* The project's name above the tree switches projects; it stays shown while the tree's other tools hide. */
+.handwork-file-tree .handwork-file-tree-header .handwork-project-switch.handwork-project-switch {
+  display: flex; flex: 0 1 auto; width: auto; min-width: 0; height: 28px; margin: 0 auto 0 -6px; padding: 0 6px;
+  opacity: 1; border: 0; border-radius: 6px; background: none; color: var(--hui-color-foreground-base-primary); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.handwork-file-tree .handwork-file-tree-header .handwork-project-switch.handwork-project-switch:hover,
+.handwork-file-tree .handwork-file-tree-header .handwork-project-switch.handwork-project-switch[data-popup-open] { background: var(--hw-hover); }
+.handwork-project-switch > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-project-switch-chevron { flex-shrink: 0; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-project-switch:focus-visible { outline: var(--hui-focus-ring); outline-offset: -1px; }
+.handwork-project-menu { min-width: 240px; max-width: 320px; }
+.handwork-project-menu-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.handwork-project-menu-current { margin-left: auto; color: var(--hui-color-foreground-base-secondary); }
+
+/* Landing: the question and where the work happens, over a soft
+   glow, with the composer lifted just off the page. The input stays centred. */
+.handwork-thread.is-landing { background-image: radial-gradient(ellipse 55% 40% at 50% 46%, color-mix(in srgb, var(--hui-color-foreground-base-primary) 3.5%, transparent), transparent 72%); }
+.handwork-empty { display: flex; flex-direction: column; align-items: center; }
+.handwork-empty h2 { font-size: 30px; line-height: 38px; font-weight: 500; letter-spacing: -0.03em; }
+.handwork-empty[data-kind="project"] h2 { color: var(--hui-color-foreground-base-secondary); }
+.handwork-empty h2 .handwork-greeting-project { color: var(--hui-color-foreground-base-primary); text-decoration: none; }
+.handwork-landing-sub.handwork-landing-sub { margin: 10px 0 0; font-size: 13.5px; line-height: 20px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-landing-meta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 0; max-width: 100%; margin-top: 12px; font-size: 12.5px; line-height: 18px; color: var(--hui-color-foreground-base-tertiary); }
+.handwork-landing-meta > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.handwork-landing-meta > span:first-child { overflow: hidden; text-overflow: ellipsis; font-family: var(--hui-font-family-mono, ui-monospace, monospace); font-size: 11.5px; }
+.handwork-landing-meta > span + span::before { content: ""; width: 3px; height: 3px; margin: 0 10px; border-radius: 999px; background: currentColor; opacity: 0.5; }
+.handwork-landing-meta svg { flex-shrink: 0; }
+.handwork-thread.is-landing [data-slot="prompt-bar-field"] { border-color: var(--hw-hairline-strong, var(--hw-hairline)); box-shadow: 0 1px 2px oklch(0 0 0 / 0.04), 0 18px 40px -18px oklch(0 0 0 / 0.18); }
+.handwork-thread.is-landing :is(.handwork-empty h2, .handwork-landing-sub, .handwork-landing-meta, [data-slot="chat-thread-footer"]) { animation: handwork-landing-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.handwork-thread.is-landing .handwork-empty h2 { animation-delay: 40ms; }
+.handwork-thread.is-landing :is(.handwork-landing-sub, .handwork-landing-meta) { animation-delay: 80ms; }
+.handwork-thread.is-landing [data-slot="chat-thread-footer"] { animation-delay: 110ms; }
+@keyframes handwork-landing-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .handwork-thread.is-landing :is(.handwork-empty h2, .handwork-landing-sub, .handwork-landing-meta, [data-slot="chat-thread-footer"]) { animation: none; } }
+/* The IDE view's narrower column keeps the same order at a smaller size. */
+/* The tree already names the project there, so its path gives way to the branch and changes. */
+.handwork-workspace-body[data-layout="ide"] > .handwork-thread .handwork-landing-meta > span:first-child { display: none; }
+.handwork-workspace-body[data-layout="ide"] > .handwork-thread .handwork-landing-meta > span:nth-child(2)::before { display: none; }
+@media (max-width: 700px) { .handwork-empty h2 { font-size: 24px; line-height: 32px; } }
