@@ -58,6 +58,9 @@ export function WorkspacePicker({
   const [footer, setFooter] = useState(120);
   const background = editing ? colors.sheet : colors.background;
   const monos = MONOS_ENABLED ? connection.catalog.monos : [];
+  const projects = connection.catalog.projects.filter(
+    (project) => project.kind !== "chats",
+  );
   const toggle = (field: keyof MobileSelection, id: string) => {
     void Haptics.selectionAsync();
     setDraft((previous) => ({
@@ -81,11 +84,11 @@ export function WorkspacePicker({
   };
   const count =
     draft.projectIds.filter((id) =>
-      connection.catalog.projects.some((project) => project.id === id),
+      projects.some((project) => project.id === id),
     ).length +
     draft.monoIds.filter((id) => monos.some((mono) => mono.id === id)).length;
   const disabled = saving || (!editing && !connection.connected);
-  const empty = !connection.catalog.projects.length && !monos.length;
+  const empty = !projects.length && !monos.length;
   const content = (
     <>
       <ScrollView
@@ -95,7 +98,9 @@ export function WorkspacePicker({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: editing
-            ? (androidHeader ? headerHeight + 12 : 4)
+            ? androidHeader
+              ? headerHeight + 12
+              : 4
             : insets.top + 48,
           paddingBottom: footer + 16,
           paddingHorizontal: 20,
@@ -133,9 +138,9 @@ export function WorkspacePicker({
             ))}
           </Section>
         ) : null}
-        {connection.catalog.projects.length ? (
+        {projects.length ? (
           <Section title="Projects" editing={editing}>
-            {connection.catalog.projects.map((project) => (
+            {projects.map((project) => (
               <PickCard
                 key={project.id}
                 editing={editing}
@@ -214,8 +219,12 @@ export function WorkspacePicker({
   );
   // Keep the ScrollView at the screen root, like SettingsPage. UIKit then
   // tracks it for transparent navigation and the custom fading header blur.
-  return editing ? content : (
-    <View style={[styles.screen, { backgroundColor: background }]}>{content}</View>
+  return editing ? (
+    content
+  ) : (
+    <View style={[styles.screen, { backgroundColor: background }]}>
+      {content}
+    </View>
   );
 }
 

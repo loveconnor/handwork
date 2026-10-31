@@ -1,0 +1,15 @@
+html, body {
+  margin: 0;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.generated-chat-ui {
+  min-width: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--hui-color-foreground-base-primary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+*, ::before, ::after { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; }

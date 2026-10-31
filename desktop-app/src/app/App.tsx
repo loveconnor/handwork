@@ -8238,6 +8238,7 @@ function Workspace({
         throw new Error("Enter a message under 100,000 characters");
       if (method === "session.start") {
         const paths = [
+          normalChatCwd(),
           ...loadRecents().map((project) => project.path),
           ...loadPinnedProjects(),
           ...listMonos().flatMap((mono) => mono.projects),
@@ -8260,7 +8261,7 @@ function Workspace({
             mobileNewSession(cwd, sessionDefaults?.runtimeMode),
             params,
           ),
-          ...(await mobileWorkspaceChoice(cwd, params)),
+          ...(isNormalChat(cwd) ? {} : await mobileWorkspaceChoice(cwd, params)),
         };
         // A placeholder title, so the first send seeds and generates one as the composer does.
         session.id = id;

@@ -96,7 +96,11 @@ export function EmptySession({
             style={styles.mark}
             accessibilityIgnoresInvertColors
           />
-          <Text style={styles.headline}>{EMPTY_HEADLINE}</Text>
+          <Text style={styles.headline}>
+            {project?.kind === "chats"
+              ? "What's on your mind?"
+              : EMPTY_HEADLINE}
+          </Text>
           {project ? (
             <Text style={styles.projectName} numberOfLines={1}>
               {project.name}

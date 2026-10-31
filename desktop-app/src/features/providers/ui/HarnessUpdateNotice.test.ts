@@ -71,9 +71,7 @@ describe("HarnessUpdateNotice", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    const notice = document.body.querySelector(
-      "[aria-label=\"Agent updates\"]",
-    );
+    const notice = document.body.querySelector('[aria-label="Agent updates"]');
     expect(notice?.textContent).toContain("Claude Code");
     expect(notice?.textContent).toContain("2.1.284 → 2.1.285");
 
@@ -104,6 +102,36 @@ describe("HarnessUpdateNotice", () => {
     expect(refreshHarnessCatalogs).toHaveBeenLastCalledWith(["claude"], {
       force: true,
     });
+    act(() => root.unmount());
+  });
+  it("names the active installation when an updater exits without replacing it", async () => {
+    installed = "2.1.284 (Claude Code)";
+    const { updateHarnessCli } =
+      await import("../../../integrations/harness/core/child");
+    vi.mocked(updateHarnessCli).mockImplementationOnce(async () => undefined);
+    refreshHarnessCatalogs.mockClear();
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(createElement(HarnessUpdateNotice));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const notice = document.body.querySelector('[aria-label="Agent updates"]')!;
+    const update = [...notice.querySelectorAll("button")].find(
+      (button) => button.textContent === "Update",
+    )!;
+    await act(async () => {
+      update.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(notice.textContent).toContain(
+      "The active installation is still 2.1.284",
+    );
+    expect(notice.textContent).toContain("/bin/claude");
+    expect(notice.textContent).toContain(
+      "choose another agent path in Settings",
+    );
+    expect(refreshHarnessCatalogs).not.toHaveBeenCalled();
     act(() => root.unmount());
   });
 });

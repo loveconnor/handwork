@@ -1718,12 +1718,6 @@ html.is-mac.has-native-glass.has-native-glass-tint.glass-body:not(.theme-light)
   background: color-mix(in srgb, var(--color-background-base) 0%, transparent);
 }
 
-textarea,
-input,
-.agent-transcript,
-.markdown-preview,
-.whats-new-md,
-.unified-diff,
 .markdown-view-actions {
   top: 0.5rem;
 }

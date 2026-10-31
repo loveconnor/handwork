@@ -9,6 +9,8 @@ import { GlassBlurTarget } from "@/ui/LiquidView";
 
 const desktop = vi.hoisted(() => ({
   startSession: vi.fn(),
+  worktrees: vi.fn(),
+  changes: vi.fn(),
   sendMessage: vi.fn(),
   offline: false,
   os: "ios",
@@ -23,7 +25,10 @@ const desktop = vi.hoisted(() => ({
   existing: { path: "/repo/.worktrees/mobile", name: "feature/mobile" },
 }));
 
-vi.mock("react-native-svg", () => ({ default: () => <svg />, Path: () => null }));
+vi.mock("react-native-svg", () => ({
+  default: () => <svg />,
+  Path: () => null,
+}));
 vi.mock("react-native", () => ({
   Platform: {
     get OS() {
@@ -115,13 +120,19 @@ vi.mock("@/features/connection/nativeLink", () => ({
   hasNativeTranscript: false,
 }));
 vi.mock("@/features/connection/useProjectChanges", () => ({
-  useProjectChanges: (_project: string, _enabled: boolean, path?: string) => ({
-    result: { branch: path ? desktop.existing.name : "main", files: [] },
-    error: null,
-  }),
+  useProjectChanges: (project: string, enabled: boolean, path?: string) => {
+    desktop.changes(project, enabled);
+    return {
+      result: { branch: path ? desktop.existing.name : "main", files: [] },
+      error: null,
+    };
+  },
 }));
 vi.mock("@/features/connection/useProjectWorktrees", () => ({
-  useProjectWorktrees: () => ({ worktrees: [desktop.existing], loaded: true }),
+  useProjectWorktrees: (project: string, enabled: boolean) => {
+    desktop.worktrees(project, enabled);
+    return { worktrees: [desktop.existing], loaded: true };
+  },
 }));
 vi.mock("@/features/background/useEmptyBackground", () => ({
   useEmptyBackground: vi.fn(),
@@ -336,6 +347,40 @@ describe("new session composer workspace", () => {
     root = createRoot(container);
   });
   afterEach(() => act(() => root.unmount()));
+
+  it.each(["ios", "android"])(
+    "starts normal chats without workspace controls or Git reads on %s",
+    async (os) => {
+      desktop.os = os;
+      const chats: Project = {
+        ...project,
+        id: "home",
+        name: "Chats",
+        path: "/home/me",
+        branch: "",
+        kind: "chats",
+      };
+      act(() =>
+        root.render(<ProjectScreen project={chats} sessionId={undefined} />),
+      );
+      expect(container.querySelector("[data-workspace]")).toBeNull();
+      expect(desktop.worktrees).toHaveBeenLastCalledWith("home", false);
+      expect(desktop.changes).toHaveBeenLastCalledWith("home", false);
+      await send();
+      expect(desktop.startSession).toHaveBeenLastCalledWith(
+        "home",
+        "Build the app",
+        {},
+        [],
+      );
+      act(() =>
+        root.render(<ProjectScreen project={chats} sessionId="chat" />),
+      );
+      expect(desktop.worktrees).toHaveBeenLastCalledWith("home", false);
+      expect(desktop.changes).toHaveBeenLastCalledWith("home", false);
+      expect(container.querySelector("[data-workspace]")).toBeNull();
+    },
+  );
 
   it("keeps circular Android project/settings controls after switching projects", () => {
     desktop.os = "android";

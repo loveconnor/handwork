@@ -45,14 +45,58 @@ describe("Honest UI artwork", () => {
       expect(html).toContain('width="18"');
     }
   });
-  it("uses Honest UI logos or neutral Honest UI icons for every provider", () => {
+  it("uses the upstream provider logo for shared-harness models", () => {
+    for (const [provider, brand] of Object.entries({
+      ollama: "ollama",
+      ollama_cloud: "ollama",
+      opencode: "opencode",
+      "opencode-go": "opencode",
+      "opencode-zen": "opencode",
+      deepseek: "deepseek",
+      anthropic: "anthropic",
+      openai: "openai",
+      "github-copilot": "githubcopilot",
+      "google-antigravity": "antigravity",
+      "google-gemini-cli": "geminicli",
+      "lm-studio": "lmstudio",
+      "openai-codex": "openai",
+      openrouter: "openrouter",
+      xai: "xai",
+    })) {
+      const html = renderToStaticMarkup(
+        createElement(HarnessIcon, { harness: "handwork", provider }),
+      );
+      expect(html, provider).toContain(`data-provider-logo="${brand}"`);
+      expect(html, provider).toContain("<svg");
+      expect(html, provider).toContain("<path");
+      expect(html, provider).not.toContain("mask:");
+    }
+  });
+  it("uses Honest UI artwork with LobeHub marks for missing provider brands", () => {
     for (const harness of HARNESSES) {
       const html = renderToStaticMarkup(
         createElement(HarnessIcon, { harness }),
       );
-      expect(html, harness).toContain("<svg");
       expect(html, harness).not.toContain("<img");
-      expect(html, harness).toMatch(/data-honest-(?:logo|icon)=/);
+      if (
+        [
+          "opencode",
+          "antigravity",
+          "hermes",
+          "devin",
+          "pi",
+          "omp",
+          "fx",
+        ].includes(harness)
+      ) {
+        expect(html, harness).toContain(`data-provider-logo="${harness}"`);
+        expect(html, harness).toContain("<svg");
+        expect(html, harness).toContain("<path");
+        expect(html, harness).not.toContain("mask:");
+      } else {
+        expect(html, harness).toContain("<svg");
+        expect(html, harness).toMatch(/data-honest-(?:logo|icon)=/);
+      }
     }
   });
 });

@@ -1782,6 +1782,7 @@ describe("collapsed rail actions", () => {
     ).toEqual([
       "Expand projects",
       "Switch project, current project project",
+      "New project",
       "Chats",
       "Explorer",
       "Changes",

@@ -341,6 +341,62 @@ describe("model picker", () => {
     expect(rows.some((row) => row.startsWith("Fast"))).toBe(true);
   });
 
+  it("puts local models under the OpenCode and Ollama tabs while keeping Handwork routing", () => {
+    const onChange = vi.fn();
+    setHarnessModels("handwork", [
+      {
+        id: "handwork:opencode/glm",
+        harness: "handwork",
+        name: "Local GLM",
+        nativeId: "opencode/glm",
+        provider: { id: "opencode", name: "OpenCode Local" },
+      },
+      {
+        id: "handwork:ollama/gpt-oss:20b",
+        harness: "handwork",
+        name: "gpt-oss:20b",
+        nativeId: "ollama/gpt-oss:20b",
+        provider: { id: "ollama", name: "Ollama" },
+      },
+    ]);
+    act(() =>
+      root.render(
+        createElement(ModelPicker, {
+          harness: "handwork",
+          model: "handwork:ollama/gpt-oss:20b",
+          values: {},
+          hideSettings: true,
+          onChange,
+          onSettingsChange: vi.fn(),
+        }),
+      ),
+    );
+    const trigger = container.querySelector<HTMLButtonElement>(
+      'button[aria-haspopup="dialog"]',
+    )!;
+    expect(
+      trigger.querySelector('[data-provider-logo="ollama"]'),
+    ).not.toBeNull();
+    act(() => trigger.click());
+    const ollamaTab = container.querySelector<HTMLElement>(
+      '[role="tab"][aria-label="Ollama"]',
+    )!;
+    expect(ollamaTab.getAttribute("aria-selected")).toBe("true");
+    expect(
+      container.querySelector('[role="option"][aria-label^="gpt-oss:20b"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[role="option"][aria-label^="Local GLM"]'),
+    ).toBeNull();
+    hover(container.querySelector('[role="tab"][aria-label="OpenCode"]')!);
+    const option = container.querySelector<HTMLButtonElement>(
+      '[role="option"][aria-label^="Local GLM"]',
+    )!;
+    expect(option).not.toBeNull();
+    act(() => option.click());
+    expect(onChange).toHaveBeenCalledWith("handwork", "handwork:opencode/glm");
+  });
+
   it("groups OpenCode models by provider and searches provider names", () => {
     setHarnessModels("opencode", [
       {
@@ -1006,7 +1062,7 @@ describe("model picker", () => {
       menu.querySelector('[role="group"][aria-label="Reasoning"]'),
     ).not.toBeNull();
     const serviceTierGroup = menu.querySelector<HTMLElement>(
-      "[role=\"group\"][aria-label=\"Service tier\"]",
+      '[role="group"][aria-label="Service tier"]',
     )!;
     expect(serviceTierGroup.textContent).toContain("Standard");
     expect(serviceTierGroup.textContent).toContain("Fast");

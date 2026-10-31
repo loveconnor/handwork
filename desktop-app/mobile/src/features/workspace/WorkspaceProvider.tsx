@@ -40,7 +40,7 @@ type Workspace = {
   projects: Project[];
   monos: Mono[];
   sessions: SessionSummary[];
-  watch: (id: string | null) => void;
+  watch: (id: string | null, native?: boolean) => void;
   startSession: (
     projectId: string,
     text: string,
@@ -184,7 +184,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // rename holds only while the desktop still has the title it replaced.
   const [renamed, setRenamed] = useState<Record<string, { title: string; from: string }>>({});
   const [deleted, setDeleted] = useState<ReadonlySet<string>>(new Set());
-  const [watching, watch] = useState<string | null>(null);
+  const [watching, setWatching] = useState<string | null>(null);
+  const [javascriptWatching, setJavascriptWatching] = useState(false);
+  const javascriptTranscripts = useRef(new Set<string>());
+  const watch = useCallback((id: string | null, native = hasNativeTranscript) => {
+    if (id) {
+      if (native) javascriptTranscripts.current.delete(id);
+      else javascriptTranscripts.current.add(id);
+    }
+    setJavascriptWatching(!native);
+    setWatching(id);
+  }, []);
   // Conversations showing turns from the disk cache, until the desktop's arrive.
   // They may be long out of date, so a watch opens on the latest turns rather
   // than carrying on from them.
@@ -221,7 +231,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // land as the desktop sends them. A desktop that cannot watch, or a dropped
   // link, falls back to reading once a second until a watch opens again.
   useEffect(() => {
-    if (!watching || !desktop || hasNativeTranscript) return;
+    if (!watching || !desktop || (hasNativeTranscript && !javascriptWatching)) return;
     const id = watching;
     let disposed = false;
     let watchId: number | null = null;
@@ -328,7 +338,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       save();
       if (watchId !== null) void closeWatch(watchId);
     };
-  }, [watching, desktop, read]);
+  }, [watching, javascriptWatching, desktop, read]);
   const mutationIds = useRef(new Map<string, string>());
   const { command, refresh } = connection;
   const mutate = useCallback(async <T,>(method: string, params: object): Promise<T> => {
@@ -386,7 +396,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback(async (conversationId: string, text: string, attachments: Attachment[] = []) => {
     const at = Date.now();
     const id = `pending:${at}`;
-    const userCount = hasNativeTranscript
+    const native = hasNativeTranscript && !javascriptTranscripts.current.has(conversationId);
+    const userCount = native
       ? (nativeUserCounts.current[conversationId] ?? 0)
       : countUserItems(turnsRef.current[conversationId]);
     setPending((previous) => ({
@@ -394,7 +405,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       [conversationId]: {
         turn: { id, items: [userItem(id, text, at, attachments)] },
         userCount,
-        ...(hasNativeTranscript && nativeLastUsers.current[conversationId]
+        ...(native && nativeLastUsers.current[conversationId]
           ? { afterUserId: nativeLastUsers.current[conversationId]! } : {}),
       },
     }));
@@ -408,7 +419,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setPending((previous) => withoutKey(previous, conversationId));
       throw reason;
     }
-    if (hasNativeTranscript) return; // The native watch retires the local echo.
+    if (native) return; // The native watch retires the local echo.
     await read(conversationId);
     // The read has the message; the watch may have brought it already.
     setPending((previous) =>
@@ -461,7 +472,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const stop = useCallback(
     async (conversationId: string) => {
       await mutate("session.cancel", { conversationId });
-      if (!hasNativeTranscript) await read(conversationId);
+      if (!hasNativeTranscript || javascriptTranscripts.current.has(conversationId)) await read(conversationId);
     },
     [mutate, read],
   );
@@ -581,6 +592,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     catalog,
     selection,
     remembered,
+    watch,
     startSession,
     sendMessage,
     stop,
@@ -625,15 +637,15 @@ function useLive() {
  * in: read the turns with useConversationTurns, in the transcript itself.
  * The watch opens only once `watching`, say once a pushed screen is moving.
  */
-export function useConversation(id: string | null, watching = true) {
+export function useConversation(id: string | null, watching = true, native = hasNativeTranscript) {
   const { watch } = useWorkspace();
   const status = use(StatusContext);
   if (!status) throw new Error("useConversation must be used inside WorkspaceProvider");
   useEffect(() => {
     if (!watching) return;
-    watch(id);
+    watch(id, native);
     return () => watch(null);
-  }, [id, watch, watching]);
+  }, [id, watch, watching, native]);
   return {
     busy: id ? !!status.busy[id] : false,
     error: id ? (status.errors[id] ?? null) : null,

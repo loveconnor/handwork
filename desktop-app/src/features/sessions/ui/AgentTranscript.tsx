@@ -1,3 +1,4 @@
+import { GeneratedChatContext } from "./GeneratedChatBlock";
 import {
 ArrowUp,
 Check,
@@ -216,6 +217,7 @@ type Props = {
   onLoadEarlier?: (beforePrepend: () => void) => Promise<void>;
   onReturnToLatest?: () => void;
   busy?: boolean;
+  onGeneratedMessage?: (text: string) => void;
   cwd?: string;
   /** Who the turns are by, in place of the model: a Mono's name. */
   agentName?: string;
@@ -1766,7 +1768,11 @@ export const AgentTranscript = memo(
       <TranscriptVisibility.Provider value={props.visible ?? true}>
         <TranscriptPacing.Provider value={!props.bottomAligned}>
           <ToolDetailSession.Provider value={props.sessionId}>
-            <AgentTranscriptComponent {...props} />
+            <GeneratedChatContext.Provider
+              value={props.onGeneratedMessage ? { send: props.onGeneratedMessage, busy: !!props.busy } : null}
+            >
+              <AgentTranscriptComponent {...props} />
+            </GeneratedChatContext.Provider>
           </ToolDetailSession.Provider>
         </TranscriptPacing.Provider>
       </TranscriptVisibility.Provider>

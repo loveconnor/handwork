@@ -1,4 +1,6 @@
 import { SvgXml } from "react-native-svg";
+import { Image } from "react-native";
+import { HANDWORK_MARK } from "@/ui/brand";
 
 import type { Harness } from "@/features/workspace/types";
 import { useColors } from "@/ui/theme";
@@ -17,6 +19,13 @@ export function ProviderLogo({
 }) {
   const colors = useColors();
   const color = givenColor ?? colors.content;
+  if (harness === "handwork")
+    return (
+      <Image
+        source={HANDWORK_MARK}
+        style={{ width: size, height: size, tintColor: color }}
+      />
+    );
   return (
     <SvgXml
       xml={PROVIDER_SVGS[harness]}

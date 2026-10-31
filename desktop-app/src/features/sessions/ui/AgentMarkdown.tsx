@@ -1,3 +1,4 @@
+import { GeneratedChatContext, GeneratedChatBlock } from "./GeneratedChatBlock";
 import {
   Copy,
   Check,
@@ -369,6 +370,7 @@ function MarkdownCode({
   ...props
 }: MarkdownCodeProps) {
   const incomplete = useIsCodeFenceIncomplete();
+  const generatedChat = useContext(GeneratedChatContext);
   const block = Object.prototype.hasOwnProperty.call(props, "data-block");
   if (!block) {
     const text = textContent(children);
@@ -416,6 +418,14 @@ function MarkdownCode({
   }
   const meta = codeMeta(node);
   const fence = parseCodeFence(className, meta);
+  if (generatedChat && fence.language.toLowerCase() === "honestai") {
+    return (
+      <GeneratedChatBlock
+        program={textContent(children)}
+        streaming={incomplete}
+      />
+    );
+  }
   if (fence.language.toLowerCase() === "mermaid") {
     return (
       <MermaidBlock code={textContent(children)} incomplete={incomplete} />
