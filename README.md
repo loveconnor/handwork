@@ -6,7 +6,7 @@ Handwork provides the terminal interface, tools, permission checks, and saved co
 
 Handwork works across model providers and outside the terminal. Its agent runtime and terminal code are written in Zig. A separate JavaScript SDK lets other applications provide their own interface, tools, or authentication. Fast startup and a responsive terminal are design goals, not claims that Handwork produces better code or runs faster than every alternative.
 
-The npm CLI is currently version 0.0.9 and ships for macOS on Apple Silicon only. The repository also contains source builds, an SDK, and official Codex and Copilot runtime adapters. Those adapters run the provider's agent engine rather than Handwork's native agent loop.
+The npm CLI is currently version 0.1.7 and ships for macOS on Apple Silicon and Windows on x64 and Arm64. The repository also contains source builds, an SDK, and official Codex and Copilot runtime adapters. Those adapters run the provider's agent engine rather than Handwork's native agent loop.
 
 ## Contents
 
