@@ -12,6 +12,8 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   buildObservedCommand,
+  fakeCodexSse,
+  isEmptyComposerLine,
   heldFakeCodexFinalText,
   isVolatileTokenStatusRow,
   paneExitMatches,
@@ -21,7 +23,6 @@ import {
 } from "./tmux-helpers";
 
 const tmuxTest = test.skipIf(!tmuxAvailable());
-
 
 test("pane exit matching requires the expected observed status", () => {
   expect(paneExitMatches({ dead: false, status: null }, 0)).toBe(false);
@@ -175,4 +176,23 @@ tmuxTest("minimum history lines survive a fresh tmux server restart", async () =
       });
     } catch {}
   }
+});
+
+test("empty composer recognition includes clipped placeholder text", () => {
+  expect(isEmptyComposerLine("┃ Ask anything, or")).toBe(true);
+  expect(isEmptyComposerLine("┃ Ask an")).toBe(true);
+  expect(isEmptyComposerLine("┃ Ask anything, or type / for commands")).toBe(true);
+  expect(isEmptyComposerLine("┃ user draft")).toBe(false);
+});
+
+test("Codex fixture streams keep text and parallel calls on distinct output indices", async () => {
+  const response = fakeCodexSse([
+    { type: "response.output_text.delta", delta: "Before tools." },
+    ...["first", "second"].map((id) => ({ type: "response.output_item.done", output_index: 0,
+      item: { type: "function_call", call_id: id, name: "read_file", arguments: '{"path":"README.md"}' } })),
+  ]);
+  const events = (await response.text()).trim().split("\n\n").map((line) => JSON.parse(line.slice(6)));
+  expect(events[0].output_index).toBe(0);
+  expect(events.filter((event) => event.type === "response.output_item.added").map((event) => event.output_index)).toEqual([1, 2]);
+  expect(events.filter((event) => event.type === "response.function_call_arguments.done")).toHaveLength(2);
 });

@@ -1,0 +1,1269 @@
+   Compiling serde_core v1.0.229
+   Compiling objc2-exception-helper v0.1.1
+   Compiling objc2-encode v4.1.0
+   Compiling zeroize v1.9.0
+   Compiling stable_deref_trait v1.2.1
+   Compiling once_cell v1.21.4
+   Compiling pin-project-lite v0.2.17
+   Compiling smallvec v1.15.2
+   Compiling subtle v2.6.1
+   Compiling rand_core v0.10.1
+   Compiling getrandom v0.2.17
+   Compiling time v0.3.55
+   Compiling socket2 v0.6.5
+   Compiling percent-encoding v2.3.2
+   Compiling core-foundation-sys v0.8.7
+   Compiling yoke v0.8.3
+   Compiling mio v1.2.2
+   Compiling getrandom v0.4.3
+   Compiling form_urlencoded v1.2.2
+   Compiling generic-array v0.14.7
+   Compiling rustls-pki-types v1.15.1
+   Compiling core-foundation v0.10.1
+   Compiling const-oid v0.9.6
+   Compiling untrusted v0.9.0
+   Compiling zerovec v0.11.6
+   Compiling zerotrie v0.2.4
+   Compiling crossbeam-utils v0.8.22
+   Compiling raw-window-handle v0.6.2
+   Compiling ring v0.17.14
+   Compiling objc2 v0.6.4
+   Compiling num-traits v0.2.19
+   Compiling phf_shared v0.13.1
+   Compiling foreign-types-shared v0.3.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling base64ct v1.8.3
+   Compiling futures-core v0.3.34
+   Compiling slab v0.4.12
+   Compiling phf v0.13.1
+   Compiling foreign-types v0.5.0
+   Compiling tokio v1.53.1
+   Compiling pem-rfc7468 v0.7.0
+   Compiling tracing-core v0.1.36
+   Compiling rand_core v0.6.4
+   Compiling tinystr v0.8.3
+   Compiling potential_utf v0.1.5
+   Compiling crossbeam-channel v0.5.16
+   Compiling icu_collections v2.2.0
+   Compiling der v0.7.10
+   Compiling minimal-lexical v0.2.1
+   Compiling icu_locale_core v2.2.0
+   Compiling getrandom v0.3.4
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling nom v7.1.3
+   Compiling ff v0.13.1
+   Compiling digest v0.10.7
+   Compiling base16ct v0.2.0
+   Compiling tracing v0.1.44
+   Compiling embed_plist v1.2.2
+   Compiling http-range v0.1.5
+   Compiling mime v0.3.17
+   Compiling group v0.13.0
+   Compiling crypto-bigint v0.5.5
+   Compiling chacha20 v0.10.2
+   Compiling http-body v1.1.0
+   Compiling futures-task v0.3.34
+   Compiling tinyvec_macros v0.1.1
+   Compiling hmac v0.12.1
+   Compiling num-integer v0.1.47
+   Compiling tinyvec v1.12.0
+   Compiling futures-util v0.3.34
+   Compiling rand v0.10.3
+   Compiling tower-service v0.3.3
+   Compiling ipnet v2.12.1
+   Compiling try-lock v0.2.5
+   Compiling want v0.3.1
+   Compiling num-bigint v0.4.8
+   Compiling spki v0.7.3
+   Compiling pkcs8 v0.10.2
+   Compiling rfc6979 v0.4.0
+   Compiling sec1 v0.7.3
+   Compiling block2 v0.6.2
+   Compiling icu_provider v2.2.0
+   Compiling rustls-webpki v0.103.14
+   Compiling icu_properties v2.2.0
+   Compiling icu_normalizer v2.2.0
+   Compiling httparse v1.10.1
+   Compiling signature v2.2.0
+   Compiling futures-channel v0.3.34
+   Compiling security-framework-sys v2.17.0
+   Compiling rand_pcg v0.10.2
+   Compiling errno v0.3.14
+   Compiling lru-slab v0.1.3
+   Compiling atomic-waker v1.1.2
+   Compiling zerocopy v0.8.59
+   Compiling quinn-udp v0.5.16
+   Compiling sha2 v0.10.9
+   Compiling sync_wrapper v1.0.2
+   Compiling data-encoding v2.11.1
+   Compiling rustls v0.23.43
+   Compiling lazy_static v1.5.0
+   Compiling unicase v2.10.0
+   Compiling tower-layer v0.3.3
+   Compiling bitflags v2.13.1
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling uuid v1.24.0
+   Compiling objc2-core-foundation v0.3.2
+   Compiling serde_spanned v1.1.1
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling erased-serde v0.4.10
+   Compiling dispatch2 v0.3.1
+   Compiling core-graphics-types v0.2.0
+   Compiling toml v1.1.4+spec-1.1.0
+   Compiling serde_with v3.22.0
+   Compiling semver v1.0.28
+   Compiling cfb v0.7.3
+   Compiling dpi v0.1.2
+   Compiling keyboard-types v0.7.0
+   Compiling idna_adapter v1.2.2
+   Compiling serde-untagged v0.1.9
+   Compiling idna v1.1.0
+   Compiling plist v1.10.0
+   Compiling cookie v0.18.2
+   Compiling url v2.5.8
+   Compiling jsonptr v0.6.3
+   Compiling json-patch v3.0.1
+   Compiling infer v0.19.0
+   Compiling core-graphics v0.25.0
+   Compiling png v0.18.1
+   Compiling serialize-to-javascript v0.1.2
+   Compiling objc2-foundation v0.3.2
+   Compiling objc2-core-graphics v0.3.2
+   Compiling objc2-core-video v0.3.2
+   Compiling objc2-core-text v0.3.2
+   Compiling urlpattern v0.3.0
+   Compiling rusticata-macros v4.1.0
+   Compiling elliptic-curve v0.13.8
+   Compiling security-framework v3.7.0
+   Compiling asn1-rs v0.7.2
+   Compiling rustix v1.1.4
+   Compiling yasna v0.6.0
+   Compiling zune-core v0.5.3
+   Compiling ecdsa v0.16.9
+   Compiling primeorder v0.13.6
+   Compiling zune-jpeg v0.5.15
+   Compiling p256 v0.13.2
+   Compiling rcgen v0.14.10
+   Compiling pulldown-cmark v0.13.4
+   Compiling tauri-utils v2.9.3
+   Compiling system-configuration-sys v0.6.0
+   Compiling core-foundation v0.9.4
+   Compiling weezl v0.1.12
+   Compiling hyper v1.11.0
+   Compiling tower v0.5.3
+   Compiling quick-error v2.0.1
+   Compiling futures-sink v0.3.34
+   Compiling pxfm v0.1.30
+   Compiling fax v0.2.7
+   Compiling xattr v1.6.1
+   Compiling tokio-util v0.7.19
+   Compiling system-configuration v0.6.1
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling http-body-util v0.1.5
+   Compiling der-parser v10.0.0
+   Compiling oid-registry v0.8.1
+   Compiling tower-http v0.6.11
+   Compiling webpki-roots v1.0.9
+   Compiling filetime v0.2.29
+   Compiling bytemuck v1.25.2
+   Compiling fastrand v2.5.0
+   Compiling xml-rs v0.8.29
+   Compiling byteorder-lite v0.1.0
+   Compiling tempfile v3.27.0
+   Compiling tar v0.4.46
+   Compiling webpki-roots v0.26.11
+   Compiling hyper-util v0.1.20
+   Compiling netdev v0.31.0
+   Compiling zstd-safe v7.3.0
+   Compiling libsqlite3-sys v0.38.2
+   Compiling attohttpc v0.30.1
+   Compiling x509-parser v0.18.1
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling handwork v0.1.8 (/Users/connorlove/Work/Handwork/handwork/desktop-app/src-tauri)
+   Compiling open v5.4.1
+   Compiling fallible-iterator v0.3.0
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling minisign-verify v0.2.5
+   Compiling natpmp v0.5.0
+   Compiling xmltree v0.10.3
+   Compiling rusqlite v0.40.2
+   Compiling igd-next v0.18.0
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling zstd v0.13.3
+   Compiling keyring v3.6.3
+   Compiling half v2.7.1
+   Compiling unicode-normalization v0.1.25
+   Compiling quinn-proto v0.11.19
+   Compiling tokio-rustls v0.26.4
+   Compiling tiff v0.11.3
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling hyper-rustls v0.27.9
+   Compiling ureq v2.12.1
+   Compiling hostname v0.4.2
+   Compiling if-addrs v0.15.0
+   Compiling reqwest v0.13.4
+   Compiling moxcms v0.8.1
+   Compiling quinn v0.11.12
+   Compiling handwork-mobile-link v0.1.0 (/Users/connorlove/Work/Handwork/handwork/desktop-app/crates/mobile-link)
+   Compiling image v0.25.10
+   Compiling objc2-cloud-kit v0.3.2
+   Compiling objc2-quartz-core v0.3.2
+   Compiling objc2-core-data v0.3.2
+   Compiling objc2-core-image v0.3.2
+   Compiling objc2-core-location v0.3.2
+   Compiling objc2-user-notifications v0.3.2
+   Compiling objc2-app-kit v0.3.2
+   Compiling objc2-web-kit v0.3.2
+   Compiling tao v0.35.3
+   Compiling muda v0.19.3
+   Compiling window-vibrancy v0.6.0
+   Compiling objc2-osa-kit v0.3.2
+   Compiling rfd v0.16.0
+   Compiling global-hotkey v0.8.0
+   Compiling arboard v3.6.1
+   Compiling osakit v0.3.1
+   Compiling tauri-runtime v2.11.3
+   Compiling wry v0.55.1
+   Compiling tray-icon v0.24.2
+   Compiling tauri-runtime-wry v2.11.4
+   Compiling tauri v2.11.5
+   Compiling tauri-plugin-fs v2.5.1
+   Compiling tauri-plugin-process v2.3.1
+   Compiling tauri-plugin-opener v2.5.4
+   Compiling tauri-plugin-global-shortcut v2.3.2
+   Compiling tauri-plugin-window-state v2.4.1
+   Compiling tauri-plugin-updater v2.10.1
+   Compiling tauri-plugin-dialog v2.7.2
+    Finished `test` profile [unoptimized] target(s) in 45.61s
+     Running unittests src/lib.rs (target/debug/deps/handwork_lib-50a9d50c5cf9475f)
+
+running 603 tests
+test account_identity::tests::claude_without_oauth_account_is_signed_out ... ok
+test automations::tests::accepts_inbox_event_keys ... ok
+test automations::tests::accepts_jira_triggers ... ok
+test automations::tests::accepts_azure_devops_triggers ... ok
+test artifacts::tests::bootstrap_goes_first_in_head_and_never_before_the_doctype ... ok
+test account_identity::tests::claude_falls_back_to_full_name_and_keeps_missing_email_optional ... ok
+test account_identity::tests::codex_falls_back_to_namespaced_profile_email ... ok
+test account_identity::tests::codex_reads_id_token_claims ... ok
+test account_identity::tests::claude_reads_oauth_account ... ok
+test account_identity::tests::codex_rejects_malformed_tokens ... ok
+test automations::tests::validates_time_fields ... ok
+test chat_background::tests::accepts_supported_extensions_case_insensitively ... ok
+test chat_background::tests::project_background_stems_are_stable_and_distinct ... ok
+test background_work::tests::child_policy_probe ... ok
+test chat_background::tests::rejects_files_the_webview_cannot_render_as_backgrounds ... ok
+test automations::tests::existing_automations_default_to_time_triggers ... ok
+test automations::tests::empty_triggers_stay_empty ... ok
+test automations::tests::missing_triggers_hydrate_from_legacy_fields ... ok
+test artifacts::tests::migrates_legacy_artifacts_once_without_importing_personal_notes ... ok
+test automations::tests::claims_each_event_key_once ... ok
+test background_work::tests::scheduling_policy_reaches_child_and_descendant ... ok
+test automations::tests::trim_history_preserves_nonterminal_runs ... ok
+test automations::tests::trims_run_history_to_the_configured_limit ... ok
+test artifacts::tests::html_artifacts_round_trip_their_kind ... ok
+test artifacts::tests::artifact_contract_preserves_kind_and_excludes_note_fields ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-ensure-baseline-82201-1793462212867322000-3/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-idempotent-82201-1793462212867506000-5/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-delete-untracked-82201-1793462212866654000-2/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-apply-source-82201-1793462212867568000-6/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-committed-82201-1793462212866621000-1/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-apply-conflict-source-82201-1793462212874486000-8/.git/
+test artifacts::tests::deletion_cleans_full_and_paginated_chats_and_keeps_other_artifacts_and_replies ... ok
+test checkpoint::tests::rejects_invalid_session_id ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-keep-82201-1793462212875158000-10/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-keep-one-82201-1793462212882136000-11/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-late-capture-82201-1793462212888713000-12/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-mono-multiple-repos-82201-1793462212888986000-13/a/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-two-sessions-82201-1793462212901301000-14/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-read-only-session-82201-1793462212903548000-15/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-stats-scoped-82201-1793462212923938000-16/.git/
+[main (root-commit) e62fbdb] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 plan.md
+[main (root-commit) 934969a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 tracked.txt
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 1beed5c] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 delete.txt
+ create mode 100644 edit.txt
+[main (root-commit) e092d75] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 a.txt
+ create mode 100644 b.txt
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 030647c] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 987fe71] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 plan.md
+ create mode 100644 readme.md
+Cloning into '/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-apply-target-82201-1793462212867987000-7'...
+[main (root-commit) e4f0a7d] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 app.ts
+Cloning into '/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-apply-conflict-target-82201-1793462212874875000-9'...
+[main (root-commit) 55cb105] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 a.txt
+ create mode 100644 b.txt
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-mono-multiple-repos-82201-1793462212888986000-13/b/.git/
+done.
+done.
+[main (root-commit) 030647c] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+test checkpoint::tests::keep_clears_review_and_leaves_files ... ok
+test checkpoint::tests::capture_missing_path_lets_non_git_undo_delete ... ok
+test checkpoint::tests::deleting_untracked_baseline_still_needs_review ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-stats-churn-82201-1793462213273359000-30/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-shared-file-82201-1793462213285033000-31/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-session-counts-82201-1793462213294677000-32/.git/
+[main 7bd6e91] agent changes
+ 3 files changed, 2 insertions(+), 2 deletions(-)
+ create mode 100644 created.txt
+ delete mode 100644 delete.txt
+test checkpoint::tests::ensure_is_idempotent_across_turns ... ok
+test checkpoint::tests::ensure_baselines_other_session_dirty_files ... ok
+[main (root-commit) e4f0a7d] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 app.ts
+[main (root-commit) 9f7d8e7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-changed-after-82201-1793462213376495000-34/.git/
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-untouched-82201-1793462213375787000-33/.git/
+[main (root-commit) e4f0a7d] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 app.ts
+test checkpoint::tests::session_stats_are_scoped_to_touched_files ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-checkpoint-keep-user-82201-1793462213411600000-38/.git/
+test checkpoint::tests::committed_session_changes_leave_review ... ok
+[main (root-commit) e4f0a7d] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 app.ts
+[main (root-commit) 5238e7f] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 edit.txt
+ create mode 100644 keep.txt
+test checkpoint::tests::read_only_session_has_no_changes_when_another_session_edits ... ok
+test checkpoint::tests::keep_one_file_then_undo_the_rest ... ok
+[main (root-commit) 4d57d52] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 clean.txt
+ create mode 100644 user.txt
+test checkpoint::tests::isolated_worker_integration_keeps_both_sides_on_conflict_or_unknown_edit ... ok
+test checkpoint::tests::session_stats_match_git_not_edit_churn ... ok
+test checkpoint::tests::status_counts_only_the_session_delta_from_its_pre_edit_snapshot ... ok
+test checkpoint::tests::isolated_worker_delta_applies_idempotently_to_matching_baseline ... ok
+test checkpoint::tests::other_session_edits_do_not_appear_in_review ... ok
+test checkpoint::tests::undo_refuses_a_file_changed_after_the_session_edit ... ok
+test checkpoint::tests::undo_does_not_touch_untouched_user_files ... ok
+test checkpoint::tests::undo_reverts_only_session_files_and_keeps_user_dirty ... ok
+test checkpoint::tests::late_capture_is_not_attributed_to_the_session ... ok
+test checkpoint::tests::shared_file_keeps_session_scoped_review_but_disables_unsafe_undo ... ok
+test checkpoint::tests::mono_changes_in_two_repositories_can_be_kept_independently ... ok
+test checkpoint::turn::tests::committing_only_part_of_a_files_changes_keeps_it_pending ... ok
+test checkpoint::turn::tests::commits_during_the_turn_clear_review_but_preserve_the_recorded_diff ... ok
+test checkpoint::turn::tests::commits_after_the_turn_clear_modified_created_and_deleted_files ... ok
+test checkpoint::turn::tests::committed_results_do_not_reappear_after_later_edits_or_restarts ... ok
+test checkpoint::turn::tests::continuing_an_unfinished_turn_preserves_its_baseline_and_edit_evidence ... ok
+test checkpoint::turn::tests::failures_and_incomplete_turns_never_fall_back_to_the_previous_result ... ok
+test checkpoint::turn::tests::old_shared_recordings_without_edit_evidence_do_not_claim_workspace_changes ... ok
+test checkpoint::turn::tests::each_turn_has_a_fresh_baseline_and_noop_turns_clear_the_old_card ... ok
+test checkpoint::turn::tests::checkpoints_scope_nested_workspaces_and_repositories_without_head ... ok
+test codex_handwork_store::tests::refreshed_keyring_credentials_only_recover_the_same_account ... ok
+test codex_handwork_store::tests::rejects_a_private_state_link_to_the_original_home ... ok
+test codex_handwork_store::tests::migration_keeps_closed_agents_closed_and_leaves_other_threads_out ... ok
+test codex_handwork_store::tests::rejects_unrelated_files_and_missing_inherited_context ... ok
+test checkpoint::turn::tests::linked_worktrees_have_independent_recordings_and_indexes ... ok
+test control::tests::app_token_survives_normal_turns_but_only_works_when_opted_in ... ok
+test control::tests::app_tokens_are_bound_to_active_turns_and_cannot_control_orchestration ... ok
+test control::tests::checkout_reservations_include_nested_folders ... ok
+test control::tests::closing_a_window_releases_ordinary_turns_and_owned_orchestration ... ok
+test control::tests::comparison_keys_preserve_posix_case ... ok
+test control::tests::scopes_reject_escape_and_resolve_new_files ... ok
+test control::tests::workers_get_distinct_private_scratch_and_matching_temp_environment ... ok
+test control_cli::tests::app_mode_accepts_chat_cards_and_documents_every_type ... ok
+test control_cli::tests::app_mode_exposes_only_app_actions_and_safe_request_ids ... ok
+test codex_handwork_store::tests::shares_settings_and_login_but_not_codex_state ... ok
+test control_cli::tests::app_mode_exposes_soul_actions_and_documents_requested_updates ... ok
+test control_cli::tests::explains_help_and_malformed_invocations ... ok
+test control_cli::tests::help_names_every_action_and_the_real_executable ... ok
+test control_cli::tests::inactive_app_turn_does_not_suggest_retries ... ok
+test control_cli::tests::quotes_the_control_path_only_when_the_shell_needs_it ... ok
+test control_cli::tests::validates_inputs_without_invoking_a_shell ... ok
+test cursor_store::tests::accepts_newline_in_requested_id ... ok
+test codex_handwork_store::tests::retains_native_bytes_descendants_compressed_tails_and_inherited_history ... ok
+test cursor_store::tests::finds_tool_call_and_skips_non_json_blobs ... ok
+test cursor_store::tests::matches_cursor_composite_ids_by_either_half ... ok
+test cursor_store::tests::reads_live_wal_and_checkpointed_stores_without_writing_sidecars ... ok
+test checkpoint::turn::tests::preserves_literal_paths_and_records_modes_and_symlinks_safely ... ok
+test cursor_store::tests::skips_oversized_blobs_and_prefers_recent_rows ... ok
+test devin_config::tests::adds_the_write_rule_and_keeps_the_users_settings ... ok
+test devin_config::tests::malformed_commented_configs_still_fail_closed ... ok
+test devin_config::tests::preserves_settings_and_permissions_in_commented_configs ... ok
+test devin_config::tests::refuses_configs_it_cannot_extend ... ok
+test devin_config::tests::starts_from_an_empty_config ... ok
+test checkpoint::turn::tests::records_shell_changes_and_preserves_the_index_head_and_saved_result ... ok
+test devin_usage::tests::credentials_require_a_key_and_an_https_server ... ok
+test devin_usage::tests::extra_usage_balance_defaults_to_zero_only_on_quota_plans ... ok
+test devin_usage::tests::hidden_or_absent_windows_are_dropped ... ok
+test devin_usage::tests::reads_quota_windows_and_identity ... ok
+test devin_usage::tests::unix_credentials_live_in_the_xdg_data_directory ... ok
+test devin_usage::tests::versions_are_plain_tokens ... ok
+test external_editor::tests::editor_ids_and_names_are_unique ... ok
+test external_editor::tests::unknown_editor_is_rejected_before_launch ... ok
+test fs::preserves_unix_backslash_filenames ... ok
+test devin_config::tests::writes_each_config_once_by_content ... ok
+test fs::tests::attachment_bytes_round_trip_through_temp_dir ... ok
+test fs::tests::binary_reads_return_bytes_and_refuse_directories ... ok
+test fs::tests::claude_shell_commands_match_only_requested_bash_tool_ids ... ok
+test cursor_store::tests::finds_only_exact_child_lineage_and_skips_unchanged_revisions ... ok
+test cursor_store::tests::reads_native_messages_and_tools_in_order_and_merges_results ... ok
+test checkpoint::turn::tests::overlapping_turns_keep_exact_diffs_but_cannot_restore_shared_work ... ok
+test fs::tests::copy_folder_gets_a_unique_name_and_rejects_paste_into_self ... ok
+test fs::tests::copy_rejects_paste_into_self_through_a_symlink_alias ... ok
+test fs::tests::generated_image_validation_accepts_png_only ... ok
+test fs::tests::git_actions_that_need_helpers_use_login_shell_path ... ok
+test checkpoint::turn::tests::commits_clear_review_in_nested_workspaces_and_repositories_without_head ... ok
+test fs::tests::editor_text_files_round_trip_without_leaving_a_temporary_file ... ok
+test fs::tests::git_branches_empty_outside_a_repo ... ok
+[main (root-commit) 7f49b70] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 tracked.ts
+test checkpoint::turn::tests::shared_turns_only_review_files_with_their_own_successful_edit_events ... ok
+test fs::tests::a_cancelled_git_listing_does_not_return_the_index ... ok
+test cursor_store::tests::bounds_child_history_and_ignores_oversized_messages ... ok
+[main (root-commit) bd44f6e] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 note.txt
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_branches_lists_unborn_head ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-branch-remote-origin-82201-1793462217029130000-8/
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_commit_amend_rewords_without_staged_changes ... ok
+test checkpoint::turn::tests::nested_turns_share_work_but_sibling_path_prefixes_do_not ... ok
+test fs::tests::git_commit_rejects_empty_message ... ok
+test checkpoint::turn::tests::shared_turns_with_different_edits_do_not_claim_each_others_files ... ok
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test checkpoint::turn::tests::unrelated_and_partial_commits_preserve_pending_files_and_exact_counts ... ok
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-branch-remote-origin-82201-1793462217029130000-8
+ * [new branch]      main -> main
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+branch 'main' set up to track 'origin/main'.
+[main (root-commit) 1108326] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 other.txt
+test checkpoint::turn::tests::undo_restores_only_recorded_files_and_keep_retains_history ... ok
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main b5f23eb] update a
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+test fs::tests::git_commit_amend_rewrites_head_with_staged_changes ... ok
+test fs::tests::git_commit_diff_rejects_bad_sha_and_path ... ok
+[main (root-commit) 29d7aae] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) aa408e9] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-branch-remote-origin-82201-1793462217029130000-8
+ * [new branch]      feature -> feature
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+branch 'feature' set up to track 'origin/feature'.
+test fs::tests::git_commit_clears_staged_files ... ok
+[main (root-commit) 1b69c60] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 sub/file.txt
+ create mode 100644 sub/second.txt
+[main (root-commit) 0cc16a2] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 local.txt
+test fs::tests::git_commit_reports_signing_failure_with_hint ... ok
+[main (root-commit) 149472a] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_commit_diff_reads_parent_and_current ... ok
+Switched to a new branch 'other'
+test fs::tests::git_commit_diff_root_commit_is_added ... ok
+[feature 4417c23] feature
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[main (root-commit) ff29021] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+[main (root-commit) cc9e4a4] init
+ 1 file changed, 40 insertions(+)
+ create mode 100644 big.txt
+Deleted branch feature (was 149472a).
+test fs::tests::git_diff_stats_are_zero_outside_a_repo ... ok
+[main (root-commit) dd0f3cd] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 my file.txt
+ create mode 100644 "\355\225\234\352\270\200.md"
+[other (root-commit) 26f1d99] other
+ 1 file changed, 1 insertion(+)
+ create mode 100644 b.txt
+[main 39b2a18] edit
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[main dfefd49] edit
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+test fs::tests::git_diff_files_keep_paths_relative_to_nested_workspace ... ok
+[main (root-commit) bbc38f3] init
+ 1 file changed, 3 insertions(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::ensure_git_commit_fetches_from_gh_resolved_remote ... ok
+[main (root-commit) bbc38f3] init
+ 1 file changed, 3 insertions(+)
+ create mode 100644 a.txt
+test fs::tests::git_diff_full_context_includes_distant_lines ... ok
+test fs::tests::git_branches_lists_remote_only_branch ... ok
+test fs::tests::git_diff_stats_count_unstaged_and_untracked ... ok
+test fs::tests::git_diff_stats_are_zero_when_clean ... ok
+test fs::tests::git_file_diff_rejects_path_escape ... ok
+[main (root-commit) b361908] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 a.txt
+ create mode 100644 b.txt
+test fs::tests::git_file_diff_rejects_outside_a_repo ... ok
+test fs::tests::git_diff_full_context_errors_without_a_merge_base ... ok
+test fs::tests::git_commit_lets_checkout_proceed ... ok
+test fs::tests::git_create_and_checkout_branch ... ok
+test fs::tests::git_diff_index_keeps_literal_non_ascii_paths ... ok
+test fs::tests::git_diff_index_lists_modified_and_untracked ... ok
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) bbc38f3] init
+ 1 file changed, 3 insertions(+)
+ create mode 100644 a.txt
+test fs::tests::git_file_diff_deleted_has_empty_current ... ok
+test fs::tests::git_history_empty_outside_a_repo ... ok
+test fs::tests::git_diff_full_context_uses_canonical_plain_output ... ok
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) ab034b7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 gone.txt
+test fs::tests::git_head_message_fails_without_commits ... ok
+test fs::tests::git_file_diff_returns_both_sides ... ok
+[main (root-commit) 63b8a64] init
+ 1 file changed, 4 insertions(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_file_diff_untracked_has_empty_original ... ok
+test fs::tests::git_file_diff_staged_reads_head_and_index ... ok
+test fs::tests::git_head_message_returns_subject_and_body ... ok
+test fs::tests::git_discard_restores_tracked_and_deletes_untracked ... ok
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_info_falls_back_to_folder_name_without_origin ... ok
+test fs::tests::git_file_diff_staged_handles_additions_and_deletions ... ok
+test fs::tests::git_discard_keeps_staged_hunks ... ok
+Switched to a new branch 'feature'
+Switched to a new branch 'feature'
+test fs::tests::git_ls_files_includes_untracked_and_drops_ignored ... ok
+test fs::tests::git_file_diff_separates_staged_and_unstaged_changes ... ok
+[main b1ce46b] second
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+test fs::tests::git_info_reads_branch_and_origin_repo ... ok
+[feature 487ce7f] feature only
+ 1 file changed, 1 insertion(+)
+ create mode 100644 feat.txt
+[feature 149e728] feature work
+ 1 file changed, 1 insertion(+)
+ create mode 100644 feat.txt
+[main (root-commit) 0383fb4] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+Switched to branch 'main'
+Saved working directory and index state On feature: wip stash
+test fs::tests::git_history_lists_commits_parents_and_head ... ok
+test fs::tests::git_stage_rejects_path_escape ... ok
+test checkpoint::turn::tests::recovers_edits_when_an_older_version_replaced_an_unfinished_baseline ... ok
+[main 8d90989] main work
+ 1 file changed, 1 insertion(+)
+ create mode 100644 main.txt
+[main (root-commit) 9fb0514] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 big.txt
+[main (root-commit) 61b2125] init
+ 1 file changed, 12000 insertions(+)
+ create mode 100644 many.txt
+[main (root-commit) cf3cdf5] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 deleted/nested/file.ts
+Switched to branch 'main'
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_discard_all_restores_unstaged_and_keeps_staged ... ok
+Merge made by the 'ort' strategy.
+[main (root-commit) 5c882b5] init
+ 5 files changed, 5 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 ready.txt
+ create mode 100644 src-other/app.ts
+ create mode 100644 src/app.ts
+ create mode 100644 src/nested/deleted.ts
+[main (root-commit) 51b0605] init
+ 4 files changed, 4 insertions(+)
+ create mode 100644 */inside.txt
+ create mode 100644 a/other.txt
+ create mode 100644 folderx/other.txt
+ create mode 100644 ready.txt
+test fs::tests::git_output_capped_keeps_queued_chunks_complete_and_ordered ... ok
+ feat.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 feat.txt
+[main (root-commit) 63b8a64] init
+ 1 file changed, 4 insertions(+)
+ create mode 100644 a.txt
+[main 678870a] edit
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[main 697adda] main only
+ 1 file changed, 1 insertion(+)
+ create mode 100644 main.txt
+test fs::tests::git_output_capped_stops_before_buffering_the_rest ... ok
+test fs::tests::git_output_capped_cancels_a_silent_child ... ok
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_history_records_merge_parents ... ok
+[main (root-commit) c0e0a79] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_history_skips_stash_and_unmerged_branches ... ok
+[main (root-commit) c0e0a79] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::git_staged_context_reads_cached_diff ... ok
+test fs::tests::github_avatar_url_encodes_bot_logins ... ok
+test fs::tests::github_check_details_reads_steps_and_failure_annotations ... ok
+test fs::tests::github_comment_input_rejects_empty_or_unknown ... ok
+test fs::tests::github_network_errors_do_not_pause_other_commands ... ok
+test fs::tests::github_pr_actions_map_to_non_interactive_gh_commands ... ok
+test fs::tests::github_pr_checks_args_target_repo_and_number ... ok
+test fs::tests::github_rate_limit_blocks_other_commands_until_reset ... ok
+test fs::tests::github_rate_limit_probe_failure_still_pauses_requests ... ok
+test fs::tests::github_rate_limit_reset_parser_requires_valid_quota_data ... ok
+test fs::tests::github_secondary_rate_limit_pauses_without_a_quota_probe ... ok
+test fs::tests::github_star_status_distinguishes_a_missing_star_from_an_unavailable_check ... ok
+test fs::tests::github_status_context_keeps_its_report_time ... ok
+test fs::tests::github_url_from_output_reads_the_last_http_line ... ok
+test fs::tests::github_work_item_creation_time_reaches_frontend ... ok
+test fs::tests::home_root_is_not_indexed ... ok
+test fs::tests::inside_root_refuses_paths_that_leave_the_project ... ok
+test fs::tests::inspect_paths_reports_files_and_directories ... ok
+test fs::tests::git_staged_context_falls_back_to_unstaged ... ok
+[main (root-commit) b4ad573] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+test fs::tests::list_dir_falls_back_to_name_parser_outside_git ... ok
+test fs::tests::list_dir_sorts_numbered_names_naturally_with_folders_first ... ok
+test fs::tests::local_git_never_resolves_login_shell_path ... ok
+[main (root-commit) 213ec81] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-feature-origin-82201-1793462218874068000-65/
+[main (root-commit) ad977ba] init
+ 4 files changed, 4 insertions(+)
+ create mode 100644 a/other.txt
+ create mode 100644 folder?/inside.txt
+ create mode 100644 folderx/other.txt
+ create mode 100644 ready.txt
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-ahead-origin-82201-1793462218892912000-67/
+[main (root-commit) 213ec81] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+[feature 7a52c55] add new
+ 1 file changed, 1 insertion(+)
+ create mode 100644 new.txt
+[feature 41a5bae] feature
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[main (root-commit) 213ec81] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 a.txt
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-pushed-origin-82201-1793462218919836000-70/
+test fs::tests::git_stage_contents_stages_partial_hunk ... ok
+test fs::tests::natural_name_sort_handles_multiple_and_large_numbers ... ok
+test fs::tests::omp_active_assistant_texts_keep_active_message_order_with_both_forms ... ok
+test fs::tests::omp_active_assistant_texts_repeat_equal_messages_in_file_order ... ok
+test fs::tests::omp_interjections_do_not_coalesce_across_reasoning ... ok
+test fs::tests::omp_interjections_do_not_cross_users_or_empty_assistant_messages ... ok
+test fs::tests::omp_interjections_follow_active_ancestry_and_keep_text_forms ... ok
+test fs::tests::omp_interjections_require_displayed_assistant_anchors ... ok
+test fs::tests::only_video_containers_can_join_the_stream_scope ... ok
+test fs::tests::parse_gh_pr_list_prefers_open ... ok
+test fs::tests::parse_git_decorations_classifies_head_local_remote_and_tags ... ok
+test fs::tests::parse_github_pr_checks_combines_rollup_states_and_unknown_values ... ok
+test fs::tests::parse_github_pr_checks_fills_missing_check_data ... ok
+test fs::tests::parse_github_pr_checks_maps_check_run_states ... ok
+test fs::tests::parse_github_pr_checks_maps_status_context_states ... ok
+test fs::tests::parse_github_pr_checks_rejects_invalid_responses ... ok
+test fs::tests::parse_github_pr_checks_treats_missing_rollup_as_empty ... ok
+test fs::tests::parse_github_pr_checks_unknown_status_never_trusts_conclusion ... ok
+test fs::tests::parse_github_pr_diff_meta_reads_files_and_totals ... ok
+test fs::tests::parse_github_pr_oids_reads_base_and_head ... ok
+test fs::tests::parse_github_repositories_includes_a_forks_parent ... ok
+test fs::tests::parse_github_repositories_keeps_a_normal_repo_single ... ok
+test fs::tests::parse_github_review_reply_url_reads_graphql ... ok
+test fs::tests::parse_github_work_item_details_reads_body_and_author ... ok
+Initialized empty Git repository in /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-sync-origin-82201-1793462218952829000-71/
+test fs::tests::parse_github_work_item_details_reads_pr_review_meta ... ok
+test fs::tests::parse_github_work_item_reads_view_shape ... ok
+test fs::tests::parse_github_work_item_thread_merges_conversation ... ok
+test fs::tests::parse_github_work_item_thread_reads_graphql_errors ... ok
+test fs::tests::parse_github_work_item_thread_reads_issue_comments ... ok
+test fs::tests::parse_github_work_items_maps_issue_fields ... ok
+test fs::tests::parse_github_work_items_reads_draft_prs ... ok
+test fs::tests::parse_github_work_items_reads_issue_state_reason ... ok
+test fs::tests::pr_head_filter_qualifies_branch_with_repo_owner ... ok
+test fs::tests::project_dirs_stay_indexable ... ok
+test fs::tests::project_images_read_only_inside_the_project ... ok
+test fs::tests::project_images_refuse_oversized_files ... ok
+test fs::tests::project_images_refuse_symlinks_out_of_the_project ... ok
+test fs::tests::project_location_does_not_guess_without_a_saved_identity ... ok
+test fs::tests::project_location_follows_a_sibling_rename ... ok
+test fs::tests::read_only_git_cmd_path_adds_fixed_dirs_to_inherited_path ... ok
+test fs::tests::rename_delete_and_copy_round_trip ... ok
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-feature-origin-82201-1793462218874068000-65
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-ahead-origin-82201-1793462218892912000-67
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+test fs::tests::git_stage_and_unstage_deleted_directory ... ok
+Switched to a new branch 'feature'
+test fs::tests::list_dir_marks_ignored_with_git_semantics ... ok
+[main (root-commit) d2c7ed9] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-pushed-origin-82201-1793462218919836000-70
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+test fs::tests::git_stage_and_unstage_file ... ok
+Switched to a new branch 'feature'
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-sync-origin-82201-1793462218952829000-71
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+test fs::tests::git_stage_and_unstage_directory ... ok
+Cloning into '.'...
+[main (root-commit) a684a76] init
+ 2 files changed, 2 insertions(+)
+ create mode 100644 chosen.txt
+ create mode 100644 other.txt
+done.
+[main (root-commit) ada21eb] init
+ 4 files changed, 4 insertions(+)
+ create mode 100644 [ab]/inside.txt
+ create mode 100644 a/other.txt
+ create mode 100644 folderx/other.txt
+ create mode 100644 ready.txt
+[main (root-commit) a73c0f6] init
+ 3 files changed, 3 insertions(+)
+ create mode 100644 chosen.txt
+ create mode 100644 deleted.txt
+ create mode 100644 secret.txt
+[main (root-commit) 0dc0280] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 other.txt
+[main (root-commit) e5ea4a7] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+Preparing worktree (new branch 'other')
+HEAD is now at d2c7ed9 init
+[main (root-commit) 6c3ab99] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 chosen.txt
+test fs::tests::locate_files_distinguishes_repos_worktrees_and_deleted_parents ... ok
+test fs::tests::git_stash_includes_untracked_that_block_checkout ... ok
+test fs::tests::git_stash_lets_checkout_proceed ... ok
+test fs::tests::signing_hint_ignores_other_errors ... ok
+test fs::tests::split_github_repo_reads_owner_and_name ... ok
+test fs::tests::split_stem_ext_keeps_dotfiles_whole ... ok
+test fs::tests::valid_github_node_id_allows_graphql_ids ... ok
+test fs::tests::stat_files_returns_mtime_for_existing_files_only ... ok
+test fs::tests::walk_skips_app_bundles ... ok
+test fs::tests::walk_skips_vendor_dirs_and_gitignore_names ... ok
+test fs::tests::git_sync_counts_unpushed_commits ... ok
+test harness::exec_allowlist_tests::allows_grok_cleanup_only_for_one_valid_session_id ... ok
+test harness::exec_allowlist_tests::allows_known_catalog_args ... ok
+test harness::exec_allowlist_tests::allows_service_args_only_for_opencode ... ok
+test harness::exec_allowlist_tests::rejects_other_args ... ok
+test harness::output_batcher_tests::a_burst_shares_one_event_and_drains_before_done ... ok
+test harness::output_batcher_tests::a_large_line_closes_its_batch ... ok
+test harness::output_batcher_tests::an_idle_stream_sends_its_first_line_at_once ... ok
+test harness::output_batcher_tests::sse_events_split_on_blank_lines ... ok
+test harness::reap_logic_tests::harness_parent_from_bytes_reads_the_marker ... ok
+test harness::reap_logic_tests::looks_like_harness_argv_accepts_agent_clis_only ... ok
+test harness::reap_logic_tests::parse_proc_ppid_skips_a_comm_holding_spaces_and_parens ... ok
+test harness::reap_logic_tests::parse_ps_pid_command_does_not_treat_the_binary_as_ppid ... ok
+test harness::reap_logic_tests::parse_ps_row_reads_harness_parent_from_env_tail ... ok
+test harness::reap_logic_tests::parse_ps_row_reads_pid_ppid_and_args ... ok
+test harness::reap_logic_tests::should_not_reap_a_terminal_program_even_if_marked ... ok
+test harness::reap_logic_tests::should_not_reap_our_own_marked_child ... ok
+test harness::reap_logic_tests::should_reap_legacy_cursor_acp_orphaned_to_launchd ... ok
+test harness::reap_logic_tests::should_reap_marked_child_of_a_dead_parent ... ok
+test harness::tests::antigravity_launch_args_match_the_platform_registry ... ok
+test harness::tests::antigravity_resolver_prefers_executable_wrapper_and_tracks_orphans ... ok
+test harness::tests::cached_gui_search_path_finds_homebrew_tools_from_a_finder_launch ... ok
+test harness::tests::command_basename_strips_path ... ok
+test fs::tests::walk_stops_between_entries_not_only_before_the_first_directory ... ok
+test harness::tests::cursor_agent_accepts_symlink_named_agent ... ok
+test harness::tests::fx_accepts_vercel_agent_and_rejects_json_viewer ... ok
+[main (root-commit) 37f42a6] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 file.txt
+test harness::tests::fx_marker_is_found_past_the_first_chunk ... ok
+test harness::tests::grok_accepts_official_install_path_and_markers ... ok
+test harness::tests::gui_search_path_puts_login_path_ahead_of_fallbacks ... ok
+test harness::tests::inherited_path_beats_fixed_dirs_when_the_login_read_fails ... ok
+test harness::tests::install_spawn_keeps_a_child_nothing_cancelled ... ok
+test fs::tests::walk_stops_early_when_cancelled ... ok
+test harness::tests::install_spawn_rejects_a_child_after_kill_all ... ok
+test harness::tests::isolate_child_stamps_the_reap_marker ... ok
+test harness::tests::install_spawn_rejects_a_child_killed_mid_spawn ... ok
+test harness::tests::kill_all_rejects_an_in_flight_spawn ... ok
+test fs::tests::selected_commit_preserves_other_staged_files ... ok
+test harness::tests::kill_during_spawn_invalidates_the_stamp ... ok
+[main (root-commit) cce6cb0] init
+ 4 files changed, 4 insertions(+)
+ create mode 100644 :(glob)*/inside.txt
+ create mode 100644 a/other.txt
+ create mode 100644 folderx/other.txt
+ create mode 100644 ready.txt
+test harness::tests::kill_all_reaps_term_ignoring_children_before_return ... ok
+To /var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-git-pushed-origin-82201-1793462218919836000-70
+ * [new branch]      feature -> feature
+test fs::tests::git_sync_counts_feature_branch_without_upstream ... ok
+test harness::tests::only_text_file_busy_is_worth_respawning_for ... ok
+test harness::tests::overlapping_spawn_invalidates_the_earlier_one ... ok
+test harness::tests::passwd_identity_resolves_the_current_user ... ok
+test harness::tests::peeking_the_login_path_never_loads_or_waits_for_it ... ok
+test harness::tests::pi_accepts_coding_agent_and_rejects_other_pi ... ok
+[main (root-commit) 6c3ab99] init
+ 1 file changed, 1 insertion(+)
+ create mode 100644 chosen.txt
+test fs::tests::selected_files_work_without_a_head ... ok
+test harness::tests::reap_snapshots_spares_children_of_this_process ... ok
+test harness::tests::resolve_gui_binary_finds_a_binary_on_the_gui_path ... ok
+test harness::tests::runtime_binary_paths_stay_fixed_for_the_process ... ok
+test fs::tests::git_stage_and_unstage_literal_directory_names ... ok
+test harness::tests::terminate_escalates_after_group_leader_exits ... ok
+test harness::tests::terminate_escalates_to_sigkill ... ok
+test harness::tests::which_in_path_takes_the_first_executable_hit ... ok
+test harness_updates::tests::maps_only_npm_published_harnesses ... ok
+test harness_updates::tests::reads_version_from_registry_payload ... ok
+test harness_updates::tests::reports_the_last_line_an_updater_printed ... ok
+test harness_updates::tests::updates_only_through_each_cli_own_updater ... ok
+test link_preview::tests::accepts_only_plain_http_urls ... ok
+test link_preview::tests::falls_back_to_the_document_title ... ok
+test link_preview::tests::reads_social_title_and_icon_attributes_in_any_order ... ok
+test link_preview::tests::rejects_local_and_special_networks ... ok
+test macos::tests::bundle_name_from_app_path_reads_existing_bundle_name ... ok
+test macos::tests::dev_bundle_plist_uses_the_provided_app_name ... ok
+test macos::tests::existing_bundle_root_from_exe_rejects_bundle_roots_without_a_usable_name ... ok
+test harness::tests::terminate_reaps_the_process_group ... ok
+test fs::tests::selected_filenames_are_literal ... ok
+test macos::tests::sanitized_dev_bundle_name_accepts_single_component ... ok
+test macos::tests::sanitized_dev_bundle_name_rejects_invalid_components ... ok
+test macos_background::tests::suppresses_both_activation_paths_and_restores_after_error_and_panic ... ok
+test mcp::tests::accepts_opencode_names_and_command_arrays ... ok
+test macos::tests::native_backdrop_accepts_radius_updates_without_material_saturation ... ok
+test mcp::tests::adds_opencode_two_server_without_changing_existing_timeouts_or_servers ... ok
+test macos::tests::floating_mask_supports_appkit_stretching_without_an_exception ... ok
+test mcp::tests::adds_to_existing_cursor_jsonc ... ok
+test mcp::tests::chooses_existing_opencode_jsonc_and_custom_user_config ... ok
+test mcp::tests::adds_opencode_two_server_with_timeouts_and_no_existing_servers_map ... ok
+test mcp::tests::discovery_does_not_treat_opencode_timeouts_as_servers ... ok
+test mcp::tests::discovery_preserves_codex_enablement ... ok
+test mcp::tests::discovery_preserves_disabled_servers_across_opencode_versions ... ok
+test fs::tests::selected_symlinks_do_not_read_or_commit_outside_files ... ok
+test mcp::tests::jsonc_preserves_urls_and_removes_comments_and_trailing_commas ... ok
+test mcp::tests::parses_single_server_from_standard_json ... ok
+test harness::tests::kill_completes_while_a_stdin_write_is_blocked ... ok
+test mcp::tests::does_not_duplicate_home_configs_or_hide_a_server_named_servers ... ok
+test mcp::tests::discovers_provider_configs_without_exposing_credentials ... ok
+test mcp::tests::replacing_config_restricts_permissions ... ok
+test mcp::tests::rejects_legacy_server_named_timeout_without_changing_config ... ok
+test mobile_access::tests::commands_prefer_the_live_busy_owner_and_choose_stably_between_idle_windows ... ok
+test mcp::tests::writes_opencode_one_config_with_environment ... ok
+test mobile_access::tests::invalid_proof_or_expiration_does_not_consume_an_invitation_or_enroll_a_device ... ok
+test mobile_access::tests::session_commands_have_stable_device_scoped_ids_across_restarts ... ok
+test mobile_access::tests::the_poll_carries_recent_sessions_and_pages_serve_the_rest ... ok
+test mcp::tests::writes_opencode_two_config_and_normalizes_standard_env ... ok
+test mobile_access::tests::invitation_is_consumed_once_and_only_public_device_metadata_is_persisted ... ok
+test mcp::tests::writes_server_without_discarding_other_configuration ... ok
+test mcp::tests::concurrent_additions_keep_every_server ... ok
+test fs::tests::git_sync_marks_head_pushed_without_upstream ... ok
+test mono::tests::writes_private_files_even_with_a_leftover_public_temp_file ... ok
+test mono::tests::takes_over_the_folder_its_project_had_once ... ok
+test mono_chat::menu_bar::tests::each_mono_receives_its_own_portrait_when_the_payload_order_changes ... ok
+test mono::tests::refuses_to_overwrite_a_changed_file ... ok
+test mono_chat::menu_bar::tests::menu_portrait_contains_the_mascot_pixels_and_transparent_corners ... ok
+test mono_chat::menu_bar::tests::native_portrait_preserves_pixel_mascot_colors_and_alpha ... ok
+test mono_chat::tests::a_floating_window_shows_its_own_mono_until_the_rail_switches_it ... ok
+test mono_chat::tests::each_mono_keeps_its_own_snapshot_when_another_window_opens_or_streams ... ok
+test mono_chat::tests::expired_requests_cannot_be_delivered_after_a_retry ... ok
+test mono::tests::reads_and_writes_topics_inside_the_folder_only ... ok
+test mono::tests::concurrent_habit_claims_only_save_over_a_version_once ... ok
+test mono::tests::creates_one_folder_per_mono_with_empty_memory ... ok
+test mono_chat::tests::only_the_owner_can_accept_or_acknowledge_a_request ... ok
+test mono_chat::tests::menu_bar_mark_is_sixteen_points_inside_the_standard_eighteen_point_image ... ok
+test mono_chat::menu_bar::tests::appkit_accepts_the_png_used_by_native_icon_menu_items ... ok
+test mono_chat::menu_bar::tests::every_menu_action_draws_a_portrait_sized_symbol ... ok
+test fs::tests::selected_context_keeps_index_and_excluded_content_private ... ok
+test notifications::platform::tests::delegate_registers_protocol_methods ... ok
+test notifications::platform::tests::identifier_round_trips_the_session ... ok
+test notifications::platform::tests::permission_requires_a_visible_alert_style ... ok
+test notifications::platform::tests::wait_gives_up_when_the_completion_handler_never_runs ... ok
+test notifications::platform::tests::wait_reports_what_the_completion_handler_sent ... ok
+test pasteboard::path_tests::a_uri_list_line_resolves_to_the_file_it_names ... ok
+test pasteboard::path_tests::drops_empty_entries ... ok
+test pasteboard::path_tests::drops_the_carriage_return_a_uri_list_leaves_behind ... ok
+test pasteboard::path_tests::keeps_spaces_that_belong_to_the_name ... ok
+test pasteboard::path_tests::reads_a_uri_list_the_wayland_clipboard_publishes ... ok
+test pasteboard::png_tests::encodes_rgba_pixels_as_a_png ... ok
+test pasteboard::png_tests::keeps_pixels_lossless ... ok
+test pasteboard::png_tests::rejects_an_empty_or_malformed_image ... ok
+test pasteboard::png_tests::rejects_an_image_wide_enough_to_exhaust_memory ... ok
+test pasteboard::tests::accepts_file_urls_with_a_localhost_host ... ok
+test pasteboard::tests::ignores_file_urls_with_non_local_hosts ... ok
+test pasteboard::tests::ignores_non_file_urls_in_file_url_items ... ok
+test pasteboard::tests::ignores_pasteboards_without_file_urls ... ok
+test pasteboard::tests::reads_file_urls_from_a_private_pasteboard ... ok
+test pasteboard::tests::resolves_file_reference_urls_to_the_current_image_path ... ok
+test pasteboard::tests::writes_original_file_url_to_a_private_pasteboard ... ok
+test pi_usage::tests::agent_directory_matches_pi_override_semantics ... ok
+test pi_usage::tests::changed_credentials_discard_the_response ... ok
+test pi_usage::tests::codex_requires_its_own_account_id ... ok
+test pi_usage::tests::codex_weekly_primary_is_not_labeled_five_hour ... ok
+test pi_usage::tests::custom_directory_missing_auth_does_not_fall_back ... ok
+test pi_usage::tests::http_request_uses_pi_token_and_codex_account_header ... ok
+test pi_usage::tests::ineligible_credentials_never_make_a_request ... ok
+test pi_usage::tests::known_provider_auth_overrides_are_not_mistaken_for_oauth ... ok
+test pi_usage::tests::malformed_responses_are_not_zero_usage ... ok
+test mono_transcript::tests::failed_anchors_roll_back_and_reset_cascades_all_history ... ok
+test pi_usage::tests::parses_anthropic_zero_usage_and_never_returns_raw_identity ... ok
+test mono_transcript::tests::appending_after_deleting_a_loaded_window_preserves_the_archive ... ok
+test mono_transcript::tests::migrates_only_the_requested_mono_and_pages_ten_complete_turns ... ok
+test pi_usage::tests::reads_only_the_selected_pi_credential_without_writing ... ok
+test pi_usage::tests::per_model_auth_overrides_are_not_mistaken_for_saved_oauth ... ok
+test pi_usage::tests::relative_agent_directories_do_not_read_the_apps_working_directory ... ok
+test project_logo::tests::sanitize_project_key_replaces_unsafe_characters ... ok
+test project_logo::tests::sanitize_project_key_separates_paths_that_sanitize_alike ... ok
+test project_logo::tests::sanitize_project_key_shortens_long_paths_without_colliding ... ok
+test pi_usage::tests::redirects_never_forward_credentials_and_errors_do_not_forward_bodies ... ok
+test pi_usage::tests::oversized_auth_and_responses_are_rejected ... ok
+test provider_session_transfer::tests::reports_a_missing_claude_transcript ... ok
+test pty::label_tests::command_label_prefers_cli_over_interpreter ... ok
+test pty::label_tests::shell_names_are_ignored ... ok
+test pty::tests::login_args_for_common_shells ... ok
+test pty::tests::pty_flush_waits_for_a_full_chunk_or_the_coalesce_window ... ok
+test pty::tests::remove_if_pid_ignores_a_replaced_session ... ok
+test quick_composer::delivery::tests::consecutive_submissions_wait_for_successful_acknowledgement ... ok
+test quick_composer::delivery::tests::launch_mode_fields_survive_the_bridge ... ok
+test quick_composer::git_popup::tests::blur_only_marks_a_click_inside_the_current_trigger ... ok
+test quick_composer::git_popup::tests::menu_flips_and_clamps_at_screen_edges ... ok
+test quick_composer::delivery::tests::retains_other_windows_requests_and_reassigns_only_destroyed_owners ... ok
+test quick_composer::git_popup::tests::menu_is_anchored_without_changing_the_composer_frame ... ok
+test quick_composer::git_popup::tests::popup_is_never_a_workspace_launch_target ... ok
+test quick_composer::git_popup::tests::request_preserves_the_composers_branch_snapshot ... ok
+test mono_transcript::tests::pending_messages_survive_header_only_writes_and_clear_after_delivery ... ok
+test mono_transcript::tests::suffix_edits_appends_and_rewinds_preserve_unloaded_history ... ok
+test quick_composer::tests::attachments_round_trip_without_webview_local_data ... ok
+test quick_composer::tests::launch_preserves_model_settings_across_windows ... ok
+test quick_composer::tests::missing_files_and_unsupported_providers_cannot_launch ... ok
+test quick_composer::tests::no_workspace_return_requests_hidden_creation_and_cmd_return_requests_reveal ... ok
+test quick_composer::tests::older_launches_without_settings_remain_valid ... ok
+test quick_composer::tests::quick_composer_shortcut_requires_a_non_shift_modifier ... ok
+test quick_composer::tests::workspace_choices_round_trip_and_conflicts_are_rejected ... ok
+test rate_limits::tests::auth_content_blob_without_key_stays_authoritative ... ok
+test rate_limits::tests::config_go_api_key_falls_through_to_opencode_provider ... ok
+test quick_composer::screenshots::tests::failed_promotion_keeps_the_original_for_retry ... ok
+test rate_limits::tests::config_go_api_key_ignores_other_providers_and_supports_env ... ok
+test rate_limits::tests::config_go_api_key_reads_provider_options ... ok
+test rate_limits::tests::custom_config_dir_selects_claudes_hashed_keychain_service ... ok
+test rate_limits::tests::extract_access_token_from_claude_credentials ... ok
+test rate_limits::tests::extract_access_token_from_flat_object ... ok
+test rate_limits::tests::extract_access_token_rejects_empty ... ok
+test rate_limits::tests::extract_opencode_go_api_key_from_auth_json ... ok
+test rate_limits::tests::extract_opencode_go_api_key_rejects_missing_or_empty ... ok
+test rate_limits::tests::opencode_data_dir_prefers_explicit_override ... ok
+test rate_limits::tests::opencode_go_forbidden_maps_to_unavailable ... ok
+test rate_limits::tests::token_expired_uses_actual_expiry ... ok
+test rate_limits::tests::parse_opencode_config_accepts_jsonc ... ok
+test quick_composer::screenshots::tests::release_only_deletes_owned_captures_and_promotion_retains_session_copy ... ok
+test quick_composer::screenshots::tests::sweep_retains_recent_live_and_unrecognized_files ... ok
+test provider_session_transfer::tests::carries_a_codex_rollout_and_its_inherited_history ... ok
+test provider_session_transfer::tests::carries_a_claude_transcript_with_its_subagents_and_checkpoints ... ok
+test harness::tests::omp_accepts_rpc_capable_binary_and_rejects_other_names ... ok
+test reminders::tests::cancellation_and_session_deletion_remove_reminders ... ok
+test remote::tests::desktop_forwards_supported_host_operations ... ok
+test remote::tests::endpoints_require_an_encrypted_route_and_no_embedded_secrets ... ok
+test remote::tests::public_machine_metadata_never_contains_the_token ... ok
+test remote_media::tests::github_and_linear_attachments_are_allowed ... ok
+test remote_media::tests::github_pages_other_hosts_and_traversal_are_rejected ... ok
+test remote_media::tests::redirects_stay_on_allowed_hosts ... ok
+test reminders::tests::due_reminders_are_claimed_once_across_projects_and_remain_visible ... ok
+test remote_ssh::tests::bootstrap_is_versioned_and_only_explicit_upgrade_restarts_the_host ... ok
+test reminders::tests::invalid_batch_and_past_time_do_not_partially_save ... ok
+test remote_ssh::tests::loopback_transport_preserves_host_and_reconnects ... ignored, requires the isolated loopback SSH fixture
+test remote_ssh::tests::remote_platform_probe_handles_cmd_powershell_and_unix ... ok
+test remote_ssh::tests::ssh_targets_cannot_inject_options_or_shell_commands ... ok
+test remote_ssh::tests::stale_requests_cannot_invalidate_a_newer_tunnel ... ok
+test remote_ssh::tests::unix_bootstrap_accepts_windows_checkout_line_endings ... ok
+test resources::tests::ancestry_never_includes_unrelated_or_ancestor_processes ... ok
+test reminders::tests::reschedule_rearms_and_old_notification_cannot_clear_it ... ok
+test reminders::tests::project_rules_wait_for_resolution_and_suppress_due_reminders_without_replay ... ok
+test remote_ssh::tests::device_names_are_bounded_single_lines ... ok
+test search::tests::a_new_search_cancels_the_previous_owner ... ok
+test search::tests::cancelling_one_project_search_does_not_cancel_another ... ok
+test reminders::tests::reopening_catches_missed_reminders_without_reannouncing_fired_ones ... ok
+test search::tests::a_cancelled_fallback_scan_returns_no_matches ... ok
+test search::tests::git_grep_cancelled_search_returns_empty_instead_of_falling_back ... ok
+test search::tests::a_cancelled_git_listing_does_not_scan_the_index ... ok
+test search::tests::the_cancellable_listing_reports_nothing_once_cancelled ... ok
+test harness::tests::reap_snapshots_kills_a_marked_orphan ... ok
+test search::tests::git_grep_no_match_is_still_an_empty_success ... ok
+test session_store::tests::a_new_session_search_supersedes_the_same_owner ... ok
+test session_store::tests::a_superseded_session_search_does_not_release_the_newer_token ... ok
+test remote_ssh::tests::answers_must_match_the_current_prompt ... ok
+test search::tests::git_grep_stops_reading_at_the_output_cap ... ok
+test resources::tests::stopping_a_tool_preserves_its_agent_and_sibling ... ok
+test search::tests::git_grep_treats_hyphen_prefixed_include_as_pathspec ... ok
+test session_store::tests::cancelling_one_session_search_does_not_cancel_another ... ok
+test session_store::tests::a_completed_session_search_releases_its_token ... ok
+test session_store::tests::a_failed_session_search_releases_its_token ... ok
+test fs::tests::selected_paths_reject_directories_and_other_repositories_before_staging ... ok
+test session_store::tests::a_superseded_session_search_returns_no_hits ... ok
+test session_store::tests::a_test_helper_session_search_releases_its_token ... ok
+test session_store::tests::archive_round_trips_and_survives_upsert ... ok
+test session_store::tests::context_usage_is_absent_until_a_harness_reports ... ok
+test session_store::tests::automation_id_round_trips ... ok
+test remote::tests::a_slow_host_does_not_look_like_a_dead_tunnel ... ok
+test session_store::tests::context_usage_round_trips ... ok
+test session_store::tests::delete_removes_session ... ok
+test session_store::tests::deleting_a_worker_prunes_parent_state_and_does_not_release_dependencies ... ok
+test session_store::tests::draft_marker_round_trips_through_session_summaries ... ok
+test session_store::tests::deleting_a_lead_releases_current_and_earlier_workers ... ok
+test session_store::tests::failed_session_deletion_rolls_back_orchestration_cleanup ... ok
+test session_store::tests::get_round_trips_blocks_provider_session_and_account ... ok
+test session_store::tests::in_flight_list_does_not_clear ... ok
+test session_store::tests::in_flight_replace_clears_previous ... ok
+test session_store::tests::in_flight_set_take_is_ordered_and_destructive ... ok
+test session_store::tests::legacy_inbox_chats_are_not_normal_sessions ... ok
+test session_store::tests::linked_work_item_can_be_set_and_removed_without_rewriting_the_session ... ok
+test session_store::tests::linked_work_item_round_trips ... ok
+test session_store::tests::list_by_project_is_served_by_a_covering_index ... ok
+test session_store::tests::list_by_project_filters_and_orders ... ok
+test session_store::tests::list_does_not_sum_write_preview_diffs ... ok
+test fs::tests::git_sync_pulls_then_pushes ... ok
+test session_store::tests::list_linked_finds_threads_across_projects ... ok
+test session_store::tests::migrate_creates_sessions_table ... ok
+test session_store::tests::migrate_creates_workspace_tables_when_versions_already_recorded ... ok
+test session_store::tests::migrate_restores_the_covering_index_when_versions_already_recorded ... ok
+test mono_transcript::tests::cold_page_reads_are_bounded_and_never_read_the_legacy_blob ... ok
+test session_store::tests::migration_v11_adds_pinned_column ... ok
+test session_store::tests::migration_groups_workers_from_the_earlier_preview ... ok
+test session_store::tests::migration_v3_adds_context_columns ... ok
+test session_store::tests::migration_v4_creates_in_flight_table ... ok
+test session_store::tests::migration_v5_creates_workspace_snapshot_table ... ok
+test session_store::tests::migration_v6_adds_archived_column ... ok
+test session_store::tests::migration_v7_adds_worktree_cwd_column ... ok
+test harness::tests::configured_binary_paths_fail_closed_and_stay_exact ... ok
+test session_store::tests::orchestration_history_groups_workers_and_keeps_their_transcripts ... ok
+test session_store::tests::pin_round_trips_and_survives_upsert ... ok
+test session_store::tests::queued_messages_round_trip_and_clear_without_changing_the_transcript ... ok
+test session_store::tests::removed_worktree_state_round_trips_and_can_be_reselected ... ok
+test session_store::tests::saving_a_loaded_transcript_keeps_its_omitted_tool_output ... ok
+test session_store::tests::search_empty_query_is_empty ... ok
+test session_store::tests::rebase_project_moves_saved_sessions_to_the_renamed_path ... ok
+test session_store::tests::search_finds_title_and_message_hits ... ok
+test session_store::tests::search_keeps_older_mono_messages_available_after_conversion ... ok
+test session_store::tests::search_respects_cwd_and_skips_archived ... ok
+test session_store::tests::search_skips_inbox_ask_sessions_when_scoped_and_unscoped ... ok
+test session_store::tests::search_uses_top_level_user_blocks_for_the_materialized_filter ... ok
+test session_store::tests::session_search_without_a_cwd_avoids_the_sessions_table ... ok
+test session_store::tests::session_search_uses_a_query_only_read_connection ... ok
+test session_store::tests::sidebar_visibility_round_trips_without_hiding_session_access ... ok
+test skills::tests::agents_skills_win_over_provider_dirs ... ok
+test skills::tests::antigravity_skills_do_not_shadow_existing_providers ... ok
+test skills::tests::claude_plugin_enablement_uses_local_project_user_precedence ... ok
+test skills::tests::claude_project_plugins_only_apply_to_their_project ... ok
+test skills::tests::disabled_claude_plugin_skills_are_hidden ... ok
+test skills::tests::disabled_project_skill_falls_back_to_same_name_personal_skill ... ok
+test skills::tests::disabled_skill_matching_preserves_distinct_unix_paths_with_backslashes ... ok
+test skills::tests::discovers_antigravity_user_skills ... ok
+test session_store::tests::upsert_keeps_session_branch_and_worktree ... ok
+test skills::tests::discovers_devin_project_and_user_skills ... ok
+test skills::tests::discovers_fx_project_and_user_skills ... ok
+test skills::tests::discovers_hermes_project_and_user_skills ... ok
+test skills::tests::discovers_grok_project_and_user_skills ... ok
+test session_store::tests::upsert_preserves_created_at_and_updates_fields ... ok
+test session_store::tests::sidebar_visibility_migration_keeps_existing_sessions_visible ... ok
+test skills::tests::discovers_pi_project_and_user_skills ... ok
+test session_store::tests::upsert_same_blocks_keeps_updated_at ... ok
+test skills::tests::discovers_installed_claude_plugin_skills ... ok
+test skills::tests::parse_frontmatter_falls_back_to_folder_name ... ok
+test skills::tests::parse_frontmatter_reads_name_and_folded_description ... ok
+test session_store::tests::upsert_tracks_whether_a_user_has_spoken ... ok
+test skills::tests::ignores_unregistered_claude_plugin_cache_versions ... ok
+test skills::tests::utf8_prefix_drops_only_a_cut_character ... ok
+test ssh_askpass::tests::detects_openssh_host_trust_without_a_prompt_hint ... ok
+test skills::tests::path_is_within_fails_closed_when_either_path_is_missing ... ok
+test tests::explicit_exit_requests_quit ... ok
+test tests::last_window_close_stays_alive_with_dock ... ok
+test skills::tests::managed_plugin_settings_apply_dropins_in_order ... ok
+test tool_detail::tests::omits_only_large_details ... ok
+test tool_detail::tests::restores_output_when_a_rebuilt_block_dropped_the_marker ... ok
+test tool_detail::tests::saving_omitted_blocks_keeps_the_stored_output ... ok
+test tool_detail::tests::unrecoverable_output_keeps_its_marker ... ok
+test skills::tests::skips_dirs_without_skill_md ... ok
+test tool_detail::tests::untouched_blocks_are_borrowed ... ok
+test window::tests::a_final_reply_and_the_timeout_cannot_both_close_the_poll ... ok
+test window::tests::a_second_quit_leaves_the_open_dialog_in_charge ... ok
+test window::tests::a_second_quit_while_polling_is_ignored ... ok
+test window::tests::a_window_closing_mid_poll_is_not_waited_on ... ok
+test window::tests::a_window_that_never_answers_counts_as_busy ... ok
+test window::tests::another_window_closing_leaves_the_dialog_alone ... ok
+test window::tests::background_session_creation_overrides_main_windows_visible_and_focus_defaults ... ok
+test window::tests::closing_the_window_holding_the_dialog_aborts_the_quit ... ok
+test window::tests::explicit_reveal_creates_a_visible_focused_session_window ... ok
+test window::tests::floating_mono_windows_are_excluded_from_workspace_lifecycle ... ok
+test window::tests::one_window_answering_does_not_decide_for_the_others ... ok
+test window::tests::only_windows_that_answered_are_offered_the_dialog ... ok
+test window::tests::replies_from_a_stale_run_are_ignored ... ok
+test window::tests::the_app_exits_only_once_every_window_has_persisted ... ok
+test skills::tests::lists_large_skill_when_prefix_cuts_a_character ... ok
+test worktree_lifecycle::tests::removal_and_in_flight_spawns_exclude_each_other_until_guards_drop ... ok
+test tool_detail::tests::fetches_one_tool_or_step_detail ... ok
+test worktrees::tests::parses_literal_paths_and_worktree_flags ... ok
+test session_store::tests::worker_upserts_carry_ownership_before_the_run_is_saved ... ok
+test session_store::tests::workspace_snapshot_round_trips_and_replaces ... ok
+test session_store::tests::oversized_transcript_keeps_title_hit_without_hiding_older_messages ... ok
+test session_store::tests::standalone_chat_survives_restart_outside_project_history ... ok
+test session_store::tests::upsert_snapshots_git_branch ... ok
+test session_store::tests::startup_does_not_read_saved_transcripts ... ok
+test ssh_askpass::tests::prompt_bridge_rejects_unknown_clients_and_does_not_put_answers_in_files ... ok
+test harness::tests::mcp_commands_use_active_configured_binaries ... ok
+test worktrees::tests::references_include_archived_sessions_and_directly_opened_worktrees ... ok
+test worktrees::tests::database_failures_keep_worktree_and_session_state_consistent ... ok
+test worktrees::tests::removal_preflight_is_read_only_and_rejects_blockers ... ok
+test worktrees::tests::removal_preserves_shared_archived_and_direct_sessions ... ok
+test worktrees::tests::isolates_changes_and_preserves_branch_on_removal ... ok
+test worktrees::tests::reuses_branches_and_rejects_locked_or_unregistered_paths ... ok
+test worktrees::tests::renames_only_temporary_worktree_branches ... ok
+test worktrees::tests::startup_recovers_interruptions_before_and_after_git_removal ... ok
+test skills::tests::lists_large_catalogs_from_every_root ... ok
+test worktrees::tests::orchestration_worktree_starts_from_the_lead_checkout_contents ... ok
+test checkpoint::turn::tests::records_empty_binary_and_unusual_paths_without_the_old_file_limit ... ok
+
+test result: ok. 602 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 10.75s
+
+     Running unittests src/main.rs (target/debug/deps/handwork-ef5c3758b7c2eed5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/handwork_mobile_link-0a0d236f119d1921)
+
+running 22 tests
+test tests::addresses_do_not_accept_credentials_or_routes ... ok
+test tests::expired_and_revoked_keys_are_refused ... ok
+test transcript::tests::markdown_keeps_table_cells_and_horizontal_code_groups ... ok
+test transcript::tests::replacements_prune_rows_and_unknown_cursors_fail_without_losing_turns ... ok
+test transcript::tests::presentation_preserves_reply_insets_and_nested_work_rails ... ok
+test transcript::tests::appending_code_changes_only_the_previous_last_line_and_new_lines ... ok
+test transcript::tests::completed_blocks_share_allocations_and_stream_completion_has_no_text_delta ... ok
+test transcript::tests::a_reopened_window_confirms_by_last_user_id_even_when_its_count_shrinks ... ok
+test transcript::tests::incremental_watch_edits_append_unicode_and_keep_completed_rows ... ok
+test transcript::tests::fold_actions_and_selection_keep_the_source_text ... ok
+test transcript::tests::changed_tail_sends_no_completed_rows_and_history_does_not_confirm_pending ... ok
+test transcript::tests::incremental_watch_edits_change_nested_state_and_recover_from_stale_appends ... ok
+test ffi::tests::native_transcript_wire_contract_and_cleanup ... ok
+test transcript::tests::incremental_markdown_matches_complete_parse_at_every_unicode_boundary ... ok
+test transport::tests::closing_a_watch_on_the_phone_releases_the_desktop_sink ... ok
+test transport::tests::revocation_applies_to_an_existing_connection_and_large_frames_are_rejected ... ok
+test transport::tests::unpaired_and_wrongly_pinned_clients_never_reach_the_handler ... ok
+test transport::tests::requests_and_a_closed_watch_share_one_pooled_connection ... ok
+test transport::tests::direct_quic_round_trip_with_pinned_mutual_tls_over_ipv4_and_ipv6 ... ok
+test tests::enrollment_proof_binds_both_device_and_invitation ... ok
+test transport::tests::waiting_for_a_watch_sleeps_until_data_and_does_not_consume_it ... ok
+test transport::tests::a_watch_streams_updates_until_the_desktop_ends_it ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+   Doc-tests handwork_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests handwork_mobile_link
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

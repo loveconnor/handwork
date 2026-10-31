@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runHandwork } from "../evals/eval-helpers";
+import { runHandwork, providerVersionTestEnv } from "../evals/eval-helpers";
 import { contentText } from "./conditional-guidance-oracle";
 import {
   fakeCodexFinalText,
@@ -449,7 +449,6 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
         HOME: root.home,
         TMPDIR: root.root,
 
-
         HANDWORK_AUTO_UPGRADE: "0",
         HANDWORK_TRACE_LOG: root.traceLogPath,
         HANDWORK_TRACE_SCOPES: "mcp",
@@ -481,7 +480,6 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       env: {
         HOME: root.home,
         TMPDIR: root.root,
-
 
         HANDWORK_AUTO_UPGRADE: "0",
         HANDWORK_TRACE_LOG: root.traceLogPath,
@@ -1224,18 +1222,18 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
     });
     let childCompleted = false;
     const activeProvider = startDynamicFakeCodex(async (body) => {
-      if (body.includes('"toolCallId":"child_mcp_call"')) {
+      if (body.includes('"call_id":"child_mcp_call"')) {
         childCompleted = true;
         releaseParent(fakeCodexFinalText("SCOPED_MCP_ONE_OFF_PARENT_READY"));
         return fakeCodexFinalText("SCOPED_MCP_ONE_OFF_CHILD_READY");
       }
-      if (body.includes('"toolCallId":"child_mcp_select"')) {
+      if (body.includes('"call_id":"child_mcp_select"')) {
         return fakeCodexToolCall("child_mcp_call", TOOL_NAME, { text: "child" });
       }
-      if (body.includes('"toolCallId":"child_completion"')) {
+      if (body.includes('"call_id":"child_completion"')) {
         return fakeCodexToolCall("child_mcp_select", "mcp_select_tool", { name: TOOL_NAME });
       }
-      if (body.includes('"toolCallId":"child_prompt_get"')) {
+      if (body.includes('"call_id":"child_prompt_get"')) {
         return fakeCodexToolCall("child_completion", "mcp_features", {
           action: "prompt_complete",
           server: "fixture",
@@ -1244,7 +1242,7 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
           value: "b",
         });
       }
-      if (body.includes('"toolCallId":"child_prompt_list"')) {
+      if (body.includes('"call_id":"child_prompt_list"')) {
         return fakeCodexToolCall("child_prompt_get", "mcp_features", {
           action: "prompt_get",
           server: "fixture",
@@ -1252,21 +1250,21 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
           arguments: { tone: "brief" },
         });
       }
-      if (body.includes('"toolCallId":"child_resource_read"')) {
+      if (body.includes('"call_id":"child_resource_read"')) {
         return fakeCodexToolCall("child_prompt_list", "mcp_features", {
           action: "prompt_list",
           server: "fixture",
         });
       }
-      if (body.includes('"toolCallId":"child_resource_list"')) {
+      if (body.includes('"call_id":"child_resource_list"')) {
         return fakeCodexToolCall("child_resource_read", "mcp_features", {
           action: "resource_read",
           server: "fixture",
           uri: "custom://alpha",
         });
       }
-      if (body.includes('"toolCallId":"create_scoped_child"')) {
-        return parentCompletion;
+      if (body.includes('"call_id":"create_scoped_child"')) {
+        return parentCompletion.then(response => response.clone());
       }
       if (body.includes(childPrompt)) {
         return fakeCodexToolCall("child_resource_list", "mcp_features", {
@@ -1325,13 +1323,13 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       });
       let childCompleted = false;
       const activeProvider = startDynamicFakeCodex((body) => {
-        if (body.includes('"toolCallId":"feature_only_list"')) {
+        if (body.includes('"call_id":"feature_only_list"')) {
           childCompleted = body.includes("custom://alpha");
           releaseParent(fakeCodexFinalText(`FEATURE_ONLY_${marker}_PARENT_READY`));
           return fakeCodexFinalText(`FEATURE_ONLY_${marker}_CHILD_READY`);
         }
-        if (body.includes('"toolCallId":"create_feature_only_child"')) {
-          return parentCompletion;
+        if (body.includes('"call_id":"create_feature_only_child"')) {
+          return parentCompletion.then(response => response.clone());
         }
         if (body.includes(childPrompt)) {
           expect(body).not.toContain(TOOL_NAME);
@@ -1407,16 +1405,11 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       });
       let childFailedClosed = false;
       const activeProvider = startDynamicFakeCodex(async (body) => {
-        if (body.includes('"toolCallId":"disabled_child_feature"')) {
-          const request = JSON.parse(body) as {
-            prompt?: Array<{ content?: unknown }>;
-          };
-          const parts = (request.prompt ?? []).flatMap((message) =>
-            Array.isArray(message.content) ? message.content : []
-          ) as Array<Record<string, unknown>>;
-          const toolResult = parts.find((part) =>
-            part.type === "tool-result" &&
-            part.toolCallId === "disabled_child_feature"
+        if (body.includes('"call_id":"disabled_child_feature"')) {
+          const request = JSON.parse(body);
+          const toolResult = request.input.find((part: Record<string, unknown>) =>
+            part.type === "function_call_output" &&
+            part.call_id === "disabled_child_feature"
           );
           expect(toolResult).toBeDefined();
           expect(contentText(toolResult!.output)).toBe(
@@ -1426,8 +1419,8 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
           releaseParent(fakeCodexFinalText(`DISABLED_MCP_${marker}_PARENT_READY`));
           return fakeCodexFinalText(`DISABLED_MCP_${marker}_CHILD_READY`);
         }
-        if (body.includes('"toolCallId":"create_disabled_child"')) {
-          return parentCompletion;
+        if (body.includes('"call_id":"create_disabled_child"')) {
+          return parentCompletion.then(response => response.clone());
         }
         if (body.includes(childPrompt)) {
           return fakeCodexToolCall("disabled_child_feature", "mcp_features", {
@@ -1516,14 +1509,14 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       let allowedBaseline = 0;
       let deniedBaseline: WireEntry[] = [];
       const activeProvider = startDynamicFakeCodex(async (body) => {
-        if (body.includes('"toolCallId":"scoped_refresh_search"')) {
+        if (body.includes('"call_id":"scoped_refresh_search"')) {
           expect(body).toContain("mcp_allowed_echo");
           expect(body).not.toContain("mcp_denied_blocked");
           releaseParent(fakeCodexFinalText("SCOPED_REFRESH_PARENT_READY"));
           return fakeCodexFinalText("SCOPED_REFRESH_CHILD_READY");
         }
-        if (body.includes('"toolCallId":"create_scoped_refresh_child"')) {
-          return parentCompletion;
+        if (body.includes('"call_id":"create_scoped_refresh_child"')) {
+          return parentCompletion.then(response => response.clone());
         }
         if (body.includes(childPrompt)) {
           await Bun.sleep(250);
@@ -2045,17 +2038,16 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       });
       expect(result.code).toBe(0);
       const request = JSON.parse(provider.requests.at(-1)!.body);
-      const part = request.prompt.flatMap((message: { content?: unknown[] }) => message.content ?? [])
-        .find((value: { type?: string; toolCallId?: string }) => value.type === "tool-result" && value.toolCallId === "image_call");
+      const part = request.input.find((value: any) => value.type === "function_call_output" && value.call_id === "image_call");
       expect(part).toBeDefined();
       if (supportsImages) {
-        expect(part.output.type).toBe("content");
-        expect(part.output.value.some((value: { type: string; mediaType?: string }) => value.type === "image-data" && value.mediaType === "image/png")).toBe(true);
-        expect(part.output.value.find((value: { type: string }) => value.type === "text").text).not.toContain("iVBORw0KGgo");
+        expect(Array.isArray(part.output)).toBe(true);
+        expect(part.output.some((value: any) => value.type === "input_image" && value.image_url.startsWith("data:image/png;base64,"))).toBe(true);
+        expect(part.output.find((value: any) => value.type === "input_text").text).not.toContain("iVBORw0KGgo");
       } else {
-        expect(part.output.type).toBe("text");
-        expect(part.output.value).toContain("not sent because this model does not support image input");
-        expect(part.output.value).not.toContain("iVBORw0KGgo");
+        expect(typeof part.output).toBe("string");
+        expect(part.output).toContain("not sent because this model does not support image input");
+        expect(part.output).not.toContain("iVBORw0KGgo");
       }
       await expectFixtureProcessesExited(readWire(root.wireLogPath));
     }, 30_000);
@@ -2078,12 +2070,10 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
         cwd: root.workspace, env: fixtureEnv(root, provider), timeoutMs: 20_000,
       });
       expect(result.code, result.stderr || result.stdout).toBe(0);
-      const part = JSON.parse(provider.requests[1]!.body).prompt
-        .flatMap((message: { content?: unknown[] }) => message.content ?? [])
-        .find((part: { type?: string; toolCallId?: string }) => part.type === "tool-result" && part.toolCallId === "feature_image");
-      expect(part.output.type, JSON.stringify(part.output)).toBe("content");
-      expect(part.output.value.some((part: { type?: string; mediaType?: string }) => part.type === "image-data" && part.mediaType === "image/png")).toBe(true);
-      expect(part.output.value.filter((part: { type?: string }) => part.type === "text").map((part: { text: string }) => part.text).join("\n")).not.toContain("iVBORw0KGgo");
+      const part = JSON.parse(provider.requests[1]!.body).input.find((part: any) => part.type === "function_call_output" && part.call_id === "feature_image");
+      expect(Array.isArray(part.output)).toBe(true);
+      expect(part.output.some((part: any) => part.type === "input_image" && part.image_url.startsWith("data:image/png;base64,"))).toBe(true);
+      expect(part.output.filter((part: { type?: string }) => part.type === "input_text").map((part: { text: string }) => part.text).join("\n")).not.toContain("iVBORw0KGgo");
       const wire = readWire(root.wireLogPath);
       expect(wire.filter((entry) => entry.message.method === (action === "resource_read" ? "resources/read" : "prompts/get"))).toHaveLength(1);
       await expectFixtureProcessesExited(wire);
@@ -2115,15 +2105,12 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
     });
     expect(resumed.code).toBe(0);
     const request = JSON.parse(provider.requests[0]!.body);
-    const result = request.prompt.flatMap((message: { content?: unknown[] }) => message.content ?? [])
-      .find((part: { type?: string; toolCallId?: string }) => part.type === "tool-result" && part.toolCallId === "saved_image");
-    expect(result.output.type).toBe("content");
-    expect(result.output.value.some((part: { type?: string }) => part.type === "image-data")).toBe(true);
-    const loaded = JSON.parse(provider.requests[1]!.body).prompt
-      .flatMap((message: { content?: unknown[] }) => message.content ?? [])
-      .find((part: { type?: string; toolCallId?: string }) => part.type === "tool-result" && part.toolCallId === "load_saved_image");
-    expect(loaded.output.type).toBe("content");
-    expect(loaded.output.value.some((part: { type?: string }) => part.type === "image-data")).toBe(true);
+    const result = request.input.find((part: any) => part.type === "function_call_output" && part.call_id === "saved_image");
+    expect(Array.isArray(result.output)).toBe(true);
+    expect(result.output.some((part: any) => part.type === "input_image" && part.image_url.startsWith("data:image/png;base64,"))).toBe(true);
+    const loaded = JSON.parse(provider.requests[1]!.body).input.find((part: any) => part.type === "function_call_output" && part.call_id === "load_saved_image");
+    expect(Array.isArray(loaded.output)).toBe(true);
+    expect(loaded.output.some((part: any) => part.type === "input_image" && part.image_url.startsWith("data:image/png;base64,"))).toBe(true);
     const wire = readWire(root.wireLogPath);
     expect(wire.filter((entry) => entry.message.method === "tools/call")).toHaveLength(1);
     await expectFixtureProcessesExited(wire);
@@ -2812,9 +2799,8 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       await tui.waitForText("Terminal MCP startup complete.", 20_000);
       await waitForTtyAskExit(tui, 0);
       expect(activeProvider.requests).toHaveLength(1);
-      const prompt = (JSON.parse(activeProvider.requests[0]!.body) as {
-        prompt: Array<{ content: unknown }>;
-      }).prompt.map((message) => contentText(message.content)).join("\n");
+      const request = JSON.parse(activeProvider.requests[0]!.body);
+      const prompt = request.instructions + "\n" + request.input.map((message: any) => contentText(message.content)).join("\n");
       expect(prompt).toContain(
         '<server name="fixture" state="ready" tools="1" />',
       );
@@ -2935,11 +2921,9 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
     );
 
     expect(result.code).toBe(0);
-    const resultPart = JSON.parse(activeProvider.requests[2]!.body).prompt
-      .flatMap((message: { content?: unknown[] }) => message.content ?? [])
-      .find((part: { type?: string; toolCallId?: string }) => part.type === "tool-result" && part.toolCallId === "call_mcp");
-    expect(resultPart.output.type).toBe("error-text");
-    expect(resultPart.output.value).toContain("text violates the server pattern");
+    const resultPart = JSON.parse(activeProvider.requests[2]!.body).input.find((part: any) => part.type === "function_call_output" && part.call_id === "call_mcp");
+    expect(JSON.parse(result.stdout).tool_calls).toContainEqual({ name: TOOL_NAME, status: "error" });
+    expect(resultPart.output).toContain("text violates the server pattern");
     const wire = readWire(root.wireLogPath);
     expect(wire.filter((entry) => entry.message.method === "tools/call")).toHaveLength(1);
     await expectFixtureProcessesExited(wire);
@@ -4254,7 +4238,8 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
 
         await tui.waitForText(`Complete URL: ${targetUrl}`, 20_000);
         await tui.sendText("1");
-        await tui.waitForText("Continue manually, retry the browser, or cancel?", 20_000);
+        const retryPane = await tui.waitForText("2. Retry browser", 20_000);
+        expect(retryPane).toContain("3. Cancel");
         const trace = readFileSync(traceLog, "utf8");
         expect(trace).toContain(
           "url opener unsuccessful term=exited exit_code=1",
@@ -4418,7 +4403,7 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       fakeCodexFinalText("Unexpected continuation."),
     ], { models: [{ id: MODEL, type: "language", tags: ["tool-use"] }] });
     const proc = Bun.spawn([join(REPO_ROOT, "zig-out", "bin", "handwork"), "ask", "--json", "--auto", "--no-save", "Find the fixture tool"], {
-      cwd: root.workspace, env: { ...process.env, ...fixtureEnv(root, provider) }, stdout: "ignore", stderr: "ignore",
+      cwd: root.workspace, env: { ...process.env, ...providerVersionTestEnv(fixtureEnv(root, provider)) }, stdout: "ignore", stderr: "ignore",
     });
     try {
       const deadline = Date.now() + 5_000;
@@ -4523,10 +4508,6 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
     },
     25_000,
   );
-
-  
-
-  
 
   test.skipIf(!tmuxAvailable())(
     "empty MCP catalogs ignore Enter and preserve menu navigation",
@@ -4696,19 +4677,19 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       const beforePrompt = "BEFORE_FAILED_RELOAD";
       const afterPrompt = "AFTER_FAILED_RELOAD";
       const activeProvider = startDynamicFakeCodex((body) => {
-        if (body.includes('"toolCallId":"after_call"')) {
+        if (body.includes('"call_id":"after_call"')) {
           return fakeCodexFinalText("AFTER_RELOAD_READY");
         }
-        if (body.includes('"toolCallId":"after_select"')) {
+        if (body.includes('"call_id":"after_select"')) {
           return fakeCodexToolCall("after_call", TOOL_NAME, { text: "after" });
         }
         if (body.includes(afterPrompt)) {
           return fakeCodexToolCall("after_select", "mcp_select_tool", { name: TOOL_NAME });
         }
-        if (body.includes('"toolCallId":"before_call"')) {
+        if (body.includes('"call_id":"before_call"')) {
           return fakeCodexFinalText("BEFORE_RELOAD_READY");
         }
-        if (body.includes('"toolCallId":"before_select"')) {
+        if (body.includes('"call_id":"before_select"')) {
           return fakeCodexToolCall("before_call", TOOL_NAME, { text: "before" });
         }
         if (body.includes(beforePrompt)) {
@@ -4858,16 +4839,16 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       const beforePrompt = "SELECT_BEFORE_MCP_RELOAD";
       const afterPrompt = "CALL_DIRECTLY_AFTER_MCP_RELOAD";
       const activeProvider = startDynamicFakeCodex((body) => {
-        if (body.includes('"toolCallId":"reload_direct"')) {
+        if (body.includes('"call_id":"reload_direct"')) {
           return fakeCodexFinalText("POST_RELOAD_GUIDANCE_READY");
         }
         if (body.includes(afterPrompt)) {
           return fakeCodexToolCall("reload_direct", TOOL_NAME, { text: "stale" });
         }
-        if (body.includes('"toolCallId":"reload_before_call"')) {
+        if (body.includes('"call_id":"reload_before_call"')) {
           return fakeCodexFinalText("PRE_RELOAD_CALL_READY");
         }
-        if (body.includes('"toolCallId":"reload_before_select"')) {
+        if (body.includes('"call_id":"reload_before_select"')) {
           return fakeCodexToolCall("reload_before_call", TOOL_NAME, { text: "before" });
         }
         if (body.includes(beforePrompt)) {
@@ -4897,7 +4878,7 @@ exec "$HANDWORK_MCP_FIXTURE_RUNTIME" "$HANDWORK_MCP_FIXTURE_PATH"
       await tui.waitForText("POST_RELOAD_GUIDANCE_READY", 15_000);
 
       const postReloadResult = activeProvider.requests.find((request) =>
-        request.body.includes('"toolCallId":"reload_direct"')
+        request.body.includes('"call_id":"reload_direct"')
       );
       expect(postReloadResult?.body).toContain(
         "Dynamic MCP tool not selected for this model step",

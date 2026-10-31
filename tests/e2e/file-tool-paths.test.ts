@@ -1,3 +1,4 @@
+import { fakeCodexFunctionCallEvents } from "./tmux-helpers";
 import { describe, expect, test } from "bun:test";
 import {
   existsSync,
@@ -48,7 +49,7 @@ function sse(events: object[]) {
 
 function toolCall(id: string, name: string, input: object) {
   return sse([
-    { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: id, name: name, arguments: JSON.stringify(input) } },
+    ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: id, name: name, arguments: JSON.stringify(input) }, 0),
     { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
   ]);
 }
@@ -90,33 +91,20 @@ function contentText(content: unknown): string {
 
 function toolResultOutput(body: string, callId: string): string {
   const request = JSON.parse(body) as {
-    prompt: Array<{ content: unknown }>;
+    input: Array<{ type: string; call_id?: string; output?: unknown }>;
   };
-  const parts = request.prompt.flatMap((message) =>
-    Array.isArray(message.content) ? message.content : []
-  ) as Array<Record<string, unknown>>;
-  const result = parts.find((part) =>
-    part.type === "tool-result" && part.toolCallId === callId
+  const result = request.input.find((item) =>
+    item.type === "function_call_output" && item.call_id === callId
   );
   if (!result) throw new Error(`Missing tool result for ${callId}`);
   return contentText(result.output);
 }
 
 function toolResultReason(body: string, callId: string): string {
-  const request = JSON.parse(body) as {
-    prompt: Array<{ content: unknown }>;
-  };
-  const parts = request.prompt.flatMap((message) =>
-    Array.isArray(message.content) ? message.content : []
-  ) as Array<Record<string, unknown>>;
-  const result = parts.find((part) =>
-    part.type === "tool-result" && part.toolCallId === callId
-  );
-  if (!result) throw new Error(`Missing tool result for ${callId}`);
-  const output = result.output as Record<string, unknown>;
-  expect(output.type).toBe("execution-denied");
+  const output = JSON.parse(toolResultOutput(body, callId)).error;
+  expect(output.type).toBe("tool_review_held");
   expect(typeof output.reason).toBe("string");
-  return output.reason as string;
+  return output.reason;
 }
 
 function occurrenceCount(text: string, needle: string) {
@@ -228,8 +216,6 @@ function providerEnv(
 
     HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
     HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-    HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-    HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
     HANDWORK_MODEL: MODEL,
     HANDWORK_AUTO_UPGRADE: "0",
     ...extra,
@@ -299,7 +285,14 @@ async function runTerminalToolScenario(args: {
   unsetHome?: boolean;
   expectedResultRequest: string[];
 }) {
-  const provider = startFakeCodex([
+  const chatResponse = (delta: object, finishReason: string) => new Response(
+    `data: ${JSON.stringify({ choices: [{ delta, finish_reason: finishReason }] })}\n\ndata: [DONE]\n\n`,
+    { headers: { "content-type": "text/event-stream" } },
+  );
+  const provider = startFakeCodex(args.unsetHome ? [
+    chatResponse({ tool_calls: [{ index: 0, id: args.id, type: "function", function: { name: args.name, arguments: JSON.stringify(args.input) } }] }, "tool_calls"),
+    chatResponse({ content: "tool result handled" }, "stop"),
+  ] : [
     toolCall(args.id, args.name, args.input),
     finalText("tool result handled"),
   ]);
@@ -308,11 +301,15 @@ async function runTerminalToolScenario(args: {
       ["ask", "--auto", "--json", "--no-save", "Execute the requested file tool once."],
       {
         cwd: args.root.workspace,
-        env: providerEnv(
-          args.root,
-          provider,
-          args.unsetHome ? undefined : args.root.home,
-        ),
+        env: {
+          ...providerEnv(args.root, provider, args.unsetHome ? undefined : args.root.home),
+          ...(args.unsetHome ? {
+            HANDWORK_AUTH_MODE: "local",
+            HANDWORK_DISABLE_KEYCHAIN: "1",
+            OPENAI_API_KEY: "fixture-api-key",
+            HANDWORK_OPENAI_BASE_URL: provider.baseUrl,
+          } : {}),
+        },
         timeoutMs: TIMEOUT,
       },
     );
@@ -321,9 +318,11 @@ async function runTerminalToolScenario(args: {
     expect(provider.requests).toHaveLength(2);
     expect(provider.classifierRequests).toHaveLength(0);
     expect(provider.requests[0].body).not.toContain(args.id);
-    expect(toolResultOutput(provider.requests[1].body, args.id)).not.toContain(
-      "Not executed",
-    );
+    const toolOutput = args.unsetHome
+      ? JSON.parse(provider.requests[1].body).messages.find((message: any) => message.role === "tool" && message.tool_call_id === args.id)?.content
+      : toolResultOutput(provider.requests[1].body, args.id);
+    expect(toolOutput).toBeString();
+    expect(toolOutput).not.toContain("Not executed");
     for (const expected of args.expectedResultRequest) {
       expect(provider.requests[1].body).toContain(expected);
     }
@@ -826,8 +825,8 @@ describe("filesystem path handling", () => {
         }),
         (body) => {
           const resultOutput = toolResultReason(body, "write_large_review");
-          expect(resultOutput).toContain('"reason":"review_caution"');
-          expect(resultOutput).toContain("Action held after safety review");
+          expect(resultOutput).toBe("review_caution");
+          expect(toolResultOutput(body, "write_large_review")).toContain("Action held after safety review");
           return finalText("large reviewed write blocked");
         },
       ], { classifierDecision: "caution" });
@@ -867,7 +866,7 @@ describe("filesystem path handling", () => {
         expect(trace).toContain(
           "event=auto_review_compose_result result=ready",
         );
-        expect(trace).toContain("event=auto_review_transport_start");
+        expect(trace).toContain("event=auto_review_send");
         expect(trace).toContain(
           "event=auto_review_result tool_name=write_file decision=caution",
         );
@@ -1211,14 +1210,11 @@ describe("filesystem path handling", () => {
           for (const removed of REMOVED_FILESYSTEM_TOOLS) {
             expect(names).not.toContain(removed);
           }
-          expect(names).toEqual(expect.arrayContaining([
-            "read_file",
-            "write_file",
-            "edit_file",
-            "glob_files",
-            "grep_files",
-            "shell",
-          ]));
+          expect(names.filter(Boolean).sort()).toEqual(["load_tools", "read_file"]);
+          return toolCall("load_shell", "load_tools", { names: ["shell"] });
+        },
+        (body) => {
+          expect(JSON.parse(body).tools.some((tool: { name?: string }) => tool.name === "shell")).toBe(true);
           return toolCall("terminal_fallback_1", "shell", { request: {
             action: "run",
             command,
@@ -1253,10 +1249,11 @@ describe("filesystem path handling", () => {
           },
         );
         const json = parseHandworkJson(result);
-        expect(provider.requests).toHaveLength(2);
+        expect(provider.requests).toHaveLength(3);
         expect(provider.classifierRequests).toHaveLength(1);
         expect(provider.remainingResponseCount()).toBe(0);
         expect(json.tool_calls).toEqual([
+          expect.objectContaining({ name: "load_tools", status: "success" }),
           expect.objectContaining({ name: "shell", status: "success" }),
         ]);
       } finally {

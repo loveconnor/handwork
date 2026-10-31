@@ -2357,7 +2357,9 @@ test "core.app_worker_runtime assistant chunk trace is metadata only" {
         trace,
         "event=assistant_chunk_applied",
     ) != null);
-    try std.testing.expect(std.mem.find(u8, trace, "chunk_bytes=27") != null);
+    const expected_bytes = try std.fmt.allocPrint(alloc, "chunk_bytes={d}", .{secret.len});
+    defer alloc.free(expected_bytes);
+    try std.testing.expect(std.mem.find(u8, trace, expected_bytes) != null);
     try std.testing.expect(std.mem.find(u8, trace, secret) == null);
 }
 

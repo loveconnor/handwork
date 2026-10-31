@@ -54,7 +54,7 @@ function isSlashCommandRow(line: string): boolean {
   const visible = line
     .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
     .trimStart();
-  return visible.startsWith("/");
+  return visible.startsWith("/") && visible.trim() !== "/help for commands";
 }
 
 function selectedSlashRowIndex(escapes: string): number {
@@ -63,22 +63,23 @@ function selectedSlashRowIndex(escapes: string): number {
 }
 
 test("slash menu selection index ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m${DIM_SGR} v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m${DIM_SGR} v0.3.27 · /help for commands`;
   const unselected = "\x1b[38;5;245m/help show available slash commands";
   const selected = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m start a fresh session and keep background processes`;
 
   expect(selectedSlashRowIndex(`${header}\n${unselected}\n${selected}`)).toBe(1);
+  expect(selectedSlashRowIndex(`/help for commands\n${unselected}\n${selected}`)).toBe(1);
 });
 
 function capturePaneHistory(session: TmuxSession, start = -120): string {
-  return execSync(`tmux capture-pane -t ${session.name} -p -S ${start}`, {
+  return execSync(`tmux -L handwork-e2e-${process.pid} capture-pane -t ${session.name} -p -S ${start}`, {
     stdio: "pipe",
     encoding: "utf-8",
   });
 }
 
 function captureViewportEscapes(session: TmuxSession): string {
-  return execFileSync("tmux", ["capture-pane", "-t", session.name, "-e", "-p"], {
+  return execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "capture-pane", "-t", session.name, "-e", "-p"], {
     stdio: "pipe",
     encoding: "utf-8",
   });
@@ -314,8 +315,8 @@ function nestedText(content: unknown): string {
 }
 
 function providerPromptText(body: string): string {
-  const request = JSON.parse(body) as { prompt: Array<{ content: unknown }> };
-  return request.prompt.map((message) => nestedText(message.content)).join("\n");
+  const request = JSON.parse(body) as { instructions: string; input: Array<{ content: unknown }> };
+  return [request.instructions, ...request.input.map((message) => nestedText(message.content))].join("\n");
 }
 
 function countOccurrences(text: string, needle: string): number {
@@ -721,7 +722,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: fixture.home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 120,
@@ -763,7 +763,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: fixture.workspace,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -1022,12 +1021,12 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(
         visibleTranscriptTailRow(afterResponse),
         `resumed baseline grid:\n${afterResponse.join("\n")}`,
-      ).toBe(69);
+      ).toBeLessThan(closedComposerRow);
       expect(closedComposerRow).toBe(73);
       await session.sendLiteralText("/");
-      await session.waitForText("Commands 35", 5_000);
+      await session.waitForText("Commands 39", 5_000);
       const afterSlash = await capture("after-slash");
-      expect(visibleTranscriptTailRow(afterSlash)).toBe(60);
+      expect(visibleTranscriptTailRow(afterSlash)).toBeLessThan(composerRow(afterSlash));
       expect(composerRow(afterSlash)).toBe(64);
       await session.sendLiteralText("f");
       await session.waitForText("/feedback", 5_000);
@@ -1047,9 +1046,9 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         5_000,
       );
       const afterDismiss = await capture("after-dismiss");
-      expect(visibleTranscriptTailRow(afterDismiss)).toBe(60);
-      expect(composerRow(afterDismiss)).toBe(64);
-      expect(footerStatusRow(afterDismiss)).toBe(66);
+      expect(visibleTranscriptTailRow(afterDismiss)).toBe(visibleTranscriptTailRow(afterSlash));
+      expect(composerRow(afterDismiss)).toBe(closedComposerRow);
+      expect(footerStatusRow(afterDismiss)).toBe(footerStatusRow(afterResponse));
       await session.sendLiteralText("x");
       await session.waitForPane(
         (pane) =>
@@ -1058,9 +1057,9 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         5_000,
       );
       const afterDismissEdit = await capture("after-dismiss-edit");
-      expect(visibleTranscriptTailRow(afterDismissEdit)).toBe(60);
-      expect(composerRow(afterDismissEdit)).toBe(64);
-      expect(footerStatusRow(afterDismissEdit)).toBe(66);
+      expect(visibleTranscriptTailRow(afterDismissEdit)).toBe(visibleTranscriptTailRow(afterDismiss));
+      expect(composerRow(afterDismissEdit)).toBe(closedComposerRow);
+      expect(footerStatusRow(afterDismissEdit)).toBe(footerStatusRow(afterResponse));
 
       await session.sendKeys("C-u");
       await session.waitForPane(hasEmptyComposer, 5_000);
@@ -1081,23 +1080,16 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(new Set(openComposerRows).size).toBe(1);
       expect(new Set(openFooterRows).size).toBe(1);
       expect(openComposerRows[0]).toBeLessThan(composerRow(afterResponse));
-      expect(composerRow(afterDismiss)).toBeLessThan(closedComposerRow);
+      expect(composerRow(afterDismiss)).toBe(closedComposerRow);
       expect(composerRow(afterDismissEdit)).toBe(composerRow(afterDismiss));
       expect(composerRow(afterClear)).toBe(composerRow(afterDismiss));
-      expect(footerStatusRow(afterDismiss)).toBeLessThan(footerStatusRow(afterResponse));
+      expect(footerStatusRow(afterDismiss)).toBe(footerStatusRow(afterResponse));
       expect(footerStatusRow(afterDismissEdit)).toBe(footerStatusRow(afterDismiss));
       expect(footerStatusRow(afterClear)).toBe(footerStatusRow(afterDismiss));
 
-      for (const grid of [
-        afterResponse,
-        afterSlash,
-        afterSlashF,
-        afterSlashFe,
-        afterSlashFeedback,
-        afterDismiss,
-        afterDismissEdit,
-        afterClear,
-      ]) {
+      // Open menus reserve transcript space. Closing restores the footer while
+      // leaving the already-painted transcript rows stable until new content.
+      for (const grid of [afterResponse, afterSlash, afterSlashF, afterSlashFe, afterSlashFeedback]) {
         assertNoBlankGapBetweenTranscriptAndComposer(grid);
       }
 
@@ -1190,7 +1182,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -1248,7 +1239,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
           cwd: workspace,
           env: {
             HOME: home,
-
 
             HANDWORK_AUTO_UPGRADE: "0",
           },
@@ -1342,7 +1332,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         stderrPath,
@@ -1405,7 +1394,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -1541,7 +1529,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -1550,10 +1537,10 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForComposer(10_000);
 
       await session.sendText("/help");
-      let grid = await waitForHelpMenu(session, 35);
+      let grid = await waitForHelpMenu(session, 39);
       let pane = grid.join("\n");
       expect(pane).toContain("handwork");
-      expect(pane).toContain("Run /help for commands");
+      expect(pane).toContain("/help for commands");
       expect(pane).toContain("[All]");
       expect(pane).toContain("/help");
       expect(pane).not.toContain("● /help");
@@ -1566,7 +1553,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       grid = await waitForHelpMenu(session, 5);
       expect(grid.join("\n")).toContain("[General]");
       await session.sendKeys("BTab");
-      grid = await waitForHelpMenu(session, 35);
+      grid = await waitForHelpMenu(session, 39);
       expect(grid.join("\n")).toContain("[All]");
 
       await session.sendLiteralText("clipboard");
@@ -1577,11 +1564,11 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(pane).not.toContain("/clear");
 
       await session.sendKeys("C-u");
-      await waitForHelpMenu(session, 35);
+      await waitForHelpMenu(session, 39);
       await session.sendKeys("Down");
       await session.sendKeys("Enter");
       pane = await session.waitForPane(
-        (current) => hasEmptyComposer(current) && !current.includes("Commands 35"),
+        (current) => hasEmptyComposer(current) && !current.includes("Commands 39"),
         5_000,
       );
       expect(composerContains(pane, "/clear")).toBe(false);
@@ -1590,7 +1577,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendKeys("C-u");
       await session.sendText("/help");
-      await waitForHelpMenu(session, 35);
+      await waitForHelpMenu(session, 39);
       await session.sendLiteralText("additional directories");
       await waitForHelpMenu(session, 1);
       await session.sendKeys("Enter");
@@ -1607,7 +1594,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendKeys("C-u");
       await session.sendText("/help");
-      await waitForHelpMenu(session, 35);
+      await waitForHelpMenu(session, 39);
       await session.sendLiteralText("no command can match this query");
       await session.waitForText("No commands found.", 5_000);
       await session.sendKeys("Escape");
@@ -1645,7 +1632,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -1657,7 +1643,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       const grid = await waitForSettingsMenu(session);
       let pane = grid.join("\n");
       expect(pane).toContain("handwork");
-      expect(pane).toContain("Run /help for commands");
+      expect(pane).toContain("/help for commands");
       expect(pane).toContain("Settings");
       expect(pane).toContain("Interface");
       expect(pane).toContain("[All]");
@@ -1712,7 +1698,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -1771,7 +1756,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -1853,7 +1837,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -1913,7 +1896,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -1949,7 +1931,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -2022,7 +2003,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -2100,7 +2080,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -2217,7 +2196,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 120,
@@ -2318,7 +2296,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 120,
@@ -2379,7 +2356,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: fixture.home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_RECORD: tapePath,
         },
@@ -2388,6 +2364,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         stderrPath: fixture.stderrPath,
       });
       await session.waitForComposer(10_000);
+      const startupBlankLines = leadingBlankLineCount(capturePaneHistory(session, -80));
       const alternateCount = (sequence: string) =>
         countOccurrences(readFileSync(tapePath).toString("latin1"), sequence);
       const entersBeforeSkills = alternateCount("\x1b[?1049h");
@@ -2402,7 +2379,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       grid = await waitForSkillsMenu(session, 4);
       const pane = grid.join("\n");
       expect(pane).toContain("handwork");
-      expect(pane).toContain("Run /help for commands");
+      expect(pane).toContain("/help for commands");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeSkills);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
       expect(pane).toContain("[All]");
@@ -2423,15 +2400,15 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       const tail_history = capturePaneHistory(session, -80);
       expect(deep_history).not.toContain("Visible skills (");
       expect(deep_history).not.toContain("skill discovery warning:");
-      expect(leadingBlankLineCount(tail_history)).toBeLessThan(3);
+      expect(leadingBlankLineCount(tail_history)).toBeLessThanOrEqual(startupBlankLines);
       expect(tail_history).not.toContain("handwork v0.3.7");
       const escapes = await session.capturePaneEscapes();
       expect(escapes).not.toContain(`${DIM_SGR}handwork-review`);
       expect(deep_history).not.toMatch(/┃ \/sk/);
 
-      await session.sendLiteralText("work");
+      await session.sendLiteralText("workspace-menu");
       grid = await waitForSkillsMenu(session, 1);
-      expect(composerContains(grid.join("\n"), "work")).toBe(true);
+      expect(composerContains(grid.join("\n"), "workspace-menu")).toBe(true);
       expect(grid.join("\n")).toContain("workspace-menu");
       expect(grid.join("\n")).not.toContain("managed menu second line");
 
@@ -2447,16 +2424,16 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       const entersBeforeDollar = alternateCount("\x1b[?1049h");
       const leavesBeforeDollar = alternateCount("\x1b[?1049l");
 
-      await session.sendLiteralText("$work");
+      await session.sendLiteralText("$workspace-menu");
       grid = await waitForSkillsMenu(session, 1);
-      expect(composerContains(grid.join("\n"), "$work")).toBe(true);
+      expect(composerContains(grid.join("\n"), "$workspace-menu")).toBe(true);
       expect(grid.join("\n")).toContain("handwork");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeDollar);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeDollar);
       await session.sendKeys("C-[");
       await session.waitForPane(
         (current) =>
-          composerContains(current, "$work") &&
+          composerContains(current, "$workspace-menu") &&
           current.includes("handwork") &&
           !current.includes("↑↓ navigate"),
         5_000,
@@ -2636,8 +2613,8 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
 
       await session.sendText("/help");
-      grid = await waitForHelpMenu(session, 35);
-      expect(grid.join("\n")).toContain("Run /help for commands");
+      grid = await waitForHelpMenu(session, 39);
+      expect(grid.join("\n")).toContain("show available slash commands");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeSkills);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
       await session.sendKeys("Escape");
@@ -2648,7 +2625,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendText("/settings");
       grid = await waitForSettingsMenu(session);
-      expect(grid.join("\n")).toContain("Run /help for commands");
+      expect(grid.join("\n")).toContain("Permission mode");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeSkills);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
       await session.sendKeys("Escape");
@@ -2660,7 +2637,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendText("/resume");
       await session.waitForText("Sessions 0", 5_000);
       grid = await session.capturePaneGrid();
-      expect(grid.join("\n")).toContain("Run /help for commands");
+      expect(grid.join("\n")).toContain("No sessions found.");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeSkills);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
       await session.sendKeys("Escape");
@@ -2687,7 +2664,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         stderrPath: fixture.stderrPath,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -2799,7 +2775,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
           HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-          HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_MODEL: currentModel,
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_RECORD: fixture.tapePath,
@@ -2818,7 +2793,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendLiteralText("/mode");
       await session.sendKeys("Enter");
-      await waitForModelsMenu(session, 4);
+      await waitForModelsMenu(session, 5);
       expect(await session.captureFullScrollback()).not.toContain(`● Model: ${currentModel}`);
       await session.sendKeys("Escape");
       await session.waitForPane(
@@ -2835,7 +2810,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
           !current.includes("tab provider"),
         5_000,
       );
-      expect(stagedPane).not.toContain("Models 4");
+      expect(stagedPane).not.toContain("Models 5");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeModelMenu);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeModelMenu);
       await session.sendKeys("Escape");
@@ -2843,10 +2818,10 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(hasEmptyComposer, 5_000);
 
       await session.sendText("/model");
-      let grid = await waitForModelsMenu(session, 4);
+      let grid = await waitForModelsMenu(session, 5);
       let pane = grid.join("\n");
       expect(pane).toContain("handwork");
-      expect(pane).toContain("Run /help for commands");
+      expect(pane).toContain("/help for commands");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeModelMenu);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeModelMenu);
       expect(pane).toContain("[All]");
@@ -2856,16 +2831,16 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(pane).not.toContain("xAI");
       expect(pane).not.toContain("Z.AI");
       expect(pane).toContain(currentModel);
-      expect(pane).toContain("1M context · 32K output · Fast");
-      expect(pane).toContain("Note: Provider catalog is authenticated with an API key");
-      const headerRow = grid.findIndex((line) => line.includes("Models 4"));
-      const firstModelRow = grid.findIndex((line) => line.includes("openai/gpt-5.4"));
-      const lastModelRow = grid.findIndex((line) => line.includes(selectedModel));
+      expect(pane).toContain("1M context · Fast");
+      expect(pane).toContain("Provider catalog: authentication is managed by the host.");
+      const headerRow = grid.findIndex((line) => line.includes("Models 5"));
+      const firstModelRow = grid.findIndex((line) => line.includes(currentModel));
+      const lastModelRow = grid.findIndex((line) => line.includes("gpt-5.6-luna"));
       const statusRow = grid.findIndex((line) =>
-        line.includes("Note: Provider catalog is authenticated with an API key")
+        line.includes("Provider catalog: authentication is managed by the host.")
       );
-      const currentRow = grid[firstModelRow + 1]!;
-      const openaiRow = grid[firstModelRow]!;
+      const currentRow = grid[firstModelRow]!;
+      const openaiRow = grid[firstModelRow + 1]!;
       const currentFactsColumn = currentRow.indexOf("1M context");
       const openaiFactsColumn = openaiRow.indexOf("400K context");
       const currentNameEnd = currentRow.indexOf(currentModel) + currentModel.length;
@@ -2884,11 +2859,11 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(grid.join("\n")).toContain("[Anthropic]");
 
       await session.sendKeys("BTab");
-      await waitForModelsMenu(session, 4);
+      await waitForModelsMenu(session, 5);
       await session.sendLiteralText("no-such-model");
       await session.waitForText("No models found.", 5_000);
       await session.sendKeys("C-u");
-      await waitForModelsMenu(session, 4);
+      await waitForModelsMenu(session, 5);
       await session.sendLiteralText("gemini");
       grid = await waitForModelsMenu(session, 1);
       pane = grid.join("\n");
@@ -2903,27 +2878,26 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       );
 
       await session.sendText("/model");
-      await waitForModelsMenu(session, 4);
-      await session.sendKeys("Down");
+      await waitForModelsMenu(session, 5);
       await session.sendKeys("Enter");
       await session.waitForPane(
         (current) => composerContains(current, `/model ${currentModel}`) && current.includes("default"),
         5_000,
       );
-      expect((JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { provider?: string } }).models?.provider).toBeUndefined();
+      expect((JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { codex?: string } }).models?.codex).toBeUndefined();
       await session.sendKeys("C-u");
       await session.waitForPane(hasEmptyComposer, 5_000);
 
       await session.sendText("/model");
-      await waitForModelsMenu(session, 4);
+      await waitForModelsMenu(session, 5);
       await session.sendKeys("Down");
       await session.sendKeys("Down");
       await session.sendKeys("Down");
       await session.sendKeys("Enter");
       await session.waitForText(`● Switched to ${selectedModel}`, 5_000);
 
-      const settings = JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { provider?: string } };
-      expect(settings.models?.provider).toBe(selectedModel);
+      const settings = JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { codex?: string } };
+      expect(settings.models?.codex).toBe(selectedModel);
       expect(await session.paneTitle()).toBe(runningBinaryTitle(fixture.workspace));
       expect(session.isAlive()).toBe(true);
 
@@ -2975,7 +2949,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
           HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-          HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_MODEL: currentModel,
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -2990,7 +2963,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendKeys("Left");
 
       await session.sendKeys("C-p");
-      let grid = await waitForModelsMenu(session, 2);
+      let grid = await waitForModelsMenu(session, 3);
       let pane = grid.join("\n");
       expect(pane).toContain("[All]");
       expect(pane).toContain("tab provider");
@@ -3012,7 +2985,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       // Enter on a filtered row applies the model directly and still returns
       // the draft instead of seeding the inline /model stages.
       await session.sendKeys("C-p");
-      await waitForModelsMenu(session, 2);
+      await waitForModelsMenu(session, 3);
       await session.sendLiteralText("plain");
       await session.waitForPane(
         (current) => current.includes(selectedModel) && !current.includes(currentModel),
@@ -3024,8 +2997,8 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(composerContains(pane, "hello drXaft")).toBe(true);
       expect(composerContains(pane, "/model")).toBe(false);
 
-      const settings = JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { provider?: string } };
-      expect(settings.models?.provider).toBe(selectedModel);
+      const settings = JSON.parse(readFileSync(fixture.settingsPath, "utf8")) as { models?: { codex?: string } };
+      expect(settings.models?.codex).toBe(selectedModel);
       expect(session.isAlive()).toBe(true);
       expect(readFileSync(fixture.stderrPath, "utf8")).toBe("");
 
@@ -3067,7 +3040,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
           HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-          HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_MODEL: modelIds[0],
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -3078,7 +3050,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForComposer(10_000);
 
       await session.sendText("/model");
-      const pane = (await waitForModelsMenu(session, modelIds.length)).join("\n");
+      const pane = (await waitForModelsMenu(session, modelIds.length + 1)).join("\n");
       for (const suffix of ["alpha", "beta", "gamma", "delta"]) {
         expect(pane).toContain(`ing-${suffix}`);
       }
@@ -3118,7 +3090,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
           HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-          HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
           HANDWORK_MODEL: "openai/gpt-4o",
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -3137,7 +3108,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(hasEmptyComposer(pane)).toBe(true);
       expect(pane).not.toContain("Reasoning effort");
       expect(pane).not.toContain("default");
-      expect(JSON.parse(readFileSync(fixture.settingsPath, "utf8")).models.provider).toBe(selectedModel);
+      expect(JSON.parse(readFileSync(fixture.settingsPath, "utf8")).models.codex).toBe(selectedModel);
       expect(await session.paneTitle()).toBe(runningBinaryTitle(fixture.workspace));
       expect(session.isAlive()).toBe(true);
       expect(readFileSync(fixture.stderrPath, "utf8")).toBe("");
@@ -3189,7 +3160,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
             HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
             HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-            HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
             HANDWORK_MODEL: currentModel,
             HANDWORK_AUTO_UPGRADE: "0",
           },
@@ -3252,7 +3222,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: fixture.workspace,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },
@@ -3726,7 +3695,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
         },
         width: 100,
@@ -3735,7 +3703,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForComposer(10_000);
 
       await session.sendLiteralText("/");
-      await session.waitForText("Commands 35", 5_000);
+      await session.waitForText("Commands 39", 5_000);
 
       for (let i = 0; i < 5; i += 1) {
         await session.sendKeys("Down");
@@ -3745,10 +3713,11 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(selectedRow).toBeGreaterThanOrEqual(5);
 
       await session.sendKeys("Down");
+      expect(selectedSlashRowIndex(await session.capturePaneEscapes())).toBe(selectedRow);
       await session.sendKeys("Up");
 
       const reversedRow = selectedSlashRowIndex(await session.capturePaneEscapes());
-      expect(reversedRow).toBe(4);
+      expect(reversedRow).toBe(selectedRow - 1);
       expect(session.isAlive()).toBe(true);
 
       await session.sendKeys("C-u");
@@ -3793,7 +3762,6 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },

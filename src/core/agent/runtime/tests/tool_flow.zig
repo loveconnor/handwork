@@ -455,45 +455,26 @@ const FreshnessApplicableContext = struct {
 fn expectPermissionDeniedToolResult(provider: *const FakeProvider, index: usize, tool_name: []const u8, reason: types.ToolPermissionDenialReason) !void {
     const alloc = std.testing.allocator;
     try std.testing.expect(index < provider.request_bodies.items.len);
-
-    var parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
+    const parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
     defer parsed.deinit();
-
-    const prompt = parsed.value.object.get("prompt").?.array.items;
-    for (prompt) |entry| {
-        if (entry != .object) continue;
-        const role = entry.object.get("role") orelse continue;
-        if (role != .string or !std.mem.eql(u8, role.string, "tool")) continue;
-        const content = entry.object.get("content") orelse continue;
-        if (content != .array) continue;
-        for (content.array.items) |part| {
-            if (part != .object) continue;
-            const part_tool_name = part.object.get("toolName") orelse continue;
-            if (part_tool_name != .string or !std.mem.eql(u8, part_tool_name.string, tool_name)) continue;
-            const output = part.object.get("output") orelse continue;
-            if (output != .object) continue;
-            const output_type = output.object.get("type") orelse continue;
-            if (output_type != .string or !std.mem.eql(u8, output_type.string, "execution-denied")) continue;
-            try std.testing.expect(output.object.get("value") == null);
-            const reason_value = output.object.get("reason") orelse continue;
-            if (reason_value != .string) continue;
-
-            try std.testing.expect(tool_result_errors.isToolPermissionDeniedOutput(reason_value.string));
-            var payload = try std.json.parseFromSlice(std.json.Value, alloc, reason_value.string, .{});
-            defer payload.deinit();
-            const error_obj = payload.value.object.get("error").?.object;
-            try std.testing.expectEqualStrings("tool_permission_denied", error_obj.get("type").?.string);
-            try std.testing.expectEqualStrings(tool_name, error_obj.get("tool_name").?.string);
-            if (expectedPermissionDeniedMessage(reason)) |message| {
-                try std.testing.expectEqualStrings(message, error_obj.get("message").?.string);
-            }
-            try std.testing.expectEqualStrings(@tagName(reason), error_obj.get("reason").?.string);
-            try std.testing.expect(error_obj.get("denied").?.bool);
-            try std.testing.expect(error_obj.get("suggestion") != null);
-            return;
-        }
+    const input = parsed.value.object.get("input") orelse return error.TestExpectedInputMissing;
+    for (input.array.items) |part| {
+        if (part != .object) continue;
+        const kind = part.object.get("type") orelse continue;
+        if (kind != .string or !std.mem.eql(u8, kind.string, "function_call_output")) continue;
+        const output = part.object.get("output") orelse continue;
+        if (output != .string or !tool_result_errors.isToolPermissionDeniedOutput(output.string)) continue;
+        const payload = try std.json.parseFromSlice(std.json.Value, alloc, output.string, .{});
+        defer payload.deinit();
+        const error_obj = payload.value.object.get("error").?.object;
+        if (!std.mem.eql(u8, tool_name, error_obj.get("tool_name").?.string)) continue;
+        try std.testing.expectEqualStrings("tool_permission_denied", error_obj.get("type").?.string);
+        if (expectedPermissionDeniedMessage(reason)) |message| try std.testing.expectEqualStrings(message, error_obj.get("message").?.string);
+        try std.testing.expectEqualStrings(@tagName(reason), error_obj.get("reason").?.string);
+        try std.testing.expect(error_obj.get("denied").?.bool);
+        try std.testing.expect(error_obj.get("suggestion") != null);
+        return;
     }
-
     return error.TestExpectedToolResultMissing;
 }
 
@@ -508,71 +489,39 @@ fn expectedPermissionDeniedMessage(reason: types.ToolPermissionDenialReason) ?[]
     };
 }
 
-fn expectMalformedArgumentToolPair(
-    provider: *const FakeProvider,
-    index: usize,
-    tool_call_id: []const u8,
-    tool_name: []const u8,
-) !void {
+fn expectMalformedArgumentToolPair(provider: *const FakeProvider, index: usize, tool_call_id: []const u8, tool_name: []const u8) !void {
     const alloc = std.testing.allocator;
     try std.testing.expect(index < provider.request_bodies.items.len);
-
-    var parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
+    const parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
     defer parsed.deinit();
-
     var call_count: usize = 0;
     var result_count: usize = 0;
-    const prompt = parsed.value.object.get("prompt").?.array.items;
-    for (prompt) |entry| {
-        if (entry != .object) continue;
-        const role = entry.object.get("role") orelse continue;
-        if (role != .string) continue;
-        const content = entry.object.get("content") orelse continue;
-        if (content != .array) continue;
-
-        for (content.array.items) |part| {
-            if (part != .object) continue;
-            const part_type = part.object.get("type") orelse continue;
-            if (part_type != .string) continue;
-            const part_call_id = part.object.get("toolCallId") orelse continue;
-            const part_tool_name = part.object.get("toolName") orelse continue;
-            if (part_call_id != .string or part_tool_name != .string) continue;
-            if (!std.mem.eql(u8, part_call_id.string, tool_call_id) or
-                !std.mem.eql(u8, part_tool_name.string, tool_name))
-            {
-                continue;
-            }
-
-            if (std.mem.eql(u8, role.string, "assistant") and
-                std.mem.eql(u8, part_type.string, "tool-call"))
-            {
-                const input = part.object.get("input") orelse return error.TestExpectedToolCallInputMissing;
-                try std.testing.expect(input == .object);
-                try std.testing.expectEqual(@as(usize, 0), input.object.count());
-                call_count += 1;
-                continue;
-            }
-
-            if (std.mem.eql(u8, role.string, "tool") and
-                std.mem.eql(u8, part_type.string, "tool-result"))
-            {
-                const output = part.object.get("output") orelse return error.TestExpectedToolResultMissing;
-                if (output != .object) return error.TestExpectedToolResultMissing;
-                const value = output.object.get("value") orelse return error.TestExpectedToolResultMissing;
-                if (value != .string) return error.TestExpectedToolResultMissing;
-                try std.testing.expect(tool_result_errors.isToolExecutionFailedOutput(value.string));
-
-                var failure = try std.json.parseFromSlice(std.json.Value, alloc, value.string, .{});
-                defer failure.deinit();
-                const error_obj = failure.value.object.get("error").?.object;
-                try std.testing.expectEqualStrings("tool_execution_failed", error_obj.get("type").?.string);
-                try std.testing.expectEqualStrings(tool_name, error_obj.get("tool_name").?.string);
-                try std.testing.expect(std.mem.find(u8, error_obj.get("suggestion").?.string, "tool schema") != null);
-                result_count += 1;
-            }
+    const input = parsed.value.object.get("input") orelse return error.TestExpectedInputMissing;
+    for (input.array.items) |part| {
+        if (part != .object) continue;
+        const call_id = part.object.get("call_id") orelse continue;
+        if (call_id != .string or !std.mem.eql(u8, call_id.string, tool_call_id)) continue;
+        const kind = part.object.get("type") orelse continue;
+        if (kind != .string) continue;
+        if (std.mem.eql(u8, kind.string, "function_call")) {
+            try std.testing.expectEqualStrings(tool_name, part.object.get("name").?.string);
+            const args = try std.json.parseFromSlice(std.json.Value, alloc, part.object.get("arguments").?.string, .{});
+            defer args.deinit();
+            try std.testing.expect(args.value == .object);
+            try std.testing.expectEqual(@as(usize, 0), args.value.object.count());
+            call_count += 1;
+        } else if (std.mem.eql(u8, kind.string, "function_call_output")) {
+            const output = part.object.get("output").?.string;
+            try std.testing.expect(tool_result_errors.isToolExecutionFailedOutput(output));
+            const failure = try std.json.parseFromSlice(std.json.Value, alloc, output, .{});
+            defer failure.deinit();
+            const error_obj = failure.value.object.get("error").?.object;
+            try std.testing.expectEqualStrings("tool_execution_failed", error_obj.get("type").?.string);
+            try std.testing.expectEqualStrings(tool_name, error_obj.get("tool_name").?.string);
+            try std.testing.expect(std.mem.find(u8, error_obj.get("suggestion").?.string, "tool schema") != null);
+            result_count += 1;
         }
     }
-
     try std.testing.expectEqual(@as(usize, 1), call_count);
     try std.testing.expectEqual(@as(usize, 1), result_count);
 }
@@ -2240,7 +2189,7 @@ test "vision uses generic lifecycle execution memory persistence and reprojectio
     try std.testing.expectEqualStrings("anthropic/claude-opus-4.6", provider.request_models.items[0]);
     try std.testing.expectEqualStrings("google/gemini-2.5-flash", provider.request_models.items[1]);
     try std.testing.expectEqualStrings("anthropic/claude-opus-4.6", provider.request_models.items[2]);
-    try expectBodyContains(&provider, 1, "\"type\":\"file\"");
+    try expectBodyContains(&provider, 1, "\"type\":\"input_image\"");
     try expectBodyNotContains(&provider, 1, catalog[0].path);
     try expectBodyContains(&provider, 2, "compiler error");
     try expectBodyContains(&provider, 2, "error: expected expression");
@@ -2451,8 +2400,8 @@ test "vision denial settles the authorized attempt without reading the image" {
         hooks.lifecycle_events.items[2].terminal.outcome.kind,
     );
     try std.testing.expectEqual(@as(usize, 2), provider.request_bodies.items.len);
-    try expectBodyContains(&provider, 0, "\"toolChoice\":{\"type\":\"required\"}");
-    try expectBodyNotContains(&provider, 1, "\"toolChoice\":{\"type\":\"required\"}");
+    try expectBodyContains(&provider, 0, "\"tool_choice\":\"required\"");
+    try expectBodyNotContains(&provider, 1, "\"tool_choice\":\"required\"");
     try std.testing.expectEqualStrings("Final", hooks.finish_assistant_text.?);
 }
 
@@ -2505,7 +2454,7 @@ test "provider search finalizes when stop includes provider result and final ans
     }};
     const completions = [_]FakeCompletion{.{
         .content = "Final [source](https://example.test/source)",
-        .provider_state_json = "[{\"type\":\"reasoning\",\"text\":\"private\"},{\"type\":\"tool-call\",\"toolCallId\":\"provider_search\",\"providerOptions\":{\"test\":{\"signature\":\"call\"}}},{\"type\":\"text\",\"offset\":0,\"length\":" ++ std.fmt.comptimePrint("{d}", .{"Final [source](https://example.test/source)".len}) ++ ",\"providerOptions\":{\"test\":{\"signature\":\"text\"}}}]",
+        .provider_state_json = "[{\"type\":\"reasoning\",\"encrypted_content\":\"private\"},{\"type\":\"message\",\"id\":\"final-message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"Final [source](https://example.test/source)\"}]}]",
         .tool_calls = &calls,
         .finish_reason = .stop,
     }};
@@ -2546,8 +2495,8 @@ test "provider search finalizes when stop includes provider result and final ans
     try std.testing.expectEqual(@as(usize, 1), step.tool_results.len);
     try std.testing.expectEqualStrings(provider_result, step.tool_results[0].output);
     try std.testing.expect(std.mem.find(u8, step.provider_replay.?.parts_json, "private") != null);
-    try std.testing.expect(std.mem.find(u8, step.provider_replay.?.parts_json, "\"signature\":\"text\"") == null);
-    try std.testing.expect(std.mem.find(u8, turn.provider_replay.?.parts_json, "\"signature\":\"text\"") != null);
+    try std.testing.expect(std.mem.find(u8, step.provider_replay.?.parts_json, "final-message") == null);
+    try std.testing.expect(std.mem.find(u8, turn.provider_replay.?.parts_json, "final-message") != null);
     try std.testing.expect(std.mem.find(u8, turn.provider_replay.?.parts_json, "private") == null);
 }
 
@@ -4321,7 +4270,7 @@ test "committed file result is appended before degraded secondary publication" {
         hooks.system_notices.items[0],
     );
     try expectBodyContainsInOrder(&provider, 1, &.{
-        "\"role\":\"tool\"",
+        "\"type\":\"function_call_output\"",
         model_output,
         "\"role\":\"user\"",
         "Summarize the committed change.",
@@ -4822,7 +4771,7 @@ test "permission feedback follows the matching tool result" {
     try std.testing.expect(std.mem.find(u8, review_context, "user prompt") != null);
     try std.testing.expectEqual(@as(usize, 2), provider.request_bodies.items.len);
     try expectBodyContainsInOrder(&provider, 1, &.{
-        "\"role\":\"tool\"",
+        "\"type\":\"function_call_output\"",
         "read output",
         "\"role\":\"user\"",
         "Summarize the file after reading it.",
@@ -6369,8 +6318,8 @@ test "processQueuedPrompt projects a continuing tool notice as conversation" {
 
     try std.testing.expectEqual(@as(usize, 2), provider.request_bodies.items.len);
     try expectBodyContainsInOrder(&provider, 1, &.{
-        "\"toolName\":\"read_file\"",
-        "\"value\":\"tool output\"",
+        "\"name\":\"read_file\"",
+        "\"output\":\"tool output\"",
         "\"role\":\"user\"",
         "continue with degraded visual evidence",
     });

@@ -105,7 +105,7 @@ async function runScenario(name) {
   const seedReply = (turn) => `${turn === 1 ? head : `HOST_HISTORY_MIDDLE_${turn}`}\n${"history alpha beta gamma delta sample line\n".repeat(automatic ? 18_000 : 400)}HOST_SEED_DONE_${turn}${turn === seedTurns ? `\n${tail}` : ""}`;
   const activity = /Compacting \((?:\d+h)?(?:\d+m)?\d+s\)/;
   const forbidden = /Compacting|compaction|Context compacted|No context to compact|Your existing context was kept|HOST_INTERNAL_HANDOFF_268a/i;
-  const emptyComposer = (text) => text.split("\n").some((line) => /^[ \t]*(?:┃|❯|>)[ \t]*$/.test(line));
+  const emptyComposer = (text) => text.includes("Ask anything, or type / for commands") || text.split("\n").some((line) => /^[ \t]*(?:┃|❯|>)[ \t]*$/.test(line));
   const records = new Map();
   const requests = [];
   let revision = 0, commits = 0, summaries = 0, ordinary = 0;
@@ -131,11 +131,11 @@ async function runScenario(name) {
   };
   const fetch = async (_url, init = {}) => {
     if ((init.method ?? "GET") === "GET") {
-      return Response.json({ models: [{ id: "fixture/test-model", type: "language", tags: ["tool-use"], context_window: 128000, max_tokens: 8192 }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+      return Response.json({ models: [{ id: "fixture/test-model", type: "language", tags: ["tool-use"], context_window: 128000, max_tokens: 8192 }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: model.context_window, supported_reasoning_levels: [], input_modalities: ["text"] })) });
     }
     const body = JSON.parse(typeof init.body === "string" ? init.body : new TextDecoder().decode(init.body));
     requests.push(body);
-    if (body.toolChoice?.type === "none" && body.tools?.length === 0) {
+    if (body.tool_choice === "none" && !body.tools?.length) {
       summaries++;
       // Retained windows vary by model; summarize only markers actually supplied.
       const source = JSON.stringify(body);
@@ -183,7 +183,7 @@ async function runScenario(name) {
       stderr(bytes) { state.stderr += new TextDecoder().decode(bytes); },
       onEvent(event) { state.events.push(event); },
     });
-    await waitFor(() => grid(terminal).includes(args.length ? "Session resumed" : "Run /help for commands") && emptyComposer(grid(terminal)), "terminal startup");
+    await waitFor(() => grid(terminal).includes(args.length ? "Session resumed" : "Ask anything, or type / for commands") && emptyComposer(grid(terminal)), "terminal startup");
     return state;
   }
   async function stop() {
@@ -303,7 +303,7 @@ async function runScenario(name) {
     assert.equal(summaries, 1, "followup must not trigger automatic compaction");
     const followup = JSON.stringify(requests.at(-1));
     assert(followup.includes(head) && followup.includes(tail), JSON.stringify(requests.map((request) => ({
-      summary: request.toolChoice?.type === "none" && request.tools?.length === 0,
+      summary: request.tool_choice === "none" && !request.tools?.length,
       head: JSON.stringify(request).includes(head), tail: JSON.stringify(request).includes(tail),
       handoff: JSON.stringify(request).includes("HOST_INTERNAL_HANDOFF_268a"),
     }))));

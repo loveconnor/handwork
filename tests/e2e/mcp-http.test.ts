@@ -140,22 +140,15 @@ function startToolProvider(finalText: string) {
 function toolResultText(
   body: string,
   toolCallId: string,
-  outputType: "text" | "error-text" = "text",
+  _outputType: "text" | "error-text" = "text",
 ): string {
   const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
+    input: Array<{ type: string; call_id?: string; output?: unknown }>;
   };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .find((part) =>
-      part.type === "tool-result" && part.toolCallId === toolCallId
-    );
-  if (!result) throw new Error(`Missing tool result for ${toolCallId}`);
-  const output = result.output as Record<string, unknown>;
-  if (output.type !== outputType || typeof output.value !== "string") {
-    throw new Error(`Invalid tool result for ${toolCallId}`);
-  }
-  return output.value;
+  const result = request.input.find(item =>
+    item.type === "function_call_output" && item.call_id === toolCallId);
+  if (!result || typeof result.output !== "string") throw new Error(`Missing tool result for ${toolCallId}`);
+  return result.output;
 }
 
 function preserveHttpFailure(
@@ -274,7 +267,6 @@ describe("modern MCP Streamable HTTP", () => {
         env: {
           HOME: root.home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_TRACE_LOG: root.traceLogPath,
           HANDWORK_TRACE_SCOPES: "mcp",
@@ -309,7 +301,6 @@ describe("modern MCP Streamable HTTP", () => {
         cwd: root.workspace,
         env: {
           HOME: root.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_TRACE_LOG: root.traceLogPath,
@@ -346,7 +337,6 @@ describe("modern MCP Streamable HTTP", () => {
         env: {
           HOME: root.home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_TRACE_LOG: root.traceLogPath,
           HANDWORK_TRACE_SCOPES: "mcp",
@@ -372,7 +362,6 @@ describe("modern MCP Streamable HTTP", () => {
         cwd: root.workspace,
         env: {
           HOME: root.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
         },

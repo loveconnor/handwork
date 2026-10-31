@@ -39,7 +39,15 @@ type StdioProvenance = {
 };
 
 const allowlist: AllowRule[] = [
-  rule("src/ui/transcript/io.zig", "writeFrameBytes", /stdio_write/, "frame_commit", "normal interactive frame delivery"),
+  rule("src/ui/shell_runtime.zig", "(?:ensureInteractive|queryLayout)", /stdio_acquisition/, "terminal_probe", "Windows TTY and terminal geometry probes"),
+  rule("src/ui/shell_runtime.zig", "captureOriginalTermios", /stdio_acquisition/, "initialization_teardown", "capture Windows console state"),
+  rule("src/ui/shell_runtime.zig", "refreshPendingImageCellSize", /stdio_(?:acquisition|write)/, "terminal_probe", "image cell size query"),
+  rule("src/ui/transcript/runtime.zig", "outputFile", /stdio_acquisition/, "interactive_terminal_owner", "resolve stored or default stdout handle"),
+  rule("src/ui/ask_presentation.zig", "refreshGeometry", /stdio_acquisition/, "terminal_probe", "ask terminal geometry probe"),
+  rule("src/ui/terminal/graphics_probe.zig", "windowPixels", /fixed_descriptor/, "terminal_probe", "window pixel dimensions"),
+  rule("src/ui/terminal/graphics_probe.zig", "probe", /stdio_(?:acquisition|write)/, "terminal_probe", "graphics capability query"),
+  rule("src/ui/render.zig", "(?:set|clear)", /stdio_acquisition/, "title_control", "resolve terminal title output handle"),
+  rule("src/ui/transcript/io.zig", "(?:writeFrameBytes|writeRawFrameBytes)", /stdio_write/, "frame_commit", "normal interactive frame delivery"),
   rule("src/ui/transcript/runtime.zig", "<top-level>", /stdio_acquisition/, "interactive_terminal_owner", "stored interactive stdout handle"),
   rule("src/core/app/app_lifecycle.zig", "writeLifecycleTerminalBytes", /stdio_write/, "initialization_teardown", "interactive startup and teardown control"),
   rule("src/core/app/app_lifecycle.zig", "bootstrapInteractiveApp", /stdio_acquisition_write/, "initialization_teardown", "pre-raw-mode Keychain onboarding prompt"),
@@ -211,6 +219,7 @@ function detectPrimitive(
     return "writer_delegation";
   }
   if (streamingWrite) {
+    if (/\.outputFile\(\)\.writeStreaming(?:All)?\(/.test(snippet)) return "stdio_write";
     const receiver = /([A-Za-z_][A-Za-z0-9_.?]*)\.writeStreaming(?:All)?\(/.exec(snippet)?.[1];
     const name = receiver?.split(".").at(-1);
     if (name && (isStdioHandle(name) || /^(?:stdout|stderr|stdout_file|stderr_file)$/.test(name))) {

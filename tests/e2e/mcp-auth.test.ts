@@ -768,22 +768,15 @@ function collectRegularFiles(root: string): string[] {
 function toolResultText(
   body: string,
   toolCallId: string,
-  outputType: "text" | "error-text" = "text",
+  _outputType: "text" | "error-text" = "text",
 ): string {
   const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
+    input: Array<{ type: string; call_id?: string; output?: unknown }>;
   };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .find((part) =>
-      part.type === "tool-result" && part.toolCallId === toolCallId
-    );
-  if (!result) throw new Error(`Missing tool result for ${toolCallId}`);
-  const output = result.output as Record<string, unknown>;
-  if (output.type !== outputType || typeof output.value !== "string") {
-    throw new Error(`Invalid tool result for ${toolCallId}`);
-  }
-  return output.value;
+  const result = request.input.find(item =>
+    item.type === "function_call_output" && item.call_id === toolCallId);
+  if (!result || typeof result.output !== "string") throw new Error(`Missing tool result for ${toolCallId}`);
+  return result.output;
 }
 
 function preserveAuthFailure(
@@ -900,8 +893,6 @@ describe("MCP remote authentication lifecycle", () => {
     expect(auth.tokenExchanges).toBe(1);
     expect(existsSync(join(root.home, ".handwork", "mcp-credentials", "credentials.json"))).toBe(true);
   }, 15_000);
-
-  
 
   test("pinned localhost callback reuses one port without aborting", async () => {
     upstream = startModernMcpHttpFixture("json");
@@ -2578,7 +2569,9 @@ describe("MCP remote authentication lifecycle", () => {
       expect(auth.revocations).toBe(2);
       await tui.sendKeys("Escape");
       await tui.waitForPane((pane) => !pane.includes("[Servers]"), 5_000);
-      expect(await tui.captureFullScrollback()).toBe(beforeLogoutMenu);
+      // Menu dismissal may resize the empty viewport; transcript content must survive.
+      const transcriptLines = (text: string) => text.split("\n").map(line => line.trimEnd()).filter(line => line.trim().length > 0);
+      expect(transcriptLines(await tui.captureFullScrollback())).toEqual(transcriptLines(beforeLogoutMenu));
       await tui.kill();
       tui = null;
 

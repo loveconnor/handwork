@@ -4,18 +4,44 @@ import { execFileSync, execSync, spawn as nodeSpawn } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
+  lstatSync,
+  realpathSync,
   mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 export const HANDWORK_BIN = resolve(import.meta.dirname, "../../zig-out/bin/handwork");
 export const REPO_ROOT = resolve(import.meta.dirname, "../..");
 
+function prepareMockCodexProfile(env: Record<string, string | undefined>): void {
+  if (env.HANDWORK_AUTH_MODE !== "host-managed" || !env.HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL || !env.HOME) return;
+  const endpoint = new URL(env.HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL);
+  if (endpoint.hostname !== "127.0.0.1" && endpoint.hostname !== "localhost") throw new Error("fixture endpoint must be loopback");
+  const home = realpathSync(env.HOME);
+  if (home === realpathSync(homedir())) throw new Error("fixture must use an isolated HOME");
+  const profile = join(home, ".handwork");
+  const settingsPath = join(profile, "settings.json");
+  for (const path of [profile, settingsPath]) {
+    if (existsSync(path) && lstatSync(path).isSymbolicLink()) throw new Error("fixture profile must not use symlinks");
+  }
+  let settings: Record<string, unknown> = {};
+  if (existsSync(settingsPath)) {
+    // Deliberately malformed settings belong to the product's parser tests.
+    try { settings = JSON.parse(readFileSync(settingsPath, "utf8")); } catch { return; }
+    if (!settings || typeof settings !== "object" || Array.isArray(settings)) return;
+  }
+  if (settings.provider !== undefined) return;
+  mkdirSync(profile, { recursive: true, mode: 0o700 });
+  writeFileSync(settingsPath, JSON.stringify({ ...settings, provider: "codex" }) + "\n", { mode: 0o600 });
+}
+
 export function providerVersionTestEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  // Fake Codex fixtures select Codex explicitly; fresh native profiles use OpenAI.
+  prepareMockCodexProfile(env);
   const result = { ...env };
   if (env.HANDWORK_E2E_OPENAI_CODEX_MODELS_URL && !env.HANDWORK_E2E_CODEX_VERSION_URL && !env.HANDWORK_E2E_CODEX_CLIENT_VERSION) {
     result.HANDWORK_E2E_CODEX_CLIENT_VERSION = "0.153.0";

@@ -2308,9 +2308,9 @@ test "user patch snapshots and removes legacy workspace copies" {
     defer tmp.cleanup();
     try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
     const original =
-        "{\"model\":\"old/global\",\"future\":7,\"workspaces\":{" ++
-        "\"/workspace/a\":{\"model\":\"workspace/a\",\"permission_mode\":\"ask\",\"input_appearance\":\"lines\",\"sandbox\":\"none\"}," ++
-        "\"/workspace/b\":{\"model\":\"workspace/b\",\"permission_mode\":\"auto\",\"input_appearance\":\"lines\",\"effort\":\"low\"}," ++
+        "{\"codex_model\":\"old/global\",\"future\":7,\"workspaces\":{" ++
+        "\"/workspace/a\":{\"codex_model\":\"workspace/a\",\"permission_mode\":\"ask\",\"input_appearance\":\"lines\",\"sandbox\":\"none\"}," ++
+        "\"/workspace/b\":{\"codex_model\":\"workspace/b\",\"permission_mode\":\"auto\",\"input_appearance\":\"lines\",\"effort\":\"low\"}," ++
         "\"legacy-string\":\"preserve-me\"}}\n";
     try writeStoreFixture(tmp.dir, "home/.handwork/settings.json", original);
 
@@ -2326,17 +2326,17 @@ test "user patch snapshots and removes legacy workspace copies" {
     defer outcome.deinit(alloc);
 
     try std.testing.expect(outcome == .committed);
-    try std.testing.expectEqual(@as(usize, 4), outcome.committed.cleanup.fields_removed);
+    try std.testing.expectEqual(@as(usize, 2), outcome.committed.cleanup.fields_removed);
     try std.testing.expectEqual(@as(usize, 2), outcome.committed.cleanup.workspaces_changed);
-    try std.testing.expectEqual(@as(usize, 2), outcome.committed.cleanup.recovery_paths.len);
+    try std.testing.expectEqual(@as(usize, 1), outcome.committed.cleanup.recovery_paths.len);
 
     const bytes = try store.readPrimaryForTest(alloc);
     defer alloc.free(bytes);
     try std.testing.expect(std.mem.find(u8, bytes, "\"models\":{\"codex\":\"openai/gpt-5.4\"}") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"permission_mode\":\"auto\"") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "input_appearance") == null);
-    try std.testing.expect(std.mem.find(u8, bytes, "\"model\":\"workspace/a\"") == null);
-    try std.testing.expect(std.mem.find(u8, bytes, "\"model\":\"workspace/b\"") == null);
+    try std.testing.expect(std.mem.find(u8, bytes, "\"codex_model\":\"workspace/a\"") != null);
+    try std.testing.expect(std.mem.find(u8, bytes, "\"codex_model\":\"workspace/b\"") != null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"permission_mode\":\"ask\"") == null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"input_appearance\":\"lines\"") == null);
     try std.testing.expect(std.mem.find(u8, bytes, "\"sandbox\":\"none\"") != null);
@@ -2427,7 +2427,7 @@ test "later migration refreshes the bounded field recovery snapshot" {
     defer tmp.cleanup();
     try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
     const first_original =
-        "{\"workspaces\":{\"/workspace/a\":{\"model\":\"legacy/one\"}}}\n";
+        "{\"workspaces\":{\"/workspace/a\":{\"permission_mode\":\"ask\"}}}\n";
     try writeStoreFixture(tmp.dir, "home/.handwork/settings.json", first_original);
 
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
@@ -2435,7 +2435,7 @@ test "later migration refreshes the bounded field recovery snapshot" {
     var store = try Store.initFromHome(alloc, home, .writable);
     defer store.deinit(alloc);
 
-    var first = try store.applyUserPatch(alloc, .{ .model_preference = .{ .provider = .codex, .model = "user/one" } });
+    var first = try store.applyUserPatch(alloc, .{ .permission_mode = .auto });
     defer first.deinit(alloc);
     const first_path = try alloc.dupe(
         u8,
@@ -2444,9 +2444,9 @@ test "later migration refreshes the bounded field recovery snapshot" {
     defer alloc.free(first_path);
 
     const second_original =
-        "{\"model\":\"user/one\",\"workspaces\":{\"/workspace/b\":{\"model\":\"legacy/two\"}}}\n";
+        "{\"permission_mode\":\"ask\",\"workspaces\":{\"/workspace/b\":{\"permission_mode\":\"ask\"}}}\n";
     try writeStoreFixture(tmp.dir, "home/.handwork/settings.json", second_original);
-    var second = try store.applyUserPatch(alloc, .{ .model_preference = .{ .provider = .codex, .model = "user/two" } });
+    var second = try store.applyUserPatch(alloc, .{ .permission_mode = .auto });
     defer second.deinit(alloc);
 
     try std.testing.expect(std.mem.eql(
@@ -2476,7 +2476,7 @@ test "later migration refreshes the bounded field recovery snapshot" {
     var iterator = backups.iterate();
     var migration_count: usize = 0;
     while (try iterator.next(io_mod.getIo())) |entry| {
-        if (std.mem.startsWith(u8, entry.name, "settings.json.preference-migration.model")) {
+        if (std.mem.startsWith(u8, entry.name, "settings.json.preference-migration.permission_mode")) {
             migration_count += 1;
         }
     }
@@ -2525,8 +2525,8 @@ test "migration snapshot failure leaves primary byte identical" {
     defer tmp.cleanup();
     try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
     const original =
-        "{\"model\":\"old/global\",\"workspaces\":{" ++
-        "\"/workspace/a\":{\"model\":\"workspace/a\",\"sandbox\":\"none\"}}}\n";
+        "{\"permission_mode\":\"ask\",\"workspaces\":{" ++
+        "\"/workspace/a\":{\"permission_mode\":\"ask\",\"sandbox\":\"none\"}}}\n";
     try writeStoreFixture(tmp.dir, "home/.handwork/settings.json", original);
 
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
@@ -2537,7 +2537,7 @@ test "migration snapshot failure leaves primary byte identical" {
 
     try std.testing.expectError(
         error.SettingsMigrationSnapshotFailed,
-        store.applyUserPatch(alloc, .{ .model_preference = .{ .provider = .codex, .model = "openai/gpt-5.4" } }),
+        store.applyUserPatch(alloc, .{ .permission_mode = .auto }),
     );
 
     const bytes = try store.readPrimaryForTest(alloc);
@@ -3361,7 +3361,7 @@ test "indeterminate migration retains recovery metadata for the caller" {
     defer tmp.cleanup();
     try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
     const original =
-        "{\"workspaces\":{\"/workspace/a\":{\"model\":\"legacy/model\",\"future\":true}}}\n";
+        "{\"workspaces\":{\"/workspace/a\":{\"permission_mode\":\"ask\",\"future\":true}}}\n";
     try writeStoreFixture(tmp.dir, "home/.handwork/settings.json", original);
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home);
@@ -3371,7 +3371,7 @@ test "indeterminate migration retains recovery metadata for the caller" {
 
     try std.testing.expectError(
         error.SettingsCommitIndeterminate,
-        store.applyUserPatch(alloc, .{ .model_preference = .{ .provider = .codex, .model = "user/model" } }),
+        store.applyUserPatch(alloc, .{ .permission_mode = .auto }),
     );
     var cleanup = store.takeFailureCleanup();
     defer cleanup.deinit(alloc);

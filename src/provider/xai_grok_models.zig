@@ -63,6 +63,15 @@ fn fetchCatalogForProvider(
     alloc: std.mem.Allocator,
     input: model_catalog.FetchInput,
 ) std.mem.Allocator.Error!model_catalog.ProviderResult {
+    @import("../core/config/provider_policy.zig").requireNative(.grok) catch |err|
+        return .{ .failure = catalogFetchFailure(err) };
+    return fetchCatalogTransport(alloc, input);
+}
+
+fn fetchCatalogTransport(
+    alloc: std.mem.Allocator,
+    input: model_catalog.FetchInput,
+) std.mem.Allocator.Error!model_catalog.ProviderResult {
     const request_auth = catalogRequestAuth(input.access) orelse
         return .{ .failure = .{ .category = .authentication, .http_status = .unauthorized } };
     if (request_auth.account_id) |account_id| {
@@ -159,6 +168,7 @@ fn catalogRequestAuth(access: credentials.CatalogAccess) ?CatalogRequestAuth {
 
 fn catalogFetchFailure(err: anyerror) model_catalog.Failure {
     if (err == error.Cancelled) return .{ .category = .cancellation };
+    if (err == error.ProviderIntegrationDisabled) return .{ .category = .transport, .retryable = false };
     if (err == error.GrokModelCatalogTooLarge) return .{ .category = .malformed_response };
     return .{ .category = .transport, .retryable = true };
 }
@@ -182,7 +192,6 @@ const FetchOperation = struct {
     client_version: ?versions.Version = null,
 
     pub fn run(self: *@This()) !FetchResponse {
-        try @import("../core/config/provider_policy.zig").requireNative(.grok);
         var client: std.http.Client = .{ .allocator = self.alloc, .io = io_mod.getIo() };
         defer client.deinit();
         var auth_header: ?[]u8 = null;
@@ -505,7 +514,7 @@ test "Grok catalog URLs use provider-owned subscription and modality endpoints" 
 }
 
 test "Grok subscription catalog requires account identity before network I/O" {
-    const result = try model_catalog_provider.fetch(std.testing.allocator, .{
+    const result = try fetchCatalogTransport(std.testing.allocator, .{
         .access = .{ .authenticated = .{
             .source = .grok_subscription,
             .credential = "grok-token",
@@ -524,7 +533,7 @@ test "Grok subscription catalog requires account identity before network I/O" {
         },
     }
     try expectCatalogProviderFailure(
-        try model_catalog_provider.fetch(std.testing.allocator, .{
+        try fetchCatalogTransport(std.testing.allocator, .{
             .access = .{ .authenticated = .{
                 .source = .grok_subscription,
                 .credential = "grok-token",
@@ -851,7 +860,7 @@ test "Grok catalog adapter classifies oversized bodies at both provider origins"
         );
         defer environment.deinit();
         try expectCatalogProviderFailure(
-            try model_catalog_provider.fetch(alloc, .{ .access = access, .endpoint = "" }),
+            try fetchCatalogTransport(alloc, .{ .access = access, .endpoint = "" }),
             .malformed_response,
         );
     }
@@ -876,11 +885,25 @@ test "Grok catalog adapter classifies oversized bodies at both provider origins"
     const modalities_environment = try CatalogEndpointEnvironment.install(alloc, valid_url, modalities_url);
     defer modalities_environment.deinit();
     try expectCatalogProviderFailure(
-        try model_catalog_provider.fetch(alloc, .{ .access = access, .endpoint = "" }),
+        try fetchCatalogTransport(alloc, .{ .access = access, .endpoint = "" }),
         .malformed_response,
     );
     valid_fixture.deinit();
     modalities_fixture.deinit();
     if (valid_fixture.failure) |err| return err;
     if (modalities_fixture.failure) |err| return err;
+}
+
+test "disabled Grok catalog entry point rejects before transport" {
+    try expectCatalogProviderFailure(
+        try model_catalog_provider.fetch(std.testing.allocator, .{
+            .access = .{ .authenticated = .{
+                .source = .grok_subscription,
+                .credential = "test-token",
+                .account_id = "acct_test",
+            } },
+            .endpoint = "",
+        }),
+        .transport,
+    );
 }

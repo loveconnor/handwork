@@ -8192,7 +8192,7 @@ test "app_input_runtime decoded kitty Escape follows the raw Escape policy" {
     }
 }
 
-test "pending full transcript open cancels after complete escape input" {
+test "pending full transcript open preserves page up and cancels other navigation" {
     const alloc = std.testing.allocator;
     const sequences = [_][]const u8{
         "\x1b[A",
@@ -8217,7 +8217,7 @@ test "pending full transcript open cancels after complete escape input" {
             "",
             app.input_runtime.edit_state.input.items,
         );
-        try std.testing.expect(!app.shell.cancelPendingFullTranscriptOpen());
+        try std.testing.expectEqual(std.mem.eql(u8, sequence, "\x1b[5~"), app.shell.cancelPendingFullTranscriptOpen());
     }
 }
 
@@ -8740,7 +8740,7 @@ fn openRoutingAuthPicker(app: *RoutingFakeApp) !void {
     app.auth.source_inventory.insert(.chatgpt_subscription);
     app.auth.openPicker(app.alloc);
     try std.testing.expect(app.auth.movePicker(1));
-    try std.testing.expectEqual(@as(usize, 4), app.auth.pickerView().choiceCount());
+    try std.testing.expectEqual(@as(usize, 15), app.auth.pickerView().choiceCount());
     try std.testing.expectEqual(@as(usize, 1), app.auth.pickerView().selectedIndex());
 }
 
@@ -9211,9 +9211,9 @@ test "app_input_runtime ctrl+j and ctrl+k navigate visible composer pickers" {
         bytes: []const u8,
         expected_index: usize,
     }{
-        .{ .bytes = "\x0a", .expected_index = 3 },
+        .{ .bytes = "\x0a", .expected_index = 2 },
         .{ .bytes = "\x0b", .expected_index = 0 },
-        .{ .bytes = "\x1b[106;5u", .expected_index = 3 },
+        .{ .bytes = "\x1b[106;5u", .expected_index = 2 },
         .{ .bytes = "\x1b[107;5u", .expected_index = 0 },
     };
 

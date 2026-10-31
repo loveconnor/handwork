@@ -321,7 +321,7 @@ test "capability refresh keys host-managed catalogs by provider" {
     defer resolver.deinit(alloc);
     const input = model_catalog.FetchInput{ .endpoint = "https://example.invalid", .access = .host_managed };
     try resolver.refreshIfDue(alloc, provider, input);
-    provider.provider_id = .codex;
+    provider.provider_id = .openai;
     try resolver.refreshIfDue(alloc, provider, input);
     try std.testing.expectEqual(@as(usize, 2), fake.calls);
     fake.outcome = .unavailable;

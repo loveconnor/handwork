@@ -54,18 +54,20 @@ pub fn parse_preferences(alloc: Allocator, value: std.json.Value) !DurableSessio
     return .{ .provider = provider, .model = try alloc.dupe(u8, model), .effort = effort, .fast_mode = fast_mode };
 }
 
-test "legacy connection preferences decode through the shared state codec" {
+test "providerless legacy connection preferences cannot change provider authority" {
     const alloc = std.testing.allocator;
     const state_json = "{\"id\":\"legacy\",\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"connection_id\":\"legacy\",\"model_id\":\"test/model\",\"effort\":\"high\",\"fast_mode\":true},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
     try std.testing.checkAllAllocationFailures(alloc, struct {
         fn check(a: Allocator, bytes: []const u8) !void {
             var source = std.Io.Reader.fixed(bytes);
-            var state = try decodeState(a, &source, .{});
-            defer state.deinit(a);
-            try std.testing.expectEqual(model_provider.ProviderId.codex, state.preferences.provider);
-            try std.testing.expectEqualStrings("test/model", state.preferences.model);
-            try std.testing.expectEqualStrings("high", state.preferences.effort.label());
-            try std.testing.expect(state.preferences.fast_mode);
+            if (decodeState(a, &source, .{})) |value| {
+                var state = value;
+                state.deinit(a);
+                return error.TestUnexpectedResult;
+            } else |err| {
+                if (err == error.OutOfMemory) return err;
+                try std.testing.expectEqual(error.InvalidDurableField, err);
+            }
         }
     }.check, .{state_json});
 }
@@ -3239,7 +3241,7 @@ test "legacy durable state defaults context history start to zero" {
     const legacy =
         "{\"id\":\"legacy\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\"," ++
         "\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\"," ++
-        "\"preferences\":{\"model\":\"model\",\"effort\":\"auto\",\"fast_mode\":false}," ++
+        "\"preferences\":{\"provider\":\"codex\",\"model\":\"model\",\"effort\":\"auto\",\"fast_mode\":false}," ++
         "\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
     var source = std.Io.Reader.fixed(legacy);
     var decoded = try decodeState(alloc, &source, .{});
@@ -3249,7 +3251,7 @@ test "legacy durable state defaults context history start to zero" {
     const invalid =
         "{\"id\":\"invalid\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\"," ++
         "\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\"," ++
-        "\"preferences\":{\"model\":\"model\",\"effort\":\"auto\",\"fast_mode\":false}," ++
+        "\"preferences\":{\"provider\":\"codex\",\"model\":\"model\",\"effort\":\"auto\",\"fast_mode\":false}," ++
         "\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0,\"context_history_start\":1}";
     var invalid_source = std.Io.Reader.fixed(invalid);
     try std.testing.expectError(
@@ -3261,7 +3263,7 @@ test "legacy durable state defaults context history start to zero" {
 test "per-turn work provenance is strict and ordinary state omits it" {
     const alloc = std.testing.allocator;
     const ordinary =
-        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[{\"kind\":\"assistant\",\"user\":{\"text\":\"hello\",\"images\":[]},\"assistant\":\"world\",\"execution\":{\"schema_version\":3,\"tool_steps\":[],\"files\":[]}}],\"total_input_tokens\":0,\"total_output_tokens\":0}";
+        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[{\"kind\":\"assistant\",\"user\":{\"text\":\"hello\",\"images\":[]},\"assistant\":\"world\",\"execution\":{\"schema_version\":3,\"tool_steps\":[],\"files\":[]}}],\"total_input_tokens\":0,\"total_output_tokens\":0}";
     var ordinary_source = std.Io.Reader.fixed(ordinary);
     var state = try decodeState(alloc, &ordinary_source, .{});
     defer state.deinit(alloc);
@@ -3356,11 +3358,11 @@ test "durable session IDs reject unsafe basenames" {
 test "durable state rejects invalid metadata fields before returning" {
     const alloc = std.testing.allocator;
     const invalid_documents = [_][]const u8{
-        "{\"id\":\"../bad\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
-        "{\"id\":\"good\",\"origin_workspace_root\":\"relative\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
-        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\" en \",\"preferences\":{\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
-        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"m\",\"effort\":\"not valid\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
-        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\" m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"../bad\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"good\",\"origin_workspace_root\":\"relative\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\" en \",\"preferences\":{\"provider\":\"codex\",\"model\":\"m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"m\",\"effort\":\"not valid\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"good\",\"origin_workspace_root\":\"/tmp/a\",\"workspace_root\":\"/tmp/a\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\" m\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
     };
 
     for (invalid_documents) |document| {
@@ -4418,7 +4420,7 @@ test "recovery checkpoint round trips while legacy state stays absent" {
     try std.testing.expect(restored.outstanding_reservation);
 
     const legacy =
-        "{\"id\":\"legacy\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"openai/gpt-test\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
+        "{\"id\":\"legacy\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"openai/gpt-test\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
     var legacy_source = std.Io.Reader.fixed(legacy);
     var legacy_state = try decodeState(alloc, &legacy_source, .{});
     defer legacy_state.deinit(alloc);
@@ -4500,7 +4502,7 @@ test "session permission state round trips while legacy state stays empty" {
     );
 
     const legacy =
-        "{\"id\":\"legacy-permission-state\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"openai/gpt-test\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
+        "{\"id\":\"legacy-permission-state\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"openai/gpt-test\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}";
     var legacy_source = std.Io.Reader.fixed(legacy);
     var legacy_state = try decodeState(alloc, &legacy_source, .{});
     defer legacy_state.deinit(alloc);
@@ -4584,7 +4586,7 @@ test "durable state usage remains strict and releases partial allocations" {
     const alloc = std.testing.allocator;
     const state_json =
         \\{"id":"usage-state","origin_workspace_root":"/workspace","workspace_root":"/workspace","created_at_ms":1,"updated_at_ms":2,
-        \\"conversation_language":"en","preferences":{"model":"test/model","effort":"auto","fast_mode":false},"history":[],"total_input_tokens":0,"total_output_tokens":0,
+        \\"conversation_language":"en","preferences":{"provider":"codex","model":"test/model","effort":"auto","fast_mode":false},"history":[],"total_input_tokens":0,"total_output_tokens":0,
         \\"usage":{"billing":"complete","api_duration_complete":true,"wall_duration_complete":true,"code_complete":true,"next_sequence":2,"settled_through_sequence":1,
         \\"api_duration_ms":10,"wall_duration_ms":20,"total_cost":1,"input_tokens":10,"output_tokens":3,"cache_read_tokens":2,"cache_write_tokens":0,"billable_web_search_calls":0,"lines_added":0,"lines_removed":0,
         \\"models":[{"model":"test/model","first_sequence":1,"total_cost":1,"input_tokens":10,"output_tokens":3,"cache_read_tokens":2,"cache_write_tokens":0,"billable_web_search_calls":0}],"pending":[]},
@@ -4607,9 +4609,9 @@ test "durable state usage remains strict and releases partial allocations" {
 
 test "durable session optional fields handle fuzzed ownership paths" {
     try std.testing.fuzz({}, fuzzDurableSessionOptionalFields, .{ .corpus = &.{
-        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
-        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0,\"context_history_start\":0,\"last_subagent_work_id\":\"work\"}",
-        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0,\"last_subagent_work_id\":\"work\",\"context_history_start\":0}",
+        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0}",
+        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0,\"context_history_start\":0,\"last_subagent_work_id\":\"work\"}",
+        "{\"id\":\"session\",\"origin_workspace_root\":\"/tmp/origin\",\"workspace_root\":\"/tmp/current\",\"created_at_ms\":1,\"updated_at_ms\":1,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"history\":[],\"total_input_tokens\":0,\"total_output_tokens\":0,\"last_subagent_work_id\":\"work\",\"context_history_start\":0}",
         "",
         "{}",
         "{\"last_subagent_work_id\":null}",

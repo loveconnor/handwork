@@ -58,7 +58,6 @@ tmuxTest("direct native-clear recovery resets the view and replays the held draf
     stderrPath: stderr_path,
     env: {
 
-
       HANDWORK_THEME: undefined,
       TMUX: undefined,
       HANDWORK_TRACE_LOG: trace_path,
@@ -74,7 +73,7 @@ tmuxTest("direct native-clear recovery resets the view and replays the held draf
   await session.waitForPane((pane) => composerContains(pane, "abc"), 10_000);
   const history = await session.captureFullScrollback();
   expect(history).not.toContain(old_marker);
-  expect(history).toContain("handwork v");
+  expect(history).toContain("handwork · v");
   expect(readFileSync(stderr_path, "utf8")).toBe("");
 }, 30_000);
 
@@ -91,7 +90,6 @@ tmuxTest("direct healthy screens retain an ordinary burst without resetting", as
     height: 30,
     stderrPath: stderr_path,
     env: {
-
 
       HANDWORK_THEME: undefined,
       TMUX: undefined,
@@ -122,7 +120,6 @@ tmuxTest("native-clear replay settles a complete paste before the next key", asy
     height: 30,
     stderrPath: stderr_path,
     env: {
-
 
       HANDWORK_THEME: undefined,
       TMUX: undefined,
@@ -157,7 +154,6 @@ tmuxTest("tmux leaves native-clear probing disabled and preserves ordinary input
     height: 30,
     stderrPath: stderr_path,
     env: {
-
 
       HANDWORK_TRACE_LOG: trace_path,
       HANDWORK_TRACE_SCOPES: "native_clear",

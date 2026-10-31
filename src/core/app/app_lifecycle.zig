@@ -1261,10 +1261,9 @@ test "startup provider chooses only its provider-scoped model" {
     try std.testing.expectEqualStrings("gpt-model", codex.model);
 
     const missing_codex = config_runtime.Settings{ .provider = .codex };
-    try std.testing.expectError(
-        error.CodexModelNotSelected,
-        configuredProviderSelection("default/model", &missing_codex),
-    );
+    const fallback = try configuredProviderSelection("default/model", &missing_codex);
+    try std.testing.expectEqual(model_provider.ProviderId.codex, fallback.provider);
+    try std.testing.expectEqualStrings("default/model", fallback.model);
 }
 
 fn loadInitialModel(alloc: Allocator, default_model: []const u8, configured: ?[]const u8) ![]u8 {
@@ -2081,7 +2080,7 @@ test "host-managed startup skips every local credential source" {
     try std.testing.expectEqual(credentials.CatalogAccess.host_managed, state.modelCatalogAccess());
 }
 
-test "loadStartupState defaults fast mode on only for the compiled Provider default and requires bound explicit preferences" {
+test "loadStartupState defaults fast mode off and requires bound explicit preferences" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
@@ -2110,7 +2109,7 @@ test "loadStartupState defaults fast mode on only for the compiled Provider defa
 
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"workspaces\":{{\"{s}\":{{\"model\":\"openai/gpt-5\"}},\"{s}\":{{\"fast_mode\":false}},\"{s}\":{{\"model\":\"zai/glm-5.3\",\"fast_mode\":true}},\"{s}\":{{\"model\":\"provider/fast-toggle\",\"fast_mode\":true,\"fast_mode_model_bound\":true}},\"{s}\":{{\"provider\":\"codex\",\"codex_model\":\"gpt-5.4-mini\"}}}}}}\n",
+        "{{\"workspaces\":{{\"{s}\":{{\"provider\":\"codex\",\"codex_model\":\"openai/gpt-5\"}},\"{s}\":{{\"fast_mode\":false}},\"{s}\":{{\"provider\":\"codex\",\"codex_model\":\"zai/glm-5.3\",\"fast_mode\":true}},\"{s}\":{{\"provider\":\"codex\",\"codex_model\":\"provider/fast-toggle\",\"fast_mode\":true,\"fast_mode_model_bound\":true}},\"{s}\":{{\"provider\":\"codex\",\"codex_model\":\"gpt-5.4-mini\"}}}}}}\n",
         .{ configured_root, disabled_root, legacy_fast_root, bound_fast_root, codex_root },
     );
     defer std.testing.allocator.free(fixture);
@@ -2121,10 +2120,10 @@ test "loadStartupState defaults fast mode on only for the compiled Provider defa
 
     var absent = try loadStartupStateForWorkspace(std.testing.allocator, absent_root, "zai/glm-5.2", 25);
     defer absent.deinit(std.testing.allocator);
-    try std.testing.expectEqualStrings("zai/glm-5.2", absent.selected_model);
-    try std.testing.expectEqualStrings("zai/glm-5.2", absent.configured_model);
-    try std.testing.expect(absent.fast_mode);
-    try std.testing.expect(absent.fast_mode_model_bound);
+    try std.testing.expectEqualStrings("gpt-5.4", absent.selected_model);
+    try std.testing.expectEqualStrings("gpt-5.4", absent.configured_model);
+    try std.testing.expect(!absent.fast_mode);
+    try std.testing.expect(!absent.fast_mode_model_bound);
 
     var configured = try loadStartupStateForWorkspace(std.testing.allocator, configured_root, "zai/glm-5.2", 25);
     defer configured.deinit(std.testing.allocator);

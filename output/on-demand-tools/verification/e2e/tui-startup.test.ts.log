@@ -1,0 +1,11 @@
+tests/e2e/tui-startup.test.ts:
+(skip) tui: startup and exit > handwork launches and shows prompt
+(skip) tui: startup and exit > /help opens the command catalog
+(skip) tui: startup and exit > /quit exits cleanly
+(pass) tui: fresh-session commands > statusline hides the workspace identity by default [1074.48ms]
+(pass) tui: fresh-session commands > /help keeps command descriptions close after a wide-to-narrow resize [1505.76ms]
+(pass) tui: fresh-session commands > statusline refreshes the working directory and Git branch [2105.41ms]
+(pass) tui: fresh-session commands > restore the launch header without retaining prior output [2394.83ms]
+(pass) tui: MCP startup > unresponsive MCP discovery does not block startup or shutdown [1801.44ms]
+(pass) tui: credential onboarding > /provider opens the picker and native API-key entry [1676.89ms]
+(pass) tui: credential onboarding > startup shows credential onboarding on the first frame and Escape remains session-only [2357.59ms]

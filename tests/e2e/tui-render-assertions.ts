@@ -48,7 +48,7 @@ function isFooterHintRow(line: string): boolean {
 
 function isInputContinuationRow(line: string): boolean {
   const normalized = normalizeGridLine(line);
-  return normalized.trim().length === 0 || normalized.startsWith("  ");
+  return normalized.trim().length === 0 || normalized.startsWith("  ") || normalized.startsWith("┃");
 }
 
 function normalizeGridLine(line: string): string {
@@ -62,7 +62,7 @@ export function findFooterBlocks(grid: string[]): FooterBlock[] {
   const blocks: FooterBlock[] = [];
   for (let i = 0; i < grid.length; i++) {
     if (!isInputRow(grid[i]!)) continue;
-    if (normalizeGridLine(grid[i]!).startsWith("┃")) {
+    if (normalizeGridLine(grid[i]!).startsWith("┃") && !(i > 0 && isDividerRow(grid[i - 1]!))) {
       if (i > 0 && normalizeGridLine(grid[i - 1]!).startsWith("┃")) continue;
       let spacer = i + 1;
       while (

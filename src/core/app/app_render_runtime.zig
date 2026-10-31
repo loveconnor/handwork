@@ -3721,7 +3721,7 @@ test "core.app_render_runtime keeps configured controls visible while model capa
         &hint_buf,
     );
     try std.testing.expectEqualStrings(
-        "run /login · ask · opus 4.8 · xhigh · ⚡︎",
+        "ask · run /login · opus 4.8 · xhigh · ⚡︎",
         line,
     );
 }
@@ -4506,10 +4506,9 @@ test "core.app_render_runtime active setup hub stays on the inline transcript su
     try Runtime(CoordinatorTestApp).flushRequestedFrame(&app);
 
     try std.testing.expect(!app.terminal.catalogMenuScreenActive());
-    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "Setup"));
-    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "Connections"));
-    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "Credential source"));
-    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "enter open"));
+    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "Subscription provider"));
+    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "Codex"));
+    try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "OpenAI"));
     try std.testing.expect(!(try coordinatorGridContains(app.shell.shadow_vt.?.*, "test-model")));
     try std.testing.expect(try coordinatorGridContains(app.shell.shadow_vt.?.*, "setup transcript stays behind"));
 
@@ -5688,8 +5687,8 @@ test "core.app_render_runtime anchored placement keeps the composer on the termi
     // rows (4..20) below it, and the composer is pinned to the last rows.
     try std.testing.expect(try coordinatorGridContains(terminal, "SHELL01"));
     try std.testing.expectEqual(@as(u16, 4), app.shell.owned_top_row);
-    try std.testing.expectEqual(@as(u16, 9), try coordinatorRowContaining(terminal, std.mem.trimEnd(u8, ui_render.welcome_logo_rows[0], " ")));
-    try std.testing.expectEqual(@as(u16, 15), try coordinatorRowContaining(terminal, "Run /help"));
+    try std.testing.expectEqual(@as(u16, 13), try coordinatorRowContaining(terminal, "handwork ·"));
+    try std.testing.expectEqual(@as(u16, 16), try coordinatorRowContaining(terminal, "/help for commands"));
     try std.testing.expectEqual(layout.rows, app.shell.committed_frame_layout.footer_area.bottom);
     try std.testing.expectEqual(layout.rows, try coordinatorRowContaining(terminal, "run /login"));
 
@@ -5705,8 +5704,8 @@ test "core.app_render_runtime anchored placement keeps the composer on the termi
     // The splash gives up its lead rows: the logo moves to the launch row and
     // the prompt follows it.
     try std.testing.expect(try coordinatorGridContains(terminal, "SHELL01"));
-    try std.testing.expectEqual(@as(u16, 4), try coordinatorRowContaining(terminal, std.mem.trimEnd(u8, ui_render.welcome_logo_rows[0], " ")));
-    try std.testing.expectEqual(@as(u16, 10), try coordinatorRowContaining(terminal, "Run /help"));
+    try std.testing.expectEqual(@as(u16, 10), try coordinatorRowContaining(terminal, "handwork ·"));
+    try std.testing.expectEqual(@as(u16, 13), try coordinatorRowContaining(terminal, "/help for commands"));
     try std.testing.expect((try coordinatorRowContaining(terminal, "FIRST_PROMPT")) > 10);
     try std.testing.expectEqual(layout.rows, app.shell.committed_frame_layout.footer_area.bottom);
     try std.testing.expectEqual(layout.rows, try coordinatorRowContaining(terminal, "run /login"));

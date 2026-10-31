@@ -1,0 +1,13 @@
+tests/e2e/tui-compaction-activity.test.ts:
+(pass) tui: compaction activity > manual: held summary is transient, commits once released, and resumes ordinary work [25342.96ms]
+(pass) tui: compaction activity > auto: held summary is transient, commits once released, and resumes ordinary work [42170.19ms]
+(pass) tui: compaction activity > overflow: held summary is transient, commits once released, and resumes ordinary work [4066.95ms]
+(pass) tui: compaction activity > manual: a message submitted during a held compaction waits and runs after with compacted context [21881.91ms]
+(pass) tui: compaction activity > auto: a message submitted during a held compaction waits and runs after with compacted context [21805.47ms]
+(pass) tui: compaction activity > manual cancel: scoped feedback preserves history and permits later input and reopen [4734.99ms]
+(pass) tui: compaction activity > manual empty: scoped feedback preserves history and permits later input and reopen [4103.67ms]
+(pass) tui: compaction activity > manual provider-error: scoped feedback preserves history and permits later input and reopen [3059.09ms]
+(pass) tui: compaction activity > auto: cancellation provenance preserves the correct transcript after reopen [3532.76ms]
+(pass) tui: compaction activity > ordinary: cancellation provenance preserves the correct transcript after reopen [2848.76ms]
+(pass) tui: compaction activity > missing credentials keep compaction feedback local without hiding ordinary auth errors [2333.41ms]
+(pass) tui: compaction activity > ordinary held request remains Thinking without compaction or extra requests [1386.56ms]

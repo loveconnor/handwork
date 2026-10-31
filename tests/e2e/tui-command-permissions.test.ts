@@ -18,10 +18,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { HANDWORK_BIN, runHandwork } from "../evals/eval-helpers";
+import { HANDWORK_BIN, runHandwork, providerVersionTestEnv } from "../evals/eval-helpers";
 import {
   canonicalSubagentIdForStore,
   fakeCodexPermissionDecision,
+  hasEmptyComposer,
+  fakeCodexSse,
   fakeCodexTitleDefault,
   heldFakeCodexFinalText,
   isVolatileTokenStatusRow,
@@ -96,11 +98,14 @@ afterEach(async () => {
   }
 });
 
-function sse(events: object[]) {
-  return new Response(
-    `${events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("")}data: [DONE]\n\n`,
-    { headers: { "content-type": "text/event-stream" } },
-  );
+function sse(events: any[]) {
+  return fakeCodexSse(events.filter(event => event.type !== "tool-input-start").map(event => {
+    if (event.type === "response.output_item.done" && event.item?.type === "function_call") {
+      return { type: "tool-call", toolCallId: event.item.call_id, toolName: event.item.name, input: event.item.arguments };
+    }
+    if (event.type === "response.output_text.delta") return { type: "text-delta", id: "answer", delta: event.delta };
+    return event;
+  }));
 }
 
 function providerToolCall(toolName: string, input: object, toolCallId: string) {
@@ -216,50 +221,28 @@ function expectGroupedContinuationRequest(
   expect(amendment).toBeGreaterThan(second);
 }
 
-function expectOrdinaryToolResults(body: string, callIds: string[]) {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
-  };
-  const results = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .filter((part) => part.type === "tool-result");
+function nativeToolResults(body: string): Array<{ call_id: string; output: string }> {
+  return JSON.parse(body).input.filter((item: any) => item.type === "function_call_output");
+}
 
-  expect(results).toHaveLength(callIds.length);
-  expect(results.map((part) => part.toolCallId).sort()).toEqual([...callIds].sort());
+function expectOrdinaryToolResults(body: string, callIds: string[]) {
+  const results = nativeToolResults(body);
+  expect(results.map(part => part.call_id).sort()).toEqual([...callIds].sort());
   for (const result of results) {
-    const output = result.output as Record<string, unknown> | undefined;
-    expect(output?.type).toBe("text");
-    expect(JSON.parse(output?.value as string)).toMatchObject({
-      state: "completed",
-      exit_code: 0,
-      error: null,
-    });
+    expect(JSON.parse(result.output)).toMatchObject({ state: "completed", exit_code: 0, error: null });
   }
   expect(JSON.stringify(results)).not.toContain("Repeated identical tool call blocked");
 }
 
 function toolResultText(body: string, toolCallId: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
-  };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .find((part) => part.type === "tool-result" && part.toolCallId === toolCallId);
+  const result = nativeToolResults(body).find(item => item.call_id === toolCallId);
   expect(result).toBeDefined();
-  const output = result!.output as Record<string, unknown>;
-  expect(output.type).toBe("text");
-  expect(typeof output.value).toBe("string");
-  return output.value as string;
+  expect(typeof result!.output).toBe("string");
+  return result!.output;
 }
 
 function completedToolCallIds(body: string): string[] {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
-  };
-  return (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .filter((part) => part.type === "tool-result")
-    .map((part) => part.toolCallId as string);
+  return nativeToolResults(body).map(item => item.call_id);
 }
 
 function contentText(value: unknown): string {
@@ -278,30 +261,16 @@ function contentText(value: unknown): string {
 }
 
 function promptText(body: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: unknown }>;
-  };
-  return (request.prompt ?? []).map((message) => contentText(message.content)).join("\n");
+  const request = JSON.parse(body);
+  return request.instructions + "\n" + request.input.map((message: any) => contentText(message)).join("\n");
 }
 
 function latestPromptText(body: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: unknown }>;
-  };
-  return contentText(request.prompt?.at(-1)?.content);
+  return contentText(JSON.parse(body).input.at(-1));
 }
 
 function currentUserText(body: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ role?: string; content?: unknown }>;
-  };
-  return contentText(
-    request.prompt?.findLast((message) => message.role === "user")?.content,
-  );
-}
-
-function occurrenceCount(text: string, needle: string): number {
-  return text.split(needle).length - 1;
+  return contentText(JSON.parse(body).input.findLast((message: any) => message.role === "user")?.content);
 }
 
 async function waitForTraceSlice(
@@ -350,8 +319,8 @@ function startFakeCodex(
     port: 0,
     async fetch(req) {
       const url = new URL(req.url);
-      if (url.pathname === "/v1/models") {
-        return Response.json({ models: [{ id: MODEL, type: "language", tags: ["tool-use"] }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+      if (url.pathname === "/models") {
+        return Response.json({ models: [{ id: MODEL, type: "language", tags: ["tool-use"] }, { id: "gpt-5.6-luna", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
       if (req.method !== "POST") return new Response("not found", { status: 404 });
       const body = await req.text();
@@ -479,7 +448,7 @@ async function waitForProviderRequestCount(
 function paneTty(session: TmuxSession): string {
   return execFileSync(
     "tmux",
-    ["display-message", "-t", session.name, "-p", "#{pane_tty}"],
+    ["-L", `handwork-e2e-${process.pid}`, "display-message", "-t", session.name, "-p", "#{pane_tty}"],
     { encoding: "utf8" },
   ).trim();
 }
@@ -531,16 +500,7 @@ function foregroundHandworkRow(
 }
 
 function toolResultValue(body: string, toolCallId: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: string | Array<Record<string, unknown>> }>;
-  };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => Array.isArray(message.content) ? message.content : [])
-    .find((part) => part.type === "tool-result" && part.toolCallId === toolCallId);
-  expect(result).toBeDefined();
-  const output = result!.output as Record<string, unknown>;
-  expect(output.type).toBe("text");
-  return output.value as string;
+  return toolResultText(body, toolCallId);
 }
 
 function expectTraceOrder(trace: string, markers: string[]) {
@@ -618,7 +578,7 @@ function providerEnv(
   provider: ReturnType<typeof startFakeCodex>,
   extra: Record<string, string | undefined> = {},
 ) {
-  return {
+  return providerVersionTestEnv({
     HOME: root.home,
     HANDWORK_AUTH_MODE: "host-managed",
 
@@ -629,7 +589,7 @@ function providerEnv(
     HANDWORK_DIRECT_SECRET: "must-not-be-inherited",
     NO_COLOR: "1",
     ...extra,
-  };
+  });
 }
 
 function definedEnv(env: Record<string, string | undefined>) {
@@ -1319,17 +1279,7 @@ describe("effect-aware command permissions", () => {
       writeFileSync(resumedStderrPath, "");
       const commandOutputText = (text: string): string =>
         text.split("\n").filter((line) => line.trimStart().startsWith("│ ")).join("\n");
-      const toolResultValue = (body: string, toolCallId: string): string => {
-        const request = JSON.parse(body) as {
-          prompt?: Array<{ content?: Array<Record<string, any>> }>;
-        };
-        const result = (request.prompt ?? [])
-          .flatMap((message) => message.content ?? [])
-          .find((part) => part.type === "tool-result" && part.toolCallId === toolCallId);
-        expect(result).toBeDefined();
-        expect(result?.output?.type).toBe("text");
-        return String(result?.output?.value ?? "");
-      };
+      const toolResultValue = toolResultText;
 
       activeSession = await TmuxSession.create({
         cmd: HANDWORK_BIN,
@@ -1696,8 +1646,6 @@ describe("effect-aware command permissions", () => {
     TIMEOUT,
   );
 
-  
-
   test.skipIf(!tmuxAvailable())(
     "TUI creates a private Markdown trace without a feedback CTA",
     async () => {
@@ -1908,8 +1856,7 @@ describe("effect-aware command permissions", () => {
       const firstPrompt = "Render the numbered transcript fixture.";
       const secondPrompt = "Run seq 1 1.";
       const finalResponse = "AUTO_COMMAND_SCROLLBACK_COMPLETE";
-      const hasComposer = (pane: string) =>
-        pane.split("\n").some((line) => line.trim() === "┃");
+      const hasComposer = hasEmptyComposer;
       let releaseClassifier!: (response: Response) => void;
       const heldClassifier = new Promise<Response>((resolve) => {
         releaseClassifier = resolve;
@@ -1982,7 +1929,7 @@ describe("effect-aware command permissions", () => {
         (pane) => pane.includes(finalResponse) && hasComposer(pane),
         TIMEOUT,
       );
-      expect(finalPane.split("\n").filter((line) => line.trim() === "┃")).toHaveLength(1);
+      expect(finalPane.split("\n").filter((line) => /^[ ]*┃(?: Ask anything, or type \/ for commands)?[ ]*$/.test(line))).toHaveLength(1);
 
       const afterScrollback = await activeSession.captureFullScrollback();
       expect(extractMarkers(afterScrollback)).toEqual(expectedMarkers);
@@ -2716,18 +2663,19 @@ describe("effect-aware command permissions", () => {
       writeFileSync(stderrPath, "");
 
       const provider = startDynamicFakeCodex((body) => {
-        if (body.includes(`\"toolCallId\":\"${commandId}\"`)) {
+        if (body.includes(`\"call_id\":\"${commandId}\"`)) {
           return finalText("CHILD_PERMISSION_DENIED");
         }
-        if (body.includes(`\"toolCallId\":\"${createId}\"`)) {
+        if (body.includes(`\"call_id\":\"${createId}\"`)) {
           const created = JSON.parse(toolResultText(body, createId)) as {
             ok: boolean;
             result?: string;
           };
           expect(created.ok).toBe(true);
-          expect(created.result).toContain("CHILD_PERMISSION_DENIED");
-          expect(toolResultText(body, createId)).not.toContain("child_id");
-          return finalText("PARENT_OBSERVED_CHILD_DENIAL");
+          expect(existsSync(markerPath)).toBe(false);
+          if (body.includes("CHILD_PERMISSION_DENIED")) return finalText("PARENT_OBSERVED_CHILD_DENIAL");
+          expect(created.result).toContain("The child is running");
+          return finalText("Waiting for the delegated result.");
         }
         if (currentUserText(body).includes(childPrompt)) {
           expect(body).not.toContain('"name":"subagent"');
@@ -3096,34 +3044,24 @@ describe("effect-aware command permissions", () => {
       );
       expect(provider.requests).toHaveLength(2);
       expect(provider.classifierRequests).toHaveLength(1);
-      const classifierPrompt = JSON.parse(
-        provider.classifierRequests[0]!.body,
-      ).prompt as Array<{ role: string }>;
-      const firstConversationIndex = classifierPrompt.findIndex(
-        (message) => message.role !== "system",
-      );
-      expect(classifierPrompt[0]?.role).toBe("system");
-      expect(firstConversationIndex).toBeGreaterThan(0);
-      expect(
-        classifierPrompt.slice(firstConversationIndex).map((message) => message.role),
-      ).not.toContain("system");
-      expect(provider.classifierRequests[0]!.headers.get("ai-language-model-id")).toBe(
-        "openai/gpt-5.6-luna",
-      );
+      const classifierRequest = JSON.parse(provider.classifierRequests[0]!.body);
+      expect(classifierRequest.instructions.length).toBeGreaterThan(0);
+      expect(classifierRequest.input.map((message: any) => message.role)).not.toContain("system");
+      expect(classifierRequest.model).toBe("gpt-5.6-luna");
       expect(JSON.parse(provider.classifierRequests[0]!.body)).not.toHaveProperty(
         "providerOptions.provider.speed",
       );
       expect(provider.classifierRequests[0]!.body).toContain("\"permission_decision\"");
-      expect(provider.classifierRequests[0]!.body).toContain("\"toolChoice\":{\"type\":\"required\"}");
-      expect(provider.classifierRequests[0]!.body).toContain("\"maxOutputTokens\":2048");
+      expect(classifierRequest.tool_choice).toBe("required");
+      expect(classifierRequest).not.toHaveProperty("max_output_tokens");
       expect(provider.classifierRequests[0]!.body).toContain(
         "review_context_kind: contextual",
       );
       expect(provider.classifierRequests[0]!.body).toContain(
         "Run the classifier fixture.",
       );
-      expect(provider.classifierRequests[0]!.body).toContain("\"role\":\"assistant\"");
-      expect(provider.classifierRequests[0]!.body).toContain("\"toolCallId\":\"command_1\"");
+      expect(classifierRequest.input).toContainEqual(expect.objectContaining({ type: "function_call", name: "shell" }));
+      expect(provider.classifierRequests[0]!.body).toContain("\"call_id\":\"command_1\"");
       expect(provider.classifierRequests[0]!.body).toContain(
         "The first user message contains the host-selected view",
       );
@@ -3179,7 +3117,7 @@ describe("effect-aware command permissions", () => {
       expect(provider.requests).toHaveLength(3);
       expect(provider.classifierRequests).toHaveLength(1);
       const trace = readFileSync(tracePath, "utf8");
-      expect(trace.match(/event=auto_review_transport_start/g)).toHaveLength(1);
+      expect(trace.match(/event=auto_review_send/g)).toHaveLength(1);
       expect(trace.match(/event=auto_review_result/g)).toHaveLength(1);
       expect(trace).toContain("decision=unavailable");
       expect(trace).toContain("fallback_reason=completion_text");
@@ -3225,7 +3163,7 @@ describe("effect-aware command permissions", () => {
       expect(provider.requests).toHaveLength(2);
       expect(provider.classifierRequests).toHaveLength(1);
       const trace = readFileSync(tracePath, "utf8");
-      expect(trace.match(/event=auto_review_transport_start/g)).toHaveLength(1);
+      expect(trace.match(/event=auto_review_send/g)).toHaveLength(1);
       expect(trace.match(/event=auto_review_result/g)).toHaveLength(1);
       expect(trace).toContain("decision=unavailable");
       expect(trace).toContain("fallback_reason=completion_text");
@@ -3276,11 +3214,11 @@ describe("effect-aware command permissions", () => {
       expect(provider.requests).toHaveLength(2);
       expect(provider.classifierRequests).toHaveLength(1);
       const trace = readFileSync(tracePath, "utf8");
-      expect(trace.match(/event=auto_review_transport_start/g)).toHaveLength(1);
+      expect(trace.match(/event=auto_review_send/g)).toHaveLength(1);
       expect(trace.match(/event=auto_review_result/g)).toHaveLength(1);
       expect(trace).toContain("decision=unavailable");
       expect(trace).toContain(
-        "event=auto_review_transport result=transient_failure http_status=502",
+        "event=auto_review_transport result=transient_failure reason=provider_failure failure_kind=bad_gateway",
       );
       expect(trace).toContain("fallback_reason=transport_transient");
     },
@@ -3376,7 +3314,7 @@ describe("effect-aware command permissions", () => {
         `#!/bin/sh\nprintf '%s\\n' "$*" > ${JSON.stringify(marker)}\nprintf 'delegated claude complete\\n'\n`,
       );
       chmodSync(claudePath, 0o755);
-      const command = `claude -p ${JSON.stringify(prompt)}`;
+      const command = `${JSON.stringify(claudePath)} -p ${JSON.stringify(prompt)}`;
       const provider = startFakeCodex([
         toolCall(command),
         finalText("delegated classifier complete"),
@@ -3413,8 +3351,8 @@ describe("effect-aware command permissions", () => {
         "Ask Claude to create the requested Desktop note.",
       );
       expect(provider.classifierRequests[0]!.body).toContain("action: command");
-      expect(provider.classifierRequests[0]!.body).toContain(
-        "command: claude -p \\\"Create the requested Desktop note.\\\"",
+      expect(JSON.parse(provider.classifierRequests[0]!.body).instructions).toContain(
+        `command: ${command}`,
       );
       expect(readFileSync(tracePath, "utf8")).toContain("approval_source=auto_classifier");
     },

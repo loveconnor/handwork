@@ -1,0 +1,447 @@
+{
+  "method": "Consolidated completed runs of every Bun E2E file, using isolated test profiles and loopback providers. Failed initial runs were repaired and superseded by passing file runs. Some source batches contain failures in other files; evidence extracts contain only the named passing file. This is not a single-process all-files run.",
+  "platform": "macOS arm64",
+  "environment": {
+    "HANDWORK_E2E_DISABLE_DOTENV": "1",
+    "HANDWORK_LIVE_TESTS": "0",
+    "HANDWORK_WEB_FETCH_LIVE": "0"
+  },
+  "files": 54,
+  "passed": 1114,
+  "skipped": 52,
+  "failed": 0,
+  "results": [
+    {
+      "file": "acp.test.ts",
+      "passed": 103,
+      "skipped": 12,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/acp.test.ts.log",
+      "evidence": "verification/e2e/acp.test.ts.log"
+    },
+    {
+      "file": "ask-presentation.test.ts",
+      "passed": 12,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-presentation-host-repair.log",
+      "evidence": "verification/e2e/ask-presentation.test.ts.log"
+    },
+    {
+      "file": "auto-mode-reliability.test.ts",
+      "passed": 35,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/auto-mode-reliability.test.ts.log",
+      "evidence": "verification/e2e/auto-mode-reliability.test.ts.log"
+    },
+    {
+      "file": "ci-shards.test.ts",
+      "passed": 7,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/ci-shards.test.ts.log",
+      "evidence": "verification/e2e/ci-shards.test.ts.log"
+    },
+    {
+      "file": "cli.test.ts",
+      "passed": 74,
+      "skipped": 1,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/cli.test.ts.log",
+      "evidence": "verification/e2e/cli.test.ts.log"
+    },
+    {
+      "file": "config-persistence.test.ts",
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/config-persistence.test.ts.log",
+      "evidence": "verification/e2e/config-persistence.test.ts.log"
+    },
+    {
+      "file": "context-limits-live.test.ts",
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/context-limits-live.test.ts.log",
+      "evidence": "verification/e2e/context-limits-live.test.ts.log"
+    },
+    {
+      "file": "file-tool-paths.test.ts",
+      "passed": 14,
+      "skipped": 2,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/file-tool-paths.test.ts.log",
+      "evidence": "verification/e2e/file-tool-paths.test.ts.log"
+    },
+    {
+      "file": "file-tool-permissions.test.ts",
+      "passed": 2,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/file-tool-permissions.test.ts.log",
+      "evidence": "verification/e2e/file-tool-permissions.test.ts.log"
+    },
+    {
+      "file": "host-managed-auth.test.ts",
+      "passed": 3,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-presentation-host-repair.log",
+      "evidence": "verification/e2e/host-managed-auth.test.ts.log"
+    },
+    {
+      "file": "mcp-auth.test.ts",
+      "passed": 51,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-mcp-network-repair.log",
+      "evidence": "verification/e2e/mcp-auth.test.ts.log"
+    },
+    {
+      "file": "mcp-http.test.ts",
+      "passed": 41,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-http-permission-final.log",
+      "evidence": "verification/e2e/mcp-http.test.ts.log"
+    },
+    {
+      "file": "mcp-legacy-remote.test.ts",
+      "passed": 42,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/mcp-legacy-remote.test.ts.log",
+      "evidence": "verification/e2e/mcp-legacy-remote.test.ts.log"
+    },
+    {
+      "file": "mcp-stdio.test.ts",
+      "passed": 107,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-confirmed-repairs.log",
+      "evidence": "verification/e2e/mcp-stdio.test.ts.log"
+    },
+    {
+      "file": "notifications.test.ts",
+      "passed": 5,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/notifications.test.ts.log",
+      "evidence": "verification/e2e/notifications.test.ts.log"
+    },
+    {
+      "file": "permission-errors.test.ts",
+      "passed": 5,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-confirmed-repairs.log",
+      "evidence": "verification/e2e/permission-errors.test.ts.log"
+    },
+    {
+      "file": "prompt-history.test.ts",
+      "passed": 4,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/prompt-history.test.ts.log",
+      "evidence": "verification/e2e/prompt-history.test.ts.log"
+    },
+    {
+      "file": "session-recovery.test.ts",
+      "passed": 30,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/session-recovery.test.ts.log",
+      "evidence": "verification/e2e/session-recovery.test.ts.log"
+    },
+    {
+      "file": "session-title.test.ts",
+      "passed": 4,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/session-title.test.ts.log",
+      "evidence": "verification/e2e/session-title.test.ts.log"
+    },
+    {
+      "file": "terminal-host.test.ts",
+      "passed": 65,
+      "skipped": 3,
+      "failed": 0,
+      "source_log": "/tmp/handwork-confirmed-repairs.log",
+      "evidence": "verification/e2e/terminal-host.test.ts.log"
+    },
+    {
+      "file": "tmux-helpers.test.ts",
+      "passed": 8,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-permissions-final27.log",
+      "evidence": "verification/e2e/tmux-helpers.test.ts.log"
+    },
+    {
+      "file": "tui-agent.test.ts",
+      "passed": 0,
+      "skipped": 1,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/tui-agent.test.ts.log",
+      "evidence": "verification/e2e/tui-agent.test.ts.log"
+    },
+    {
+      "file": "tui-auth-source-selection.test.ts",
+      "passed": 26,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-auth-source3.log",
+      "evidence": "verification/e2e/tui-auth-source-selection.test.ts.log"
+    },
+    {
+      "file": "tui-command-permissions.test.ts",
+      "passed": 46,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-command-final33.log",
+      "evidence": "verification/e2e/tui-command-permissions.test.ts.log"
+    },
+    {
+      "file": "tui-compaction-activity.test.ts",
+      "passed": 12,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-compaction8.log",
+      "evidence": "verification/e2e/tui-compaction-activity.test.ts.log"
+    },
+    {
+      "file": "tui-composer-edit-contracts.test.ts",
+      "passed": 26,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-confirmed-repairs.log",
+      "evidence": "verification/e2e/tui-composer-edit-contracts.test.ts.log"
+    },
+    {
+      "file": "tui-decision-prompts.test.ts",
+      "passed": 49,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-permissions-final27.log",
+      "evidence": "verification/e2e/tui-decision-prompts.test.ts.log"
+    },
+    {
+      "file": "tui-direct-write-audit.test.ts",
+      "passed": 4,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/tui-direct-write-audit.test.ts.log",
+      "evidence": "verification/e2e/tui-direct-write-audit.test.ts.log"
+    },
+    {
+      "file": "tui-file-picker.test.ts",
+      "passed": 20,
+      "skipped": 1,
+      "failed": 0,
+      "source_log": "/tmp/handwork-final-input8.log",
+      "evidence": "verification/e2e/tui-file-picker.test.ts.log"
+    },
+    {
+      "file": "tui-full-transcript-brutal.test.ts",
+      "passed": 5,
+      "skipped": 3,
+      "failed": 0,
+      "source_log": "/tmp/handwork-navigation-transcript4.log",
+      "evidence": "verification/e2e/tui-full-transcript-brutal.test.ts.log"
+    },
+    {
+      "file": "tui-input-line-delete.test.ts",
+      "passed": 1,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-recovery5.log",
+      "evidence": "verification/e2e/tui-input-line-delete.test.ts.log"
+    },
+    {
+      "file": "tui-input-navigation.test.ts",
+      "passed": 36,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-final-input8.log",
+      "evidence": "verification/e2e/tui-input-navigation.test.ts.log"
+    },
+    {
+      "file": "tui-interrupt-recovery.test.ts",
+      "passed": 9,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-recovery9.log",
+      "evidence": "verification/e2e/tui-interrupt-recovery.test.ts.log"
+    },
+    {
+      "file": "tui-keybindings.test.ts",
+      "passed": 0,
+      "skipped": 3,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/tui-keybindings.test.ts.log",
+      "evidence": "verification/e2e/tui-keybindings.test.ts.log"
+    },
+    {
+      "file": "tui-native-clear-recovery.test.ts",
+      "passed": 4,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-final-command-decision.log",
+      "evidence": "verification/e2e/tui-native-clear-recovery.test.ts.log"
+    },
+    {
+      "file": "tui-performance.test.ts",
+      "passed": 4,
+      "skipped": 2,
+      "failed": 0,
+      "source_log": "/tmp/handwork-resize12.log",
+      "evidence": "verification/e2e/tui-performance.test.ts.log"
+    },
+    {
+      "file": "tui-permissions.test.ts",
+      "passed": 23,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-permissions-final27.log",
+      "evidence": "verification/e2e/tui-permissions.test.ts.log"
+    },
+    {
+      "file": "tui-render-lab.test.ts",
+      "passed": 26,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-menus-render21.log",
+      "evidence": "verification/e2e/tui-render-lab.test.ts.log"
+    },
+    {
+      "file": "tui-render-live-stress.test.ts",
+      "passed": 0,
+      "skipped": 1,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/tui-render-live-stress.test.ts.log",
+      "evidence": "verification/e2e/tui-render-live-stress.test.ts.log"
+    },
+    {
+      "file": "tui-render-replay.test.ts",
+      "passed": 8,
+      "skipped": 1,
+      "failed": 0,
+      "source_log": "/tmp/handwork-startup-recording16.log",
+      "evidence": "verification/e2e/tui-render-replay.test.ts.log"
+    },
+    {
+      "file": "tui-render-stress.test.ts",
+      "passed": 1,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-render-repairs5.log",
+      "evidence": "verification/e2e/tui-render-stress.test.ts.log"
+    },
+    {
+      "file": "tui-resize.test.ts",
+      "passed": 51,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-resize-yolo-final34.log",
+      "evidence": "verification/e2e/tui-resize.test.ts.log"
+    },
+    {
+      "file": "tui-resume-brutal.test.ts",
+      "passed": 1,
+      "skipped": 3,
+      "failed": 0,
+      "source_log": "/tmp/handwork-resume-final25.log",
+      "evidence": "verification/e2e/tui-resume-brutal.test.ts.log"
+    },
+    {
+      "file": "tui-resume.test.ts",
+      "passed": 59,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-resume-final25.log",
+      "evidence": "verification/e2e/tui-resume.test.ts.log"
+    },
+    {
+      "file": "tui-slash-commands.test.ts",
+      "passed": 4,
+      "skipped": 4,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/tui-slash-commands.test.ts.log",
+      "evidence": "verification/e2e/tui-slash-commands.test.ts.log"
+    },
+    {
+      "file": "tui-slash-extra.test.ts",
+      "passed": 8,
+      "skipped": 8,
+      "failed": 0,
+      "source_log": "/tmp/handwork-menus-render21.log",
+      "evidence": "verification/e2e/tui-slash-extra.test.ts.log"
+    },
+    {
+      "file": "tui-slash-menu.test.ts",
+      "passed": 40,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-slash-final36.log",
+      "evidence": "verification/e2e/tui-slash-menu.test.ts.log"
+    },
+    {
+      "file": "tui-startup.test.ts",
+      "passed": 7,
+      "skipped": 3,
+      "failed": 0,
+      "source_log": "/tmp/handwork-slash-startup-final30.log",
+      "evidence": "verification/e2e/tui-startup.test.ts.log"
+    },
+    {
+      "file": "tui-terminal-tool.test.ts",
+      "passed": 10,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-terminaltool17.log",
+      "evidence": "verification/e2e/tui-terminal-tool.test.ts.log"
+    },
+    {
+      "file": "web-fetch-fake-network.test.ts",
+      "passed": 8,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-web-yolo19.log",
+      "evidence": "verification/e2e/web-fetch-fake-network.test.ts.log"
+    },
+    {
+      "file": "web-fetch-live.test.ts",
+      "passed": 0,
+      "skipped": 4,
+      "failed": 0,
+      "source_log": "/tmp/handwork-isolated-e2e/web-fetch-live.test.ts.log",
+      "evidence": "verification/e2e/web-fetch-live.test.ts.log"
+    },
+    {
+      "file": "web-fetch-permission-progress.test.ts",
+      "passed": 1,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-web-yolo19.log",
+      "evidence": "verification/e2e/web-fetch-permission-progress.test.ts.log"
+    },
+    {
+      "file": "web-search-permission-progress.test.ts",
+      "passed": 2,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-web-yolo19.log",
+      "evidence": "verification/e2e/web-search-permission-progress.test.ts.log"
+    },
+    {
+      "file": "yolo-permission-mode.test.ts",
+      "passed": 11,
+      "skipped": 0,
+      "failed": 0,
+      "source_log": "/tmp/handwork-resize-yolo-final34.log",
+      "evidence": "verification/e2e/yolo-permission-mode.test.ts.log"
+    }
+  ]
+}

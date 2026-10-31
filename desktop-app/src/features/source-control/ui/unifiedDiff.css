@@ -53,6 +53,8 @@
   display: none;
 }
 .diff-review-code-lane {
+  -webkit-user-select: text;
+  user-select: text;
   min-width: max(100%, var(--diff-code-min-width));
 }
 .diff-review-horizontal-scroll {

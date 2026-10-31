@@ -1858,9 +1858,9 @@ describe("@ file picker", () => {
       await active.waitForStableComposer(TIMEOUT);
       expect(provider?.requests).toHaveLength(1);
       const request = JSON.parse(provider!.requests[0]!.body);
-      expect(request.prompt.at(-1)).toEqual({
+      expect(request.input.at(-1)).toEqual({
         role: "user",
-        content: [{ type: "text", text: "@~/home-target.txt Reply with the words SHORTCUT, FLOW, and OK joined by underscores." }],
+        content: [{ type: "input_text", text: "@~/home-target.txt Reply with the words SHORTCUT, FLOW, and OK joined by underscores." }],
       });
       expect(provider!.requests[0]!.body).not.toContain("DO_NOT_ATTACH_HOME_CONTENT");
       const scrollback = await active.captureFullScrollbackEscapes();
@@ -1985,12 +1985,12 @@ describe("@ file picker", () => {
 
       expect(provider?.requests).toHaveLength(1);
       const request = JSON.parse(provider!.requests[0]!.body) as {
-        prompt: Array<{ role: string; content: unknown }>;
+        input: Array<{ role: string; content: unknown }>;
       };
-      expect(request.prompt.at(-1)).toEqual({
+      expect(request.input.at(-1)).toEqual({
         role: "user",
         content: [{
-          type: "text",
+          type: "input_text",
           text: '@"~/space dir/item.txt" Reply with FILESYSTEM_PATH_PROMPT_OK.',
         }],
       });
@@ -2185,7 +2185,6 @@ describe("@ file picker", () => {
         cwd: current.workspace,
         env: {
           HOME: current.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_MODEL: process.env.HANDWORK_FILE_PICKER_LIVE_MODEL ?? "anthropic/claude-sonnet-4.6",

@@ -16,6 +16,8 @@ import {
   startFakeCodex,
 } from "../tmux-helpers";
 
+import { providerVersionTestEnv } from "../../evals/eval-helpers";
+
 const serverUrl = process.argv[2];
 if (!serverUrl) {
   console.error("usage: bun client.ts <server-url>");
@@ -154,7 +156,7 @@ try {
     ],
     {
       cwd: workspace,
-      env: {
+      env: providerVersionTestEnv({
         ...conformanceEnv,
         HOME: home,
         HANDWORK_AUTH_MODE: "host-managed",
@@ -173,7 +175,7 @@ try {
         HANDWORK_SKIP_ONBOARDING: "1",
         HANDWORK_SOUND: "0",
         NO_COLOR: "1",
-      },
+      }),
       stdout: "pipe",
       stderr: "pipe",
     },

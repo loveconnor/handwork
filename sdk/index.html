@@ -154,11 +154,11 @@
       return mockFetch(url, init);
     }
     async function mockFetch(url, init) {
-      if (init.method === "GET" && String(url).endsWith("/models")) {
-        return Response.json({ object: "list", data: [
+      if (init.method === "GET") {
+        return Response.json({ models: [
           { id: "sdk/catalog-alpha", type: "language", released: 2, tags: ["tool-use"] },
           { id: "sdk/catalog-beta", type: "language", released: 1, tags: ["reasoning"] },
-        ] });
+        ].map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
       test.fetchCalls++;
       if (transport === "stall") {
@@ -175,22 +175,23 @@
         test.toolAdvertised = payload.tools?.some((tool) => tool.name === "browser_echo") === true;
         test.skillSent = JSON.stringify(payload).includes("BROWSER_SKILL_SENTINEL");
         return new Response([
-          'data: {"type":"tool-call","toolCallId":"browser_tool_1","toolName":"browser_echo","input":{"value":"hello"}}',
-          'data: {"type":"finish","finishReason":{"unified":"tool-calls","raw":"tool-calls"}}',
+          `data: ${JSON.stringify({ type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "browser_tool_1", call_id: "browser_tool_1", name: "browser_echo", arguments: "" } })}`,
+          `data: ${JSON.stringify({ type: "response.function_call_arguments.done", output_index: 0, arguments: JSON.stringify({ value: "hello" }) })}`,
+          'data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2}}}',
           "data: [DONE]",
           "",
         ].join("\n\n"), { status: 200, headers: { "content-type": "text/event-stream" } });
       }
       if (hostToolEnabled && test.fetchCalls === 2) {
         test.toolResultSent = new TextDecoder().decode(init.body).includes("browser:hello");
-        return new Response('data: {"type":"text-delta","delta":"tool done"}\n\ndata: {"type":"finish","finishReason":{"unified":"stop","raw":"stop"}}\n\ndata: [DONE]\n\n', { status: 200, headers: { "content-type": "text/event-stream" } });
+        return new Response('data: {"type":"response.output_text.delta","delta":"tool done"}\n\ndata: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2}}}\n\ndata: [DONE]\n\n', { status: 200, headers: { "content-type": "text/event-stream" } });
       }
       return new Response(new ReadableStream({
         async start(controller) {
-          controller.enqueue(encoded.encode('data: {"type":"text-delta","delta":"hello"}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.output_text.delta","delta":"hello"}\n\n'));
           await sleep(chunkDelay);
-          controller.enqueue(encoded.encode('data: {"type":"text-delta","delta":" world"}\n\n'));
-          controller.enqueue(encoded.encode('data: {"type":"finish","finishReason":{"unified":"stop"},"usage":{"inputTokens":{"total":3},"outputTokens":{"total":2}}}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.output_text.delta","delta":" world"}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2}}}\n\n'));
           controller.enqueue(encoded.encode("data: [DONE]\n\n"));
           controller.close();
         },

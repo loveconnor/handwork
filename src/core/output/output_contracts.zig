@@ -1754,14 +1754,14 @@ test "core status snapshot text and json stay stable" {
     const text = try snapshot.renderText(std.testing.allocator);
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
-        "[status] model=alpha\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=missing\n[status] auth_refreshable=false\n[status] auth_help=Run handwork login to sign in to a model provider.\n[status] permission_mode=ask\n[status] workspace=/tmp/handwork\n[status] history_turns=3\n[status] session_permission_grants=1\n[status] agent_step_limit=24\n",
+        "[status] model=alpha\n[status] model_source=Codex subscription\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=missing\n[status] connected_providers=none\n[status] auth_refreshable=false\n[status] auth_help=Run handwork login to sign in to a model provider.\n[status] permission_mode=ask\n[status] workspace=/tmp/handwork\n[status] history_turns=3\n[status] session_permission_grants=1\n[status] agent_step_limit=24\n",
         text,
     );
 
     const json = try snapshot.renderJson(std.testing.allocator);
     defer std.testing.allocator.free(json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"status\",\"model\":\"alpha\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"Run handwork login to sign in to a model provider.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/handwork\",\"history_turns\":3,\"session_permission_grants\":1,\"agent_step_limit\":24}",
+        "{\"kind\":\"status\",\"model\":\"alpha\",\"model_source\":\"Codex subscription\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"connected_providers\":[],\"auth_refreshable\":false,\"auth_help\":\"Run handwork login to sign in to a model provider.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/handwork\",\"history_turns\":3,\"session_permission_grants\":1,\"agent_step_limit\":24}",
         json,
     );
 }
@@ -2010,21 +2010,21 @@ test "core model list snapshot handles limits and empty lists" {
     const all_text = try (ModelListSnapshot{ .ids = &ids }).renderText(std.testing.allocator);
     defer std.testing.allocator.free(all_text);
     try std.testing.expectEqualStrings(
-        "[models] 3 available\n - alpha\n - beta\n - gamma\n",
+        "[models] 3 available\n - alpha · Codex subscription\n - beta · Codex subscription\n - gamma · Codex subscription\n",
         all_text,
     );
 
     const limit_text = try (ModelListSnapshot{ .ids = &ids, .limit = 2 }).renderText(std.testing.allocator);
     defer std.testing.allocator.free(limit_text);
     try std.testing.expectEqualStrings(
-        "[models] 3 available\n - alpha\n - beta\n ... and 1 more\n",
+        "[models] 3 available\n - alpha · Codex subscription\n - beta · Codex subscription\n ... and 1 more\n",
         limit_text,
     );
 
     const limit_json = try (ModelListSnapshot{ .ids = &ids, .limit = 2 }).renderJson(std.testing.allocator);
     defer std.testing.allocator.free(limit_json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"models\",\"count\":3,\"shown_count\":2,\"more_count\":1,\"private_models_hidden\":false,\"ids\":[\"alpha\",\"beta\"]}",
+        "{\"kind\":\"models\",\"count\":3,\"shown_count\":2,\"more_count\":1,\"private_models_hidden\":false,\"ids\":[\"alpha\",\"beta\"],\"models\":[{\"id\":\"alpha\",\"source\":\"Codex subscription\"},{\"id\":\"beta\",\"source\":\"Codex subscription\"}]}",
         limit_json,
     );
 
@@ -2035,7 +2035,7 @@ test "core model list snapshot handles limits and empty lists" {
     const empty_json = try (ModelListSnapshot{ .ids = &.{} }).renderJson(std.testing.allocator);
     defer std.testing.allocator.free(empty_json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"models\",\"count\":0,\"shown_count\":0,\"more_count\":0,\"private_models_hidden\":false,\"ids\":[]}",
+        "{\"kind\":\"models\",\"count\":0,\"shown_count\":0,\"more_count\":0,\"private_models_hidden\":false,\"ids\":[],\"models\":[]}",
         empty_json,
     );
 }
@@ -2566,14 +2566,14 @@ test "core doctor snapshot text and json stay stable" {
     const text = try snapshot.renderText(std.testing.allocator);
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
-        "[doctor] ok=1 warn=1 fail=0\n[doctor] workspace=/tmp/handwork\n[doctor] model=alpha\n[doctor] auth=Codex subscription\n[doctor] auth_refreshable=true\n[doctor] permission_mode=ask\n[doctor] agent_step_limit=24\n[ok] auth: Codex subscription is connected\n[warn] gh: GitHub CLI not found in PATH\n",
+        "[doctor] ok=1 warn=1 fail=0\n[doctor] workspace=/tmp/handwork\n[doctor] model=alpha\n[doctor] model_source=Codex subscription\n[doctor] auth=Codex subscription\n[doctor] auth_refreshable=true\n[doctor] permission_mode=ask\n[doctor] agent_step_limit=24\n[ok] auth: Codex subscription is connected\n[warn] gh: GitHub CLI not found in PATH\n",
         text,
     );
 
     const json = try snapshot.renderJson(std.testing.allocator);
     defer std.testing.allocator.free(json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"doctor\",\"ok_count\":1,\"warn_count\":1,\"fail_count\":0,\"workspace\":\"/tmp/handwork\",\"model\":\"alpha\",\"auth\":\"Codex subscription\",\"auth_refreshable\":true,\"permission_mode\":\"ask\",\"agent_step_limit\":24,\"checks\":[{\"name\":\"auth\",\"status\":\"ok\",\"detail\":\"Codex subscription is connected\"},{\"name\":\"gh\",\"status\":\"warn\",\"detail\":\"GitHub CLI not found in PATH\"}]}",
+        "{\"kind\":\"doctor\",\"ok_count\":1,\"warn_count\":1,\"fail_count\":0,\"workspace\":\"/tmp/handwork\",\"model\":\"alpha\",\"model_source\":\"Codex subscription\",\"auth\":\"Codex subscription\",\"auth_refreshable\":true,\"permission_mode\":\"ask\",\"agent_step_limit\":24,\"checks\":[{\"name\":\"auth\",\"status\":\"ok\",\"detail\":\"Codex subscription is connected\"},{\"name\":\"gh\",\"status\":\"warn\",\"detail\":\"GitHub CLI not found in PATH\"}]}",
         json,
     );
 }

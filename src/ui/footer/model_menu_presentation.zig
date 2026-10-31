@@ -612,7 +612,7 @@ test "empty model menu keeps catalog provenance below the empty state" {
 
     var status = try composeModelMenuRow(alloc, projection, 4, 80, rows);
     defer status.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, status.items, "Using the public model catalog") != null);
+    try std.testing.expect(std.mem.find(u8, status.items, "Sign in with Codex or Grok") != null);
 }
 
 test "model menu caps inline browse at twenty and prioritizes tiny selection" {

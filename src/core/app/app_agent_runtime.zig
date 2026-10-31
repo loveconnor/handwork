@@ -1672,6 +1672,11 @@ const FakeApp = struct {
     lifecycle_view: hooks.RuntimeView,
     tool_registry: tool_dispatch.Registry = test_tool_registry,
     context_registry: context_contract.Registry = test_context_registry,
+    provider_set_value: provider_set.Set = provider_set.codex_only(test_builtin_provider.provider_bundle),
+
+    pub fn providerSet(self: *const FakeApp) provider_set.Set {
+        return self.provider_set_value;
+    }
 
     fn init(alloc: Allocator) !FakeApp {
         var lifecycle_runtime = hooks.Runtime.init(alloc);
@@ -1686,6 +1691,7 @@ const FakeApp = struct {
         var credential = credentials.Credential{
             .token = try alloc.dupe(u8, "api-key"),
             .source = .chatgpt_subscription,
+            .account_id = try alloc.dupe(u8, "acct_test"),
         };
         defer credential.deinit(alloc);
         _ = app.auth.adoptCredential(alloc, &credential);
@@ -1977,13 +1983,11 @@ test "app agent runtime builds tool context from app state and MCP callbacks" {
     try std.testing.expect(ctx.fast_mode);
     try std.testing.expectEqual(types.ReasoningEffort.literal("high"), ctx.effort);
     try std.testing.expect(!ctx.web_search_runtime_ready);
-    try std.testing.expect(ctx.web_search_backend != null);
+    try std.testing.expect(ctx.web_search_backend == null);
     try std.testing.expect(ctx.web_fetch_runtime.? == &app.web_fetch_runtime);
     try std.testing.expect(ctx.web_fetch_progress_ctx != null);
     try std.testing.expect(ctx.on_web_fetch_progress != null);
-    try std.testing.expectEqualStrings("test-model", app.web_search_runtime.worker_model);
-    try std.testing.expectEqual(ctx.provider_retry_count, app.web_search_runtime.provider_retry_count);
-    try std.testing.expectEqualStrings(ctx.provider_chat_url, app.web_search_runtime.provider_chat_url);
+    try std.testing.expect(app.web_search_runtime.provider == null);
     try std.testing.expectEqualStrings("/models", ctx.provider_models_path);
     try std.testing.expectEqual(@as(usize, 4096), ctx.max_tool_result_bytes);
     try std.testing.expectEqual(types.ToolChoice.none, ctx.first_call_tool_choice);
@@ -2083,6 +2087,9 @@ test "app prompt projection configures web search then blocks native execution" 
         calls: usize = 0,
     };
     const FailingWebSearchProvider = struct {
+        fn preferredBackends(_: ?*anyopaque) anyerror!?[]const web_search_contract.SearchBackendId {
+            return null;
+        }
         fn execute(
             raw_ctx: ?*anyopaque,
             _: Allocator,
@@ -2098,10 +2105,14 @@ test "app prompt projection configures web search then blocks native execution" 
     };
     var app = try FakeApp.init(alloc);
     defer app.deinit();
+    app.provider_set_value.codex.capabilities.handwork_search = true;
     var provider_state = ProviderState{};
-    var provider = app.web_search_runtime.provider orelse return error.TestExpectedEqual;
-    provider.context = @ptrCast(&provider_state);
-    provider.execute_fn = FailingWebSearchProvider.execute;
+    const provider = @import("../tooling/web_search_provider.zig").Provider{
+        .context = @ptrCast(&provider_state),
+        .policy = .{},
+        .preferred_backends_fn = FailingWebSearchProvider.preferredBackends,
+        .execute_fn = FailingWebSearchProvider.execute,
+    };
     app.web_search_runtime = web_search_runtime.Runtime.init(.{
         .provider = provider,
     });

@@ -77,6 +77,7 @@ async function launch(
       HOME: fixture.home,
       SHELL: terminalFixtureShell(),
       HANDWORK_AUTH_MODE: "host-managed",
+      HANDWORK_ON_DEMAND_TOOLS: "0",
 
       HANDWORK_AUTO_UPGRADE: "0",
       HANDWORK_PERMISSION_MODE: "yolo",
@@ -131,7 +132,7 @@ function toolResultEnvelope(body: string, toolCallId: string): string {
     }
     if (!value || typeof value !== "object") return;
     const object = value as Record<string, unknown>;
-    const id = object.toolCallId ?? object.tool_call_id;
+    const id = object.toolCallId ?? object.tool_call_id ?? object.call_id;
     if (id === toolCallId) matches.push(JSON.stringify(object));
     for (const child of Object.values(object)) visit(child);
   };
@@ -144,7 +145,7 @@ function schemaFromRequest(body: string): Record<string, unknown> {
   const tools = parsed.tools as Array<Record<string, unknown>>;
   const shell = tools.find((tool) => tool.name === "shell");
   if (!shell) throw new Error("missing shell schema");
-  return shell.inputSchema as Record<string, unknown>;
+  return shell.parameters as Record<string, unknown>;
 }
 
 function terminalRecords(home: string): Array<Record<string, unknown>> {

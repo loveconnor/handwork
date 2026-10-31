@@ -1211,8 +1211,15 @@ fn parseStartupStatusObject(
                     } else {
                         try scanner.skipValue();
                     }
-                } else if (layer == .profile and std.mem.eql(u8, key.text, "model")) {
-                    try readStartupStatusModel(scanner, alloc, &settings);
+                } else if (layer == .profile and (std.mem.eql(u8, key.text, "provider") or
+                    std.mem.eql(u8, key.text, "models") or
+                    std.mem.eql(u8, key.text, "codex_model") or
+                    std.mem.eql(u8, key.text, "grok_model") or
+                    std.mem.eql(u8, key.text, "model")))
+                {
+                    // Provider selection and model overrides must resolve together
+                    // across all layers, including a workspace provider switch.
+                    return error.RequiresProviderModelResolution;
                 } else if (layer == .profile and std.mem.eql(u8, key.text, "permission_mode")) {
                     settings.permission_mode = try readStartupStatusPermissionMode(scanner);
                 } else if (std.mem.eql(u8, key.text, "max_agent_steps")) {
@@ -1255,25 +1262,6 @@ fn parseStartupStatusWorkspaceOverrides(scanner: *std.json.Scanner, alloc: Alloc
                 return error.InvalidSettingsShape;
             },
         }
-    }
-}
-
-fn readStartupStatusModel(scanner: *std.json.Scanner, alloc: Allocator, settings: *StartupStatusSettings) !void {
-    const token = try scanner.nextAlloc(alloc, .alloc_if_needed);
-    switch (token) {
-        .string, .allocated_string => {
-            const value = try configJsonStringFromToken(token);
-            defer value.deinit(alloc);
-            const trimmed = std.mem.trim(u8, value.text, " \t\r\n");
-            if (trimmed.len == 0) return;
-            const owned = try alloc.dupe(u8, trimmed);
-            if (settings.model) |current| alloc.free(current);
-            settings.model = owned;
-        },
-        else => {
-            freeConfigJsonToken(alloc, token);
-            return error.InvalidModelType;
-        },
     }
 }
 
@@ -1991,7 +1979,7 @@ test "loadMergedSettings merges project defaults before profile layers" {
 
     const user_settings = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"model\":\"user-model\",\"permission_mode\":\"ask\",\"max_agent_steps\":8,\"workspaces\":{{\"{s}\":{{\"model\":\"override-model\",\"permission_mode\":\"auto\"}}}}}}",
+        "{{\"codex_model\":\"user-model\",\"permission_mode\":\"ask\",\"max_agent_steps\":8,\"workspaces\":{{\"{s}\":{{\"codex_model\":\"override-model\",\"permission_mode\":\"auto\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(user_settings);
@@ -2066,7 +2054,7 @@ test "loadStartupStatusSettings merges project defaults before profile layers" {
 
     const user_settings = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"model\":\"user-model\",\"permission_mode\":\"ask\",\"max_agent_steps\":8,\"workspaces\":{{\"/other\":{{\"model\":\"wrong\"}},\"{s}\":{{\"model\":\"override-model\",\"permission_mode\":\"yolo\"}}}}}}",
+        "{{\"codex_model\":\"user-model\",\"permission_mode\":\"ask\",\"max_agent_steps\":8,\"workspaces\":{{\"/other\":{{\"codex_model\":\"wrong\"}},\"{s}\":{{\"codex_model\":\"override-model\",\"permission_mode\":\"yolo\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(user_settings);
@@ -2201,7 +2189,7 @@ test "skill_match_fuzzy returns a migration-specific parse error" {
 test "retired presentation settings are ignored regardless of type" {
     var settings = try parseSettingsJson(
         std.testing.allocator,
-        "{\"model\":\"openai/gpt-5.4\",\"input_appearance\":false,\"maxxing_mode\":7}",
+        "{\"codex_model\":\"openai/gpt-5.4\",\"input_appearance\":false,\"maxxing_mode\":7}",
     );
     defer settings.deinit(std.testing.allocator);
     try std.testing.expectEqualStrings("openai/gpt-5.4", settings.models.get(.codex).?);
@@ -2310,7 +2298,7 @@ test "first_call_tool_choice ignores unknown strings and rejects invalid types" 
 }
 
 test "obsolete web_fetch worker model setting is ignored" {
-    var parsed = try parseSettingsJson(std.testing.allocator, "{\"web_fetch_worker_model\":false,\"model\":\"provider/model\"}");
+    var parsed = try parseSettingsJson(std.testing.allocator, "{\"web_fetch_worker_model\":false,\"codex_model\":\"provider/model\"}");
     defer parsed.deinit(std.testing.allocator);
     try std.testing.expectEqualStrings("provider/model", parsed.models.get(.codex).?);
 }
@@ -2771,7 +2759,7 @@ test "addPermissionRule preserves unrelated workspace override keys" {
 
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"workspaces\":{{\"{s}\":{{\"model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
+        "{{\"workspaces\":{{\"{s}\":{{\"codex_model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(fixture);
@@ -2928,7 +2916,7 @@ test "user effort preference preserves unrelated workspace override keys" {
 
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"workspaces\":{{\"{s}\":{{\"model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
+        "{{\"workspaces\":{{\"{s}\":{{\"codex_model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(fixture);
@@ -2970,7 +2958,7 @@ test "user fast mode preference writes bool and preserves unrelated keys" {
 
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"workspaces\":{{\"{s}\":{{\"model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
+        "{{\"workspaces\":{{\"{s}\":{{\"codex_model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(fixture);
@@ -3012,7 +3000,7 @@ test "user startup scrollback preference writes bool and preserves unrelated key
 
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"workspaces\":{{\"{s}\":{{\"model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
+        "{{\"workspaces\":{{\"{s}\":{{\"codex_model\":\"my-model\",\"permission_mode\":\"auto\"}}}}}}",
         .{workspace_root},
     );
     defer std.testing.allocator.free(fixture);
@@ -3049,7 +3037,7 @@ test "project profile-only settings are ignored and diagnosed by key" {
     try writeFixtureFile(
         tmp.dir,
         "home/.handwork/settings.json",
-        "{\"model\":\"profile/model\",\"permission_mode\":\"auto\",\"permission\":{\"bash\":{\"profile *\":\"allow\"}},\"prompt_history\":{\"enabled\":true},\"statusLine\":{\"sandbox\":true,\"context\":false},\"first_call_tool_choice\":\"none\",\"auto_upgrade\":false,\"update_channel\":\"dev\",\"fast_mode\":false,\"input_appearance\":\"tint\",\"maxxing_mode\":\"minimal\",\"slash_menu_categories\":false,\"effort\":\"high\",\"output_level\":\"quiet\",\"startup_scrollback\":false}\n",
+        "{\"codex_model\":\"profile/model\",\"permission_mode\":\"auto\",\"permission\":{\"bash\":{\"profile *\":\"allow\"}},\"prompt_history\":{\"enabled\":true},\"statusLine\":{\"sandbox\":true,\"context\":false},\"first_call_tool_choice\":\"none\",\"auto_upgrade\":false,\"update_channel\":\"dev\",\"fast_mode\":false,\"input_appearance\":\"tint\",\"maxxing_mode\":\"minimal\",\"slash_menu_categories\":false,\"effort\":\"high\",\"output_level\":\"quiet\",\"startup_scrollback\":false}\n",
     );
     try writeFixtureFile(
         tmp.dir,
@@ -3108,7 +3096,7 @@ test "malformed project profile-only settings are ignored before value parsing" 
     try writeFixtureFile(
         tmp.dir,
         "home/.handwork/settings.json",
-        "{\"model\":\"profile/model\",\"permission_mode\":\"ask\",\"fast_mode\":false}\n",
+        "{\"codex_model\":\"profile/model\",\"permission_mode\":\"ask\",\"fast_mode\":false}\n",
     );
     try writeFixtureFile(
         tmp.dir,
@@ -3367,7 +3355,7 @@ test "detailed settings diagnose legacy workspace preferences" {
     defer std.testing.allocator.free(workspace_root);
     const fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"model\":\"user/model\",\"workspaces\":{{\"{s}\":{{\"model\":\"legacy/model\",\"statusLine\":{{\"session\":true}}}}}}}}\n",
+        "{{\"codex_model\":\"user/model\",\"workspaces\":{{\"{s}\":{{\"codex_model\":\"legacy/model\",\"statusLine\":{{\"session\":true}}}}}}}}\n",
         .{workspace_root},
     );
     defer std.testing.allocator.free(fixture);
@@ -3400,7 +3388,7 @@ test "detailed settings preserve model precedence and source" {
     defer std.testing.allocator.free(workspace_root);
     const user_fixture = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"model\":\"user/model\",\"workspaces\":{{\"{s}\":{{\"model\":\"workspace/model\"}}}}}}\n",
+        "{{\"codex_model\":\"user/model\",\"workspaces\":{{\"{s}\":{{\"codex_model\":\"workspace/model\"}}}}}}\n",
         .{workspace_root},
     );
     defer std.testing.allocator.free(user_fixture);
@@ -3426,10 +3414,10 @@ test "detailed settings expose target sources and permission views" {
 
     const user_settings = try std.fmt.allocPrint(
         std.testing.allocator,
-        "{{\"model\":\"user/model\",\"permission_mode\":\"ask\",\"fast_mode\":true,\"input_appearance\":\"tint\",\"startup_scrollback\":false," ++
+        "{{\"codex_model\":\"user/model\",\"permission_mode\":\"ask\",\"fast_mode\":true,\"input_appearance\":\"tint\",\"startup_scrollback\":false," ++
             "\"prompt_history\":{{\"enabled\":false}},\"statusLine\":{{\"sandbox\":true,\"context\":false,\"session\":true}}," ++
             "\"permission\":{{\"bash\":{{\"user *\":\"allow\"}}}},\"workspaces\":{{\"{s}\":{{" ++
-            "\"model\":\"workspace/model\",\"permission_mode\":\"auto\",\"input_appearance\":\"lines\",\"sandbox\":\"none\",\"permission\":{{\"bash\":{{\"local *\":\"allow\"}}}}" ++
+            "\"codex_model\":\"workspace/model\",\"permission_mode\":\"auto\",\"input_appearance\":\"lines\",\"sandbox\":\"none\",\"permission\":{{\"bash\":{{\"local *\":\"allow\"}}}}" ++
             "}}}}}}\n",
         .{workspace_root},
     );
@@ -3477,7 +3465,7 @@ test "detailed settings report non-empty process model override as winning sourc
     defer std.testing.allocator.free(home_root);
     const workspace_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "workspace");
     defer std.testing.allocator.free(workspace_root);
-    try writeFixtureFile(tmp.dir, "home/.handwork/settings.json", "{\"model\":\"user/model\"}\n");
+    try writeFixtureFile(tmp.dir, "home/.handwork/settings.json", "{\"codex_model\":\"user/model\"}\n");
 
     const home = try TestHome.install(std.testing.allocator, home_root);
     defer home.deinit();
@@ -3496,7 +3484,7 @@ test "invalid user model emits typed diagnostic and project model is ignored" {
     defer tmp.cleanup();
     try tmp.dir.createDirPath(io_mod.getIo(), "home/.handwork");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
-    try writeFixtureFile(tmp.dir, "home/.handwork/settings.json", "{\"model\":\" invalid/model \"}\n");
+    try writeFixtureFile(tmp.dir, "home/.handwork/settings.json", "{\"models\":{\"codex\":\" invalid/model \"}}\n");
     try writeFixtureFile(tmp.dir, "workspace/.handwork.json", "{\"model\":\"project/model\"}\n");
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
     defer std.testing.allocator.free(home_root);
@@ -3568,7 +3556,7 @@ test "invalid user settings report newest valid manual recovery backup" {
     try writeFixtureFile(
         tmp.dir,
         "home/.handwork/backups/settings.json.backup.100-0000000000000001-00000000000000000000000000000000",
-        "{\"model\":\"backup/model\"}\n",
+        "{\"codex_model\":\"backup/model\"}\n",
     );
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
     defer std.testing.allocator.free(home_root);
@@ -3733,7 +3721,7 @@ test "malformed or duplicate additional directories do not discard sibling setti
     for (invalid_values) |value| {
         const fixture = try std.fmt.allocPrint(
             alloc,
-            "{{\"workspaces\":{{\"{s}\":{{\"model\":\"workspace/model\",\"additional_directories\":{s}}}}}}}\n",
+            "{{\"workspaces\":{{\"{s}\":{{\"codex_model\":\"workspace/model\",\"additional_directories\":{s}}}}}}}\n",
             .{ workspace_root, value },
         );
         defer alloc.free(fixture);

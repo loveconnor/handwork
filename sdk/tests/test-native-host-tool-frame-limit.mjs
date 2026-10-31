@@ -22,7 +22,7 @@ const responses = [];
 let agent;
 const timer = setTimeout(() => assert.fail("native tool frame limit timed out"), 10_000);
 const sse = (...events) => new Response(
-  [...events.map((event) => `data: ${JSON.stringify(event)}\n\n`), "data: [DONE]\n\n"].join(""),
+  [...events.flatMap((event) => event.type === "response.output_item.done" ? [{ ...event, type: "response.output_item.added", item: { ...event.item, arguments: "" } }, event] : [event]).map((event) => `data: ${JSON.stringify(event)}\n\n`), "data: [DONE]\n\n"].join(""),
   { headers: { "content-type": "text/event-stream" } },
 );
 
@@ -55,10 +55,9 @@ try {
       );
       assert.ok(requests <= 3);
       const payload = JSON.parse(Buffer.from(init.body).toString("utf8"));
-      const results = payload.prompt.flatMap((message) => message.content ?? [])
-        .filter((part) => part.type === "tool-result" && part.toolCallId === "frame1");
+      const results = payload.input.filter((item) => item.type === "function_call_output" && item.call_id === "frame1");
       assert.equal(results.length, 1);
-      assert.deepEqual(results[0].output, { type: "error-text", value: limitError });
+      assert.equal(results[0].output, limitError);
       return sse(
         { type: "response.output_text.delta", delta: requests === 2 ? "handled error" : "still usable" },
         { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },

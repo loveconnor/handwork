@@ -1,0 +1,41 @@
+{
+  "encoding": "o200k_base",
+  "method": "Local tokenization of captured system text and compact tool JSON; not provider usage; excludes user message and provider framing. Same isolated profile and empty workspace.",
+  "binary_sha256": "35b64049c3840afc762d75a2b0538890944e5a8b9fdb24e803a26c1c50d17db7",
+  "results": [
+    {
+      "variant": "eager",
+      "system_tokens": 1402,
+      "tool_definition_tokens": 4082,
+      "total_excluding_user": 5484,
+      "advertised_functions": [
+        "read_file",
+        "glob_files",
+        "grep_files",
+        "edit_file",
+        "write_file",
+        "shell",
+        "subagent",
+        "capability_search",
+        "skill",
+        "install_skill",
+        "mcp_select_tool",
+        "mcp_features",
+        "ask_user_question",
+        "web_fetch",
+        "read_tool_result"
+      ]
+    },
+    {
+      "variant": "on_demand",
+      "system_tokens": 1402,
+      "tool_definition_tokens": 325,
+      "total_excluding_user": 1727,
+      "advertised_functions": [
+        "load_tools",
+        "read_file"
+      ]
+    }
+  ],
+  "reduction_percent": 68.51
+}

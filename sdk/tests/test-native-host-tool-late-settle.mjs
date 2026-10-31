@@ -18,6 +18,7 @@ const server = createServer((request, response) => {
     }
     modelRequests += 1;
     response.writeHead(200, { "content-type": "text/event-stream" });
+    response.write(`data: ${JSON.stringify({ type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "late_1", call_id: "late_1", name: "late", arguments: "" } })}\n\n`);
     response.end("data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"late_1\",\"call_id\":\"late_1\",\"name\":\"late\",\"arguments\":\"{}\"}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"usage\":{\"input_tokens\":0,\"output_tokens\":0}}}\n\ndata: [DONE]\n\n");
   });
 });
@@ -81,7 +82,7 @@ async function exerciseLateSettlement(closeBeforeSettle) {
 
     const controller = new AbortController();
     const turn = agent.prompt("wait", { signal: controller.signal });
-    await toolStarted;
+    await withTimeout(toolStarted);
     controller.abort();
     const result = await withTimeout(turn.result);
     assert.equal(result.stopReason, "cancelled");

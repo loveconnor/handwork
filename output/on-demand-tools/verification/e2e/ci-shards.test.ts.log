@@ -1,0 +1,8 @@
+tests/e2e/ci-shards.test.ts:
+(pass) CI shard planner > assigns descending weights to the lightest shard deterministically [0.09ms]
+(pass) CI shard planner > uses filename and shard index to break equal-weight ties
+(pass) CI shard planner > rejects missing and stale manifest entries [0.46ms]
+(pass) CI shard planner > rejects duplicate filenames and invalid weights
+(pass) CI shard planner > rejects invalid shard counts, empty shards, and invalid indices [0.12ms]
+(pass) CI shard planner > assigns the discovered set exactly once [0.07ms]
+(pass) CI shard planner > an exact relative path does not select a colliding Bun test basename [17.63ms]

@@ -1,3 +1,4 @@
+import { fakeCodexFunctionCallEvents } from "./tmux-helpers";
 import { describe, expect, test } from "bun:test";
 import { spawn as nodeSpawn, type ChildProcess } from "node:child_process";
 import {
@@ -10,7 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { HANDWORK_BIN, runHandwork } from "../evals/eval-helpers";
+import { HANDWORK_BIN, providerVersionTestEnv, runHandwork } from "../evals/eval-helpers";
 import { fakeCodexTitleDefault, TITLE_GENERATION_MARKER } from "./tmux-helpers";
 
 const TIMEOUT = 20_000;
@@ -40,7 +41,7 @@ function sse(events: object[], done = true) {
 
 function outerToolCalls(calls: Array<{ id: string; name: string; input: object }>) {
   return sse([
-    ...calls.map((call) => ({ type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: call.id, name: call.name, arguments: JSON.stringify(call.input) } })),
+    ...calls.flatMap((call, index) => fakeCodexFunctionCallEvents({ call_id: call.id, name: call.name, arguments: JSON.stringify(call.input) }, index)),
     { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
   ]);
 }
@@ -124,6 +125,7 @@ function fakeCodexEnv(
   return {
     HOME: root.home,
     HANDWORK_AUTH_MODE: "host-managed",
+    HANDWORK_ON_DEMAND_TOOLS: "0",
 
     HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
     HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
@@ -158,7 +160,7 @@ function requestJson(request: ProviderRequest) {
       type: string;
       name: string;
       description: string;
-      inputSchema: {
+      parameters: {
         type: string;
         properties: Record<string, { type: string; description?: string }>;
         required?: string[];
@@ -176,11 +178,11 @@ function expectWebFetchSchema(request: ProviderRequest) {
   const schema = toolSchema(requestJson(request), "web_fetch");
   expect(schema).toBeDefined();
   expect(schema?.type).toBe("function");
-  expect(schema?.inputSchema.type).toBe("object");
-  expect(schema?.inputSchema.properties.url.type).toBe("string");
-  expect(schema?.inputSchema.properties.prompt).toBeUndefined();
-  expect(schema?.inputSchema.required).toEqual(["url"]);
-  expect(schema?.inputSchema.additionalProperties).toBe(false);
+  expect(schema?.parameters.type).toBe("object");
+  expect(schema?.parameters.properties.url.type).toBe("string");
+  expect(schema?.parameters.properties.prompt).toBeUndefined();
+  expect(schema?.parameters.required).toEqual(["url"]);
+  expect(schema?.parameters.additionalProperties).toBe(false);
 }
 
 function expectNoFetchProgress(text: string) {
@@ -221,7 +223,7 @@ class AcpClient {
     );
     return new AcpClient(nodeSpawn(HANDWORK_BIN, ["acp"], {
       cwd,
-      env: definedEnv,
+      env: providerVersionTestEnv(definedEnv),
       stdio: ["pipe", "pipe", "pipe"],
     }));
   }
@@ -329,9 +331,9 @@ describe("web_fetch Provider fixture", () => {
 
           parseHandworkJson(result);
           expect(provider.requests).toHaveLength(1);
-          expect(provider.requests[0].headers.get("ai-language-model-id")).toBe(model);
+          expect(JSON.parse(provider.requests[0].body).model).toBe(model);
           expectWebFetchSchema(provider.requests[0]);
-          expect(provider.requests[0].body).toContain("provider.exa_search");
+          expect(provider.requests[0].body).toContain("web_fetch");
         } finally {
           provider.stop();
           rmSync(root.root, { recursive: true, force: true });

@@ -41,6 +41,9 @@ fn isRetryableAgentNetworkError(err: anyerror) bool {
         err == error.WouldBlock or
         err == error.WriteFailed or
         err == error.ReadFailed or
+        err == error.StreamIncomplete or
+        err == error.OpenAICodexStreamIncomplete or
+        err == error.XaiGrokStreamIncomplete or
         isRetryableTransportError(err);
 }
 
@@ -76,6 +79,9 @@ test "native network failure evidence covers setup send read and resume failures
         .{ .err = error.HttpConnectionClosing },
         .{ .err = error.WriteFailed },
         .{ .err = error.ReadFailed },
+        .{ .err = error.StreamIncomplete },
+        .{ .err = error.OpenAICodexStreamIncomplete },
+        .{ .err = error.XaiGrokStreamIncomplete },
         .{ .err = error.SystemResumed, .cause = .system_resumed },
     };
 
@@ -110,6 +116,7 @@ test "native network failure evidence excludes opaque and configuration failures
         error.ProtocolUnsupportedBySystem,
         error.ResolvConfParseFailed,
         error.InvalidDnsARecord,
+        error.ResponsesToolCallConflict,
     };
 
     for (excluded) |err| {
@@ -117,6 +124,30 @@ test "native network failure evidence excludes opaque and configuration failures
             @as(?agent_stream_provider.NetworkFailureEvidence, null),
             networkFailureEvidence(err, .definitely_unsent),
         );
+    }
+}
+
+pub fn retryAfterSeconds(head: std.http.Client.Response.Head) ?u64 {
+    var headers = head.iterateHeaders();
+    while (headers.next()) |header| {
+        if (std.ascii.eqlIgnoreCase(header.name, "retry-after")) {
+            return std.fmt.parseUnsigned(u64, std.mem.trim(u8, header.value, " \t"), 10) catch null;
+        }
+    }
+    return null;
+}
+
+test "retry-after preserves zero and bounded numeric delays" {
+    const cases = .{
+        .{ "Retry-After: 0\r\n", @as(?u64, 0) },
+        .{ "retry-after: 12\r\n", @as(?u64, 12) },
+        .{ "Retry-After: -1\r\n", @as(?u64, null) },
+        .{ "Retry-After: 18446744073709551616\r\n", @as(?u64, null) },
+        .{ "", @as(?u64, null) },
+    };
+    inline for (cases) |case| {
+        const head = try std.http.Client.Response.Head.parse("HTTP/1.1 503 Unavailable\r\n" ++ case[0] ++ "\r\n");
+        try std.testing.expectEqual(case[1], retryAfterSeconds(head));
     }
 }
 

@@ -54,19 +54,13 @@ function parseHandworkJson(result: { stdout: string; stderr: string; code: numbe
   return JSON.parse(result.stdout.trim()) as HandworkJson;
 }
 
-function executionDeniedReason(body: string, toolCallId: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
-  };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .find((part) => part.type === "tool-result" && part.toolCallId === toolCallId);
+function executionDeniedOutput(body: string, toolCallId: string): string {
+  const request = JSON.parse(body);
+  const result = request.input.find((item: any) => item.type === "function_call_output" && item.call_id === toolCallId);
   expect(result).toBeDefined();
-  const output = result!.output as Record<string, unknown>;
-  expect(output.type).toBe("execution-denied");
-  expect(typeof output.reason).toBe("string");
-  expect(output.value).toBeUndefined();
-  return output.reason as string;
+  expect(typeof result.output).toBe("string");
+  return result.output;
+
 }
 
 function permissionEnv(
@@ -219,7 +213,7 @@ describe("generic permission typed errors", () => {
         expect(provider.requests).toHaveLength(2);
 
         const toolResult = JSON.parse(
-          executionDeniedReason(provider.requests[1]!.body, toolCallId),
+          executionDeniedOutput(provider.requests[1]!.body, toolCallId),
         ) as { error: PermissionEcho };
         const echo = toolResult.error;
         expect(echo.type).toBe("tool_permission_denied");

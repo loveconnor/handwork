@@ -1484,13 +1484,13 @@ test "slash menu keeps matching skill source labels" {
     try std.testing.expect(std.mem.find(u8, header.items, "Results 1") != null);
 
     const column_widths = mixedSlashMenuColumnWidths(picker_test_slash_registry, "/handwork-test", &skills, layout.window, true);
-    var row = try composeSlashMenuOptionRow(std.testing.allocator, picker_test_slash_registry, "/handwork-test", &skills, 0, true, column_widths, 64, true);
+    var row = try composeSlashMenuOptionRow(std.testing.allocator, picker_test_slash_registry, "/handwork-test", &skills, 0, true, column_widths, 80, true);
     defer row.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.find(u8, row.items, "handwork-test-strategy") != null);
     try std.testing.expect(std.mem.find(u8, row.items, "choose focused") != null);
     try std.testing.expect(std.mem.find(u8, row.items, "…") != null);
     try std.testing.expect(std.mem.find(u8, row.items, "codex") != null);
-    try std.testing.expectEqual(@as(usize, 63), display_width.visibleWidthIgnoringAnsi(row.items));
+    try std.testing.expectEqual(@as(usize, 79), display_width.visibleWidthIgnoringAnsi(row.items));
     try std.testing.expect(std.mem.findScalar(u8, row.items, '\n') == null);
 }
 
@@ -1654,11 +1654,11 @@ test "registry-aware mixed slash completion maps skills after injected commands"
 test "registry-aware slash presentation preserves aliases" {
     try std.testing.expectEqual(
         @as(usize, 1),
-        mixedSlashCompletionCount(picker_test_slash_registry, "/bal", &.{}),
+        mixedSlashCompletionCount(picker_test_slash_registry, "/sign", &.{}),
     );
     try std.testing.expectEqualStrings(
         "/signout",
-        nthMixedSlashCompletionText(picker_test_slash_registry, "/bal", &.{}, 0).?,
+        nthMixedSlashCompletionText(picker_test_slash_registry, "/sign", &.{}, 0).?,
     );
 }
 
@@ -2188,12 +2188,12 @@ test "compact Grok sign-in keeps masked code entry without duplicate controls" {
     try std.testing.expect(std.mem.find(u8, row.items, ui_render.selected_completion_style) != null);
 }
 
-test "subscription onboarding offers Codex and Grok at full and compact heights" {
+test "provider onboarding offers Codex and OpenAI at full and compact heights" {
     const alloc = std.testing.allocator;
     const view: auth_runtime.PickerView = .{
         .active = true,
         .available_sources = .empty,
-        .selected_choice = .{ .provider = .grok },
+        .selected_choice = .{ .provider = .openai },
         .active_source = null,
         .include_skip = true,
     };
@@ -2206,9 +2206,9 @@ test "subscription onboarding offers Codex and Grok at full and compact heights"
             try screen.appendSlice(alloc, row.items);
             try screen.append(alloc, '\n');
         }
-        try std.testing.expect(std.mem.find(u8, screen.items, "› Grok") != null);
-        if (rows > 1) try std.testing.expect(std.mem.find(u8, screen.items, "Codex") != null);
-        for ([_][]const u8{ "API key", "/setup" }) |removed| {
+        try std.testing.expect(std.mem.find(u8, screen.items, "› OpenAI") != null);
+        if (rows > 2) try std.testing.expect(std.mem.find(u8, screen.items, "Codex") != null);
+        for ([_][]const u8{"/setup"}) |removed| {
             try std.testing.expect(std.mem.find(u8, screen.items, removed) == null);
         }
     }

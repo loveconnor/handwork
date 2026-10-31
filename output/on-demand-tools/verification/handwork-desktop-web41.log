@@ -1,0 +1,1578 @@
+
+> handwork-desktop@0.1.8 check:web
+> vitest run && tsc --noEmit
+
+
+ RUN  v3.2.7 /Users/connorlove/Work/Handwork/handwork/desktop-app
+
+ ✓ src/features/providers/model/providerAccounts.test.ts (12 tests) 4ms
+ ✓ src/shared/ui/PrivateEmail.test.ts (2 tests) 14ms
+ ✓ src/features/settings/model/workspaceThemes.test.ts (4 tests) 11ms
+ ✓ src/features/sessions/ui/TranscriptFind.test.ts (4 tests) 43ms
+ ✓ src/features/files/ui/FilePreviewSearch.test.ts (5 tests) 29ms
+ ✓ src/features/settings/model/displayPrefs.test.ts (9 tests) 3ms
+ ✓ src/features/providers/ui/ProviderAccountUsage.test.ts (1 test) 25ms
+ ✓ src/features/notifications/model/notificationProjects.test.ts (3 tests) 2ms
+ ✓ src/features/sessions/ui/ModelPicker.test.ts (27 tests) 179ms
+ ✓ src/features/files/ui/FileTree.test.ts (24 tests) 150ms
+ ✓ src/app/shell/UsageFooterProjectAccount.test.ts (1 test) 47ms
+ ✓ src/features/sessions/ui/ApprovalToasts.test.ts (6 tests) 36ms
+ ✓ src/features/notifications/hooks/useSessionReminders.test.ts (13 tests) 42ms
+ ✓ src/app/shell/UsageProviderChip.test.ts (14 tests) 154ms
+ ✓ src/app/model/newWorkspaceSession.test.ts (3 tests) 3ms
+ ✓ src/features/monos/floatingMain.test.ts (1 test) 267ms
+ ✓ src/features/monos/model/monoBackground.test.ts (1 test) 3ms
+ ✓ src/features/connections/model/remoteProjects.test.ts (7 tests) 2ms
+ ✓ src/features/connections/ui/AddRemoteProjectDialog.test.ts (3 tests) 104ms
+ ✓ src/features/quick-composer/ui/QuickModelSelector.test.ts (5 tests) 206ms
+ ✓ src/features/mobile/model/mobileAccountUsage.test.ts (4 tests) 19ms
+ ✓ src/features/notifications/model/notificationPreferences.test.ts (7 tests) 16ms
+ ✓ src/features/notifications/model/notificationDelivery.test.ts (5 tests) 8ms
+ ✓ src/features/connections/model/remoteOutbox.test.ts (2 tests) 2ms
+ ✓ src/features/quick-composer/model/quickComposerDefaults.test.ts (4 tests) 2ms
+ ✓ src/features/mobile/model/mobileProviderAccounts.test.ts (4 tests) 5ms
+ ✓ src/features/monos/ui/MonoUsageLimitNotice.test.ts (5 tests) 225ms
+ ✓ src/features/connections/model/remoteSessionTabs.test.ts (8 tests) 52ms
+ ✓ src/features/notifications/ui/NotificationMuteControl.test.ts (3 tests) 194ms
+ ✓ src/app/model/harnessFlush.test.ts (19 tests) 10ms
+ ✓ src/features/notifications/ui/ProjectNotificationSettings.test.ts (8 tests) 405ms
+ ✓ src/features/projects/model/projectGroups.test.ts (4 tests) 7ms
+ ✓ src/features/sessions/model/streamingPerformance.test.ts (1 test) 22ms
+ ✓ src/app/model/sessionState.test.ts (5 tests) 18ms
+ ✓ src/features/settings/model/nativeGlass.test.ts (22 tests) 3931ms
+   ✓ macOS native tint > preserves an opaque window across theme changes (inset shell mounted: false)  638ms
+   ✓ macOS native tint > preserves an opaque window across theme changes (inset shell mounted: true)  661ms
+   ✓ native glass > drops a fade still owed to glass that is back on  354ms
+ ✓ src/app/shell/MonoRailSection.test.ts (4 tests) 37ms
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > routes transcript quotes to the Hand draft
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > shows usage recovery above the Hand input and routes the reset option
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > shows pending messages in the conversation and routes retry from the bubble
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > keeps a completion notification queued beside the Hand's composer
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > keeps ready completion notifications out of the composer while they deliver
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > keeps failed completion notifications visible and lets the user retry them
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/sessions/ui/SessionPaneMessaging.test.ts > keeps rapid sends out of the queue and steer interface
+An update to UsageProviderChip inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/sessions/ui/SessionPaneMessaging.test.ts (8 tests) 143ms
+ ✓ src/features/files/ui/FilePane.remote.test.ts (1 test) 11ms
+stderr | src/features/files/ui/FilePane.agent.test.ts > file pane agent tabs > shows a worker transcript after its session arrives
+An update to AgentMarkdown2 inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/files/ui/FilePane.agent.test.ts > file pane agent tabs > shows a worker transcript after its session arrives
+An update to AgentTranscriptComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/files/ui/FilePaneLineEndings.test.ts (7 tests) 598ms
+stderr | src/features/files/ui/FilePane.agent.test.ts > file pane agent tabs > shows a worker transcript after its session arrives
+An update to Streamdown inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Streamdown inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Streamdown inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/files/ui/FilePane.agent.test.ts > file pane agent tabs > shows a worker transcript after its session arrives
+An update to AgentTranscriptComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/files/ui/FilePane.reviews.test.ts (5 tests) 150ms
+ ✓ src/features/files/ui/FilePane.agent.test.ts (3 tests) 176ms
+ ✓ src/features/monos/ui/FloatingMonoChat.motion.test.ts (1 test) 131ms
+stderr | src/app/shell/SidebarRename.test.ts > project swipe navigation > starts a short swipe transition immediately while the destination is loading
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > project swipe navigation > enables swiping only in the inset sidebar (inset=true)
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > project swipe navigation > enables swiping only in the inset sidebar (inset=false)
+An update to SearchableProjectPickerWithMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > shows the full session details immediately without a native title tooltip
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > shows the full session details immediately without a native title tooltip
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > stays open while the pointer crosses into the preview
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > stays open while the pointer crosses into the preview
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > replaces the preview when another session is hovered
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > replaces the preview when another session is hovered
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on escape
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on escape
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on scroll
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on scroll
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on contextmenu
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > dismisses on contextmenu
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > does not open for touch pointers
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > does not open for touch pointers
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > stays open when transcript prefetching scrolls another pane
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > inset session previews > stays open when transcript prefetching scrolls another pane
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > leaves the resident agent and its description out of the session list
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > omits hidden Hand launches from history, open sessions and folders
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > worktree explorer visibility > does not mount the file tree while browsing chat tabs
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > worktree explorer visibility > retains the hidden tree and catches up when Files opens
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > worktree explorer visibility > updates the visible explorer on a worktree switch
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/HabitRow.test.ts (1 test) 11ms
+ ✓ src/features/files/ui/FileViewMode.test.ts (6 tests) 1348ms
+   ✓ previewable file view mode > opens a new Markdown file in the view chosen last  611ms
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > resets the ctrlKey anchor after acting on another session's context menu
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > resets the metaKey anchor after acting on another session's context menu
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/FloatingMonoChat.test.ts (9 tests) 469ms
+ ✓ src/features/orchestration/ui/OrchestrationFlow.test.ts (10 tests) 893ms
+   ✓ orchestration composer and card > gives the lead's transcript and composer the whole pane  453ms
+ ✓ src/features/files/ui/FilePaneNavigation.test.ts (9 tests) 1606ms
+   ✓ file pane source navigation > shows Markdown source and navigates to its referenced line  508ms
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > starts a range at the active session when pagination hides the anchor
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > starts the next range at the active session after ctrlKey clears the last selection
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > starts the next range at the active session after metaKey clears the last selection
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > clears the previous session focus when Ctrl-clicking another session
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > keeps Shift-click selection free of title focus while preserving keyboard focus
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > selects the visible range from a plain click with Shift-click
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session multiselection > creates a folder containing the Ctrl-clicked sessions without opening them
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/HabitsList.test.ts (1 test) 26ms
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > renames from the menu and restores navigation (status=idle)
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > renames from the menu and restores navigation (status=working)
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > renames from the menu and restores navigation (status=needs approval)
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > allows F2 to rename a working conversation
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > prefetches after a deliberate hover and immediately on press
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > cancels with Escape while the agent is working
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > commits once on blur while the agent is working
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > cancels an empty name without trapping the conversation in the editor
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session rename > keeps an in-progress rename editable when a turn starts
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar reorder affordances > keeps the default cursor on reorderable tabs and folders
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar new session rows > grows in only for a session that arrives after the list has rendered
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar pinned sessions > renders them as a collapsible folder-style group without a divider
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar orchestration card > keeps agents inside a distinct lead card (pinned=false)
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar orchestration card > keeps agents inside a distinct lead card (pinned=true)
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar orchestration card > matches an ordinary card at rest and expands when opened or working
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar orchestration card > opens the custom subagent tooltip immediately on hover
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar orchestration card > renders saved worker details without claiming the workers are running
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar automation card > shows a bolt on sessions started by an automation
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/MonoFilePages.test.ts (8 tests) 252ms
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session GitHub links > manually links a session from its context menu
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/MonoMemoryPage.test.ts (2 tests) 103ms
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session GitHub links > keeps the dialog open when the URL is not a GitHub work item
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session GitHub links > edits or removes an existing link
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session reminders > schedules the selected session from the hover submenu
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar session reminders > groups reminders first without a card clock and offers cancellation first
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/monos/ui/MonoActivityView.test.ts (2 tests) 226ms
+ ✓ src/features/monos/ui/MonoChangesView.test.ts (9 tests) 537ms
+ ✓ src/features/files/ui/FileEditorCrlfGit.test.ts (4 tests) 3276ms
+   ✓ CRLF editor Git boundaries > shows staged hunks under autocrlf without rewriting staged siblings  1014ms
+   ✓ CRLF editor Git boundaries > does not confuse a real CRLF-only change with a clean working tree  584ms
+   ✓ CRLF editor Git boundaries > keeps the index EOL when staging only one CRLF editor hunk  875ms
+   ✓ CRLF editor Git boundaries > keeps CRLF when staging a file without an index baseline  802ms
+stderr | src/app/shell/SidebarRename.test.ts > collapsed rail actions > slides the collapsed sidebar open until dismissed from the compact tabs
+An update to SidebarWorktreeSwitcher inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > sidebar working agents > shows the original working widget when the project rail is collapsed
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/app/shell/SidebarRename.test.ts > labels preserved sessions as having no branch selected
+An update to SidebarComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/app/shell/SidebarRename.test.ts (68 tests) 2557ms
+ ✓ src/features/monos/ui/MonoSettingsDialog.test.ts (6 tests) 182ms
+ ✓ src/features/projects/ui/ProjectGroups.test.ts (6 tests) 262ms
+ ✓ src/features/settings/ui/QuickComposerShortcutEditor.test.ts (8 tests) 236ms
+ ✓ src/features/sessions/ui/AgentMarkdownMenu.test.ts (11 tests) 259ms
+ ✓ src/features/monos/ui/MonoSessionList.test.ts (9 tests) 209ms
+ ✓ src/features/sessions/ui/AgentMarkdownFileLinks.test.ts (26 tests) 251ms
+ ✓ src/features/monos/ui/MonoOverview.test.ts (9 tests) 217ms
+ ✓ src/features/sessions/ui/AgentTranscript.bubbleWidth.test.ts (3 tests) 87ms
+ ✓ src/features/sessions/ui/AgentTranscript.copy.test.ts (6 tests) 131ms
+ ✓ src/features/sessions/ui/AgentTranscript.foldProse.test.ts (1 test) 51ms
+ ✓ src/features/skills/ui/SkillsPage.test.ts (27 tests) 943ms
+ ✓ src/features/sessions/ui/AgentTranscript.firstPaint.test.ts (3 tests) 602ms
+   ✓ transcript first paint > paints the latest turns first and builds the window after  382ms
+ ✓ src/features/sessions/ui/AgentTranscript.habits.test.ts (7 tests) 211ms
+ ✓ src/features/sessions/ui/AgentTranscript.interjection.test.ts (4 tests) 94ms
+ ✓ src/features/settings/ui/SettingsView.test.ts (40 tests) 1374ms
+ ✓ src/features/sessions/ui/AgentTranscript.performance.test.ts (3 tests) 224ms
+ ✓ src/features/sessions/ui/AgentTranscript.promptRise.test.ts (8 tests) 183ms
+ ✓ src/features/sessions/ui/AgentTranscriptErrorDisclosure.test.ts (3 tests) 38ms
+ ✓ src/features/sessions/ui/AgentTranscript.search.test.ts (3 tests) 261ms
+ ✓ src/features/sessions/ui/AgentTranscript.inlineWork.test.ts (22 tests) 537ms
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/sessions/ui/AgentTranscriptPacing.test.ts (9 tests) 246ms
+ ✓ src/features/sessions/ui/agentMarkdownSpacing.test.ts (6 tests) 213ms
+ ✓ src/features/sessions/ui/CursorSubagentRecovery.test.ts (1 test) 179ms
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/connections/ui/RemoteSession.test.ts > holds a settings change during a running turn and applies it afterwards
+An update to ConnectedRemoteSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/sessions/ui/BtwSheet.test.ts (17 tests) 491ms
+ ✓ src/features/sessions/ui/wordFade.test.ts (23 tests) 491ms
+ ✓ src/features/sessions/ui/ToolDiffPreview.test.ts (7 tests) 244ms
+ ✓ src/features/connections/ui/RemoteSession.test.ts (29 tests) 7253ms
+   ✓ holds a settings change during a running turn and applies it afterwards  3893ms
+ ✓ src/features/sessions/ui/AgentTranscriptScroll.test.ts (20 tests) 754ms
+   ✓ Hand transcript pages > renders ten Hand turns while ordinary sessions progressively retain twenty  375ms
+ ✓ src/features/sessions/ui/SessionPaneScroll.test.ts (7 tests) 189ms
+ ✓ src/platform/tauri/clipboard.test.ts (9 tests) 292ms
+ ✓ src/features/sessions/ui/Composer.pasteImage.test.ts (17 tests) 439ms
+ ✓ src/features/sessions/ui/TranscriptPool.test.ts (16 tests) 387ms
+   ✓ keeps two heavy revisits warm and reduces parked memory during pressure  345ms
+ ✓ src/features/settings/ui/McpSettings.test.ts (13 tests) 471ms
+ ✓ src/features/sessions/ui/Composer.test.ts (37 tests) 908ms
+ ✓ src/features/source-control/ui/GitChangesPanel.test.ts (13 tests) 597ms
+ ✓ src/features/source-control/ui/Worktrees.test.ts (34 tests) 810ms
+ ✓ src/features/source-control/ui/SidebarWorktreeSwitcher.test.ts (13 tests) 414ms
+ ✓ src/features/quick-composer/ui/useQuickAttachments.test.ts (13 tests) 257ms
+ ✓ src/features/workspace/ui/TabMiddleClick.test.ts (40 tests) 326ms
+ ✓ src/features/monos/ui/MonoComposer.test.ts (7 tests) 74ms
+ ✓ src/features/sessions/ui/ComposerFileDrop.test.ts (16 tests) 333ms
+ ✓ src/features/connections/ui/ConnectionsSettings.test.ts (9 tests) 104ms
+ ✓ src/features/notifications/ui/ResourcePressureNotice.test.ts (2 tests) 122ms
+ ✓ src/features/sessions/ui/SessionReview.test.ts (17 tests) 145ms
+ ✓ src/features/terminal/ui/TerminalView.test.ts (6 tests) 75ms
+ ✓ src/features/mobile/ui/MobileSettings.test.ts (2 tests) 69ms
+ ✓ src/integrations/harness/providers/codex/codexApprovalUi.test.ts (11 tests) 2045ms
+ ✓ src/features/workspace/ui/TabCloseMotion.test.ts (18 tests) 143ms
+ ✓ src/features/quick-composer/ui/QuickComposer.commands.test.ts (9 tests) 162ms
+ ✓ src/app/shell/PiUsage.test.ts (8 tests) 191ms
+ ✓ src/features/monos/model/monoMigration.test.ts (2 tests) 124ms
+ ✓ src/shared/ui/DateTimePicker.test.ts (5 tests) 166ms
+ ✓ src/features/workspace/ui/TabGroupMenu.test.ts (5 tests) 111ms
+ ✓ src/shared/ui/lazySurface.test.ts (8 tests) 42ms
+ ✓ src/features/projects/ui/useProjectBackgroundEffect.test.ts (1 test) 11ms
+ ✓ src/app/shell/TitleBarMenu.test.ts (4 tests) 45ms
+ ✓ src/features/workspace/ui/SurfaceTabsMenu.test.ts (5 tests) 60ms
+ ✓ src/shared/ui/SearchableSelect.test.ts (2 tests) 24ms
+ ✓ src/features/source-control/ui/BranchPicker.test.ts (5 tests) 53ms
+ ✓ src/app/model/quickLaunchSession.test.ts (15 tests) 66ms
+ ✓ src/features/files/ui/FilePicker.test.ts (8 tests) 44ms
+ ✓ src/features/quick-composer/ui/QuickComposer.attachments.test.ts (2 tests) 96ms
+ ✓ src/features/quick-composer/ui/QuickGitPopup.test.ts (8 tests) 93ms
+ ✓ src/features/files/ui/BinaryFileView.test.ts (9 tests) 95ms
+ ✓ src/features/sessions/ui/Composer.paste.test.ts (2 tests) 109ms
+ ✓ src/features/source-control/ui/GitHistoryGraph.test.ts (3 tests) 59ms
+ ✓ src/features/quick-composer/ui/QuickWorkspaceControls.test.ts (6 tests) 68ms
+ ✓ src/features/monos/ui/MonoComposer.ime.test.ts (1 test) 16ms
+ ✓ src/app/shell/GithubStarPrompt.test.ts (7 tests) 51ms
+ ✓ src/features/workspace/ui/PaneTreeEnter.test.ts (8 tests) 39ms
+ ✓ src/features/skills/ui/SkillPromptField.test.ts (3 tests) 44ms
+ ✓ src/app/hooks/useWorkspaceNavigation.test.ts (15 tests) 107ms
+ ✓ src/app/hooks/useIdleSessionDetach.test.ts (13 tests) 45ms
+ ✓ src/features/artifacts/ui/ArtifactPanel.test.ts (4 tests) 52ms
+ ✓ src/features/sessions/hooks/useBottomChatMotion.test.ts (16 tests) 36ms
+ ✓ src/features/sessions/ui/SecondOpinionButton.test.ts (5 tests) 42ms
+ ✓ src/features/monos/ui/MonoComposerFileDrop.test.ts (3 tests) 42ms
+ ✓ src/features/sessions/ui/MonoWorkTicker.test.ts (4 tests) 28ms
+ ✓ src/features/files/ui/FileTypeIcon.test.ts (3 tests) 45ms
+ ✓ src/features/source-control/ui/ReviewDiffCaching.test.ts (4 tests) 49ms
+ ✓ src/features/providers/ui/HarnessUpdateNotice.test.ts (1 test) 25ms
+ ✓ src/features/projects/ui/ProjectBackgroundDialog.test.ts (3 tests) 43ms
+ ✓ src/shared/lib/emojiData.test.ts (3 tests) 51ms
+ ✓ src/app/shell/UsageFooterAuth.test.ts (4 tests) 102ms
+ ✓ src/features/monos/hooks/useMonoTranscript.test.ts (5 tests) 44ms
+ ✓ src/features/quick-composer/ui/QuickGitPopup.firstOpen.test.ts (4 tests) 76ms
+ ✓ src/features/automations/ui/AutomationsView.test.ts (3 tests) 59ms
+ ✓ src/shared/hooks/useAnimatedReorderConcurrency.test.ts (2 tests) 27ms
+ ✓ src/features/sessions/ui/DocumentImage.test.ts (6 tests) 44ms
+ ✓ src/features/source-control/ui/UnifiedDiffView.expansion.test.ts (2 tests) 56ms
+ ✓ src/features/sessions/ui/QuestionForm.test.ts (5 tests) 56ms
+ ✓ src/features/mobile/hooks/useMobileWorkspace.test.ts (4 tests) 13ms
+ ✓ src/features/monos/ui/PanelStack.test.ts (1 test) 16ms
+ ✓ src/features/sessions/ui/UserLinkPreview.test.ts (4 tests) 27ms
+ ✓ src/app/shell/UsageFooter.test.ts (7 tests) 20ms
+ ✓ src/app/shell/TitleBarPaneDrop.test.ts (4 tests) 30ms
+ ✓ src/features/quick-composer/ui/QuickPermissions.test.ts (3 tests) 76ms
+ ✓ src/features/files/editor/editorGit.gutter.test.ts (3 tests) 42ms
+ ✓ src/features/sessions/ui/AgentMarkdownPresentation.test.ts (1 test) 37ms
+ ✓ src/features/monos/model/monoWorkspace.test.ts (13 tests) 12ms
+ ✓ src/features/source-control/ui/SwitchBranchDialog.test.ts (1 test) 36ms
+ ✓ src/features/sessions/ui/Composer.ime.test.ts (1 test) 43ms
+ ✓ src/features/sessions/ui/TranscriptSelectionMenu.test.ts (1 test) 52ms
+ ✓ src/app/shell/useProjectSwipe.test.ts (16 tests) 68ms
+ ✓ src/features/source-control/ui/UnifiedDiffView.markers.test.ts (1 test) 86ms
+ ✓ src/app/shell/TitleBarStatus.test.ts (4 tests) 38ms
+ ✓ src/features/monos/model/monoHabits.test.ts (13 tests) 38ms
+ ✓ src/features/sessions/ui/LiveAgentsPreview.test.ts (3 tests) 86ms
+ ✓ src/features/agent-app/model/agentApp.test.ts (66 tests) 57ms
+ ✓ src/features/projects/ui/SearchableProjectPickerMonos.test.ts (2 tests) 63ms
+ ✓ src/features/sessions/model/sessionStateStore.test.ts (2 tests) 14ms
+ ✓ src/features/source-control/ui/WorkingTreeDiff.test.ts (3 tests) 71ms
+ ✓ src/features/providers/model/accountUsage.test.ts (14 tests) 19ms
+ ✓ src/app/hooks/useFloatingMono.test.ts (4 tests) 24ms
+ ✓ src/features/notifications/hooks/useInputNotifications.test.ts (6 tests) 56ms
+ ✓ src/features/agent-app/model/agentAppMemory.test.ts (10 tests) 22ms
+ ✓ src/shared/hooks/useLockOverscroll.test.ts (24 tests) 14ms
+ ✓ src/features/workspace/ui/PaneTreeTitleDrop.test.ts (1 test) 18ms
+ ✓ src/features/sessions/ui/AttachmentChip.test.ts (3 tests) 19ms
+ ✓ src/features/mobile/model/mobileAttachments.test.ts (3 tests) 17ms
+ ✓ src/features/sessions/ui/ProviderSignInDialog.test.ts (1 test) 21ms
+ ✓ src/features/sessions/model/attachmentsPreparation.test.ts (5 tests) 24ms
+ ✓ src/features/settings/model/settings.flags.test.ts (127 tests) 17ms
+ ✓ src/shared/lib/nativeContextMenu.test.ts (9 tests) 15ms
+ ✓ src/features/sessions/ui/SessionFolderPicker.test.ts (2 tests) 25ms
+ ✓ src/app/hooks/useMonoHabits.test.ts (14 tests) 6206ms
+   ✓ lets a long-running habit finish and post after thirty minutes  336ms
+   ✓ stops and records a habit that is still running after one hour  407ms
+   ✓ puts an approval the run still asks for to the user, once  4605ms
+ ✓ src/features/sessions/ui/BtwQuestionBurst.test.ts (1 test) 31ms
+ ✓ src/features/sessions/model/checkpoint.test.ts (4 tests) 17ms
+ ✓ src/features/quick-composer/ui/QuickProjectIcon.test.ts (3 tests) 20ms
+ ✓ src/features/quick-composer/ui/useQuickPickerMotion.test.ts (5 tests) 16ms
+ ✓ src/features/settings/model/appearance.test.ts (31 tests) 9ms
+ ✓ src/features/sessions/ui/useComposerDockMotion.test.ts (3 tests) 11ms
+ ✓ src/features/monos/ui/MonoIntro.test.ts (1 test) 20ms
+ ✓ src/features/sessions/ui/useReplyReflowAnchor.test.ts (1 test) 22ms
+ ✓ src/app/shell/RailAction.test.ts (1 test) 37ms
+ ✓ src/features/sessions/ui/useToolDetail.test.ts (4 tests) 15ms
+ ✓ src/features/sessions/model/transcriptHighlights.test.ts (10 tests) 8ms
+ ✓ src/shared/hooks/useStableValue.test.ts (3 tests) 6ms
+ ✓ src/features/monos/model/monoFiles.test.ts (9 tests) 5ms
+ ✓ src/features/sessions/ui/MessageQueue.test.ts (2 tests) 10ms
+ ✓ src/shared/lib/draftRestore.test.ts (9 tests) 6ms
+ ✓ src/features/settings/model/newThreadBackgroundEffects.test.ts (3 tests) 5ms
+ ✓ src/features/quick-composer/model/prepareQuickComposer.test.ts (5 tests) 8ms
+ ✓ src/app/model/preloadNavigation.test.ts (3 tests) 4ms
+ ✓ src/features/monos/model/monoRoster.test.ts (5 tests) 4ms
+ ✓ src/features/files/model/fileIndex.resume.test.ts (3 tests) 4ms
+ ✓ src/features/agent-app/model/agentAppSoul.test.ts (14 tests) 6ms
+ ✓ src/features/monos/model/monoRotation.test.ts (17 tests) 11ms
+ ✓ src/features/skills/ui/SkillDocumentPreview.test.ts (4 tests) 18ms
+ ✓ src/app/shell/WhatsNewDialog.test.ts (1 test) 25ms
+ ✓ src/features/sessions/ui/MarkdownDocumentPreview.test.ts (14 tests) 41ms
+ ✓ src/features/sessions/ui/AgentMarkdown.test.ts (14 tests) 50ms
+ ✓ src/features/sessions/ui/hardBreaks.test.ts (21 tests) 49ms
+stdout | src/integrations/harness/providers/handwork/handworkLive.test.ts > 'handwork' offline ACP transport > probes catalogs over ACP once, kills the probe, and preserves models on failure
+[handwork] handwork catalog Error: Authentication required
+    at JsonRpcClient.handle (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/jsonRpc.ts:192:11)
+    at JsonRpcClient.pushLine (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/jsonRpc.ts:66:10)
+    at AcpClient.pushLine (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/acp.ts:37:14)
+    at /Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/handwork/handworkCatalog.ts:51:19
+    at /Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/handwork/handworkLive.test.ts:72:34
+
+stdout | src/integrations/harness/providers/antigravity/antigravityLive.test.ts > 'antigravity' offline ACP transport > probes catalogs over ACP once, kills the probe, and preserves models on failure
+[handwork] antigravity catalog Error: Authentication required
+    at JsonRpcClient.handle (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/jsonRpc.ts:192:11)
+    at JsonRpcClient.pushLine (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/jsonRpc.ts:66:10)
+    at AcpClient.pushLine (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/acp.ts:37:14)
+    at /Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/antigravity/antigravityCatalog.ts:51:19
+    at /Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/antigravity/antigravityLive.test.ts:72:34
+
+stderr | src/features/files/editor/codeHighlightPlugin.test.ts > bounded code highlight plugin > keeps the cache bounded while a fence streams in
+[Shiki] 10 instances have been created. Shiki is supposed to be used as a singleton, consider refactoring your code to cache your highlighter instance; Or call `highlighter.dispose()` to release unused instances.
+
+ ✓ src/features/sessions/ui/AgentTranscriptSecondOpinion.test.ts (1 test) 22ms
+ ✓ src/features/sessions/ui/AgentTranscript.test.ts (38 tests) 96ms
+ ✓ src/features/sessions/data/sessionStoreConcurrency.test.ts (5 tests) 438ms
+ ✓ src/features/files/editor/codeHighlightPlugin.test.ts (14 tests) 502ms
+ ✓ src/app/model/bootWorkspace.test.ts (2 tests) 91ms
+ ✓ src/features/mobile/model/mobileHighlight.test.ts (5 tests) 87ms
+ ✓ src/app/shell/startedSessions.test.ts (4 tests) 1ms
+ ✓ src/integrations/harness/providers/devin/devinLive.test.ts (21 tests) 713ms
+ ✓ src/integrations/harness/providers/claude/claudeLive.test.ts (41 tests) 843ms
+ ✓ src/integrations/harness/providers/opencode/opencodeLive.test.ts (60 tests) 855ms
+ ✓ src/integrations/harness/core/applyBatch.test.ts (4 tests) 78ms
+ ✓ src/app/model/updater.test.ts (10 tests) 69ms
+ ✓ src/integrations/harness/providers/cursor/cursorLive.test.ts (15 tests) 387ms
+ ✓ src/integrations/harness/providers/grok/grokText.test.ts (6 tests) 187ms
+ ✓ src/integrations/harness/providers/codex/codexAttachments.test.ts (20 tests) 516ms
+ ✓ src/integrations/harness/providers/handwork/handworkLive.test.ts (42 tests) 1341ms
+ ✓ src/integrations/harness/providers/antigravity/antigravityLive.test.ts (42 tests) 1348ms
+ ✓ src/integrations/harness/providers/hermes/hermesLive.test.ts (4 tests) 609ms
+   ✓ Hermes live ACP sequence > stays busy and resumes after Hermes background subagents finish  525ms
+ ✓ src/features/files/editor/codeHighlightWorker.test.ts (4 tests) 40ms
+ ✓ src/features/files/editor/editorLanguage.test.ts (35 tests) 120ms
+ ✓ src/features/source-control/model/lineDiff.test.ts (5 tests) 73ms
+ ✓ src/features/sessions/model/remoteMedia.test.ts (13 tests) 64ms
+ ✓ src/features/sessions/model/speechBubble.test.ts (7 tests) 2ms
+ ✓ src/features/files/model/fileWatch.test.ts (4 tests) 257ms
+ ✓ src/app/model/appLifecycle.test.ts (20 tests) 61ms
+ ✓ src/features/files/editor/editorLint.test.ts (23 tests) 53ms
+ ✓ src/integrations/harness/providers/grok/grokLive.test.ts (4 tests) 124ms
+ ✓ src/integrations/harness/core/auth.test.ts (7 tests) 157ms
+ ✓ src/features/settings/model/mcpSettingsCache.test.ts (4 tests) 156ms
+ ✓ src/integrations/harness/providers/omp/ompLive.test.ts (31 tests) 1692ms
+ ✓ src/features/sessions/model/sessionRemoval.test.ts (15 tests) 117ms
+ ✓ src/shared/ui/icons.test.ts (3 tests) 70ms
+ ✓ src/features/sessions/ui/streamingMarkdown.test.ts (9 tests) 20ms
+ ✓ src/integrations/harness/core/child.test.ts (10 tests) 58ms
+stdout | src/integrations/harness/providers/fx/fxLive.test.ts > fx live turn sequence > auto-approves a permission request instead of blocking the turn
+TURN 1 OK, messages: [ 'initialize', 'session/new', 'session/set_mode', 'session/prompt' ]
+
+ ✓ src/integrations/harness/providers/codex/codexLive.test.ts (87 tests) 1792ms
+stdout | src/integrations/harness/providers/fx/fxLive.test.ts > fx live turn sequence > auto-approves a permission request instead of blocking the turn
+turn2 outbound ids: [ 'session/set_mode=5', 'session/prompt=6' ]
+
+stdout | src/integrations/harness/providers/fx/fxLive.test.ts > fx live turn sequence > auto-approves a permission request instead of blocking the turn
+auto-approved without any UI round trip: {"jsonrpc":"2.0","id":1,"result":{"outcome":{"outcome":"selected","optionId":"allow_always"}}}
+
+ ✓ src/integrations/harness/providers/fx/fxLive.test.ts (2 tests) 74ms
+ ✓ src/integrations/harness/providers/codex/codexText.test.ts (11 tests) 47ms
+stderr | src/features/files/editor/syntaxTokens.test.ts > highlightSource > colors comments in JSONC files
+Unknown highlighting tag property
+
+ ✓ src/features/files/editor/syntaxTokens.test.ts (10 tests) 37ms
+ ✓ src/features/source-control/model/diffHighlight.test.ts (3 tests) 77ms
+ ✓ src/integrations/harness/core/acpSubagents.test.ts (9 tests) 8ms
+ ✓ src/integrations/harness/providers/pi/piCatalog.test.ts (17 tests) 48ms
+ ✓ src/features/automations/model/automations.test.ts (15 tests) 13ms
+ ✓ src/features/skills/model/skills.test.ts (24 tests) 13ms
+ ✓ src/integrations/harness/providers/cursor/cursorText.test.ts (1 test) 35ms
+ ✓ src/platform/tauri/trackpadZoom.test.ts (8 tests) 47ms
+ ✓ src/integrations/harness/providers/pi/piSkills.test.ts (14 tests) 58ms
+ ✓ src/features/connections/model/remoteCommands.test.ts (10 tests) 8ms
+ ✓ src/integrations/harness/providers/codex/codexQuestions.test.ts (20 tests) 4ms
+ ✓ src/integrations/harness/providers/opencode/opencodeText.test.ts (6 tests) 48ms
+ ✓ src/features/source-control/model/worktrees.test.ts (14 tests) 4ms
+ ✓ src/integrations/harness/core/registry.test.ts (20 tests) 68ms
+ ✓ src/features/monos/model/monoMemory.test.ts (11 tests) 12ms
+ ✓ src/features/providers/model/providerBinaryPaths.test.ts (4 tests) 8ms
+ ✓ src/features/monos/model/monoMessaging.test.ts (8 tests) 5ms
+ ✓ src/features/monos/model/monoUsageLimit.test.ts (7 tests) 6ms
+ ✓ src/integrations/harness/core/apply.test.ts (69 tests) 24ms
+ ✓ src/features/quick-composer/model/launchDelivery.test.ts (14 tests) 22ms
+ ✓ src/features/sessions/model/ompInterjections.test.ts (44 tests) 17ms
+ ✓ src/features/settings/model/sounds.test.ts (8 tests) 4ms
+ ✓ src/features/files/editor/editorDoc.test.ts (9 tests) 3ms
+ ✓ src/features/providers/model/rateLimitsFetch.test.ts (3 tests) 22ms
+ ✓ src/integrations/harness/providers/devin/devinProtocol.test.ts (32 tests) 8ms
+ ✓ src/integrations/harness/providers/hermes/hermesProtocol.test.ts (8 tests) 3ms
+ ✓ src/features/sessions/model/transcriptActivity.test.ts (107 tests) 20ms
+ ✓ src/features/sessions/model/transcriptTurnCache.test.ts (13 tests) 18ms
+ ✓ src/features/orchestration/model/orchestration.test.ts (53 tests) 2425ms
+ ✓ src/features/sessions/model/usageLimit.test.ts (16 tests) 13ms
+ ✓ src/features/sessions/model/models.test.ts (42 tests) 6ms
+ ✓ src/features/providers/model/harnessUpdates.test.ts (4 tests) 31ms
+ ✓ src/integrations/harness/providers/pi/piProtocol.test.ts (26 tests) 14ms
+ ✓ src/app/shell/UpdateRailCard.test.ts (2 tests) 5ms
+ ✓ src/features/projects/model/projectData.test.ts (1 test) 2ms
+ ✓ src/shared/hooks/useAnimatedReorder.test.ts (21 tests) 22ms
+ ✓ src/features/monos/model/monoConversation.test.ts (4 tests) 5ms
+ ✓ src/features/sessions/model/contextUsage.test.ts (16 tests) 8ms
+ ✓ src/features/settings/model/settings.test.ts (50 tests) 23ms
+ ✓ src/integrations/harness/core/preview.test.ts (20 tests) 7ms
+ ✓ src/integrations/harness/providers/cursor/cursorCatalog.test.ts (4 tests) 7ms
+ ✓ src/features/agent-app/model/sessionConversation.test.ts (5 tests) 3ms
+ ✓ src/features/source-control/model/diffWorker.test.ts (2 tests) 17ms
+ ✓ src/features/sessions/model/btw.test.ts (31 tests) 15ms
+ ✓ src/integrations/harness/providers/opencode/opencodeProtocol.test.ts (37 tests) 11ms
+ ✓ src/integrations/harness/providers/devin/devinSubagents.test.ts (5 tests) 8ms
+ ✓ src/features/mobile/model/mobileWatch.test.ts (4 tests) 3ms
+ ✓ src/features/sessions/data/sessionStore.test.ts (49 tests) 12ms
+ ✓ src/shared/lib/keyboard.test.ts (3 tests) 1ms
+ ✓ src/features/sessions/model/sessionReminders.test.ts (7 tests) 2ms
+ ✓ src/features/source-control/model/stableDiff.test.ts (6 tests) 3ms
+ ✓ src/features/files/model/fileMentions.test.ts (31 tests) 13ms
+ ✓ src/features/skills/ui/SkillPicker.test.ts (1 test) 6ms
+ ✓ src/features/workspace/model/layout.test.ts (50 tests) 10ms
+ ✓ src/features/sessions/model/sessionFolders.test.ts (36 tests) 12ms
+ ✓ src/app/shell/SidebarUpdate.test.ts (6 tests) 9ms
+ ✓ src/features/sessions/model/userQuestion.test.ts (9 tests) 3ms
+ ✓ src/features/sessions/data/sessionHistory.test.ts (32 tests) 12ms
+ ✓ src/integrations/harness/providers/pi/piLive.test.ts (5 tests) 4ms
+ ✓ src/features/files/editor/editorGit.test.ts (17 tests) 8ms
+ ✓ src/integrations/harness/providers/codex/codexProtocol.test.ts (74 tests) 10ms
+ ✓ src/integrations/harness/core/jsonRpc.test.ts (4 tests) 4ms
+ ✓ src/integrations/harness/providers/claude/claudeProtocol.test.ts (50 tests) 10ms
+ ✓ src/features/sessions/model/ciRepairContext.test.ts (12 tests) 7ms
+ ✓ src/features/sessions/model/promptOutline.test.ts (17 tests) 3ms
+ ✓ src/features/notifications/model/notifications.test.ts (13 tests) 7ms
+ ✓ src/features/workspace/model/workspaceSnapshot.test.ts (37 tests) 12ms
+ ✓ src/integrations/harness/providers/pi/piText.test.ts (1 test) 10ms
+ ✓ src/features/projects/model/projectLogos.test.ts (10 tests) 4ms
+ ✓ src/features/orchestration/model/orchestrationWorkspace.test.ts (6 tests) 5ms
+ ✓ src/features/skills/model/skillCatalog.test.ts (17 tests) 8ms
+ ✓ src/integrations/harness/providers/cursor/cursorSubagents.test.ts (9 tests) 7ms
+ ✓ src/shared/lib/popover.test.ts (12 tests) 4ms
+ ✓ src/features/sessions/model/plan.test.ts (4 tests) 2ms
+ ✓ src/features/sessions/model/liveAgents.test.ts (10 tests) 5ms
+ ✓ src/integrations/harness/core/abortTextPrompt.test.ts (1 test) 2ms
+ ✓ src/features/files/model/fileIndex.test.ts (17 tests) 6ms
+ ✓ src/features/sessions/data/monoSessionStore.test.ts (10 tests) 7ms
+ ✓ src/integrations/harness/providers/grok/grokProtocol.test.ts (19 tests) 14ms
+ ✓ src/features/providers/model/piUsage.test.ts (4 tests) 3ms
+ ✓ src/features/sessions/model/normalChats.test.ts (5 tests) 4ms
+ ✓ src/features/source-control/model/unifiedDiffDocument.test.ts (4 tests) 6ms
+ ✓ src/features/projects/model/projectOpenRun.test.ts (9 tests) 6ms
+ ✓ src/integrations/harness/providers/handwork/handworkProtocol.test.ts (8 tests) 5ms
+ ✓ src/features/projects/model/projectReturn.test.ts (20 tests) 5ms
+ ✓ src/integrations/harness/providers/fx/fxProtocol.test.ts (22 tests) 8ms
+ ✓ src/integrations/harness/providers/pi/piSubagents.test.ts (6 tests) 7ms
+ ✓ src/features/sessions/model/sessionWorkspaceLifecycle.test.ts (8 tests) 4ms
+ ✓ src/app/model/removedFeatures.test.ts (3 tests) 11ms
+ ✓ src/features/settings/model/appShortcuts.test.ts (7 tests) 3ms
+ ✓ src/features/monos/model/monoSpawnedSessions.test.ts (8 tests) 4ms
+ ✓ src/features/sessions/model/queuedFollowUp.test.ts (10 tests) 12ms
+ ✓ src/app/model/submissionAcceptance.test.ts (3 tests) 2ms
+ ✓ src/features/files/model/editorSelection.test.ts (3 tests) 1ms
+ ✓ src/features/sessions/model/handoff.test.ts (20 tests) 5ms
+ ✓ src/app/model/updaterConfig.test.ts (10 tests) 5ms
+ ✓ src/features/settings/model/uiScale.test.ts (4 tests) 2ms
+ ✓ src/features/sessions/ui/useComposerSkills.test.ts (3 tests) 2ms
+ ✓ src/features/orchestration/model/orchestrationPlan.test.ts (15 tests) 6ms
+ ✓ src/features/monos/model/monoCompletionBatches.test.ts (19 tests) 6ms
+ ✓ src/integrations/harness/providers/codex/codexStore.test.ts (8 tests) 10ms
+ ✓ src/features/sessions/model/addChatToWorkspace.test.ts (9 tests) 4ms
+ ✓ src/integrations/harness/core/shellIntent.test.ts (13 tests) 6ms
+ ✓ src/integrations/harness/providers/opencode/opencodeClient.test.ts (11 tests) 6ms
+ ✓ src/features/sessions/model/sessionTitle.test.ts (5 tests) 4ms
+ ✓ src/features/monos/model/monoSessionCompletion.test.ts (9 tests) 4ms
+ ✓ src/features/workspace/model/workspaceTabGroups.test.ts (43 tests) 7ms
+ ✓ src/features/providers/model/rateLimits.test.ts (30 tests) 5ms
+ ✓ src/features/workspace/model/appViewTabs.test.ts (11 tests) 3ms
+ ✓ src/features/monos/model/floatingMono.test.ts (6 tests) 4ms
+ ✓ src/features/projects/model/projectTerminal.test.ts (17 tests) 4ms
+ ✓ src/features/sessions/model/inFlight.test.ts (16 tests) 4ms
+ ✓ src/features/projects/model/recents.test.ts (13 tests) 3ms
+ ✓ src/shared/ui/Modal.test.ts (2 tests) 6ms
+ ✓ src/features/sessions/model/archiveShortcut.test.ts (23 tests) 5ms
+ ✓ src/features/sessions/model/emojiMessage.test.ts (16 tests) 2ms
+ ✓ src/shared/lib/paths.test.ts (87 tests) 5ms
+ ✓ src/integrations/harness/providers/pi/piClient.test.ts (2 tests) 3ms
+ ✓ src/features/sessions/model/messageQueue.test.ts (23 tests) 3ms
+ ✓ src/features/mobile/model/mobileTranscript.test.ts (4 tests) 5ms
+ ✓ src/platform/tauri/fs.test.ts (19 tests) 6ms
+ ✓ src/features/sessions/model/editLastTurn.test.ts (14 tests) 4ms
+ ✓ src/features/workspace/model/tabGroups.test.ts (33 tests) 10ms
+ ✓ src/integrations/harness/providers/antigravity/antigravityProtocol.test.ts (8 tests) 5ms
+ ✓ src/features/sessions/model/monoWorkStatus.test.ts (9 tests) 5ms
+ ✓ src/features/sessions/ui/EmptySession.test.ts (1 test) 6ms
+ ✓ src/features/sessions/model/promptPreparation.test.ts (5 tests) 3ms
+ ✓ src/features/sessions/data/sessionStoreRestore.test.ts (7 tests) 6ms
+ ✓ src/features/terminal/model/terminalClose.test.ts (3 tests) 3ms
+ ✓ src/features/notifications/model/approvalToast.test.ts (6 tests) 3ms
+ ✓ src/features/source-control/model/unifiedDiff.test.ts (12 tests) 11ms
+ ✓ src/integrations/harness/providers/handwork/handworkText.test.ts (3 tests) 3ms
+ ✓ src/features/sessions/model/projectSessionDefaults.test.ts (10 tests) 3ms
+ ✓ src/app/model/releaseNotesWorkspace.test.ts (3 tests) 4ms
+ ✓ src/integrations/harness/providers/opencode/opencodeV2Events.test.ts (3 tests) 2ms
+ ✓ src/features/files/model/markdownSource.test.ts (3 tests) 1ms
+ ✓ src/features/connections/model/protocol.test.ts (3 tests) 2ms
+ ✓ src/features/workspace/model/tabKeys.test.ts (32 tests) 4ms
+ ✓ src/app/model/managedSubmission.test.ts (7 tests) 3ms
+ ✓ src/integrations/harness/core/fileAttachments.test.ts (21 tests) 4ms
+ ✓ src/integrations/harness/core/commitMessage.test.ts (7 tests) 4ms
+ ✓ src/features/files/editor/editorScrollbar.test.ts (4 tests) 3ms
+ ✓ src/features/projects/model/projectMascots.test.ts (5 tests) 5ms
+ ✓ src/platform/tauri/pty.test.ts (7 tests) 2ms
+ ✓ src/features/sessions/model/sessionFilters.test.ts (8 tests) 2ms
+ ✓ src/features/source-control/model/unifiedDiffWindow.test.ts (6 tests) 5ms
+ ✓ src/features/projects/model/projectLocation.test.ts (3 tests) 4ms
+ ✓ src/features/quick-composer/model/quickWorkspace.test.ts (5 tests) 3ms
+ ✓ src/app/shell/TitleBar.test.ts (18 tests) 2ms
+ ✓ src/features/sessions/model/taskList.test.ts (4 tests) 2ms
+ ✓ src/features/files/model/fileTree.test.ts (3 tests) 4ms
+ ✓ src/features/quick-composer/model/quickComposer.test.ts (15 tests) 3ms
+ ✓ src/app/model/updateNotice.test.ts (11 tests) 2ms
+ ✓ src/app/model/releaseNotes.test.ts (18 tests) 3ms
+ ✓ src/features/sessions/model/handworkModels.test.ts (3 tests) 2ms
+ ✓ src/features/source-control/model/gitGraph.test.ts (11 tests) 5ms
+ ✓ src/features/settings/model/zoomKeybinding.test.ts (5 tests) 3ms
+ ✓ src/features/sessions/model/compact.test.ts (2 tests) 1ms
+ ✓ src/features/orchestration/model/orchestrationCatalog.test.ts (3 tests) 7ms
+ ✓ src/features/sessions/data/sessionCache.test.ts (4 tests) 4ms
+ ✓ src/features/quick-composer/model/quickAttachments.test.ts (4 tests) 5ms
+ ✓ src/features/sessions/model/sessionWorkItem.test.ts (5 tests) 4ms
+ ✓ src/features/terminal/model/terminalTab.test.ts (12 tests) 3ms
+ ✓ src/features/sessions/model/quoteDraft.test.ts (12 tests) 2ms
+ ✓ src/features/source-control/model/prDiff.test.ts (8 tests) 3ms
+ ✓ src/features/sessions/model/attachments.test.ts (5 tests) 5ms
+ ✓ src/features/workspace/ui/SurfaceTabs.test.ts (10 tests) 3ms
+ ✓ src/features/monos/model/monoReaction.test.ts (6 tests) 5ms
+ ✓ src/features/sessions/ui/turnCelebration.test.ts (4 tests) 3ms
+ ✓ src/integrations/harness/providers/opencode/opencodeService.test.ts (4 tests) 3ms
+ ✓ src/features/connections/model/remoteModels.test.ts (5 tests) 2ms
+ ✓ src/features/sessions/data/sessionStoreLinkedWorkItem.test.ts (2 tests) 2ms
+ ✓ src/features/sessions/model/checkpointEdits.test.ts (2 tests) 3ms
+ ✓ src/features/source-control/model/diffComment.test.ts (3 tests) 1ms
+ ✓ src/features/quick-composer/model/quickComposerShortcut.test.ts (3 tests) 2ms
+ ✓ src/features/files/model/filePreview.test.ts (25 tests) 3ms
+ ✓ src/features/sessions/model/secondOpinion.test.ts (15 tests) 6ms
+ ✓ src/features/projects/model/chatBackground.test.ts (6 tests) 5ms
+ ✓ src/features/sessions/model/projectProviders.test.ts (9 tests) 3ms
+ ✓ src/features/sessions/model/linkPreview.test.ts (8 tests) 3ms
+ ✓ src/features/terminal/model/terminalLayout.test.ts (2 tests) 1ms
+ ✓ src/features/sessions/model/agentTabs.test.ts (4 tests) 3ms
+ ✓ src/features/connections/model/remoteSessionState.test.ts (1 test) 2ms
+ ✓ src/features/sessions/model/sessionDraft.test.ts (4 tests) 2ms
+ ✓ src/features/sessions/model/mcpPicker.test.ts (4 tests) 4ms
+ ✓ src/shared/lib/concurrent.test.ts (2 tests) 1ms
+ ✓ src/features/sessions/model/sessionSelection.test.ts (4 tests) 1ms
+ ✓ src/features/automations/model/automationTemplates.test.ts (3 tests) 1ms
+ ✓ src/features/sessions/model/transcriptSelection.test.ts (5 tests) 1ms
+ ✓ src/features/artifacts/artifacts.test.ts (1 test) 2ms
+ ✓ src/features/projects/model/projectChatBackground.test.ts (6 tests) 2ms
+ ✓ src/features/terminal/model/terminalKeys.test.ts (4 tests) 1ms
+ ✓ src/features/sessions/model/handworkToolCall.test.ts (4 tests) 3ms
+ ✓ src/features/monos/model/monoActivity.test.ts (3 tests) 3ms
+ ✓ src/app/model/windowTransfer.test.ts (2 tests) 2ms
+ ✓ src/features/notifications/model/resourcePressure.test.ts (2 tests) 1ms
+ ✓ src/features/sessions/model/sessionDone.test.ts (11 tests) 2ms
+ ✓ src/features/search/model/search.test.ts (3 tests) 3ms
+ ✓ src/features/workspace/model/tabVisitHistory.test.ts (7 tests) 5ms
+ ✓ src/features/sessions/model/opusWelcome.test.ts (2 tests) 2ms
+ ✓ src/features/settings/model/mcp.test.ts (1 test) 1ms
+ ✓ src/features/connections/model/remoteAttachmentPreviews.test.ts (2 tests) 2ms
+ ✓ src/integrations/harness/providers/codex/codexElicitation.test.ts (11 tests) 2ms
+ ✓ src/shared/lib/dragPoint.test.ts (3 tests) 1ms
+ ✓ src/features/monos/model/mono.test.ts (9 tests) 2ms
+ ✓ src/features/sessions/model/sessionFolderCommand.test.ts (5 tests) 2ms
+ ✓ src/features/sessions/model/operatorCommand.test.ts (3 tests) 2ms
+ ✓ src/features/sessions/model/composerResize.test.ts (7 tests) 1ms
+ ✓ src/features/sessions/model/draftCache.test.ts (6 tests) 2ms
+ ✓ src/integrations/harness/core/streamText.test.ts (11 tests) 2ms
+ ✓ src/shared/lib/colorUtils.test.ts (3 tests) 2ms
+ ✓ src/shared/lib/reorder.test.ts (3 tests) 2ms
+ ✓ src/features/sessions/model/transcriptJump.test.ts (1 test) 2ms
+ ✓ src/features/source-control/model/workingTreeDiff.test.ts (4 tests) 2ms
+ ✓ src/features/settings/model/projectSidebarTab.test.ts (4 tests) 2ms
+ ✓ src/shared/lib/numbers.test.ts (1 test) 1ms
+ ✓ src/features/projects/model/projectScope.test.ts (3 tests) 1ms
+ ✓ src/features/source-control/model/worktreeFocus.test.ts (3 tests) 2ms
+ ✓ src/features/sessions/model/sessionSkills.test.ts (3 tests) 1ms
+ ✓ src/features/sessions/model/astraWelcome.test.ts (1 test) 1ms
+ ✓ src/features/connections/model/remoteAttachments.test.ts (1 test) 1ms
+ ✓ src/features/sessions/model/transcriptFind.test.ts (2 tests) 1ms
+ ✓ src/shared/lib/listWindow.test.ts (6 tests) 1ms
+ ✓ src/features/sessions/model/mcpCommand.test.ts (1 test) 1ms
+ ✓ src/features/terminal/model/terminalChrome.test.ts (2 tests) 1ms
+ ↓ src/integrations/harness/providers/antigravity/antigravitySoak.test.ts (10 tests | 10 skipped)
+ ↓ src/integrations/harness/providers/antigravity/antigravityReal.test.ts (3 tests | 3 skipped)
+ ✓ src/features/files/editor/editorSearch.test.ts (5 tests) 1ms
+ ✓ src/shared/ui/focusVisibleHas.test.ts (1 test) 4ms
+
+ Test Files  471 passed | 2 skipped (473)
+      Tests  5080 passed | 13 skipped (5093)
+   Start at  11:56:06
+   Duration  26.13s (transform 19.05s, setup 0ms, collect 135.94s, tests 71.05s, environment 44.18s, prepare 15.89s)

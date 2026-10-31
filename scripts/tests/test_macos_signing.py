@@ -512,6 +512,10 @@ else:
             self.assertEqual([], list(runner_temp.iterdir()))
 
 
+@unittest.skipUnless(
+    RELEASE_WORKFLOW_PATH.is_file(),
+    "legacy engine release workflows are not shipped; desktop release contracts are tested separately",
+)
 class MacosSigningWorkflowTests(unittest.TestCase):
     def test_validation_builds_existing_versions_without_publishing(self) -> None:
         release = RELEASE_WORKFLOW_PATH.read_text(encoding="utf-8")

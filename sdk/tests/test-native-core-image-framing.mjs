@@ -21,7 +21,7 @@ let toolCalls = 0;
 let agent;
 const timer = setTimeout(() => assert.fail("native image framing timed out"), 10_000);
 const sse = (...events) => new Response(
-  [...events.map((event) => `data: ${JSON.stringify(event)}\n\n`), "data: [DONE]\n\n"].join(""),
+  [...events.flatMap((event) => event.type === "response.output_item.done" ? [{ ...event, type: "response.output_item.added", item: { ...event.item, arguments: "" } }, event] : [event]).map((event) => `data: ${JSON.stringify(event)}\n\n`), "data: [DONE]\n\n"].join(""),
   { headers: { "content-type": "text/event-stream" } },
 );
 
@@ -44,7 +44,8 @@ try {
     }],
     fetch(_url, init) {
       if (init.method === "GET") {
-        return Response.json({ models: [{ id: "native/image-model", type: "language", tags: ["tool-use", "vision", "file-input"] }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+        // Exercise image framing without triggering context compaction first.
+        return Response.json({ models: [{ id: "native/image-model", type: "language", tags: ["tool-use", "vision", "file-input"] }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 8000000, supported_reasoning_levels: [], input_modalities: ["text", "image"] })) });
       }
       requests += 1;
       if (requests === 1) return sse(
@@ -55,11 +56,9 @@ try {
       assert.ok(init.body.length < 8 * 1024 * 1024);
       assert.ok(Buffer.from(init.body).toString("base64").length > 8 * 1024 * 1024);
       const payload = JSON.parse(Buffer.from(init.body).toString("utf8"));
-      const received = payload.prompt.flatMap((message) => message.content ?? [])
-        .filter((part) => part.type === "tool-result")
-        .flatMap((part) => part.output.value ?? [])
-        .filter((part) => part.type === "image-data");
-      assert.deepEqual(received, images.map(() => ({ type: "image-data", data, mediaType: "image/png" })));
+      const received = payload.input.filter(item => item.type === "function_call_output" && item.call_id === "images1").flatMap(item => item.output)
+        .filter((part) => part.type === "input_image");
+      assert.deepEqual(received.map(part => part.image_url), images.map(() => `data:image/png;base64,${data}`));
       return sse(
         { type: "response.output_text.delta", delta: "received images" },
         { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },

@@ -50,6 +50,8 @@ pub const Config = struct {
     provider_chat_url: []const u8,
     advertised_tool_names: []const []const u8 = &.{},
     advertised_functions: []const model_tool_schema.FunctionSchema = &.{},
+    /// Null follows HANDWORK_ON_DEMAND_TOOLS. Hosts may explicitly opt out.
+    on_demand_tools: ?bool = null,
     initial_dynamic_tools: []const stream_provider.DynamicFunctionTool = &.{},
     provider_capabilities: provider_set.Bundle.Capabilities = .{
         .handwork_search = true,

@@ -1559,9 +1559,11 @@ fn fallbackCommandArtifactDir(alloc: Allocator) ![]u8 {
         io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory
     else
         io_mod.getenv("TMPDIR") orelse "/tmp";
+    const canonical_root = try io_mod.realpathAlloc(alloc, temp_root);
+    defer alloc.free(canonical_root);
     const pid_text = try std.fmt.allocPrint(alloc, "{d}", .{currentProcessId()});
     defer alloc.free(pid_text);
-    return std.fs.path.join(alloc, &.{ temp_root, command_artifact_fallback_dir_name, pid_text });
+    return std.fs.path.join(alloc, &.{ canonical_root, command_artifact_fallback_dir_name, pid_text });
 }
 
 fn currentProcessId() u64 {
@@ -1744,12 +1746,23 @@ test "explicit captured profiles execute exact shells without synthetic stderr" 
         user.output,
     );
     if (std.Io.Dir.accessAbsolute(io_mod.getIo(), "/bin/zsh", .{})) {
+        // User profiles intentionally read startup files. Isolate them from the
+        // developer's ZDOTDIR so diagnostics from local plugins are not fixtures.
+        var tmp = std.testing.tmpDir(.{});
+        defer tmp.cleanup();
+        try tmp.dir.createDirPath(io_mod.getIo(), "home");
+        const home = try io_mod.dirRealpathAlloc(arena, tmp.dir, "home");
+        const wrapper_path = try io_mod.dirRealpathAlloc(arena, tmp.dir, ".");
+        const zsh_path = try std.fs.path.join(arena, &.{ wrapper_path, "zsh" });
+        const quoted_home = try shellQuote(arena, home);
+        const source = try std.fmt.allocPrint(arena, "#!/bin/sh\nexport HOME={s}\nexport ZDOTDIR={s}\nexec /bin/zsh \"$@\"\n", .{ quoted_home, quoted_home });
+        try tmp.dir.writeFile(io_mod.getIo(), .{ .sub_path = "zsh", .data = source, .flags = .{ .permissions = std.Io.File.Permissions.fromMode(0o700) } });
         const zsh_user = try executeCommandInEnvironment(
             cfg,
             arena,
             command,
             "/tmp",
-            .{ .user = "/bin/zsh" },
+            .{ .user = zsh_path },
         );
         try std.testing.expectEqualStrings(
             "exit_code=0\n<stdout>\nprofile-stdout\n</stdout>\n<stderr>\nprofile-stderr\n</stderr>\n",

@@ -53,7 +53,7 @@
           if (sent) return;
           sent = true;
           controller.enqueue(encoded.encode(`data: ${JSON.stringify({ type: "text-delta", id: "browser_followup_1", delta: text })}\n\n`));
-          controller.enqueue(encoded.encode('data: {"type":"finish","finishReason":{"unified":"stop","raw":"stop"},"usage":{"inputTokens":{"total":1},"outputTokens":{"total":1}}}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2}}}\n\n'));
           controller.enqueue(encoded.encode("data: [DONE]\n\n"));
           controller.close();
         },
@@ -83,16 +83,16 @@
           streamChunkCount += 1;
           testState.chunks = streamChunkCount;
           if (streamChunkCount === 1) {
-            controller.enqueue(encoded.encode('data: {"type":"text-delta","delta":"STREAM_STARTED"}\n\n'));
+            controller.enqueue(encoded.encode('data: {"type":"response.output_text.delta","delta":"STREAM_STARTED"}\n\n'));
             return;
           }
           if (streamChunkCount <= 128) {
-            controller.enqueue(encoded.encode('data: {"type":"text-delta","delta":"."}\n\n'));
+            controller.enqueue(encoded.encode('data: {"type":"response.output_text.delta","delta":"."}\n\n'));
             return;
           }
           await bufferedStreamFinished;
-          controller.enqueue(encoded.encode('data: {"type":"text-delta","delta":"STREAM_FINISHED"}\n\n'));
-          controller.enqueue(encoded.encode('data: {"type":"finish","finishReason":{"unified":"stop"},"usage":{"inputTokens":{"total":1},"outputTokens":{"total":2}}}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.output_text.delta","delta":"STREAM_FINISHED"}\n\n'));
+          controller.enqueue(encoded.encode('data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2}}}\n\n'));
           controller.enqueue(encoded.encode("data: [DONE]\n\n"));
           controller.close();
           streamSourceClosed = true;
@@ -110,7 +110,7 @@
     await runtime.interactive;
     testState.stage = "waiting-startup";
     const deadline = performance.now() + 10000;
-    while (!output.includes("Run /help for commands")) {
+    while (!output.includes("Ask anything, or type / for commands")) {
       if (performance.now() >= deadline) throw new Error("startup output missing");
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
@@ -153,7 +153,7 @@
       if (performance.now() >= activeDeadline) throw new Error("active clear did not abort browser fetch");
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
-    while (!output.slice(freshWelcomeOffset).includes("Run /help for commands")) {
+    while (!output.slice(freshWelcomeOffset).includes("Ask anything, or type / for commands")) {
       if (performance.now() >= activeDeadline) throw new Error("active clear did not render a fresh session");
       await new Promise((resolve) => setTimeout(resolve, 10));
     }

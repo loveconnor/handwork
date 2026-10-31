@@ -57,13 +57,15 @@ test("opens the first project from a collapsed projectless sidebar", async ({
   await expect(sidebar).toBeVisible();
   await page.evaluate(() => {
     const fixture = window as unknown as {
-      workspaceInvoke: (
+      __TAURI_INTERNALS__: {
+        invoke: (
           command: string,
           args?: Record<string, unknown>,
         ) => Promise<unknown>;
+      };
     };
-    const base = fixture.workspaceInvoke;
-    fixture.workspaceInvoke = (command, args) => {
+    const base = fixture.__TAURI_INTERNALS__.invoke;
+    fixture.__TAURI_INTERNALS__.invoke = (command, args) => {
       if (command === "plugin:dialog|open")
         return Promise.resolve(["/fixture/first-project"]);
       if (command === "session_list_by_project") return Promise.resolve([]);

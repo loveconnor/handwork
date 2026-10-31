@@ -20,7 +20,7 @@ const max_sse_aggregate_bytes: usize = 64 * 1024 * 1024;
 const max_sse_events: usize = 100_000;
 const max_tool_calls: usize = 128;
 const max_tool_identity_bytes: usize = 1024;
-const max_tool_arguments_bytes: usize = 4 * 1024 * 1024;
+const max_tool_arguments_bytes = @import("../core/shared/tool_payload_limits.zig").arguments_json_bytes;
 const max_provider_state_bytes: usize = 4 * 1024 * 1024;
 const transfer_buffer_bytes: usize = 256 * 1024;
 const connect_timeout_ms: i64 = 30_000;
@@ -347,6 +347,7 @@ pub fn streamPrepared(
 
     var response = try http_request.receiveHead(&.{});
     if (response.head.status != .ok) {
+        const retry_after_seconds = provider_client.retryAfterSeconds(response.head);
         var transfer: [16 * 1024]u8 = undefined;
         const reader = response.reader(&transfer);
         const body = reader.allocRemaining(alloc, .limited(max_error_body_bytes)) catch |err| switch (err) {
@@ -355,6 +356,7 @@ pub fn streamPrepared(
         };
         return .{ .failed = .{
             .kind = failureKind(response.head.status),
+            .retry_after_seconds = retry_after_seconds,
             .detail = body,
             .ownership = .owned,
         } };

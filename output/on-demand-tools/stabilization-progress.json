@@ -1,0 +1,92 @@
+{
+  "status": "completed: all enabled checks in the local macOS verification matrix passed",
+  "scope": "User approved repository-wide stabilization before shipping",
+  "native_baseline": {
+    "passed": 8568,
+    "skipped": 4,
+    "failed": 137,
+    "crashed": 11,
+    "leaks": 1,
+    "qualification": "Baseline Grok SSE fixture cleanup patched to wake accept so suite can finish. No other baseline behavior changed."
+  },
+  "pre_stabilization": {
+    "passed": 8580,
+    "skipped": 4,
+    "failed": 132,
+    "crashed": 9,
+    "leaks": 1,
+    "new_failure_names_vs_baseline": []
+  },
+  "startup_draft_estimate": 1584,
+  "paid_pilot_attempts_used": 6,
+  "focused_checks": [
+    {
+      "check": "tool-flow-check3",
+      "summary": "10/10 steps succeeded; 142/142 tests passed",
+      "log": "/tmp/handwork-tool-flow-check3.log"
+    },
+    {
+      "check": "config-check2",
+      "summary": "10/10 steps succeeded; 88/88 tests passed",
+      "log": "/tmp/handwork-config-check2.log"
+    },
+    {
+      "check": "codec-check2",
+      "summary": "10/10 steps succeeded; 55/55 tests passed",
+      "log": "/tmp/handwork-codec-check2.log"
+    },
+    {
+      "check": "vision-check2",
+      "summary": "10/10 steps succeeded; 27/27 tests passed",
+      "log": "/tmp/handwork-vision-check2.log"
+    },
+    {
+      "check": "settings-store-check2",
+      "summary": "10/10 steps succeeded; 71/71 tests passed",
+      "log": "/tmp/handwork-settings-store-check2.log"
+    },
+    {
+      "check": "output-check2",
+      "summary": "10/10 steps succeeded; 43/43 tests passed",
+      "log": "/tmp/handwork-output-check2.log"
+    },
+    {
+      "check": "cli-check",
+      "summary": "10/10 steps succeeded; 77/77 tests passed",
+      "log": "/tmp/handwork-cli-check.log"
+    },
+    {
+      "check": "client-check",
+      "summary": "10/10 steps succeeded; 25/25 tests passed",
+      "log": "/tmp/handwork-client-check.log"
+    },
+    {
+      "check": "vision-contract-check",
+      "summary": "10/10 steps succeeded; 46/46 tests passed",
+      "log": "/tmp/handwork-vision-contract-check.log"
+    },
+    {
+      "check": "host-provider-check",
+      "summary": "10/10 steps succeeded; 20/20 tests passed",
+      "log": "/tmp/handwork-host-provider-check.log"
+    },
+    {
+      "check": "store-check",
+      "summary": "8/10 steps succeeded (1 failed); 120/122 tests passed (1 skipped, 1 failed)",
+      "log": "/tmp/handwork-store-check.log"
+    }
+  ],
+  "full_native_log": "verification/handwork-stabilization-full10.log",
+  "full_native": {
+    "passed": 8725,
+    "skipped": 4,
+    "failed": 0,
+    "crashed": 0,
+    "leaks": 0,
+    "log": "verification/handwork-stabilization-full10.log"
+  },
+  "e2e_progress": "e2e-verification.json",
+  "focused_checks_note": "Historical intermediate results below are superseded by the full native and final validation record.",
+  "final_startup_estimate": 1584,
+  "validation_record": "validation.json"
+}

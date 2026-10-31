@@ -1,0 +1,82 @@
+1793452719571 [agent] event=instruction_loading_context notice_bytes=276
+1793452719571 [agent] event=instruction_missing_context paths=2 json_bytes=268
+1793452719571 [agent] event=prompt_start turn_id=1 prompt_bytes=212 model=gpt-6.1-sol
+1793452719571 [agent] event=request_attempt_started request_id=1 purpose=generation
+1793452719572 [agent] event=request_composition instruction_bytes=275 conversation_bytes=212 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=0 wire_bytes=0 messages=1
+1793452719572 [agent] event=provider_admitted model=gpt-5.6-luna request_id=1
+1793452720336 [agent] event=bounded_delegation subagent_id=0 enabled=true available=true guidance_bytes=0 child_policy_bytes=396 prompt_profile=parent prompt_saved_bytes=1508
+1793452720336 [agent] step start step=1 limit=0 messages=7
+1793452720336 [agent] event=step_begin turn_id=1 step_id=1 step_index=1 step_limit=0 provider_messages=7
+1793452720336 [agent] event=before_provider_preflight turn_id=1 step_id=1 model=gpt-6.1-sol messages=7
+1793452720336 [agent] event=vision_policy turn_id=1 step_id=1 model=gpt-6.1-sol image_support=native route=native mode=unavailable pending_images=0
+1793452720337 [agent] event=recovery_checkpoint_set turn_id=1 step_id=1 provider_attempts=0/10 outstanding=true cause=transport_interrupted action=retry_request
+1793452720337 [agent] event=request_attempt_started turn_id=1 step_id=1 request_id=2 purpose=generation
+1793452720338 [agent] event=request_composition turn_id=1 step_id=1 instruction_bytes=6822 conversation_bytes=212 tool_result_bytes=0 tool_argument_bytes=0 replay_bytes=0 schema_json_bytes=19979 wire_bytes=27404 messages=1
+1793452720340 [agent] event=provider_admitted turn_id=1 step_id=1 model=gpt-6.1-sol request_id=2
+1793452720516 [agent] event=request_accounting request_id=1 status=completed admitted=true possibly_sent=true elapsed_ms=945 input_known=true output_known=true cache_known=true input=116 output=10 cached=0 consistent=true purpose=generation
+1793452720517 [agent] event=request_finished elapsed_ms=946 input_tokens=116 output_tokens=10 cached_input_tokens=0 usage_available=true
+1793452723429 [agent] event=request_accounting turn_id=1 step_id=1 request_id=2 status=completed admitted=true possibly_sent=true elapsed_ms=3092 input_known=true output_known=true cache_known=true input=4734 output=105 cached=0 consistent=true purpose=generation
+1793452723429 [agent] event=request_finished turn_id=1 step_id=1 elapsed_ms=3092 input_tokens=4734 output_tokens=105 cached_input_tokens=0 usage_available=true
+1793452723435 [agent] event=recovery_checkpoint_set turn_id=1 step_id=1 provider_attempts=1/10 outstanding=false cause=transport_interrupted action=retry_request
+1793452723435 [agent] event=tool_presentation_group turn_id=1 step_id=1 anchor_step_id=0 visible_tool_calls=true saw_tool_start=true visible_text=true saw_visible_text_after_tool_start=true
+1793452723435 [agent] step completion step=1 content_bytes=104 tool_calls=2 finish_reason=tool-calls
+1793452723435 [agent] event=assistant_completion turn_id=1 step_id=1 content_bytes=104 tool_call_count=2 finish_reason=tool-calls
+1793452723558 [agent] step start step=2 limit=0 messages=10
+1793452723558 [agent] event=step_begin turn_id=1 step_id=2 step_index=2 step_limit=0 provider_messages=10
+1793452723558 [agent] event=before_provider_preflight turn_id=1 step_id=2 model=gpt-6.1-sol messages=10
+1793452723558 [agent] event=vision_policy turn_id=1 step_id=2 model=gpt-6.1-sol image_support=native route=native mode=unavailable pending_images=0
+1793452723558 [agent] event=recovery_checkpoint_set turn_id=1 step_id=2 provider_attempts=0/10 outstanding=true cause=transport_interrupted action=retry_request
+1793452723558 [agent] event=request_attempt_started turn_id=1 step_id=2 request_id=3 purpose=generation
+1793452723559 [agent] event=request_composition turn_id=1 step_id=2 instruction_bytes=6822 conversation_bytes=316 tool_result_bytes=554 tool_argument_bytes=145 replay_bytes=65 schema_json_bytes=19979 wire_bytes=28818 messages=4
+1793452723559 [agent] event=provider_admitted turn_id=1 step_id=2 model=gpt-6.1-sol request_id=3
+1793452726101 [agent] event=request_accounting turn_id=1 step_id=2 request_id=3 status=completed admitted=true possibly_sent=true elapsed_ms=2543 input_known=true output_known=true cache_known=true input=5001 output=32 cached=4736 consistent=true purpose=generation
+1793452726105 [agent] event=request_finished turn_id=1 step_id=2 elapsed_ms=2547 input_tokens=5001 output_tokens=32 cached_input_tokens=4736 usage_available=true
+1793452726109 [agent] event=recovery_checkpoint_set turn_id=1 step_id=2 provider_attempts=1/10 outstanding=false cause=transport_interrupted action=retry_request
+1793452726109 [agent] event=tool_presentation_group turn_id=1 step_id=2 anchor_step_id=2 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1793452726110 [agent] step completion step=2 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1793452726110 [agent] event=assistant_completion turn_id=1 step_id=2 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+1793452726110 [agent] event=instruction_missing_context paths=1 json_bytes=163
+1793452726110 [agent] event=read_batch_complete file_read_operations=2
+1793452726111 [agent] step start step=3 limit=0 messages=13
+1793452726111 [agent] event=step_begin turn_id=1 step_id=3 step_index=3 step_limit=0 provider_messages=13
+1793452726111 [agent] event=before_provider_preflight turn_id=1 step_id=3 model=gpt-6.1-sol messages=13
+1793452726111 [agent] event=vision_policy turn_id=1 step_id=3 model=gpt-6.1-sol image_support=native route=native mode=unavailable pending_images=0
+1793452726112 [agent] event=recovery_checkpoint_set turn_id=1 step_id=3 provider_attempts=0/10 outstanding=true cause=transport_interrupted action=retry_request
+1793452726112 [agent] event=request_attempt_started turn_id=1 step_id=3 request_id=4 purpose=generation
+1793452726112 [agent] event=request_composition turn_id=1 step_id=3 instruction_bytes=7046 conversation_bytes=316 tool_result_bytes=903 tool_argument_bytes=201 replay_bytes=65 schema_json_bytes=19979 wire_bytes=29682 messages=6
+1793452726113 [agent] event=provider_admitted turn_id=1 step_id=3 model=gpt-6.1-sol request_id=4
+1793452729267 [agent] event=request_accounting turn_id=1 step_id=3 request_id=4 status=completed admitted=true possibly_sent=true elapsed_ms=3155 input_known=true output_known=true cache_known=true input=5236 output=74 cached=3072 consistent=true purpose=generation
+1793452729268 [agent] event=request_finished turn_id=1 step_id=3 elapsed_ms=3156 input_tokens=5236 output_tokens=74 cached_input_tokens=3072 usage_available=true
+1793452729270 [agent] event=recovery_checkpoint_set turn_id=1 step_id=3 provider_attempts=1/10 outstanding=false cause=transport_interrupted action=retry_request
+1793452729270 [agent] event=tool_presentation_group turn_id=1 step_id=3 anchor_step_id=2 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1793452729270 [agent] step completion step=3 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1793452729270 [agent] event=assistant_completion turn_id=1 step_id=3 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+1793452729272 [agent] step start step=4 limit=0 messages=15
+1793452729272 [agent] event=step_begin turn_id=1 step_id=4 step_index=4 step_limit=0 provider_messages=15
+1793452729273 [agent] event=before_provider_preflight turn_id=1 step_id=4 model=gpt-6.1-sol messages=15
+1793452729273 [agent] event=vision_policy turn_id=1 step_id=4 model=gpt-6.1-sol image_support=native route=native mode=unavailable pending_images=0
+1793452729273 [agent] event=recovery_checkpoint_set turn_id=1 step_id=4 provider_attempts=0/10 outstanding=true cause=transport_interrupted action=retry_request
+1793452729273 [agent] event=request_attempt_started turn_id=1 step_id=4 request_id=5 purpose=generation
+1793452729273 [agent] event=request_composition turn_id=1 step_id=4 instruction_bytes=7046 conversation_bytes=316 tool_result_bytes=934 tool_argument_bytes=391 replay_bytes=65 schema_json_bytes=19979 wire_bytes=30118 messages=8
+1793452729275 [agent] event=provider_admitted turn_id=1 step_id=4 model=gpt-6.1-sol request_id=5
+1793452735747 [agent] event=request_accounting turn_id=1 step_id=4 request_id=5 status=completed admitted=true possibly_sent=true elapsed_ms=6474 input_known=true output_known=true cache_known=true input=5331 output=292 cached=5120 consistent=true purpose=generation
+1793452735748 [agent] event=request_finished turn_id=1 step_id=4 elapsed_ms=6475 input_tokens=5331 output_tokens=292 cached_input_tokens=5120 usage_available=true
+1793452735750 [agent] event=recovery_checkpoint_set turn_id=1 step_id=4 provider_attempts=1/10 outstanding=false cause=transport_interrupted action=retry_request
+1793452735750 [agent] event=tool_presentation_group turn_id=1 step_id=4 anchor_step_id=2 visible_tool_calls=true saw_tool_start=true visible_text=false saw_visible_text_after_tool_start=false
+1793452735750 [agent] step completion step=4 content_bytes=0 tool_calls=1 finish_reason=tool-calls
+1793452735750 [agent] event=assistant_completion turn_id=1 step_id=4 content_bytes=0 tool_call_count=1 finish_reason=tool-calls
+1793452737589 [agent] step start step=5 limit=0 messages=17
+1793452737589 [agent] event=step_begin turn_id=1 step_id=5 step_index=5 step_limit=0 provider_messages=17
+1793452737589 [agent] event=before_provider_preflight turn_id=1 step_id=5 model=gpt-6.1-sol messages=17
+1793452737589 [agent] event=vision_policy turn_id=1 step_id=5 model=gpt-6.1-sol image_support=native route=native mode=unavailable pending_images=0
+1793452737590 [agent] event=recovery_checkpoint_set turn_id=1 step_id=5 provider_attempts=0/10 outstanding=true cause=transport_interrupted action=retry_request
+1793452737590 [agent] event=request_attempt_started turn_id=1 step_id=5 request_id=6 purpose=generation
+1793452737590 [agent] event=request_composition turn_id=1 step_id=5 instruction_bytes=7046 conversation_bytes=316 tool_result_bytes=1278 tool_argument_bytes=1188 replay_bytes=65 schema_json_bytes=19979 wire_bytes=31528 messages=10
+1793452737591 [agent] event=provider_admitted turn_id=1 step_id=5 model=gpt-6.1-sol request_id=6
+1793452740307 [agent] event=request_accounting turn_id=1 step_id=5 request_id=6 status=completed admitted=true possibly_sent=true elapsed_ms=2717 input_known=true output_known=true cache_known=true input=5717 output=47 cached=5504 consistent=true purpose=generation
+1793452740307 [agent] event=request_finished turn_id=1 step_id=5 elapsed_ms=2717 input_tokens=5717 output_tokens=47 cached_input_tokens=5504 usage_available=true
+1793452740313 [agent] event=recovery_checkpoint_set turn_id=1 step_id=5 provider_attempts=1/10 outstanding=false cause=transport_interrupted action=retry_request
+1793452740313 [agent] event=tool_presentation_group turn_id=1 step_id=5 anchor_step_id=0 visible_tool_calls=false saw_tool_start=false visible_text=true saw_visible_text_after_tool_start=false
+1793452740313 [agent] step completion step=5 content_bytes=201 tool_calls=0 finish_reason=stop
+1793452740313 [agent] event=assistant_completion turn_id=1 step_id=5 content_bytes=201 tool_call_count=0 finish_reason=stop
+1793452740316 [agent] event=prompt_finish turn_id=1 outcome_kind=assistant

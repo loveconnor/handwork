@@ -1,0 +1,9 @@
+tests/e2e/tmux-helpers.test.ts:
+(pass) pane exit matching requires the expected observed status [0.10ms]
+(pass) launched process PID parsing requires one direct child [0.26ms]
+(pass) volatile token status rows stay narrowly classified [0.25ms]
+(pass) observed command keeps wrapper signal diagnostics out of captured stderr [19.32ms]
+(pass) pane environment does not poison a shared tmux server [301.80ms]
+(pass) minimum history lines survive a fresh tmux server restart [180.53ms]
+(pass) empty composer recognition includes clipped placeholder text [0.07ms]
+(pass) Codex fixture streams keep text and parallel calls on distinct output indices

@@ -4376,6 +4376,9 @@ test "ACP prompt projection configures web search then blocks native execution" 
         calls: usize = 0,
     };
     const FailingWebSearchProvider = struct {
+        fn preferredBackends(_: ?*anyopaque) anyerror!?[]const web_search_contract.SearchBackendId {
+            return null;
+        }
         fn execute(
             raw_ctx: ?*anyopaque,
             _: Allocator,
@@ -4401,9 +4404,13 @@ test "ACP prompt projection configures web search then blocks native execution" 
     state.writer = .{ .stdout = capture };
     var ctx = AcpContext{ .alloc = arena, .state = &state, .session_id = "session_1" };
     var provider_state = ProviderState{};
-    var provider = state.web_search_runtime.provider orelse return error.TestExpectedEqual;
-    provider.context = @ptrCast(&provider_state);
-    provider.execute_fn = FailingWebSearchProvider.execute;
+    const provider = @import("../core/tooling/web_search_provider.zig").Provider{
+        .context = @ptrCast(&provider_state),
+        .policy = .{},
+        .preferred_backends_fn = FailingWebSearchProvider.preferredBackends,
+        .execute_fn = FailingWebSearchProvider.execute,
+    };
+    state.cfg.provider_set.codex.capabilities.handwork_search = true;
     state.web_search_runtime = web_search_runtime.Runtime.init(.{
         .provider = provider,
     });
@@ -4772,7 +4779,7 @@ test "ACP full advertisement includes direct provider search with explicit permi
     });
     defer projection.deinit(std.testing.allocator);
     try std.testing.expect(tool_projection_mod.containsName(projection.advertised_names, "web_search"));
-    try std.testing.expectEqualStrings(builtin_tools.web_search.description, projection.custom_guidance);
+    try std.testing.expectEqualStrings("", projection.custom_guidance);
 }
 
 test "ACP prompt agent config carries request options from active session" {
@@ -4809,13 +4816,9 @@ test "ACP prompt agent config carries request options from active session" {
     var ctx = AcpContext{ .alloc = alloc, .state = &state, .session_id = "session_1" };
     const tool_ctx = ctx.toolContext();
     try std.testing.expect(!tool_ctx.web_search_runtime_ready);
-    try std.testing.expect(tool_ctx.web_search_backend != null);
-    try std.testing.expect(state.web_search_runtime.provider.?.execute_fn == state.cfg.provider_set.codex.handwork_search.?.execute_fn);
-    try std.testing.expect(state.web_search_runtime.provider.?.preferred_backends_fn == state.cfg.provider_set.codex.handwork_search.?.preferred_backends_fn);
+    try std.testing.expect(tool_ctx.web_search_backend == null);
+    try std.testing.expect(state.web_search_runtime.provider == null);
     try std.testing.expect(tool_ctx.web_fetch_runtime.? == &state.web_fetch_runtime);
-    try std.testing.expectEqualStrings(session.model, state.web_search_runtime.worker_model);
-    try std.testing.expectEqual(state.cfg.provider_retry_count, state.web_search_runtime.provider_retry_count);
-    try std.testing.expectEqualStrings(state.cfg.provider_chat_url, state.web_search_runtime.provider_chat_url);
     try std.testing.expectEqualStrings("/models", tool_ctx.provider_models_path);
 }
 

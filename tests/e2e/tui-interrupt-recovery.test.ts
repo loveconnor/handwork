@@ -35,7 +35,7 @@ const PARTIAL_CHUNKS = [
 ];
 const VISIBLE_PARTIAL_CHUNKS = PARTIAL_CHUNKS.slice(0, 2);
 const FOLLOW_UP_RESPONSE = "INTERRUPT_FOLLOW_UP_COMPLETE";
-const FOLLOW_UP_MODEL = "google/gemini-3.1-flash-lite";
+const FOLLOW_UP_MODEL = "gpt-5.6-luna";
 
 type ProviderHandle = ReturnType<typeof startFakeCodex>;
 type HoldState = {
@@ -346,7 +346,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
         prompt: unknown;
         tools: unknown[];
       };
-      const steeringPrompt = JSON.stringify(steeringRequest.prompt);
+      const steeringPrompt = JSON.stringify(steeringRequest.input);
       expect(steeringPrompt).toContain(steeringText);
       expect(steeringRequest.tools.length).toBeGreaterThan(0);
       expect(provider.requests[1]!.body).not.toContain(
@@ -481,7 +481,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const settingsPath = join(home, ".handwork", "settings.json");
       writeFileSync(
         settingsPath,
-        JSON.stringify({ model: FAKE_CODEX_MODEL }) + "\n",
+        JSON.stringify({ provider: "codex", models: { codex: FAKE_CODEX_MODEL } }) + "\n",
       );
 
       const held: HoldState = {
@@ -542,8 +542,10 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
         Array.from({ length: gapRows.length }, () => ""),
       );
       await session.sendText(`/model ${FOLLOW_UP_MODEL}`);
+      await session.waitForText("medium", TIMEOUT);
+      await session.sendKeys("Enter");
       await waitForCondition(
-        () => JSON.parse(readFileSync(settingsPath, "utf8")).models?.provider === FOLLOW_UP_MODEL,
+        () => JSON.parse(readFileSync(settingsPath, "utf8")).models?.codex === FOLLOW_UP_MODEL,
         "follow-up model persistence",
       );
       await session.sendText("Confirm that the next prompt still works.");
@@ -577,18 +579,18 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       expect(held.cancelCount).toBe(1);
       expect(countOccurrences(readTrace(tracePath), "event=interrupt_persisted")).toBe(1);
       const followUpRequest = JSON.parse(provider.requests[1]!.body) as {
-        prompt: Array<{ role: string }>;
+        input: Array<{ role: string }>;
         tools: unknown[];
       };
-      const followUpPrompt = JSON.stringify(followUpRequest.prompt);
-      expect(provider.requests[0]!.headers.get("ai-language-model-id")).toBe(
+      const followUpPrompt = JSON.stringify(followUpRequest.input);
+      expect(JSON.parse(provider.requests[0]!.body).model).toBe(
         FAKE_CODEX_MODEL,
       );
-      expect(provider.requests[1]!.headers.get("ai-language-model-id")).toBe(
+      expect(JSON.parse(provider.requests[1]!.body).model).toBe(
         FOLLOW_UP_MODEL,
       );
       expect(
-        followUpRequest.prompt
+        followUpRequest.input
           .filter((entry) => entry.role !== "system")
           .map((entry) => entry.role),
       ).toEqual([
@@ -900,9 +902,9 @@ function heldPartialResponse(state: HoldState): Response {
 function providerPortableResponse(text: string): Response {
   const request = provider?.requests.at(-1);
   if (!request) return new Response("missing captured request", { status: 500 });
-  const payload = JSON.parse(request.body) as { prompt: Array<{ role: string }> };
+  const payload = JSON.parse(request.body) as { input: Array<{ role: string }> };
   let sawNonSystem = false;
-  for (const entry of payload.prompt) {
+  for (const entry of payload.input) {
     if (entry.role === "system") {
       if (sawNonSystem) {
         return new Response("system role must remain in the leading prefix", {

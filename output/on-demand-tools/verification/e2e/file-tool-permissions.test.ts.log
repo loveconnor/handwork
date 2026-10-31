@@ -1,0 +1,3 @@
+tests/e2e/file-tool-permissions.test.ts:
+(pass) external file permissions > handwork ask --yolo bypasses a configured write denial without a classifier request [47.45ms]
+(pass) external file permissions > handwork ask reads external paths and exercises classifier and rule-gated writes [139.56ms]

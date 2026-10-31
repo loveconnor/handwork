@@ -5840,17 +5840,12 @@ test "writable legacy resume converts once to conversation storage" {
     );
 
     {
-        var resumed = try ctx.store.resumeForWrite(
-            alloc,
-            "legacy-conversation-convert",
-        );
+        var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = "legacy-conversation-convert" }, ctx.store.workspace_root, .{ .seed_preferences = legacy_test_preferences });
         defer resumed.deinit(alloc);
     }
-    var detail = try ctx.store.loadReadOnlyDetail(
-        alloc,
-        "legacy-conversation-convert",
-        .{},
-    );
+    var detail = try ctx.store.loadReadOnlyDetail(alloc, "legacy-conversation-convert", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer detail.deinit(alloc);
     try std.testing.expectEqual(StorageFormat.conversation, detail.storage_format);
     var session_dir = try ctx.store.openSessionDir("legacy-conversation-convert");
@@ -5935,14 +5930,12 @@ test "legacy conversion externalizes available inline tool results" {
     alloc.free(path);
 
     {
-        var resumed = try ctx.store.resumeForWrite(alloc, "legacy-result-convert");
+        var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = "legacy-result-convert" }, ctx.store.workspace_root, .{ .seed_preferences = legacy_test_preferences });
         resumed.deinit(alloc);
     }
-    var detail = try ctx.store.loadReadOnlyDetail(
-        alloc,
-        "legacy-result-convert",
-        .{},
-    );
+    var detail = try ctx.store.loadReadOnlyDetail(alloc, "legacy-result-convert", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer detail.deinit(alloc);
     const result = detail.state.history[0].assistant.execution.tool_steps[0].tool_results[0];
     try std.testing.expect(result.output_handle != null);
@@ -6366,12 +6359,9 @@ test "durable resume repairs legacy zero image ids without changing valid ids" {
     const fixture_path = try writeSessionFixture(alloc, ctx.store, session_id, fixture_text);
     defer alloc.free(fixture_path);
 
-    var resumed = try ctx.store.resumeTargetForWrite(
-        alloc,
-        .{ .id = session_id },
-        ctx.workspace,
-        .{},
-    );
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = session_id }, ctx.workspace, .{
+        .seed_preferences = legacy_test_preferences,
+    });
     var resumed_owned = true;
     defer if (resumed_owned) resumed.deinit(alloc);
 
@@ -6408,7 +6398,7 @@ test "durable resume repairs legacy zero image ids without changing valid ids" {
 
     resumed.deinit(alloc);
     resumed_owned = false;
-    var persisted = try ctx.store.loadReadOnly(alloc, session_id);
+    var persisted = try loadLegacyFixtureWithProvider(ctx.store, alloc, session_id);
     defer persisted.deinit(alloc);
     try std.testing.expectEqualStrings(
         "first [Image #1]",
@@ -6476,12 +6466,9 @@ test "durable resume does not follow a symlinked snapshot directory" {
         else => return err,
     };
 
-    var resumed = try ctx.store.resumeTargetForWrite(
-        alloc,
-        .{ .id = session_id },
-        ctx.workspace,
-        .{},
-    );
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = session_id }, ctx.workspace, .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer resumed.deinit(alloc);
 
     try std.testing.expectEqual(@as(usize, 0), resumed.state.history[0].assistant.user.images.len);
@@ -7569,7 +7556,9 @@ test "writable last ignores an unrelated legacy authority fence" {
     try writeLegacyFixture(alloc, ctx.store, "foreign-fenced", "/foreign-workspace", 20);
     try writeFixtureEntry(alloc, ctx.store, "foreign-fenced", "authority.pending.json", "pending");
 
-    var resumed = try ctx.store.resumeTargetForWrite(alloc, .last, ctx.workspace, .{});
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .last, ctx.workspace, .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer resumed.deinit(alloc);
     try std.testing.expectEqualStrings("local", resumed.active_id);
     const unchanged = try readFixtureFile(alloc, ctx.store, "foreign-fenced", "authority.pending.json", 1024);
@@ -7591,7 +7580,9 @@ test "writable last reaches selected legacy authority recovery" {
     try writeFixtureEntry(alloc, ctx.store, "recover-latest", "authority.pending.json", "pending");
     try writeFixtureEntry(alloc, ctx.store, "recover-latest", "session.json", "interrupted replacement");
 
-    var resumed = try ctx.store.resumeTargetForWrite(alloc, .last, ctx.workspace, .{});
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .last, ctx.workspace, .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer resumed.deinit(alloc);
     try std.testing.expectEqualStrings("recover-latest", resumed.active_id);
     var dir = try ctx.store.openSessionDir("recover-latest");
@@ -7933,7 +7924,7 @@ test "exact legacy read does not create state" {
     defer ctx.deinit(alloc);
     try writeLegacyFixture(alloc, ctx.store, "legacy-detail", ctx.workspace, 20);
 
-    var loaded = try ctx.store.loadReadOnly(alloc, "legacy-detail");
+    var loaded = try loadLegacyFixtureWithProvider(ctx.store, alloc, "legacy-detail");
     defer loaded.deinit(alloc);
     try std.testing.expectEqualStrings("legacy-detail", loaded.id);
     const session_dir = try sessionDirPath(
@@ -7961,15 +7952,15 @@ test "malformed settings do not block legacy detail or migration" {
     try writeRawFile(settings_path, "{broken");
     try writeLegacyFixture(alloc, ctx.store, "legacy-with-bad-settings", ctx.workspace, 20);
 
-    var loaded = try ctx.store.loadReadOnly(alloc, "legacy-with-bad-settings");
+    var loaded = try loadLegacyFixtureWithProvider(ctx.store, alloc, "legacy-with-bad-settings");
     defer loaded.deinit(alloc);
     try std.testing.expectEqualStrings("legacy-with-bad-settings", loaded.id);
-    try std.testing.expectEqualStrings("anthropic/claude-opus-4.7", loaded.preferences.model);
+    try std.testing.expectEqualStrings(legacy_test_preferences.model, loaded.preferences.model);
 
-    var resumed = try ctx.store.resumeForWrite(alloc, "legacy-with-bad-settings");
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = "legacy-with-bad-settings" }, ctx.store.workspace_root, .{ .seed_preferences = legacy_test_preferences });
     defer resumed.deinit(alloc);
     try std.testing.expectEqualStrings("legacy-with-bad-settings", resumed.state.id);
-    try std.testing.expectEqualStrings("anthropic/claude-opus-4.7", resumed.state.preferences.model);
+    try std.testing.expectEqualStrings(legacy_test_preferences.model, resumed.state.preferences.model);
 }
 
 test "explicit conversation resume rebinds workspace" {
@@ -8012,11 +8003,13 @@ test "writable resume migrates legacy storage" {
     defer ctx.deinit(alloc);
     try writeLegacyFixture(alloc, ctx.store, "legacy-migrate", ctx.workspace, 20);
 
-    var resumed = try ctx.store.resumeForWrite(alloc, "legacy-migrate");
+    var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = "legacy-migrate" }, ctx.store.workspace_root, .{ .seed_preferences = legacy_test_preferences });
     defer resumed.deinit(alloc);
     try std.testing.expectEqualStrings("legacy-migrate", resumed.state.id);
     try std.testing.expectEqualStrings(ctx.workspace, resumed.state.workspace_root);
-    var detail = try ctx.store.loadReadOnlyDetail(alloc, "legacy-migrate", .{});
+    var detail = try ctx.store.loadReadOnlyDetail(alloc, "legacy-migrate", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer detail.deinit(alloc);
     try std.testing.expectEqual(StorageFormat.conversation, detail.storage_format);
 }
@@ -8037,7 +8030,7 @@ test "writable legacy resume preserves summary tail and incomplete authority thr
     );
 
     {
-        var resumed = try ctx.store.resumeForWrite(alloc, session_id);
+        var resumed = try ctx.store.resumeTargetForWrite(alloc, .{ .id = session_id }, ctx.store.workspace_root, .{ .seed_preferences = legacy_test_preferences });
         defer resumed.deinit(alloc);
         try std.testing.expectEqual(@as(usize, 2), resumed.state.history.len);
         try std.testing.expectEqualStrings("legacy summary", resumed.state.history[0].compacted_summary.summary);
@@ -8051,7 +8044,7 @@ test "writable legacy resume preserves summary tail and incomplete authority thr
         );
     }
 
-    var reloaded = try ctx.store.loadReadOnly(alloc, session_id);
+    var reloaded = try loadLegacyFixtureWithProvider(ctx.store, alloc, session_id);
     defer reloaded.deinit(alloc);
     try std.testing.expectEqual(@as(usize, 2), reloaded.history.len);
     try std.testing.expectEqualStrings("legacy summary", reloaded.history[0].compacted_summary.summary);
@@ -8110,11 +8103,9 @@ test "storage-only migration preserves legacy v2 source metadata" {
         20,
     );
 
-    var result = try ctx.store.migrateLegacyStorageOnly(
-        alloc,
-        "legacy-v2-migrate",
-        .{},
-    );
+    var result = try ctx.store.migrateLegacyStorageOnly(alloc, "legacy-v2-migrate", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer result.deinit(alloc);
     try std.testing.expectEqual(SessionMigrationStatus.migrated, result.status);
     try std.testing.expectEqual(@as(u8, 2), result.source_schema_version);
@@ -8135,11 +8126,7 @@ test "storage only migration accepts legacy snapshots larger than v3 manifest ca
         20,
     );
 
-    var result = try ctx.store.migrateLegacyStorageOnly(
-        alloc,
-        "legacy-large-migrate",
-        .{ .allow_large = true },
-    );
+    var result = try ctx.store.migrateLegacyStorageOnly(alloc, "legacy-large-migrate", .{ .seed_preferences = legacy_test_preferences, .allow_large = true });
     defer result.deinit(alloc);
     try std.testing.expectEqual(SessionMigrationStatus.migrated, result.status);
     try std.testing.expectEqual(@as(u8, 1), result.source_schema_version);
@@ -8160,19 +8147,15 @@ test "normal legacy classification parses top level schema beyond manifest prefi
         20,
     );
 
-    var detail = try ctx.store.loadReadOnlyDetail(
-        alloc,
-        "legacy-prefix-schema",
-        .{},
-    );
+    var detail = try ctx.store.loadReadOnlyDetail(alloc, "legacy-prefix-schema", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer detail.deinit(alloc);
     try std.testing.expectEqual(StorageFormat.legacy_v1, detail.storage_format);
 
-    var result = try ctx.store.migrateLegacyStorageOnly(
-        alloc,
-        "legacy-prefix-schema",
-        .{},
-    );
+    var result = try ctx.store.migrateLegacyStorageOnly(alloc, "legacy-prefix-schema", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer result.deinit(alloc);
     try std.testing.expectEqual(SessionMigrationStatus.migrated, result.status);
 }
@@ -8191,11 +8174,9 @@ test "migration result reports captured source metadata" {
         20,
     );
 
-    var result = try ctx.store.migrateLegacyStorageOnly(
-        alloc,
-        "legacy-large-result",
-        .{},
-    );
+    var result = try ctx.store.migrateLegacyStorageOnly(alloc, "legacy-large-result", .{
+        .seed_preferences = legacy_test_preferences,
+    });
     defer result.deinit(alloc);
     try std.testing.expectEqual(SessionMigrationStatus.migrated, result.status);
     try std.testing.expectEqual(@as(u8, 1), result.source_schema_version);
@@ -8444,7 +8425,7 @@ test "history page cursor rejects another session and noncanonical encodings" {
     }
 }
 
-test "history page handles empty and legacy readable sessions" {
+test "history page handles empty sessions and legacy sessions after explicit provider migration" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -8457,6 +8438,11 @@ test "history page handles empty and legacy readable sessions" {
     try std.testing.expect(empty.next_cursor == null);
 
     try writeLegacyFixture(alloc, ctx.store, "history-legacy", ctx.workspace, 20);
+    try std.testing.expectError(error.CorruptSession, ctx.store.loadHistoryPage(alloc, "history-legacy", null, 1));
+    var migrated = try ctx.store.resumeTargetForWrite(alloc, .{ .id = "history-legacy" }, ctx.workspace, .{
+        .seed_preferences = legacy_test_preferences,
+    });
+    migrated.deinit(alloc);
     var legacy = try ctx.store.loadHistoryPage(alloc, "history-legacy", null, 1);
     defer legacy.deinit(alloc);
     try std.testing.expectEqual(@as(usize, 0), legacy.turns.len);
@@ -8886,4 +8872,17 @@ test "remembered session reader retains an opened version across atomic replacem
     const current = (try ctx.store.readRememberedSessionId(alloc)).?;
     defer alloc.free(current);
     try std.testing.expectEqualStrings("after", current);
+}
+
+const legacy_test_preferences: session_codec.DurableSessionPreferences = .{
+    .provider = .codex,
+    .model = @constCast("test/model"),
+    .effort = .auto,
+    .fast_mode = false,
+};
+
+fn loadLegacyFixtureWithProvider(store: Store, alloc: Allocator, id: []const u8) !session_codec.DurableSessionState {
+    var detail = try store.loadReadOnlyDetail(alloc, id, .{ .seed_preferences = legacy_test_preferences });
+    detail.summary.deinit(alloc);
+    return detail.state;
 }

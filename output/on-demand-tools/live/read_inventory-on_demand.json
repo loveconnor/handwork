@@ -1,0 +1,23 @@
+{
+  "output": "I\u2019ll read inventory.json and sum quantities where in_stock is true.\n\n15",
+  "final_output": "15",
+  "exit_code": 0,
+  "model": "gpt-6.1-sol",
+  "session_id": "p1dOH6gp8T8-",
+  "steps": 1,
+  "tool_calls": [
+    {
+      "name": "read_file",
+      "status": "success"
+    }
+  ],
+  "usage": {
+    "input_tokens": 3565,
+    "output_tokens": 50
+  },
+  "usage_details": {
+    "cached_input_tokens": 1664,
+    "cache_write_tokens": 0,
+    "reasoning_tokens": 0
+  }
+}

@@ -1659,7 +1659,7 @@ test "common Stop parallel cancellation preserves ordinary cancelled peer as com
         testLifecycleContext(view, alloc, fixture.workspace_root),
     );
 
-    try std.testing.expectEqual(@as(usize, 3), deps.executed_names.items.len);
+    try std.testing.expectEqual(@as(usize, 2), deps.executed_names.items.len);
     try std.testing.expectEqual(@as(usize, 1), deps.history_turns.items.len);
     const turn = deps.history_turns.items[0].interrupted;
     try std.testing.expectEqualStrings("candidate", deps.finish_presentation_text.?);
@@ -1669,11 +1669,10 @@ test "common Stop parallel cancellation preserves ordinary cancelled peer as com
     try std.testing.expectEqualStrings("candidate", turn.execution.tool_steps[0].assistant.?);
     try std.testing.expectEqual(@as(usize, 0), turn.execution.tool_steps[0].tool_calls.len);
     const step = turn.execution.tool_steps[1];
-    try std.testing.expectEqual(@as(usize, 3), step.tool_calls.len);
-    try std.testing.expectEqual(@as(usize, 3), step.tool_results.len);
+    try std.testing.expectEqual(@as(usize, 2), step.tool_calls.len);
+    try std.testing.expectEqual(@as(usize, 2), step.tool_results.len);
     try std.testing.expectEqualStrings("call_ordinary_cancel", step.tool_calls[0].id);
     try std.testing.expectEqualStrings("call_owner_signal", step.tool_calls[1].id);
-    try std.testing.expectEqualStrings("call_completed_peer", step.tool_calls[2].id);
     try std.testing.expectEqual(
         types.PersistedToolStatus.failure,
         step.tool_results[0].status,
@@ -1687,10 +1686,7 @@ test "common Stop parallel cancellation preserves ordinary cancelled peer as com
         types.PersistedToolStatus.success,
         step.tool_results[1].status,
     );
-    try std.testing.expectEqual(
-        types.PersistedToolStatus.success,
-        step.tool_results[2].status,
-    );
+    for (deps.executed_names.items) |name| try std.testing.expect(!std.mem.eql(u8, name, "glob_files"));
 }
 
 test "common Stop failure excludes a later call without a result" {

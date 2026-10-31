@@ -77,14 +77,15 @@ let secondRequestAt;
 let secondRequestBody;
 let requestCount = 0;
 const mockFetch = async (_url, init) => {
-  requestedModel = new Headers(init.headers).get("ai-language-model-id");
+  if (init.method === "GET") return Response.json({ models: ["sdk/term-model", "gpt-5.6-luna"].map(slug => ({ slug, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+  requestedModel = JSON.parse(new TextDecoder().decode(init.body)).model;
   requestCount += 1;
   if (requestCount === 2) {
     secondRequestAt = performance.now();
     secondRequestBody = JSON.parse(new TextDecoder().decode(init.body));
     return new Response(new ReadableStream({
       start(controller) {
-        controller.enqueue(encoded.encode(`data: {"type":"text-delta","delta":"${steeringAnswer}"}\n\n`));
+        controller.enqueue(encoded.encode(`data: {"type":"response.output_text.delta","delta":"${steeringAnswer}"}\n\n`));
         controller.enqueue(encoded.encode("data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}}\n\n"));
         controller.enqueue(encoded.encode("data: [DONE]\n\n"));
         controller.close();
@@ -127,7 +128,7 @@ await Promise.race([
   new Promise((_, reject) => setTimeout(() => reject(new Error("timed out waiting for handwork-term to become interactive")), 5000)),
 ]);
 const startupDeadline = performance.now() + 5000;
-while (!streamedText.includes("Run /help for commands")) {
+while (!streamedText.includes("Ask anything, or type / for commands")) {
   if (performance.now() >= startupDeadline) throw new Error("timed out waiting for startup output");
   await new Promise((resolve) => setTimeout(resolve, 10));
 }
@@ -175,7 +176,7 @@ const text = new TextDecoder().decode(Buffer.concat(output.map((chunk) => Buffer
 
 if (exitCode !== 0) throw new Error(`handwork-term exited with code ${exitCode}`);
 if (!text.includes("handwork")) throw new Error("shared handwork welcome frame was not observed");
-if (!text.includes("Run /help for commands")) throw new Error("shared handwork welcome guidance was not observed");
+if (!text.includes("Ask anything, or type / for commands")) throw new Error("shared handwork welcome guidance was not observed");
 if (requestedModel !== "sdk/term-model") throw new Error(`terminal prompt did not use the host-restored model: ${requestedModel}`);
 if (!(streamStartedAt < secondRequestAt)) throw new Error("terminal started steering before the active response");
 if (!(draftVisibleAt < steeringSubmittedAt)) throw new Error("terminal did not render the steering draft before submission");
@@ -184,9 +185,9 @@ if (!(secondRequestAt < streamFinishedAt)) throw new Error("terminal waited for 
 if (postSubmitText.includes(`┋ ${liveDraft}`)) throw new Error("terminal exposed tool-only pending UI during immediate steering");
 if (!postSubmitText.includes(liveDraft)) throw new Error("terminal did not commit the steering user row after cutoff");
 if (!postSubmitText.includes("Thinking")) throw new Error("terminal hid activity during immediate steering");
-const steeringUser = secondRequestBody.prompt?.filter((message) => message.role === "user").at(-1);
-const steeringText = steeringUser?.content?.filter((part) => part.type === "text").map((part) => part.text);
-const steeringRequest = JSON.stringify(secondRequestBody.prompt);
+const steeringUser = secondRequestBody.input?.filter((message) => message.role === "user").at(-1);
+const steeringText = steeringUser?.content?.filter((part) => part.type === "input_text").map((part) => part.text);
+const steeringRequest = JSON.stringify(secondRequestBody.input);
 if (
   steeringText?.length !== 1 ||
   !steeringText[0].includes("<user_steering>") ||

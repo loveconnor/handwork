@@ -426,7 +426,7 @@ function sendOverlappingSkillCommands(
   session: TmuxSession,
   newestSkill: string,
 ): void {
-  execFileSync("tmux", [
+  execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`,
     "send-keys", "-t", session.name, "-l", "--", "/skills",
     ";", "send-keys", "-t", session.name, "Enter",
     ";", "send-keys", "-t", session.name, "-l", "--",
@@ -446,7 +446,6 @@ test.skipIf(!tmuxAvailable())(
         cwd: fixture.workspace,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_SOUND: "0",
@@ -476,12 +475,19 @@ test.skipIf(!tmuxAvailable())(
 );
 
 test.skipIf(!tmuxAvailable())(
-  "prompt admission treats missing HOME as an empty optional skill catalog",
+  "missing HOME admits the prompt and reports unavailable credentials",
   async () => {
     const fixture = createFixture();
-    const noHomeProvider = startFakeCodex([
-      fakeCodexFinalText("MISSING_HOME_PROMPT_OK"),
-    ]);
+    let requests = 0;
+    const noHomeProvider = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
+      if (request.method === "GET") return Response.json({ data: [{ id: "gpt-5.6" }] });
+      requests++;
+      const events = [
+        { choices: [{ delta: { content: "MISSING_HOME_PROMPT_OK" }, finish_reason: "stop" }] },
+        { choices: [], usage: { prompt_tokens: 3, completion_tokens: 5 } },
+      ];
+      return new Response(events.map(event => `data: ${JSON.stringify(event)}\n\n`).join("") + "data: [DONE]\n\n", { headers: { "content-type": "text/event-stream" } });
+    } });
     let active: TmuxSession | null = null;
     try {
       active = await TmuxSession.create({
@@ -491,8 +497,8 @@ test.skipIf(!tmuxAvailable())(
           HOME: undefined,
           HANDWORK_AUTH_MODE: "host-managed",
 
-          HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${noHomeProvider.baseUrl}/models`,
-          HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: noHomeProvider.chatUrl,
+          OPENAI_API_KEY: "loopback-test-only",
+          HANDWORK_OPENAI_BASE_URL: `http://127.0.0.1:${noHomeProvider.port}/v1`,
           HANDWORK_MODEL: FAKE_CODEX_MODEL,
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_DISABLE_KEYCHAIN: "1",
@@ -506,9 +512,9 @@ test.skipIf(!tmuxAvailable())(
       });
       await active.waitForComposer(TIMEOUT);
       await active.sendText("Submit without an optional home directory.");
-      const pane = await active.waitForText("MISSING_HOME_PROMPT_OK", 5_000);
+      const pane = await active.waitForText("MissingApiKey", 5_000);
       expect(pane).not.toContain("HomeNotSet");
-      expect(noHomeProvider.requestCount()).toBe(1);
+      expect(requests).toBe(0);
       expect(readFileSync(fixture.stderrPath, "utf8")).toBe("");
     } finally {
       await active?.kill();
@@ -537,7 +543,6 @@ test.skipIf(!tmuxAvailable())(
         cwd: fixture.workspace,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_SOUND: "0",
@@ -1076,7 +1081,6 @@ test.skipIf(!LIVE_ENABLED || !tmuxAvailable())(
         cwd: fixture.workspace,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_SOUND: "0",

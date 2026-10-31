@@ -193,7 +193,7 @@ function rowHasBackgroundSgr(row: string): boolean {
 }
 
 test("selected slash row ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m\x1b[38;5;245m v0.3.27 · /help for commands`;
   const composer = `${SELECTED_COMPLETION_SGR}┃ /\x1b[39m`;
   const selected = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m Clear the conversation`;
 
@@ -322,7 +322,7 @@ tmuxTest(
     await waitForExactComposerRow(active, "┃ /");
 
     await active.sendKeys("Enter");
-    await active.waitForText("Commands 35", READY_TIMEOUT);
+    await active.waitForText("Commands 39", READY_TIMEOUT);
     await active.sendKeys("Escape");
     await active.waitForPane(
       (pane) => hasEmptyComposer(pane) && !pane.includes("enter open"),
@@ -343,7 +343,7 @@ tmuxTest(
       (pane) =>
         pane.includes("/help") &&
         pane.includes("/quit") &&
-        pane.includes("Run /help for commands"),
+        pane.includes("/help for commands"),
       READY_TIMEOUT,
     );
 
@@ -351,7 +351,7 @@ tmuxTest(
     const afterUnknown = await active.capturePane();
     expect(afterUnknown).toContain("/help");
     expect(afterUnknown).toContain("/quit");
-    expect(afterUnknown).toContain("Run /help for commands");
+    expect(afterUnknown).toContain("/help for commands");
 
     await active.sendKeys("Escape");
     await active.waitForPane(
@@ -582,7 +582,7 @@ tmuxTest(
     expectCleanStderr();
     expect(provider?.requests).toHaveLength(1);
 
-    const messages = JSON.parse(provider!.requests[0]!.body).prompt as Array<{
+    const messages = JSON.parse(provider!.requests[0]!.body).input as Array<{
       role: string;
       content: Array<{ type: string; text?: string }>;
     }>;
@@ -1043,8 +1043,6 @@ tmuxTest(
   TIMEOUT,
 );
 
-
-
 tmuxTest(
   "registered slash command stays local behind a pending image",
   async () => {
@@ -1154,14 +1152,14 @@ tmuxTest(
 
     expect(localProvider.requests).toHaveLength(1);
     const body = localProvider.requests[0]!.body;
-    const fileParts = body.match(/"type":"file"/g) ?? [];
+    const fileParts = body.match(/"type":"input_image"/g) ?? [];
     expect(fileParts).toHaveLength(2);
     expect(body).not.toContain("/image ");
     expect(body).not.toContain(first);
     expect(body).not.toContain(second);
     expect(body).not.toContain(workspace);
     expect(body).not.toContain("file://");
-    expect(body).not.toContain("data:image");
+    expect(body).toContain("data:image");
     expect(body).toContain("describe both");
 
     const fullScrollback = await active.captureFullScrollback();
@@ -1270,7 +1268,7 @@ tmuxTest(
     for (const body of [firstBody, secondBody]) {
       expect(body).not.toContain(workspace);
       expect(body).not.toContain("file://");
-      expect(body).not.toContain("data:image");
+      expect(body).toContain("data:image");
     }
 
     expectCleanStderr();
@@ -1343,7 +1341,7 @@ tmuxTest(
 
     expect(localProvider.requests).toHaveLength(1);
     const body = localProvider.requests[0]!.body;
-    expect(body.match(/"type":"file"/g) ?? []).toHaveLength(2);
+    expect(body.match(/"type":"input_image"/g) ?? []).toHaveLength(2);
     expect(body.split(originalBase64).length - 1).toBe(2);
     expect(body).toContain("[Image #2][Image #3] inspect both yanks");
     expect(body).not.toContain(source);
@@ -1534,7 +1532,7 @@ tmuxTest(
       20_000,
     );
     expect(localProvider.requests.length).toBe(1);
-    const request = JSON.parse(localProvider.requests[0]!.body).prompt as Array<{
+    const request = JSON.parse(localProvider.requests[0]!.body).input as Array<{
       role: string;
       content: Array<{ type: string; text?: string }>;
     }>;
@@ -1608,7 +1606,7 @@ tmuxTest(
       READY_TIMEOUT,
     );
     await active.resizeWindow(80, 24, 300);
-    await active.waitForText("Commands 35", READY_TIMEOUT);
+    await active.waitForText("Commands 39", READY_TIMEOUT);
     expect(provider?.requests).toHaveLength(0);
     expectCleanStderr();
   },

@@ -1,3 +1,4 @@
+import { fakeCodexFunctionCallEvents } from "./tmux-helpers";
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
@@ -137,8 +138,8 @@ describe("handwork ask presentation", () => {
     const root = createRoot();
     const provider = startFakeCodex([
       fakeCodexSse([
-        { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "no-final-newline", name: "shell", arguments: JSON.stringify({ request: { action: "run", profile: "clean", yield_time_ms: 30_000, command: "printf no-final-newline" } }) } },
-        { type: "response.output_item.done", output_index: 1, item: { type: "function_call", call_id: "next-command", name: "shell", arguments: JSON.stringify({ request: { action: "run", profile: "clean", yield_time_ms: 30_000, command: "printf 'next-output\\n'" } }) } },
+        ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "no-final-newline", name: "shell", arguments: JSON.stringify({ request: { action: "run", profile: "clean", yield_time_ms: 30_000, command: "printf no-final-newline" } }) }, 0),
+        ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "next-command", name: "shell", arguments: JSON.stringify({ request: { action: "run", profile: "clean", yield_time_ms: 30_000, command: "printf 'next-output\\n'" } }) }, 1),
         { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
       ]),
       fakeCodexFinalText("Commands complete.\n"),
@@ -195,6 +196,7 @@ describe("handwork ask presentation", () => {
       "if command -v handwork_profile_function >/dev/null; then handwork_profile_function; else printf no-function; fi";
     const nestedExecMarker = join(root.workspace, "nested-no-save-ran");
     const provider = startFakeCodex([
+      fakeCodexToolCall("load-shell", "load_tools", { names: ["shell"] }),
       fakeCodexToolCall("shell-omitted", "shell", {
         request: { action: "run", command: profileCommand, yield_time_ms: 30_000 },
       }),
@@ -242,6 +244,7 @@ describe("handwork ask presentation", () => {
     };
     expect(output.output).toBe("Shell no-save profiles verified.\n");
     expect(output.tool_calls.map(({ name, status }) => ({ name, status }))).toEqual([
+      { name: "load_tools", status: "success" },
       { name: "shell", status: "success" },
       { name: "shell", status: "success" },
       { name: "shell", status: "success" },
@@ -249,13 +252,13 @@ describe("handwork ask presentation", () => {
       { name: "shell", status: "success" },
       { name: "shell", status: "success" },
     ]);
-    expect(provider.requests).toHaveLength(7);
+    expect(provider.requests).toHaveLength(8);
 
-    const firstRequest = JSON.parse(provider.requests[0]!.body) as {
+    const firstRequest = JSON.parse(provider.requests[1]!.body) as {
       tools: Array<any>;
     };
     const shellTool = firstRequest.tools.find(({ name }) => name === "shell");
-    const shellSchema = shellTool?.inputSchema;
+    const shellSchema = shellTool?.parameters;
     expect(Object.keys(shellSchema?.properties ?? {})).toEqual(["request"]);
     expect(shellSchema?.required).toEqual(["request"]);
     expect(shellSchema?.additionalProperties).toBe(false);
@@ -270,19 +273,19 @@ describe("handwork ask presentation", () => {
     expect(serializedShellTool).not.toContain('"write"');
     expect(serializedShellTool).not.toContain('"terminal"');
 
-    for (const requestIndex of [1, 3]) {
+    for (const requestIndex of [2, 4]) {
       expect(provider.requests[requestIndex]!.body).toContain("mode=login:rc:path-user:");
       expect(provider.requests[requestIndex]!.body).toContain("alias-user:function-user");
     }
-    expect(provider.requests[2]!.body).toContain("mode=unset:unset:path-clean:");
-    expect(provider.requests[2]!.body).toContain("no-alias:no-function");
-    expect(provider.requests[4]!.body).toContain("tool_execution_failed");
-    expect(provider.requests[4]!.body).toContain("tool_execution_failed");
-    expect(provider.requests[4]!.body).not.toContain("authority_denied");
-    expect(provider.requests[4]!.body).not.toContain("tool_permission_denied");
-    expect(provider.requests[5]!.body).toContain("nested");
+    expect(provider.requests[3]!.body).toContain("mode=unset:unset:path-clean:");
+    expect(provider.requests[3]!.body).toContain("no-alias:no-function");
+    expect(provider.requests[5]!.body).toContain("tool_execution_failed");
+    expect(provider.requests[5]!.body).toContain("tool_execution_failed");
+    expect(provider.requests[5]!.body).not.toContain("authority_denied");
+    expect(provider.requests[5]!.body).not.toContain("tool_permission_denied");
+    expect(provider.requests[6]!.body).toContain("nested");
     expect(existsSync(nestedExecMarker)).toBe(true);
-    expect(provider.requests[6]!.body).toContain("neighbor-exec");
+    expect(provider.requests[7]!.body).toContain("neighbor-exec");
     expect(
       existsSync(join(root.home, ".handwork", "terminal-host-v7", "host.json")),
     ).toBe(false);
@@ -399,19 +402,9 @@ describe("handwork ask presentation", () => {
 
     expect(result.code).toBe(0);
     expect(provider.requests).toHaveLength(3);
-    const firstPrompt = (JSON.parse(provider.requests[0]!.body) as ProviderRequestBody)
-      .prompt
-      .filter((message) => message.role === "system")
-      .map((message) => typeof message.content === "string" ? message.content : "")
-      .join("\n");
-    expect(firstPrompt).toContain(
-      "Before the first tool call in a tool-driven task, always send one brief user-visible update",
-    );
-    expect(firstPrompt).toContain("Never start the first tool silently.");
-    expect(firstPrompt).toContain(
-      "If another tool call will follow, always first tell the user what failed",
-    );
-    expect(firstPrompt).toContain("Do not narrate each routine tool call.");
+    const firstPrompt = JSON.parse(provider.requests[0]!.body).instructions;
+    expect(firstPrompt).toContain("Before the first tool call, send one brief update");
+    expect(firstPrompt).toContain("do not narrate routine calls");
 
     const output = JSON.parse(result.stdout) as {
       output: string;
@@ -708,15 +701,15 @@ describe("handwork ask presentation", () => {
         while (Date.now() < headerDeadline) {
           initialScrollback = await session.captureFullScrollback();
           if (
-            initialScrollback.includes("Run /help for commands") &&
+            initialScrollback.includes("/help for commands") &&
             initialScrollback.includes("Stream every answer line.")
           ) break;
           await Bun.sleep(25);
         }
-        expect(initialScrollback).toContain("Run /help for commands");
+        expect(initialScrollback).toContain("/help for commands");
         expect(initialScrollback).toContain("Stream every answer line.");
         expect(initialScrollback).not.toContain(answerLines[0]!);
-        expect(initialScrollback.indexOf("Run /help for commands")).toBeLessThan(
+        expect(initialScrollback.indexOf("/help for commands")).toBeLessThan(
           initialScrollback.indexOf("Stream every answer line."),
         );
 
@@ -736,7 +729,7 @@ describe("handwork ask presentation", () => {
 
       await session.waitForText("__HANDWORK_EXIT_0__", TIMEOUT);
       const finalScrollback = await session.captureFullScrollback();
-      expect(finalScrollback.split("Run /help for commands")).toHaveLength(2);
+      expect(finalScrollback.split("/help for commands")).toHaveLength(2);
       for (const line of answerLines) {
         expect(finalScrollback.split(line)).toHaveLength(2);
       }

@@ -114,7 +114,7 @@ const themeRepaintStart = terminalOutput.length;
 runtime.write("\x1b]11;rgb:ffff/ffff/ffff\x1b\\\x1b[?1;2c");
 await waitFor(() => {
   const repaint = terminalOutput.slice(themeRepaintStart);
-  return repaint.includes("\x1b[3J") && repaint.includes("\x1b[38;5;247m");
+  return repaint.includes("\x1b[3J") && repaint.includes("\x1b[38;5;238m");
 }, "light theme retint and repaint");
 
 const submittedAt = performance.now();
@@ -437,7 +437,7 @@ async function runActiveTransitionChild(scenario, command) {
   };
 
   await childRuntime.interactive;
-  await waitForChild(() => childOutput.includes("Run /help for commands"), "child startup");
+  await waitForChild(() => childOutput.includes("Ask anything, or type / for commands"), "child startup");
   process.stdout.write("runtime_interactive\n");
   childRuntime.write("first prompt\r");
   await waitForChild(() => fetchCount === 1, "first fetch");

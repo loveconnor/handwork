@@ -1,0 +1,5 @@
+tests/e2e/session-title.test.ts:
+(pass) handwork ask generates a model title for a fresh session [38.99ms]
+(pass) handwork ask keeps the derived title when session_titles is off [29.89ms]
+(pass) handwork ask keeps the derived title when the title model output is unusable [29.64ms]
+(pass) tui shows the generated session title [1392.40ms]

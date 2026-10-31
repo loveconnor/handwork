@@ -869,7 +869,10 @@ pub const SessionChildCapability = struct {
                     },
                     else => return stat_err,
                 };
-                const existing_file = try io_mod.openExistingRegularFile(route_dir.dir, name, .read_only);
+                const existing_file = io_mod.openExistingRegularFile(route_dir.dir, name, .read_only) catch |open_err| switch (open_err) {
+                    error.DurablePathUnsafe => return error.SessionPathUnsafe,
+                    else => return open_err,
+                };
                 defer existing_file.close(io_mod.getIo());
                 try verifyPrivateStat(existing, existing_file);
                 return error.PathAlreadyExists;

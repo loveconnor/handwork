@@ -27,7 +27,8 @@ let requestedModel;
 let firstChunkAt;
 const startedAt = performance.now();
 const mockFetch = async (_url, init) => {
-  requestedModel = new Headers(init.headers).get("ai-language-model-id");
+  if (init.method === "GET") return Response.json({ models: ["sdk/headless-model", "sdk/accepted-model", "gpt-5.6-luna"].map(slug => ({ slug, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+  requestedModel = JSON.parse(new TextDecoder().decode(init.body)).model;
   return new Response(new ReadableStream({
     async start(controller) {
       firstChunkAt = performance.now();
@@ -65,6 +66,11 @@ while (!readGrid().includes("handwork")) {
   if (performance.now() >= startupDeadline) throw new Error(`timed out waiting for handwork-term startup:\n${readGrid()}`);
   await new Promise((resolve) => setTimeout(resolve, 10));
 }
+await runtime.interactive;
+await flushTerminal();
+if (terminal.buffer.active.baseY !== 0 || terminal.buffer.active.viewportY !== 0) {
+  throw new Error("fresh xterm startup created scrollback before any input");
+}
 runtime.write("/model sdk/accepted-model\r");
 const modelDeadline = performance.now() + 5000;
 while (!(events.some((event) => event.type === "config.changed" && event.configId === "model") &&
@@ -97,10 +103,8 @@ const exitCode = await Promise.race([
 
 if (exitCode !== 0) throw new Error(`handwork-term exited with code ${exitCode}`);
 if (!grid.includes("handwork")) throw new Error(`shared handwork welcome frame was not visible in xterm grid:\n${grid}`);
-if (!grid.includes("Run /help for commands")) throw new Error(`shared handwork welcome guidance was not visible in xterm grid:\n${grid}`);
-if (terminal.buffer.active.baseY !== 0 || terminal.buffer.active.viewportY !== 0) {
-  throw new Error(`fresh xterm startup created blank scrollback: baseY=${terminal.buffer.active.baseY}, viewportY=${terminal.buffer.active.viewportY}`);
-}
+if (!grid.includes("Ask anything, or type / for commands")) throw new Error(`shared handwork welcome guidance was not visible in xterm grid:\n${grid}`);
+
 if (!events.some((event) => event.type === "terminal.size" && event.cols === 96 && event.rows === 30)) throw new Error("terminal.size event did not report headless xterm geometry");
 if (config.get("model") !== "sdk/accepted-model") throw new Error("accepted terminal model was not persisted through configStore");
 if (!events.some((event) => event.type === "config.changed" && event.configId === "model" && event.value === "sdk/accepted-model" && event.source === "terminal")) throw new Error("terminal model command did not emit config.changed");

@@ -1,3 +1,4 @@
+import { fakeCodexFunctionCallEvents } from "./tmux-helpers";
 import { afterEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
@@ -118,29 +119,21 @@ function toolResultText(
   toolCallId: string,
   outputType: "text" | "execution-denied" = "text",
 ): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<Record<string, unknown>> }>;
-  };
-  const result = (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .find((part) => part.type === "tool-result" && part.toolCallId === toolCallId);
+  const request = JSON.parse(body);
+  const result = request.input.find((part: any) => part.type === "function_call_output" && part.call_id === toolCallId);
   expect(result).toBeDefined();
-  const output = result!.output as Record<string, unknown>;
-  expect(output.type).toBe(outputType);
-  const content = outputType === "execution-denied" ? output.reason : output.value;
-  expect(typeof content).toBe("string");
-  return content as string;
+  expect(result.output).toBeString();
+  if (outputType === "execution-denied") {
+    expect(JSON.parse(result.output).error).toBeDefined();
+  }
+  return result.output;
 }
 
 function reviewerText(body: string): string {
-  const request = JSON.parse(body) as {
-    prompt?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
-  };
-  return (request.prompt ?? [])
-    .flatMap((message) => message.content ?? [])
-    .filter((part) => part.type === "text")
-    .map((part) => part.text ?? "")
-    .join("\n");
+  const request = JSON.parse(body);
+  return [request.instructions ?? "", ...request.input.map((message: any) =>
+    typeof message.content === "string" ? message.content :
+      (message.content ?? []).map((part: any) => part.text ?? "").join("\n"))].join("\n");
 }
 
 function installRecorder(root: IsolatedRoot, name: string, marker: string) {
@@ -265,9 +258,7 @@ describe("lean auto mode reliability", () => {
       const command = 'python3 -c \'import getpass; from pathlib import Path; value=getpass.getpass("Temporary OpenRouter key (hidden): "); Path("accepted.txt").write_text(str(len(value))); print("INPUT_ACCEPTED")\'';
       let handle = "";
       const reviewInput = (decision: "clear" | "caution") => (body: string) => {
-        const evidence = JSON.parse(body).prompt.map((message: { content: string | Array<{ text?: string }> }) =>
-          typeof message.content === "string" ? message.content : message.content.map((part) => part.text ?? "").join("\n")
-        ).join("\n");
+        const evidence = reviewerText(body);
         expect(evidence).toContain("review_context_kind: contextual");
         expect(evidence).toContain("Use this key for the OpenRouter test");
         expect(evidence).toContain(key);
@@ -511,23 +502,23 @@ describe("lean auto mode reliability", () => {
       const provider = startProvider(
         [
           fakeCodexSse([
-            { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "clean_direct_pwd", name: "shell", arguments: JSON.stringify({ request: { action: "run", command: "pwd", profile: "clean", yield_time_ms: 30_000 } }) } },
-            { type: "response.output_item.done", output_index: 1, item: { type: "function_call", call_id: "clean_direct_git_status", name: "shell", arguments: JSON.stringify({
+            ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "clean_direct_pwd", name: "shell", arguments: JSON.stringify({ request: { action: "run", command: "pwd", profile: "clean", yield_time_ms: 30_000 } }) }, 0),
+            ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "clean_direct_git_status", name: "shell", arguments: JSON.stringify({
                 request: {
                   action: "run",
                   command: "git status --short",
                   profile: "clean",
                   yield_time_ms: 30_000,
                 },
-              }) } },
-            { type: "response.output_item.done", output_index: 2, item: { type: "function_call", call_id: "clean_blocked_reset", name: "shell", arguments: JSON.stringify({
+              }) }, 1),
+            ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "clean_blocked_reset", name: "shell", arguments: JSON.stringify({
                 request: {
                   action: "run",
                   command: "git reset --hard",
                   profile: "clean",
                   yield_time_ms: 30_000,
                 },
-              }) } },
+              }) }, 2),
             { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
           ]),
           (body) => {
@@ -1411,22 +1402,24 @@ describe("lean auto mode reliability", () => {
       expect(existsSync(blockedMarker)).toBe(false);
       expect(provider.classifierRequests).toHaveLength(1);
       const reviewerPayload = JSON.parse(provider.classifierRequests[0]!.body) as {
-        prompt: Array<{
+        instructions: string;
+        input: Array<{
           role: string;
           content: Array<{ type: string; text?: string }>;
         }>;
       };
-      const firstConversationIndex = reviewerPayload.prompt.findIndex(
+      const firstConversationIndex = reviewerPayload.input.findIndex(
         (message) => message.role !== "system",
       );
-      expect(firstConversationIndex).toBeGreaterThan(0);
+      expect(reviewerPayload.instructions.length).toBeGreaterThan(0);
+      expect(firstConversationIndex).toBe(0);
       expect(
-        reviewerPayload.prompt.slice(firstConversationIndex).map((message) => message.role),
+        reviewerPayload.input.slice(firstConversationIndex).map((message) => message.role),
       ).not.toContain("system");
-      const rootMessage = reviewerPayload.prompt[firstConversationIndex];
+      const rootMessage = reviewerPayload.input[firstConversationIndex];
       expect(rootMessage?.role).toBe("user");
       const rootContext = (rootMessage?.content ?? [])
-        .filter((part) => part.type === "text")
+        .filter((part) => part.type === "input_text")
         .map((part) => part.text ?? "")
         .join("");
       const prefix = "review_context_kind: contextual\ntrusted_root_context:\n";
@@ -1997,8 +1990,8 @@ describe("lean auto mode reliability", () => {
           commandCall(`touch ${JSON.stringify(markers[0]!)}`, "mixed_block_1"),
           commandCall(`touch ${JSON.stringify(markers[1]!)}`, "mixed_block_2"),
           fakeCodexSse([
-            { type: "response.output_item.done", output_index: 3, item: { type: "function_call", call_id: "mixed_block_3", name: "shell", arguments: JSON.stringify({ request: { action: "run", yield_time_ms: 30_000, command: `touch ${JSON.stringify(markers[2]!)}` } }) } },
-            { type: "response.output_item.done", output_index: 4, item: { type: "function_call", call_id: "mixed_safe_pwd", name: "shell", arguments: JSON.stringify({ request: { action: "run", yield_time_ms: 30_000, command: "pwd" } }) } },
+            ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "mixed_block_3", name: "shell", arguments: JSON.stringify({ request: { action: "run", yield_time_ms: 30_000, command: `touch ${JSON.stringify(markers[2]!)}` } }) }, 3),
+            ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "mixed_safe_pwd", name: "shell", arguments: JSON.stringify({ request: { action: "run", yield_time_ms: 30_000, command: "pwd" } }) }, 4),
             { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
           ]),
           (body) => {

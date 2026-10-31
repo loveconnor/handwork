@@ -137,11 +137,16 @@ Bounded delegation is enabled by default. It uses compact operating policies for
 
 Set `HANDWORK_EXPERIMENT_BOUNDED_DELEGATION=0` to restore the original operating policy, synchronous saved CLI child execution, and handoffs without bounded receipts. The legacy `=1` override remains supported. This default does not enable the other experiments or impose new request, token, or child limits.
 
+Built-in tools use shorter model-facing descriptions by default. Tool names, argument schemas, validation, and permission rules are unchanged. Set `HANDWORK_EXPERIMENT_COMPACT_SCHEMAS=0` to restore the original descriptions; `=1` remains supported. Empty MCP catalogs report no configured servers without including instructions for discovering tools on those servers. These reductions do not establish equal model task quality or provider billing savings.
+
+Native sessions load built-in tool definitions on demand by default. A new coding conversation advertises `read_file` and `load_tools`, whose description lists the other eligible built-ins. The model can load several definitions at once, then call the original tools through the existing validation and permission checks. Loaded definitions stay available during the turn and are restored from retained tool-call history on resume; tools can be loaded again after history compaction. Custom host functions, provider-native tools, and selected MCP tools retain their existing advertisement paths. Hosts without the built-in loader retain eager behavior.
+
+Set `HANDWORK_ON_DEMAND_TOOLS=0` to restore eager definitions. Embedded hosts can set `Config.on_demand_tools` explicitly. On-demand loading can add model round trips. The [six-run pilot](benchmarks/on-demand-tools/README.md) measures startup context, total provider-reported tokens including safety reviews, elapsed time, and task success; it is not a broad quality-parity claim.
+
 ### Experimental harness controls
 
 These controls are off unless explicitly enabled. They are experiments, not demonstrated benchmark improvements. Keep each comparison to one control and preserve the same tasks, model, effort, permissions, tracing, and time budget.
 
-- `HANDWORK_EXPERIMENT_COMPACT_SCHEMAS=1` uses reviewed shorter descriptions for selected built-in tools. Tool names, argument schemas, validation, and permission rules do not change.
 - `HANDWORK_EXPERIMENT_VERIFY_COMPLETION=1` may request one verification continuation after recorded native file changes without a current recognized check. Arbitrary exit-zero shell commands are not verification. Unrecognized checks remain unknown; a passing command is not proof that the task is correct.
 - `HANDWORK_EXPERIMENT_TASK_EVIDENCE=1` adds bounded recorded operation evidence to compaction and interrupted-task handoffs. Evidence is data, not instructions or permission.
 - `HANDWORK_EXPERIMENT_MAX_CHILDREN`, `HANDWORK_EXPERIMENT_MAX_REQUESTS`, and `HANDWORK_EXPERIMENT_MAX_TOKENS` accept unsigned decimal limits; omitted limits preserve existing behavior, and zero admits no new work of that kind. Requests and input-plus-output tokens share a budget across the parent, children, retries, and compaction. Token-limited concurrent admission can be rejected while usage is pending. Unknown usage blocks subsequent token-limited requests, and one admitted request can overshoot the remaining token allowance. These are execution-window controls, not exact billing caps or durable limits across host recreation.

@@ -2940,10 +2940,10 @@ test "legacy usage replacement retains framing and checksum validation" {
     const usage_json = "{\"billing\":\"complete\",\"api_duration_complete\":true,\"wall_duration_complete\":true,\"code_complete\":true,\"next_sequence\":2,\"settled_through_sequence\":1," ++
         "\"api_duration_ms\":0,\"wall_duration_ms\":0,\"total_cost\":0,\"input_tokens\":1,\"output_tokens\":0,\"cache_read_tokens\":2,\"cache_write_tokens\":0,\"billable_web_search_calls\":0,\"lines_added\":0,\"lines_removed\":0," ++
         "\"models\":[{\"model\":\"test/model\",\"first_sequence\":1,\"total_cost\":0,\"input_tokens\":1,\"output_tokens\":0,\"cache_read_tokens\":2,\"cache_write_tokens\":0,\"billable_web_search_calls\":0}],\"pending\":[]}";
-    const common = "\"id\":\"legacy-replacement\",\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false}";
+    const common = "\"id\":\"legacy-replacement\",\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"created_at_ms\":1,\"updated_at_ms\":2,\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false}";
     const state_json = "{" ++ common ++ ",\"history\":[],\"total_input_tokens\":7,\"total_output_tokens\":3,\"usage\":" ++ usage_json ++ "}";
     const started = "{\"schema_version\":1,\"log_generation\":\"01010101010101010101010101010101\",\"seq\":1,\"event_id\":\"01010101010101010101010101010101\",\"timestamp_ms\":1,\"kind\":\"session_started\",\"payload\":{" ++
-        "\"id\":\"legacy-replacement\",\"created_at_ms\":1,\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"conversation_language\":\"en\",\"preferences\":{\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"usage\":" ++ usage_json ++ "}}\n";
+        "\"id\":\"legacy-replacement\",\"created_at_ms\":1,\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"usage\":" ++ usage_json ++ "}}\n";
     const replacement_id = [_]u8{9} ** 16;
     const digest = sha256(state_json);
     for ([_]bool{ false, true }) |corrupt| {

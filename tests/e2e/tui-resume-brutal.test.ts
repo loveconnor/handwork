@@ -203,7 +203,7 @@ async function seedRealSession(paths: Paths, config: Config): Promise<IndexedSum
   let finalSent = false;
   const provider = startDynamicFakeCodex((body) => {
     const request = JSON.parse(body);
-    if (request.toolChoice?.type === "none" && request.tools?.length === 0) {
+    if (request.tool_choice === "none" && (request.tools ?? []).length === 0) {
       return fakeCodexFinalText(
         "The session is building a large, heterogeneous transcript and reading bounded ranges from resume-tool-payload.txt. Continue the same task without repeating completed reads.",
       );

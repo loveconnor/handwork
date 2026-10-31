@@ -207,6 +207,7 @@ pub const Context = struct {
     mcp_progress_ctx: ?*anyopaque = null,
     on_mcp_progress: ?*const fn (*anyopaque, types.ToolLifecycleId, []const u8) void = null,
     advertised_dynamic_tool_names: []const []const u8 = &.{},
+    loadable_tool_names: []const []const u8 = &.{},
     permission_reviewer_provider: ?permission_auto_classifier.Provider = null,
     auto_classifier: permission_auto_classifier.Classifier =
         permission_auto_classifier.Classifier.disabled(),
@@ -386,6 +387,7 @@ pub fn executeToolCallAuthorized(
         request.command_replay_capture.?.abort(request.result_allocator);
     };
     var execution_ctx = ctx;
+    execution_ctx.loadable_tool_names = request.loadable_tool_names;
     execution_ctx.execution_budget = request.execution_budget orelse ctx.execution_budget;
     execution_ctx.provider_trace_ctx = .{
         .turn_id = if (request.lifecycle_id) |id| id.turn_id else 0,
@@ -801,6 +803,9 @@ fn executeRegisteredTool(
     var mcp_execution_error: ?anyerror = null;
     var dispatch_metadata: DispatchMetadata = .{};
     var dispatch_ctx = typedDispatchContextForCall(ctx, arena, call);
+    var selected_builtin_tool_names: []const []const u8 = &.{};
+    dispatch_ctx.loadable_tool_names = ctx.loadable_tool_names;
+    dispatch_ctx.selected_builtin_tool_names_sink = &selected_builtin_tool_names;
     dispatch_metadata.attach(&dispatch_ctx);
     var result_commit_token: ?result_commit.Token = null;
     dispatch_ctx.result_commit_sink = &result_commit_token;
@@ -878,6 +883,7 @@ fn executeRegisteredTool(
         execution.status_detail = "McpInputRequired";
     }
     execution.selected_dynamic_tools = selected_dynamic_tool_sink.tools.items;
+    execution.selected_builtin_tool_names = selected_builtin_tool_names;
     execution.context_notices = context_notice_sink.notices.items;
     execution.result_commit = result_commit_token;
     if (dispatch_ctx.cancel_flag) |cancel_flag| {
@@ -2339,6 +2345,7 @@ const TestRuntime = struct {
             .max_command_output_bytes = self.max_command_output_bytes,
             .max_tool_result_bytes = self.max_tool_result_bytes,
             .api_key = self.api_key,
+            .credential_source = .chatgpt_subscription,
             .agent_stream_provider = self.agent_stream_provider,
             .provider = self.provider,
             .provider_capabilities = self.provider_capabilities,
@@ -2460,7 +2467,7 @@ fn executeTestRunCommand(
     arena: Allocator,
     call: ToolCall,
 ) !ToolExecutionResult {
-    const terminal_call = try terminalExecCallForTest(arena, call);
+    const terminal_call = if (ctx.workspace_executor != null) call else try terminalExecCallForTest(arena, call);
     const command_ctx = try tool_admission.runCommandContext(ctx.admissionInput(), arena, terminal_call);
     return executeToolCallAuthorized(ctx, .{
         .call_allocator = arena,
@@ -2477,8 +2484,7 @@ fn executeTestRunCommand(
 }
 
 fn terminalExecCallForTest(arena: Allocator, call: ToolCall) !ToolCall {
-    if (std.mem.eql(u8, call.name, "shell")) return call;
-    if (!std.mem.eql(u8, call.name, "run_command")) return call;
+    if (!std.mem.eql(u8, call.name, "run_command") and !std.mem.eql(u8, call.name, "shell")) return call;
     var args = try std.json.parseFromSliceLeaky(
         std.json.Value,
         arena,
@@ -2487,7 +2493,8 @@ fn terminalExecCallForTest(arena: Allocator, call: ToolCall) !ToolCall {
     );
     if (args != .object) return error.InvalidToolArguments;
     try args.object.put(arena, "action", .{ .string = "run" });
-    try args.object.put(arena, "timeout_ms", .{ .integer = 600_000 });
+    if (!args.object.contains("profile")) try args.object.put(arena, "profile", .{ .string = "clean" });
+    if (!args.object.contains("timeout_ms")) try args.object.put(arena, "timeout_ms", .{ .integer = 600_000 });
     var out: std.Io.Writer.Allocating = .init(arena);
     defer out.deinit();
     try std.json.Stringify.value(args, .{}, &out.writer);
@@ -7073,6 +7080,7 @@ test "Codex vision calls fail before provider access" {
         .provider = .codex,
         .provider_capabilities = .{},
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = alloc,
     };
@@ -7135,6 +7143,7 @@ fn visionAllocationIndexAtProvider(
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = base,
         .context_limits = .{ .image_adapter_output_bytes = .{
@@ -7246,6 +7255,7 @@ fn expectVisionOutOfMemoryAt(
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = base,
         .context_limits = .{ .image_adapter_output_bytes = .{
@@ -7383,6 +7393,7 @@ test "vision authorized catalog retains historical access outside budgeted model
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = alloc,
     };
@@ -7431,6 +7442,7 @@ test "vision runtime resolves historical authorized images and batches twenty as
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .api_key = "provider-key",
         .provider_retry_count = 2,
@@ -7450,14 +7462,14 @@ test "vision runtime resolves historical authorized images and batches twenty as
 
     try std.testing.expectEqual(tool_contracts.ToolExecutionStatus.success, result.status);
     try std.testing.expectEqual(@as(usize, 3), fixture.call_count);
-    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, fixture.payloads.items[0], "\"type\":\"file\""));
-    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, fixture.payloads.items[1], "\"type\":\"file\""));
-    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, fixture.payloads.items[2], "\"type\":\"file\""));
+    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, fixture.payloads.items[0], "\"type\":\"input_image\""));
+    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, fixture.payloads.items[1], "\"type\":\"input_image\""));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, fixture.payloads.items[2], "\"type\":\"input_image\""));
     try std.testing.expectEqualStrings(rt.model, fixture.last_model);
     try std.testing.expectEqualStrings("provider-key", fixture.last_api_key);
     try std.testing.expectEqual(@as(usize, 2), fixture.last_retry_count);
     try expectContains(fixture.payloads.items[0], "Read the build state");
-    try expectContains(fixture.payloads.items[0], "\"mediaType\":\"image/png\"");
+    try expectContains(fixture.payloads.items[0], "data:image/png;base64,");
     for (fixture.payloads.items) |payload| {
         for (catalog) |image| try expectNotContains(payload, image.path);
     }
@@ -7481,6 +7493,7 @@ test "vision runtime rejects unauthorized ids before filesystem or provider acce
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
     };
     defer rt.deinit(alloc);
@@ -7499,6 +7512,7 @@ test "vision runtime rejects a path source without canonical path authority" {
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .workspace_root = "/tmp",
     };
@@ -7535,6 +7549,7 @@ test "vision runtime loads approved paths into a transient authorized catalog" {
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .workspace_root = workspace,
         .session_allocator = alloc,
@@ -7556,7 +7571,7 @@ test "vision runtime loads approved paths into a transient authorized catalog" {
     try std.testing.expectEqual(tool_contracts.ToolExecutionStatus.success, result.status);
     try expectContains(result.model_output, "\"image_id\":1");
     try std.testing.expectEqual(@as(usize, 1), fixture.call_count);
-    try expectContains(fixture.payloads.items[0], "\"type\":\"file\"");
+    try expectContains(fixture.payloads.items[0], "\"type\":\"input_image\"");
     try expectNotContains(fixture.payloads.items[0], source_path);
 }
 
@@ -7590,6 +7605,7 @@ test "vision runtime returns bounded failures for unavailable approved paths" {
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .workspace_root = workspace,
     };
@@ -7625,6 +7641,7 @@ test "vision runtime propagates cancellation while preparing approved paths" {
     var cancel_flag = std.atomic.Value(bool).init(true);
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .workspace_root = workspace,
         .cancel_flag = &cancel_flag,
@@ -7715,6 +7732,7 @@ test "vision runtime preserves partial success and exact total outage notices" {
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = alloc,
     };
@@ -7768,6 +7786,7 @@ test "vision runtime classifies an empty successful provider result as invalid" 
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = alloc,
     };
@@ -7820,6 +7839,7 @@ test "vision runtime honors configured provider bounds without a hidden twenty K
     defer fixture.deinit();
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .session_allocator = alloc,
         .context_limits = .{ .image_adapter_output_bytes = .{
@@ -7866,6 +7886,7 @@ test "vision cancellation stops later batches and does not surface the outage ti
     var cancel_flag = std.atomic.Value(bool).init(false);
     var rt = TestRuntime{
         .agent_stream_provider = fixture.provider(),
+        .model = "gpt-test",
         .tool_registry = .{ .tools = vision_test_registry_tools[0..] },
         .cancel_flag = &cancel_flag,
         .session_allocator = alloc,

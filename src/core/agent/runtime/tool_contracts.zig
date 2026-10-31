@@ -91,6 +91,7 @@ pub const ToolExecutionResult = struct {
     web_fetch_completion: ?types.WebFetchCompletion = null,
     inner_usage: ?types.ToolUsage = null,
     selected_dynamic_tools: []const @import("../../tooling/tool_mcp_runtime.zig").SelectedTool = &.{},
+    selected_builtin_tool_names: []const []const u8 = &.{},
     retired_dynamic_tool_names: []const []const u8 = &.{},
     tool_result_memory: ?types.ToolResultMemory = null,
     tool_result_memory_prepared: bool = false,
@@ -156,6 +157,7 @@ pub const ToolExecutionRequest = struct {
     expected_mcp_runtime_generation: ?u64 = null,
     expected_mcp_binding: ?types.McpToolBinding = null,
     advertised_dynamic_tool_names: []const []const u8,
+    loadable_tool_names: []const []const u8 = &.{},
     max_tool_result_bytes: usize,
     /// The owning agent loop already ran its policy-neutral idempotency and
     /// availability classifiers for this exact effective call.

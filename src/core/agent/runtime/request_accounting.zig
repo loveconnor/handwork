@@ -8,7 +8,11 @@ var next_id: std.atomic.Value(u64) = .init(1);
 
 /// Diagnostic invocation identity, not a billing identity or durable session ID.
 pub fn begin(request: provider.ModelRequest) u64 {
-    const id = next_id.fetchAdd(1, .monotonic);
+    const id = if (comptime @import("builtin").single_threaded) blk: {
+        const current = next_id.raw;
+        next_id.raw +%= 1;
+        break :blk current;
+    } else next_id.fetchAdd(1, .monotonic);
     trace.eventf("agent", "request_attempt_started", request.trace_ctx, "request_id={d} purpose={s}", .{ id, @tagName(request.request_purpose) });
     return id;
 }

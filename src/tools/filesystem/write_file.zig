@@ -3,7 +3,7 @@ const file_mutation_contract = @import("../../core/tooling/file_mutation_contrac
 const tool_dispatch = @import("../../core/tooling/tool_dispatch.zig");
 
 const Allocator = std.mem.Allocator;
-const max_content_bytes: usize = 4 * 1024 * 1024;
+const max_content_bytes = @import("../../core/shared/tool_payload_limits.zig").file_content_bytes;
 
 /// Typed input for the built-in write_file tool.
 pub const Input = struct {

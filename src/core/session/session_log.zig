@@ -1189,7 +1189,7 @@ test "conversation recovery state preserves allocation errors and contains inval
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     var dir = io_mod.VerifiedDir{ .dir = tmp.dir };
-    try tmp.dir.writeFile(std.testing.io, .{ .sub_path = manifest_file, .flags = .{ .permissions = private_file_permissions }, .data = "{\"schema_version\":4,\"id\":\"recovery-source\",\"created_at_ms\":1,\"updated_at_ms\":1,\"origin_workspace_root\":\"/tmp\",\"workspace_root\":\"/tmp\",\"conversation_language\":\"en\",\"provider\":\"legacy\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false,\"title\":null,\"subagent_child\":false}" });
+    try tmp.dir.writeFile(std.testing.io, .{ .sub_path = manifest_file, .flags = .{ .permissions = private_file_permissions }, .data = "{\"schema_version\":4,\"id\":\"recovery-source\",\"created_at_ms\":1,\"updated_at_ms\":1,\"origin_workspace_root\":\"/tmp\",\"workspace_root\":\"/tmp\",\"conversation_language\":\"en\",\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false,\"title\":null,\"subagent_child\":false}" });
     const prefix =
         "{\"schema_version\":1,\"seq\":1,\"timestamp_ms\":1,\"event\":{\"user\":{\"text\":\"fact\"}}}\n" ++
         "{\"schema_version\":1,\"seq\":2,\"timestamp_ms\":1,\"event\":{\"assistant\":{\"text\":\"saved\"}}}\n" ++

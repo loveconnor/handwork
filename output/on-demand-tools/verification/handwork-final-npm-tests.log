@@ -1,0 +1,14 @@
+
+> handwork@0.1.6 test:npm-launcher
+> node --test scripts/tests/npm-launcher.test.cjs
+
+✔ npm launcher selects each Windows architecture and rejects the wrong binary (1.824459ms)
+✔ npm launcher permits a matching checkout build and reports a missing executable (0.788083ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.683625

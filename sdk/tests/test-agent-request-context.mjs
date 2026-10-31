@@ -90,11 +90,8 @@ async function capture(instructions, prompt) {
 }
 
 function systemText(payload) {
-  const messages = payload.input;
-  assert.ok(Array.isArray(messages), "Responses request must contain input messages");
-  return messages
-    .filter((message) => message.role === "system")
-    .map((message) => message.content);
+  assert.equal(typeof payload.instructions, "string", "Codex instructions must be a string");
+  return payload.instructions;
 }
 
 try {
@@ -127,8 +124,8 @@ try {
     assert.ok(headers.get("x-session-id"), "libhandwork must retain its session identity header");
     assert.equal(headers.get("x-session-affinity"), headers.get("x-session-id"), "libhandwork must retain Provider session affinity");
   }
-  assert.deepEqual(systemText(requestBodies[0]), [], "omitted instructions must not add hidden system context");
-  assert.deepEqual(systemText(requestBodies[1]), ["HOST_INSTRUCTIONS_ONLY"], "host instructions must be the complete system context");
+  assert.deepEqual(systemText(requestBodies[0]), "You are a helpful assistant.", "omitted instructions must use only the provider fallback");
+  assert.deepEqual(systemText(requestBodies[1]), "HOST_INSTRUCTIONS_ONLY", "host instructions must be the complete system context");
   assert.match(JSON.stringify(requestBodies[0]), /NO_INSTRUCTIONS_REQUEST/);
   assert.match(JSON.stringify(requestBodies[1]), /HOST_INSTRUCTIONS_REQUEST/);
 

@@ -1186,7 +1186,7 @@ test "provider replay projection preserves matching origin and excludes other ro
     const messages = [_]ChatMessage{.{ .role = .assistant, .content = "answer", .provider_replay = .{ .source = source, .parts_json = "[]" } }};
     try std.testing.expect(try projectProviderReplay(alloc, &messages, source) == null);
     for ([_]@import("../config/model_provider.zig").ProviderSelection{
-        .{ .provider = .codex, .model = "model" },
+        .{ .provider = .openai, .model = "model" },
         .{ .provider = .grok, .model = "model" },
         .{ .provider = .codex, .model = "different" },
     }) |other| {
@@ -1200,7 +1200,7 @@ test "provider replay projection preserves matching origin and excludes other ro
     try std.testing.checkAllAllocationFailures(alloc, struct {
         fn check(a: std.mem.Allocator) !void {
             const input = [_]ChatMessage{.{ .role = .assistant, .provider_replay = .{ .source = .{ .provider = .codex, .model = "model" }, .parts_json = "[]" } }};
-            const projected = (try projectProviderReplay(a, &input, .{ .provider = .codex, .model = "model" })).?;
+            const projected = (try projectProviderReplay(a, &input, .{ .provider = .openai, .model = "model" })).?;
             defer a.free(projected);
             const copy = try dupeProviderReplay(a, input[0].provider_replay.?);
             defer freeProviderReplay(a, copy);

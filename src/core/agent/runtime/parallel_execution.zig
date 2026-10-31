@@ -314,6 +314,7 @@ fn duplicateParallelToolResult(alloc: Allocator, call: ToolCall, execution: Tool
     if (execution.diff_entry != null or
         execution.finish_turn or
         execution.selected_dynamic_tools.len != 0 or
+        execution.selected_builtin_tool_names.len != 0 or
         execution.retired_dynamic_tool_names.len != 0 or
         execution.tool_result_memory_prepared or
         execution.committed_file_handoff != null or

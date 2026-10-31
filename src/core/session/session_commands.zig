@@ -2876,7 +2876,7 @@ test "session_commands model picker emits one combined preference transaction" {
     try std.testing.expectEqual(true, app.last_preference_fast_mode.?);
 }
 
-test "session_commands user save notice uses one post-commit load after legacy cleanup" {
+test "session_commands user model save resolves once and preserves unbound legacy settings" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
@@ -2906,8 +2906,10 @@ test "session_commands user save notice uses one post-commit load after legacy c
     try std.testing.expectEqual(@as(usize, 1), app.post_commit_resolution_count);
     try expectTranscriptContains(&app, "● Model: saved to user settings (scope=user)");
     try std.testing.expect(std.mem.find(u8, app.text(), "model=project") == null);
-    try expectTranscriptContains(&app, "normalized 1 legacy value across 1 workspace");
-    try expectTranscriptContains(&app, "settings.json.preference-migration.model.");
+    try std.testing.expect(std.mem.find(u8, app.text(), "normalized") == null);
+    const saved = try tmp.dir.readFileAlloc(io_mod.getIo(), "home/.handwork/settings.json", std.testing.allocator, .limited(64 * 1024));
+    defer std.testing.allocator.free(saved);
+    try std.testing.expect(std.mem.find(u8, saved, "legacy/local") != null);
 }
 
 test "session_commands durable user save survives post-commit resolver failure" {
@@ -2940,15 +2942,17 @@ test "session_commands durable user save survives post-commit resolver failure" 
     try std.testing.expectEqual(@as(usize, 1), app.post_commit_resolution_count);
     try expectTranscriptContains(&app, "● Model: saved to user settings (scope=user)");
     try expectTranscriptContains(&app, "next-startup source unknown");
-    try expectTranscriptContains(&app, "normalized 1 legacy value across 1 workspace");
-    try expectTranscriptContains(&app, "settings.json.preference-migration.model.");
+    try std.testing.expect(std.mem.find(u8, app.text(), "normalized") == null);
+    const saved = try tmp.dir.readFileAlloc(io_mod.getIo(), "home/.handwork/settings.json", std.testing.allocator, .limited(64 * 1024));
+    defer std.testing.allocator.free(saved);
+    try std.testing.expect(std.mem.find(u8, saved, "legacy/local") != null);
 
-    var settings = try config_runtime.loadMergedSettings(
-        std.testing.allocator,
-        workspace_root,
-    );
-    defer settings.deinit(std.testing.allocator);
-    try std.testing.expectEqualStrings("user/new", settings.models.get(.codex).?);
+    var parsed_saved = try std.json.parseFromSlice(std.json.Value, std.testing.allocator, saved, .{});
+    defer parsed_saved.deinit();
+    try std.testing.expectEqualStrings("user/new", parsed_saved.value.object.get("models").?.object.get("codex").?.string);
+    // The unrelated legacy workspace entry remains invalid; a successful durable
+    // user save must not silently migrate or discard it.
+    try std.testing.expectError(error.RemovedLegacyProvider, config_runtime.loadMergedSettings(std.testing.allocator, workspace_root));
 }
 
 test "session_commands durable user save survives post-commit resolver diagnostic" {

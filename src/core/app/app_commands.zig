@@ -2118,7 +2118,9 @@ fn writeTraceReportFile(alloc: std.mem.Allocator, contents: []const u8) ![]u8 {
         io_mod.getenv("TEMP") orelse io_mod.getenv("USERPROFILE") orelse return error.MissingTemporaryDirectory
     else
         io_mod.getenv("TMPDIR") orelse "/tmp";
-    const trimmed = std.mem.trimEnd(u8, tmp_dir, "/");
+    const canonical_tmp = try io_mod.realpathAlloc(alloc, tmp_dir);
+    defer alloc.free(canonical_tmp);
+    const trimmed = std.mem.trimEnd(u8, canonical_tmp, "/");
     const now_ms = io_mod.milliTimestamp();
     const now_secs: i64 = @max(@divFloor(now_ms, 1000), 0);
     const epoch_secs: std.time.epoch.EpochSeconds = .{ .secs = @intCast(now_secs) };

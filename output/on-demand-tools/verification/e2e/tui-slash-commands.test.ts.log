@@ -1,0 +1,9 @@
+tests/e2e/tui-slash-commands.test.ts:
+(pass) tui: no-key slash commands > /compact with no eligible context leaves no transcript notice [3188.15ms]
+(pass) tui: no-key slash commands > /undo reports the exact empty state [1240.10ms]
+(pass) tui: no-key slash commands > /permissions shows state before switching usage and leaves a live composer [1447.13ms]
+(pass) tui: no-key slash commands > compact status notice preserves native scrollback [1411.96ms]
+(skip) tui: slash commands > /status shows session info
+(skip) tui: slash commands > /settings opens the settings catalog
+(skip) tui: slash commands > /model Enter lists available models inline
+(skip) tui: slash commands > unknown and removed commands show errors

@@ -1029,7 +1029,10 @@ fn applyResizeHistoryOffset(
     line_visual_rows: []const u16,
     target_offset: u32,
 ) bool {
-    if (target_offset == 0 or line_visual_rows.len == 0) return false;
+    // Cursor reflow measurements include footer and unused terminal rows. A
+    // measurement past the transcript is not a valid history anchor; retain
+    // the canonical tail selection instead of painting an empty viewport.
+    if (target_offset == 0 or target_offset >= totalVisualRows(line_visual_rows)) return false;
     normalizeSplitSelection(selection, line_visual_rows);
     const current_offset = visualOffsetForSelection(line_visual_rows, selection.*);
     const applied_offset = @max(current_offset, target_offset);
@@ -3668,6 +3671,22 @@ test "resize history offset preserves the measured intra-line endpoint" {
     try std.testing.expect(applyResizeHistoryOffset(&selection, &rows, 3));
     try std.testing.expectEqual(@as(usize, 2), selection.start_line);
     try std.testing.expectEqual(@as(u16, 1), selection.partial_skip_rows);
+}
+
+test "resize measurements beyond transcript content retain the visible tail" {
+    const rows = [_]u16{ 1, 2, 1 };
+    var selection = ViewportSelection{
+        .top_row = 1,
+        .bottom_row = 3,
+        .start_line = 1,
+        .partial_skip_rows = 0,
+        .line_count = rows.len,
+    };
+    for ([_]u32{ 4, 24 }) |offset| {
+        try std.testing.expect(!applyResizeHistoryOffset(&selection, &rows, offset));
+        try std.testing.expectEqual(@as(usize, 1), selection.start_line);
+        try std.testing.expectEqual(@as(u16, 0), selection.partial_skip_rows);
+    }
 }
 
 test "measured source rows release partial groups at a folded boundary" {

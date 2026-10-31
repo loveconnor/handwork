@@ -95,7 +95,7 @@ test "host provider selects replay without changing canonical input" {
         .close_fn = Unused.close,
     });
     const adapter = provider(&context);
-    const parts = "[{\"type\":\"reasoning\",\"text\":\"retained\"},{\"type\":\"tool-call\",\"toolCallId\":\"read\"},{\"type\":\"text\",\"offset\":0,\"length\":6}]";
+    const parts = "[{\"type\":\"reasoning\",\"encrypted_content\":\"retained\"},{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\"}]}]";
     const replay = types.ProviderReplay{
         .source = .{ .provider = .codex, .model = "fixture-model" },
         .parts_json = parts,
@@ -106,7 +106,7 @@ test "host provider selects replay without changing canonical input" {
 
     const selected = (try adapter.projectReplay(alloc, replay, &calls, false, true)).?;
     defer alloc.free(selected.parts_json);
-    try std.testing.expectEqualStrings("[{\"type\":\"reasoning\",\"text\":\"retained\"},{\"type\":\"tool-call\",\"toolCallId\":\"read\"}]", selected.parts_json);
+    try std.testing.expectEqualStrings("[{\"type\":\"reasoning\",\"encrypted_content\":\"retained\"}]", selected.parts_json);
     try std.testing.expectEqualStrings(parts, replay.parts_json);
     try std.testing.expect(selected.matches(replay.source));
     try std.testing.expectEqual(@as(?types.ProviderReplay, null), try adapter.projectReplay(alloc, replay, &.{}, false, false));

@@ -2001,14 +2001,14 @@ test "auth runtime owns onboarding skip state" {
     try std.testing.expect(runtime.view().onboarding_skipped);
 }
 
-test "auth picker navigates subscription providers and returns to root" {
+test "auth picker navigates enabled providers and returns to root" {
     const alloc = std.testing.allocator;
     var runtime: Runtime = .{};
     defer runtime.deinit(alloc);
     runtime.openPicker(alloc);
     try std.testing.expect((Choice{ .provider = .codex }).eql(runtime.pickerView().selected_choice.?));
     try std.testing.expect(runtime.movePicker(1));
-    try std.testing.expect((Choice{ .provider = .grok }).eql(runtime.pickerView().selected_choice.?));
+    try std.testing.expect((Choice{ .provider = .openai }).eql(runtime.pickerView().selected_choice.?));
     runtime.openProviderPicker(alloc, .codex);
     try std.testing.expect(runtime.popPickerStage(alloc));
     try std.testing.expectEqual(PickerStage.root, runtime.pickerView().stage);

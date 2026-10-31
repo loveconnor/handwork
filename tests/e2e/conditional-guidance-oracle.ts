@@ -123,7 +123,7 @@ export function canonicalToolName(name: string): string {
 
 export function serializedToolNames(request: ProviderRequest): string[] {
   return (request.tools ?? []).flatMap((tool) =>
-    typeof tool.name === "string" ? [tool.name] : []
+    typeof tool.name === "string" ? [tool.name] : tool.type === "web_search" ? ["web_search"] : []
   );
 }
 

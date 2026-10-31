@@ -19,6 +19,7 @@ import {
   FAKE_CODEX_MODEL,
   fakeCodexFinalText as finalText,
   fakeCodexSse,
+  fakeCodexFunctionCallEvents,
   fakeCodexToolCall as toolCall,
   type FakeCodexResponse,
   isVolatileTokenStatusRow,
@@ -167,7 +168,7 @@ function expectAtomicApprovalExit(tapePath: string, frameStart: number) {
   expect(leaveFrames).toHaveLength(1);
   const payload = leaveFrames[0]!.payload;
   const restoreIndex = payload.indexOf(
-    "\x1b[?1000l\x1b[?1006l\x1b[?1049l\x1b[?25l",
+    "\x1b[?1000l\x1b[?1006l\x1b[?1049l\x1b[?1003h\x1b[?1006h\x1b[?25l",
   );
   const syncStart = payload.indexOf("\x1b[?2026h");
   const syncEnd = payload.indexOf("\x1b[?2026l");
@@ -183,7 +184,7 @@ function expectAtomicApprovalExit(tapePath: string, frameStart: number) {
   expect(restoreIndex).toBeGreaterThan(syncStart);
   expect(syncEnd).toBeGreaterThan(restoreIndex);
   expect(payload.length).toBeGreaterThan(
-    Buffer.byteLength("\x1b[?1000l\x1b[?1006l\x1b[?1049l\x1b[?25l"),
+    Buffer.byteLength("\x1b[?1000l\x1b[?1006l\x1b[?1049l\x1b[?1003h\x1b[?1006h\x1b[?25l"),
   );
 }
 
@@ -274,29 +275,15 @@ function chunkedWriteToolCall(id: string, path: string, content: string) {
   const chunkBytes = 32 * 1024;
   const deltas = Array.from(
     { length: Math.ceil(argumentsJson.length / chunkBytes) },
-    (_, index) => ({
-      type: "tool-input-delta",
-      id,
-      delta: argumentsJson.slice(index * chunkBytes, (index + 1) * chunkBytes),
-    }),
+    (_, index) => ({ type: "response.function_call_arguments.delta", output_index: 0,
+      delta: argumentsJson.slice(index * chunkBytes, (index + 1) * chunkBytes) }),
   );
   return fakeCodexSse([
-    {
-      type: "tool-input-start",
-      id,
-      toolName: "write_file",
-    },
+    { type: "response.output_item.added", output_index: 0,
+      item: { type: "function_call", call_id: id, name: "write_file" } },
     ...deltas,
-    {
-      type: "tool-input-end",
-      id,
-    },
-    {
-      type: "tool-call",
-      toolCallId: id,
-      toolName: "write_file",
-    },
-    { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
+    { type: "response.function_call_arguments.done", output_index: 0, arguments: argumentsJson },
+    { type: "response.completed", response: { status: "completed", usage: { input_tokens: 0, output_tokens: 0 } } },
   ]);
 }
 
@@ -492,10 +479,10 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
       const provider = startFakeCodex([
         fakeCodexSse([
           { type: "response.output_text.delta", delta: `x${marker} ${"x".repeat(2_048)}` },
-          { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "pacer_gate_write", name: "write_file", arguments: JSON.stringify({
+          ...fakeCodexFunctionCallEvents({ call_id: "pacer_gate_write", name: "write_file", arguments: JSON.stringify({
               path: "pacer-gate.txt",
               content: "must not be written\n",
-            }) } },
+            }) }, 1),
           { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
         ]),
         finalText("file approval pacer gate completed"),
@@ -818,7 +805,7 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
       });
       expect(approval).not.toContain("wheel scroll");
       const grid = await session.capturePaneGrid();
-      expect(grid[0]).toContain("Run /help for commands");
+      expect(grid.join("\n")).toContain("/help for commands");
       const bottomDividerRow = grid.findLastIndex((row) =>
         /^─+$/.test(row.trim()),
       );
@@ -909,9 +896,9 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
       expect(readFileSync(target, "utf8")).toBe("amended review content\n");
       expect(provider.requests).toHaveLength(2);
       const followup = provider.requests[1]!.body;
-      expect(followup.indexOf('"role":"tool"')).toBeGreaterThanOrEqual(0);
+      expect(followup.indexOf('"type":"function_call_output"')).toBeGreaterThanOrEqual(0);
       expect(followup.indexOf(feedback)).toBeGreaterThan(
-        followup.indexOf('"role":"tool"'),
+        followup.indexOf('"type":"function_call_output"'),
       );
       await session.sendText("/quit");
       expect(await session.waitForSessionEnd()).toBe(true);
@@ -944,9 +931,9 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
       expect(resumed.stderr).toBe("");
       expect(resumedProvider.requests).toHaveLength(1);
       const resumedRequest = resumedProvider.requests[0]!.body;
-      expect(resumedRequest.indexOf('"role":"tool"')).toBeGreaterThanOrEqual(0);
+      expect(resumedRequest.indexOf('"type":"function_call_output"')).toBeGreaterThanOrEqual(0);
       expect(resumedRequest.indexOf(feedback)).toBeGreaterThan(
-        resumedRequest.indexOf('"role":"tool"'),
+        resumedRequest.indexOf('"type":"function_call_output"'),
       );
       expectCleanStderr(stderrPath);
     },
@@ -1360,7 +1347,6 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
     60_000,
   );
 
-
   test(
     "file session grant reuses the canonical target without a second prompt",
     async () => {
@@ -1739,8 +1725,6 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
     },
     TIMEOUT,
   );
-
-  
 
   test(
     "maximum-size chunked write stays reviewable and commits exact bytes",

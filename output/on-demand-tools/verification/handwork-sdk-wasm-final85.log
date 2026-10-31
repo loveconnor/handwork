@@ -1,0 +1,53 @@
+
+> libhandwork@0.0.0 test:node-wasm
+> node tests/test-node-wasm.mjs
+
+Wasm JSPI tier-up passed: 100000 calls and 3125 task resumptions
+core output framing passed: fragmented UTF-8, isolation, ordering, invalid and bounded records
+wasm: large output fragmented=false
+wasm: large output fragmented=true
+wasm: paused consumer
+wasm: cancel and reuse
+wasm: close while backpressured and independent owner
+wasm: queued tool stays cancelled
+wasm: cancel from pressure notification
+wasm: iterator close interrupts a pending read
+wasm bounded output passed: large frames, slow consumer, cancellation and reuse
+handwork-core Wasm memory passed: 20 initial pages
+wasm failed bootstrap cleanup passed
+wasm instruction limits passed
+Node Wasm module cache passed: compilation reuse, retry, isolation, and closed-instance release
+Node wasm Agent request context passed
+Node wasm Agent transport retry passed
+Node wasm Agent cancellation stopped transport retry
+Node wasm Agent retry-event cancellation stopped transport retry
+core SDK passed: minimal prompt, stream, usage, checkpoint, and close
+core SDK stalled-fetch cancellation passed: AbortSignal stopped fetch and turn.result returned cancelled
+core SDK catalog cancellation passed: pending headers/body, late response, close, and follow-up
+core SDK HOME=/repo unavailable filesystem passed: prompt reached the model
+[>4;2m[>1u[?2004h[?5522h[?7l[?1003h[?1006h[?2031h[?996n]2;handwork v0.1.6 | workspace]2;handwork v0.1.6 | workspace[?2026h[?25l[0m[1;1H[2K[2;1H[2K[3;1H[2K[4;1H[2K[5;1H[2K[6;1H[2K[7;1H[2K[8;1H[2K[9;1H[2K[10;1H[2K[11;1H[2K[12;1H[2K[13;1H[2K[14;1H[2K[15;1H[2K[16;1H[2K[17;1H[2K[18;1H[2K[19;1H[2K[20;1H[2K[21;1H[2K[22;1H[2K[23;1H[2K[24;1H[2K[1;7H[0m[48;5;255m  [0m   [0m[48;5;255m  [0m  [0m[48;5;255m     [0m  [0m[48;5;255m   [0m    [0m[48;5;255m  [0m [0m[48;5;255m      [0m  [0m[48;5;255m  [0m     [0m[48;5;255m  [0m  [0m[48;5;255m      [0m  [0m[48;5;255m      [0m  [0m[48;5;255m  [0m   [0m[48;5;255m  [2;7H  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m    [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m     [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [3;7H       [0m [0m[48;5;255m       [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m      [0m  [0m[48;5;255m     [4;7H  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m [0m[48;5;255m   [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [5;7H  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m    [0m [0m[48;5;255m      [0m   [0m[48;5;255m   [0m [0m[48;5;255m   [0m   [0m[48;5;255m      [0m  [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [7;21H[0m[38;5;245mhandwork · v0.1.6 · made by [0m[38;5;245m]8;;https://connorlove.com\Connor Love]8;;\[9;1H[0m[38;5;252m                            Describe a task to begin[10;1H[0m[38;5;245m                               /help for commands[12;1H[0m[38;5;252m● History:[0m[38;5;250m durable prompt history unavailable[21;1H[0m[38;5;240m────────────────────────────────────────────────────────────────────────────────[22;1H[0m[38;5;255m┃[0m [0m[38;5;245mAsk anything, or type / for commands[23;1H[0m[38;5;240m────────────────────────────────────────────────────────────────────────────────[24;1H[0m[38;5;252mauto[0m[38;5;245m · term-model[0m[22;3H[?2026l[?25h[?2026h7[1G[6n[2G[6n8[?2026l[?2026h[?25l[14;1H[0m[38;5;255m┃[0m [0m[1mhello[16;1H[0m[38;5;252m• Thinking[0m[22;3H[?2026l[?25h[?2026h[?25l[16;11H[0m[38;5;252m (0s)[0m[22;3H[?2026l[?25h[?2026h[?25l[22;3Hsteering draft                      [22;17H[?2026l[?25h[?2026h[?25l[16;3H[0m[38;5;252mGenerating (0s)[0m[38;5;245m (↑2 ↓2)[0m[22;17H[?2026l[?25h[?2026h[?25l[16;1H[0m[38;5;255m┃[0m [0m[1msteering draft[0m         [18;1H[0m[38;5;252m• Generating (0s)[0m[38;5;245m (↑2 ↓2)[22;3HAsk anything, or type / for commands[0m[22;3H[?2026l[?25h[?2026h[?25l[18;3H[0m[38;5;252mThinking (0s)[0m[38;5;245m (↑2 ↓2)[0m  [22;3H[?2026l[?25h[?2026h[?25l[18;3H[0m[38;5;252mGenerating (0s)[0m[38;5;245m (↑2 ↓5)[0m[22;3H[?2026l[?25h]2;hello[?2026h[?25l[16;17H[0m[0J[?7h
+
+  §
+
+[38;5;245m  0s (↑2 ↓5)[0m[?7l[24;1H
+[0m[1;1H[2K[2;1H[2K[3;1H[2K[4;1H[2K[5;1H[2K[6;1H[2K[7;1H[2K[8;1H[2K[9;1H[2K[10;1H[2K[11;1H[2K[12;1H[2K[13;1H[2K[14;1H[2K[15;1H[2K[16;1H[2K[17;1H[2K[18;1H[2K[19;1H[2K[20;1H[2K[21;1H[2K[22;1H[2K[23;1H[2K[24;1H[2K[1;7H[0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m    [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m     [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [2;7H       [0m [0m[48;5;255m       [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m      [0m  [0m[48;5;255m     [3;7H  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m [0m[48;5;255m   [0m [0m[48;5;255m  [0m [0m[48;5;255m  [0m    [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m  [0m[48;5;255m  [4;7H  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m    [0m [0m[48;5;255m      [0m   [0m[48;5;255m   [0m [0m[48;5;255m   [0m   [0m[48;5;255m      [0m  [0m[48;5;255m  [0m   [0m[48;5;255m  [0m [0m[48;5;255m  [0m   [0m[48;5;255m  [6;21H[0m[38;5;245mhandwork · v0.1.6 · made by [0m[38;5;245m]8;;https://connorlove.com\Connor Love]8;;\[8;1H[0m[38;5;252m                            Describe a task to begin[9;1H[0m[38;5;245m                               /help for commands[11;1H[0m[38;5;252m● History:[0m[38;5;250m durable prompt history unavailable[13;1H[0m[38;5;255m┃[0m [0m[1mhello[15;1H[0m[38;5;255m┃[0m [0m[1msteering draft[17;3H[0m§[19;1H[0m[38;5;245m  0s (↑2 ↓5)[21;1H[0m[38;5;240m────────────────────────────────────────────────────────────────────────────────[22;1H[0m[38;5;255m┃[0m [0m[38;5;245mAsk anything, or type / for commands[23;1H[0m[38;5;240m────────────────────────────────────────────────────────────────────────────────[24;1H[0m[38;5;252mauto[0m[38;5;245m · term-model[0m[22;3H[?2026l[?25h[?2031l[?2026l[?1000l[?1002l[?1003l[?1004l[?1006l[?1007l[?1l>[?1049l[?7h[4l[?6l[?5522l[?2004l[<u[>4;0m]2;[?2026l[?7h[0m[21;1H[J[?25h
+term SDK smoke passed: exit=0, bytes=7043
+term session resume passed: commits=1, records=1, restored_prompt=true, restored_reply=true
+terminal demo delegates subscription authentication to host fetch
+
+> test:term
+> node test-xterm-adapter.mjs && node --experimental-wasm-jspi test-term-config-restore.mjs && node --experimental-wasm-jspi test-term-headless.mjs && node --experimental-wasm-jspi test-term-table-stream.mjs && node --experimental-wasm-jspi test-term-lifecycle.mjs && node --experimental-wasm-jspi test-term-compaction.mjs && node --experimental-wasm-jspi test-term-features.mjs && node --experimental-wasm-jspi test-term-history.mjs && node --experimental-wasm-jspi test-term-workspace.mjs
+
+xterm adapter passed: browser shortcuts, captured cut and newline, terminal selection priority, and click forwarding
+headless config restore passed: host read, validation, and write failures did not abort the runtime
+headless xterm smoke passed: shared handwork frame used the 96x30 host cell grid
+headless table stream passed: four-character deltas rendered one boxed table
+headless lifecycle passed: active session transitions recovered and Ctrl-C cancelled stalled fetch
+term compaction success passed
+term compaction cancel-headers passed
+term compaction cancel-body passed
+term compaction auto-cancel-headers passed
+headless features passed: clipboard, history, transcript, catalog, and host degradation
+headless history passed: host prompt and slash command history survived terminal recreation
+headless workspace passed: capability refusal, success, truncation, timeout, Ctrl-C abort, and strict invalid boundaries mapped through the host adapter
+Node + WASM SDK lane passed

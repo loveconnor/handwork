@@ -1,0 +1,33 @@
+tests/e2e/tui-render-lab.test.ts:
+$ bun render-lab/index.ts --list-scenarios
+(pass) render-lab lists gated Plan B native scenarios [31.57ms]
+$ bun render-lab/index.ts --scenario buffer-system-frame-bench --runs "20" --sizes "80x24,120x40,200x80" --out "/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-frame-bench-test-VGzNzn"
+(pass) buffer-system frame benchmark writes timing artifact [65.40ms]
+(pass) buffer-system p95 gate rejects undersampled runs [31.80ms]
+(pass) native render-lab scenarios require explicit opt-in [31.31ms]
+(pass) render-lab analyzer accepts neutral rows below anchored activity [1.91ms]
+(pass) render-lab analyzer treats thinking token counters as activity rows [0.53ms]
+(pass) render-lab analyzer recognizes the separate welcome help line [0.03ms]
+(pass) render-lab analyzer recognizes the real handwork prompt glyph [0.40ms]
+(pass) render-lab analyzer recognizes tint footer chrome [0.27ms]
+(pass) render-lab analyzer flags missing footer and input chrome [0.56ms]
+(pass) render-lab analyzer rejects damaged multiline footer with real hint and cursor [0.72ms]
+(pass) render-lab analyzer recognizes clipped multiline input continuation rows [0.45ms]
+(pass) render-lab analyzer recognizes compact multiline footer status [0.38ms]
+(pass) render-lab analyzer rejects a blank multiline footer status row [0.40ms]
+(pass) render-lab analyzer flags missing required gap before thinking [0.40ms]
+(pass) render-lab analyzer fails when the trace log is missing [0.51ms]
+(pass) render-lab analyzer enforces active-tool placement and uniqueness [1.85ms]
+(pass) render-lab analyzer rejects activity marker corruption [1.93ms]
+(pass) render-lab analyzer rejects expanded command marker corruption [2.31ms]
+(pass) render-lab analyzer rejects duplicate permission UI [0.99ms]
+(pass) render-lab analyzer rejects reordered observability scrollback [0.86ms]
+(pass) render-lab analyzer reports trace counters and rejects quiescent work [0.53ms]
+$ bun render-lab/index.ts --scenario active-tool-placement --runs "1" --out "/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-render-lab-overflow-test-fGnGW1"
+(pass) tui: render lab > active tool placement keeps one visible marker across resize states [14464.24ms]
+$ bun render-lab/index.ts --scenario user-card-resize-replay-scrollback --runs "1" --out "/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-render-lab-overflow-test-hPdVaZ"
+(pass) tui: render lab > user card resize replay keeps one card and one startup banner in scrollback [5490.20ms]
+$ bun render-lab/index.ts --scenario startup-scrollback-disabled-overflow --runs "1" --out "/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-render-lab-overflow-test-VIMjYt"
+(pass) tui: render lab > startup scrollback disabled overflow artifacts pass tape oracle [6404.25ms]
+$ bun render-lab/index.ts --scenario startup-scrollback-enabled-overflow --runs "1" --out "/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-render-lab-overflow-test-qnOdZP"
+(pass) tui: render lab > startup scrollback enabled overflow starts eagerly without progressive release [6394.02ms]

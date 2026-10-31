@@ -1,0 +1,40 @@
+
+> libhandwork@0.0.0 test:node-napi
+> node tests/test-node-napi.mjs
+
+core output framing passed: fragmented UTF-8, isolation, ordering, invalid and bounded records
+native: large output fragmented=false
+native: large output fragmented=true
+native: paused consumer
+native: cancel and reuse
+native: close while backpressured and independent owner
+native: queued tool stays cancelled
+native: cancel from pressure notification
+native: iterator close interrupts a pending read
+native bounded output passed: large frames, slow consumer, cancellation and reuse
+native core readiness notification passed
+native core misuse passed: argument, handle, stale, ambient trace isolation, backpressure, and closed-handle checks are enforced
+native core workers passed: worker isolation, same-environment concurrency, and GC cleanup
+native worker termination passed: active stalled runtime finalized within 5s
+native core security passed: malformed creation is stable and ACP stdio MCP is blocked
+native output passed: lossless backpressure, graceful drain and blocked destruction
+native core passed: minimal agent initialization, checkpoint, and graceful close
+native config isolation passed: explicit instructions, no workspace scan, and no native billing lookup
+Node native Agent request context passed
+Node native Agent transport retry passed
+Node native Agent cancellation stopped transport retry
+Node native Agent retry-event cancellation stopped transport retry
+native core stream passed: split terminal tail, matching abort, prompt reuse, and graceful close
+native host-fetch failure passed: independent AbortError fails without hanging
+native image framing passed: accepted images survive base64 framing; oversized raw requests stay bounded
+native tool frame limit passed: one tool error, model continuation, reusable agent, no replay
+native pre-fetch cancellation passed: no stale request survives abort
+native late-publication cancellation passed: cancelled before host fetch and follow-up recovered
+native core cancellation passed: stalled request cancelled and runtime closed
+native late host-tool completions stayed inert after cancellation and close
+default libhandwork import passed: no network or optional adapter activation
+explicit Node and browser model discovery passed
+libhandwork loader passed: browser exports, native preference, fallback diagnostics, semantic errors, strict low-level API validation, and failed-start cleanup
+native failed bootstrap cleanup passed
+native instruction limits passed
+Node + N-API SDK lane passed

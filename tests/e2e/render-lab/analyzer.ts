@@ -5,6 +5,7 @@ import {
   isInputRow as isRenderedInputRow,
 } from "../tui-render-assertions";
 import { stdoutFrames } from "./tape";
+import { isEmptyComposerLine } from "../tmux-helpers";
 import type {
   RenderLabFailure,
   RenderLabFrame,
@@ -384,13 +385,10 @@ function assertActivitySpacing(failures: RenderLabFailure[], frame: RenderLabFra
       blankAfter += 1;
       after += 1;
     }
-    if (blankAfter >= 2) {
-      push(
-        failures,
-        "activity-footer-extra-blank",
-        frame,
-        `thinking row has ${blankAfter} blank rows before the footer divider`,
-      );
+    // Anchored frames place unused rows below activity, next to the footer.
+    // Nothing may overwrite that clear band or paint inside the footer.
+    if (footer && (rowIndex >= footerTop || after !== footerTop)) {
+      push(failures, "activity-footer-overlap", frame, "turn activity overlaps footer or has intervening content");
     }
 
     let before = rowIndex - 1;
@@ -424,6 +422,9 @@ function assertActiveToolPlacementScenario(
   ].includes(frame.event)) {
     const isActiveClippedFrame = frame.event === "active-tool-clipped";
     assertMarkerCount(failures, frame, activeMarker, isActiveClippedFrame ? 1 : 0);
+    if (isActiveClippedFrame && (grid.match(/• Running(?: \(|$)/gm) ?? []).length !== 1) {
+      push(failures, "active-tool-turn-status", frame, "running turn status must remain visible exactly once");
+    }
     if (isActiveClippedFrame) {
       assertMarkerCount(failures, frame, terminalMarker, 0);
       assertSemanticScrollbackMarkerCount(
@@ -431,7 +432,7 @@ function assertActiveToolPlacementScenario(
         frame,
         activeMarker,
         1,
-        "active-tool-activity-scrollback-once",
+        "active-tool-running-group-count",
       );
       assertSemanticScrollbackMarkerCount(
         failures,
@@ -1045,6 +1046,7 @@ function expectsHandworkChrome(
     frame.event.includes("help-visible") ||
     frame.event.includes("slash-menu-expanded") ||
     frame.event.includes("final-third-launch-state") ||
+    frame.event.includes("handwork-launch-requested") ||
     frame.event.includes("handwork-quit-requested") ||
     frame.event.includes("post-quit-shell-prompt")
   ) {
@@ -1198,7 +1200,7 @@ function assertStartupOverflowSubmittedTransition(
   }
   if (!frame.grid.some((row) => {
     const text = semanticText(row);
-    return isInputRow(text) && text.trim().length === 1;
+    return isEmptyComposerLine(text);
   })) {
     push(failures, "submitted-empty-input-visible", frame, "submitted frame has no empty footer prompt");
   }

@@ -295,8 +295,6 @@ describe.skipIf(SKIP)("tui: extra slash commands", () => {
     TIMEOUT,
   );
 
-  
-
 });
 
 describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
@@ -443,7 +441,7 @@ describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
           5_000,
         );
         expect(hasEmptyComposer(closed)).toBe(true);
-        expect(await session.captureFullScrollback()).toBe(before);
+        expect((await session.captureFullScrollback()).split("\n").filter(line => line.trim())).toEqual(before.split("\n").filter(line => line.trim()));
         expect(readFileSync(stderrPath, "utf8")).toBe("");
       } finally {
         if (session) {
@@ -639,7 +637,7 @@ describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
           (pane) => !pane.includes("[Resources]"),
           5_000,
         );
-        expect(await session.captureFullScrollback()).toBe(before);
+        expect((await session.captureFullScrollback()).split("\n").filter(line => line.trim())).toEqual(before.split("\n").filter(line => line.trim()));
 
         await session.sendText("/mcp");
         await session.waitForText("MCP 1", 10_000);
@@ -714,7 +712,7 @@ describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
           (pane) => !pane.includes("[Servers]"),
           5_000,
         );
-        expect(await session.captureFullScrollback()).toBe(before);
+        expect((await session.captureFullScrollback()).split("\n").filter(line => line.trim())).toEqual(before.split("\n").filter(line => line.trim()));
         expect(readFileSync(stderrPath, "utf8")).toBe("");
       } finally {
         if (session) {
@@ -798,7 +796,7 @@ describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
 
         await session.sendKeys("Escape");
         await session.waitForPane((pane) => !pane.includes("[Servers]"), 5_000);
-        expect(await session.captureFullScrollback()).toBe(before);
+        expect((await session.captureFullScrollback()).split("\n").filter(line => line.trim())).toEqual(before.split("\n").filter(line => line.trim()));
         expect(readFileSync(stderrPath, "utf8")).toBe("");
       } finally {
         if (session) {

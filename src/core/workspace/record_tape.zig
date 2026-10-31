@@ -183,17 +183,22 @@ fn configureAutomatic(
     } else null;
     const root = if (home) |value|
         try profile_paths.recordingsDir(alloc, value)
-    else
-        try std.fs.path.join(alloc, &.{ io_mod.getenv("TMPDIR") orelse "/tmp", "handwork-recordings" });
+    else blk: {
+        const temp_root = try io_mod.realpathAlloc(alloc, io_mod.getenv("TMPDIR") orelse "/tmp");
+        defer alloc.free(temp_root);
+        break :blk try std.fs.path.join(alloc, &.{ temp_root, "handwork-recordings" });
+    };
     defer alloc.free(root);
     try io_mod.makeDirRecursive(root);
+    const canonical_root = try io_mod.realpathAlloc(alloc, root);
+    defer alloc.free(canonical_root);
 
     var attempts: u8 = 0;
     while (attempts < 8) : (attempts += 1) {
         var random_bytes: [6]u8 = undefined;
         io_mod.getIo().random(&random_bytes);
         const random_hex = std.fmt.bytesToHex(random_bytes, .lower);
-        const path = try std.fmt.allocPrint(alloc, "{s}/handwork-record-{d}-{s}.fxtape", .{ root, nowMs(), random_hex });
+        const path = try std.fmt.allocPrint(alloc, "{s}/handwork-record-{d}-{s}.fxtape", .{ canonical_root, nowMs(), random_hex });
         defer alloc.free(path);
 
         configureWithOptions(alloc, path, initial_cols, initial_rows, handwork_version, true, true, show_inline_notice) catch |err| switch (err) {
@@ -719,7 +724,7 @@ test "recordStdin suppresses input by default" {
     try expectNoFrame(bytes);
 }
 
-test "debug recording request creates a private tape under home" {
+test "debug recording request creates a private tape under a linked home" {
     const alloc = testing.allocator;
     resetEnvForTest();
     defer resetEnvForTest();
@@ -729,10 +734,16 @@ test "debug recording request creates a private tape under home" {
     try tmp.dir.createDirPath(io_mod.getIo(), "home");
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home);
+    const root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
+    defer alloc.free(root);
+    const linked_home = try std.fs.path.join(alloc, &.{ root, "linked-home" });
+    defer alloc.free(linked_home);
+    const link_supported = @import("builtin").os.tag != .windows;
+    if (link_supported) try tmp.dir.symLink(io_mod.getIo(), "home", "linked-home", .{ .is_directory = true });
 
     var env = std.process.Environ.Map.init(alloc);
     defer env.deinit();
-    try env.put("HOME", home);
+    try env.put("HOME", if (link_supported) linked_home else home);
     try env.put("HANDWORK_DEBUG_RECORD", "1");
 
     shutdown();
@@ -849,7 +860,11 @@ test "debug recording request uses the temporary fallback when HOME is empty" {
     defer status.deinit(alloc);
     switch (status) {
         .active => |active| {
-            try testing.expect(std.mem.startsWith(u8, active.path, "/tmp/handwork-recordings/"));
+            const canonical_tmp = try io_mod.realpathAlloc(alloc, "/tmp");
+            defer alloc.free(canonical_tmp);
+            const expected_prefix = try std.fs.path.join(alloc, &.{ canonical_tmp, "handwork-recordings/" });
+            defer alloc.free(expected_prefix);
+            try testing.expect(std.mem.startsWith(u8, active.path, expected_prefix));
             shutdown();
             if (std.fs.path.isAbsolute(active.path)) {
                 std.Io.Dir.deleteFileAbsolute(io_mod.getIo(), active.path) catch {};

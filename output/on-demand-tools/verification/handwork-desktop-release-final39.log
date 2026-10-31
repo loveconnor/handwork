@@ -1,0 +1,23 @@
+✔ stamps every release version with LF line endings and can be rerun (63.834542ms)
+✔ stamps every release version with CRLF line endings and can be rerun (58.106459ms)
+✔ publishes one immutable signed URL for every supported platform (4.581333ms)
+✔ refuses incomplete, duplicated, unsigned, wrong-version, and unsafe releases (0.294708ms)
+✔ collects Windows installers without losing their architecture or signature (65.912917ms)
+✔ collects the Mac installer and signed app archive, excluding the .app tree (32.141916ms)
+✔ syncs the Tauri app and release workflow together, removing stale Electron source (366.165625ms)
+✔ stable tags, including hyphens in build metadata, use the stable feed (0.891125ms)
+✔ prerelease tags use only the beta feed (0.069875ms)
+✔ non-release refs are rejected (0.164209ms)
+✔ stable builds preserve the configured endpoint (0.117417ms)
+✔ stable builds can use the R2 default (0.067875ms)
+✔ beta builds override a configured production endpoint (0.042875ms)
+✔ beta builds require an isolated R2 endpoint and HTTPS (0.064209ms)
+✔ the CLI exports the same channel used for feed publication (33.1255ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 646.274541

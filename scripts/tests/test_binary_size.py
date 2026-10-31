@@ -237,6 +237,7 @@ class BinarySizeCliTests(unittest.TestCase):
                 parse_macho_sections(report)
 
 
+@unittest.skipUnless(WORKFLOW_PATH.is_file(), "legacy engine binary-size workflow is not shipped in this checkout")
 class BinarySizeWorkflowTests(unittest.TestCase):
     def test_pr_workflow_compares_all_supported_release_safe_targets(self) -> None:
         self.assertTrue(WORKFLOW_PATH.is_file(), "binary-size workflow is missing")

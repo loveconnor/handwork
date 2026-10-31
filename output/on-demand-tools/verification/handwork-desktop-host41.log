@@ -1,0 +1,110 @@
+
+> handwork-desktop@0.1.8 pretest:host
+> npm run host:build
+
+
+> handwork-desktop@0.1.8 host:build
+> tsc --noEmit -p host/tsconfig.json && node host/build.mjs
+
+
+> handwork-desktop@0.1.8 test:host
+> vitest run --config host/vitest.config.ts
+
+
+ RUN  v3.2.7 /Users/connorlove/Work/Handwork/handwork/desktop-app
+
+ ✓ host/engine.test.ts (27 tests) 3803ms
+   ✓ headless session ownership > retries a failed event write and settles the stopped turn  1076ms
+   ✓ headless session ownership > retries a failed final settlement  1087ms
+ ✓ host/server.test.ts (15 tests) 2203ms
+   ✓ remote host API > lists, creates, and selects registered remote worktrees through RPC  798ms
+   ✓ remote host API > answers this app's file commands inside host projects only  594ms
+   ✓ remote host API > browses and commits changes in the host checkout  549ms
+stdout | host/provider-transport.test.ts > existing providers over headless process I/O
+[handwork] session title Error: Pi process is not running
+    at PiRpc.request (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/pi/piClient.ts:45:28)
+    at promptOnLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/pi/piText.ts:151:23)
+
+stdout | host/provider-transport.test.ts > existing providers over headless process I/O
+[handwork] session title Error: omp process is not running
+    at PiRpc.request (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/pi/piClient.ts:45:28)
+    at promptOnLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/pi/piText.ts:151:23)
+
+stdout | host/provider-transport.test.ts > existing providers over headless process I/O
+[handwork] session title Error: Claude text generator exited
+    at Object.session.readyDone (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/claude/claudeText.ts:416:16)
+    at /Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/claude/claudeText.ts:266:15
+    at EventEmitter.<anonymous> (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/child.ts:216:11)
+    at EventEmitter.emit (node:events:514:28)
+    at HostChildBackend.emit (/Users/connorlove/Work/Handwork/handwork/desktop-app/host/child-backend.ts:130:17)
+    at ChildProcess.<anonymous> (/Users/connorlove/Work/Handwork/handwork/desktop-app/host/child-backend.ts:369:12)
+    at ChildProcess.emit (node:events:526:24)
+    at maybeClose (node:internal/child_process:1172:16)
+    at Socket.<anonymous> (node:internal/child_process:527:11)
+    at Socket.emit (node:events:514:28)
+
+stdout | host/provider-transport.test.ts
+[handwork] session title Error: Host is stopping
+    at HostChildBackend.start (/Users/connorlove/Work/Handwork/handwork/desktop-app/host/child-backend.ts:325:29)
+    at HostChildBackend.invoke (/Users/connorlove/Work/Handwork/handwork/desktop-app/host/child-backend.ts:229:28)
+    at invoke (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/child.ts:82:15)
+    at spawnChild (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/core/child.ts:371:21)
+    at startLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/claude/claudeText.ts:273:11)
+    at promptOnLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/claude/claudeText.ts:151:19)
+
+ ✓ host/provider-transport.test.ts (13 tests) 7022ms
+   ✓ existing providers over headless process I/O > discovers host models in parallel without probe process collisions  5115ms
+To /private/var/folders/db/rcsnyf011n7542x_p838rxrr0000gp/T/handwork-workspace-remote-ygHLTs
+ * [new branch]      HEAD -> main
+ ✓ host/workspace.test.ts (9 tests) 2824ms
+   ✓ reports tracked and untracked changes and commits staged files  1069ms
+   ✓ stages and unstages a folder subtree without affecting other changes  593ms
+ ✓ host/child-backend.test.ts (6 tests) 1615ms
+   ✓ stops a provider tree (ignores SIGTERM: true)  1115ms
+Preparing worktree (new branch 'other')
+ ✓ host/workspace-commands.test.ts (7 tests) 3122ms
+   ✓ commits only selected working files and preserves other staging and repos  414ms
+   ✓ generates context for selected added and deleted files without reading excluded changes or altering the index  489ms
+   ✓ rejects invalid and cross-repo selections before touching staging  846ms
+   ✓ treats wildcard, pathspec, newline and backslash filenames literally  445ms
+   ✓ locates each checkout and deleted parents while enforcing host boundaries  420ms
+ ✓ host/large-sync.test.ts (2 tests) 1846ms
+   ✓ reopens and updates a session whose transcript exceeds 16 MiB  1448ms
+   ✓ streams a changed block larger than 16 MiB as a bounded delta  398ms
+ ✓ host/windows.test.ts (5 tests | 2 skipped) 29ms
+ ↓ host/windows-bootstrap.test.ts (3 tests | 3 skipped)
+ ✓ host/service.test.ts (8 tests | 1 skipped) 58ms
+ ✓ host/git-worktrees.test.ts (3 tests) 936ms
+   ✓ applies generated worktree names only to retained sessions (deleted: false)  305ms
+   ✓ creates registered host worktrees and binds new sessions to the selected checkout  342ms
+stdout | host/opencode-v2-transport.test.ts > runs an OpenCode 2.x session through the host service commands and bridge
+[handwork] session title Error: OpenCode returned empty output.
+    at promptOnLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/opencode/opencodeText.ts:130:22)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+ ✓ host/opencode-v2-transport.test.ts (1 test) 162ms
+ ✓ host/bootstrap.test.ts (3 tests) 1624ms
+   ✓ installs a verified package, handles unusual home paths, and reuses its host on reconnect  689ms
+   ✓ updates an existing host only when requested, then restarts its service  775ms
+ ✓ host/process.test.ts (6 tests) 11ms
+ ✓ host/cli.test.ts (1 test) 869ms
+   ✓ starts detached, authenticates a device, revokes it, and stops independently of the launcher  869ms
+stdout | host/opencode-transport.test.ts > runs an OpenCode session through the host HTTP and SSE bridge
+[handwork] session title Error: OpenCode returned empty output.
+    at promptOnLive (/Users/connorlove/Work/Handwork/handwork/desktop-app/src/integrations/harness/providers/opencode/opencodeText.ts:130:22)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+ ✓ host/opencode-transport.test.ts (1 test) 211ms
+ ✓ host/sync-transfer.test.ts (3 tests) 5ms
+Switched to a new branch 'main'
+ ✓ host/git-branches.test.ts (1 test) 409ms
+   ✓ lists and switches only clean existing local branches  409ms
+ ✓ host/attachments.test.ts (1 test) 5ms
+ ✓ host/providers.test.ts (1 test) 2ms
+ ✓ host/browse.test.ts (1 test) 2ms
+ ✓ host/owner.test.ts (1 test) 3ms
+
+ Test Files  21 passed | 1 skipped (22)
+      Tests  112 passed | 6 skipped (118)
+   Start at  11:56:19
+   Duration  31.37s (transform 1.09s, setup 0ms, collect 2.29s, tests 26.76s, environment 1ms, prepare 521ms)

@@ -20,16 +20,15 @@ const authority_and_communication = default_prompt[operation_end..];
 const shared_operations =
     \\# Bounded execution
     \\
-    \\- Read source/test/config with needed status in the FIRST response. Group independent tools, including edits to different files, in the SAME response. Bound read_file files and grep_files patterns. With project context enabled, rely on scoped AGENTS.md; retrieve omitted or newly applicable guidance. Do not repeat covered instruction searches or inspect unrelated directories.
-    \\- Use edit_file for localized changes to existing files; batch edits against original text without overlaps. Do not repeat unchanged code or reads. Wait for prerequisites.
-    \\- After edits, group required tests, uncovered edge probes and final diff checks in ONE shell.run, chained with &&. Reuse harness/inputs/setup. Probe representative boundary/error classes; expand combinations only for material risk or requirements. Repeat only for changed inputs/dependencies or failure; diagnose first. Never skip required checks or claim unrun results.
-    \\- Node ESM inline: --input-type=module with -e or stdin; no --test.
+    \\- FIRST response: read relevant source/test/config/status. Group independent tools, including edits to different files, in the SAME response. Bound read_file files/grep_files patterns. Rely on scoped AGENTS.md; retrieve omitted or newly applicable guidance. Do not repeat covered instruction searches or inspect unrelated directories.
+    \\- Use edit_file for localized changes; batch nonoverlapping edits against original text. Avoid unchanged rereads; wait for prerequisites.
+    \\- Group required tests, uncovered boundary/error probes and final diff checks in ONE shell.run with &&. Reuse fixtures. Expand only for material risks/requirements; repeat for changed inputs/dependencies or failures, diagnosing first. Never skip required checks or claim unrun results.
+    \\- Node ESM: --input-type=module with -e/stdin, not --test.
     \\
 ;
 
 const parent_operations = shared_operations ++
-    \\- Keep short work here unless delegation is requested. Assign bounded outcomes, context and nonoverlapping owned paths. Batch independent owned edits while a child runs; integrate and verify once after delivery. No polling or duplicate child work.
-    \\- Honor user/AGENTS model/effort choices; use configured IDs. provider requires model; slash never selects provider. Omissions inherit; effort auto uses the model default. Report unavailable choices without substitution. Prefer named steerable children. Routing is creation-only: changes require a new child and concise handoff without conflicting work. Relay steering promptly; queued feedback does not cancel tools and a receipt is not completion. Preserve preferences and unfinished work across interruptions/compaction.
+    \\- Keep short work here unless delegation is requested; load subagent guidance first. No polling or duplicate child work.
     \\
     \\
 ;
@@ -77,7 +76,8 @@ test "bounded prompt preserves authority and custom policy while reducing operat
         try testing.expectEqual(Profile.original, untouched.profile);
         try testing.expectEqual(@as(usize, 0), untouched.saved_bytes);
     }
-    try testing.expect(std.mem.indexOf(u8, parent_prompt, "provider requires model") != null);
+    // Tool-specific routing guidance is supplied with the subagent schema.
+    try testing.expect(std.mem.indexOf(u8, parent_prompt, "Keep short work here unless delegation is requested") != null);
     try testing.expect(std.mem.indexOf(u8, parent_prompt, "No polling or duplicate child work") != null);
     for ([_][]const u8{ parent_prompt, child_prompt }) |prompt| {
         try testing.expect(std.mem.indexOf(u8, prompt, "including edits to different files, in the SAME response") != null);

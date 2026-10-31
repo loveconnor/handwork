@@ -1,0 +1,12 @@
+tests/e2e/yolo-permission-mode.test.ts:
+(pass) yolo permission mode > --full-access warns once, bypasses configured denial, and keeps stdout clean [78.39ms]
+(pass) yolo permission mode > --yolo warns once, bypasses configured denial, and keeps stdout clean [74.57ms]
+(pass) yolo permission mode > status accepts full-access in settings and environment without changing JSON [46.90ms]
+(pass) yolo permission mode > status accepts full access in settings and environment without changing JSON [43.18ms]
+(pass) yolo permission mode > status accepts yolo in settings and environment without changing JSON [45.43ms]
+(pass) yolo permission mode > status omits sandbox while preserving the legacy configured value [5.93ms]
+(pass) yolo permission mode > legacy sandbox config is inert and ps executes once [74.74ms]
+(pass) yolo interactive mode > Shift+Tab cycles through yolo and warning time pauses behind menus [11092.75ms]
+(pass) yolo interactive mode > Shift+Tab applies auto to a later tool call in the active turn [1472.90ms]
+(pass) yolo interactive mode > Shift+Tab tightening to ask gates a later tool call in the active turn [1670.60ms]
+(pass) yolo interactive mode > a pending ctrl+c keeps its quit hint intact and pauses the warning at 60 columns [4416.15ms]

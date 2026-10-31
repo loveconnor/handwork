@@ -112,15 +112,17 @@ pub fn parseUnified(alloc: Allocator, raw: []const u8) !Parsed {
         if (files.items.len == 0) continue;
         const file = &files.items[files.items.len - 1];
 
+        if (std.mem.startsWith(u8, line, "@@ ")) {
+            const range = parseHunkHeader(line) orelse continue;
+            old_line = range.old_start;
+            new_line = range.new_start;
+            if (hunk_count > 0) try file.appendLine(alloc, .elision, null, null, "⋯");
+            hunk_count += 1;
+            in_hunk = true;
+            continue;
+        }
         if (!in_hunk) {
-            if (std.mem.startsWith(u8, line, "@@ ")) {
-                const range = parseHunkHeader(line) orelse continue;
-                old_line = range.old_start;
-                new_line = range.new_start;
-                if (hunk_count > 0) try file.appendLine(alloc, .elision, null, null, "⋯");
-                hunk_count += 1;
-                in_hunk = true;
-            } else if (std.mem.startsWith(u8, line, "+++ ")) {
+            if (std.mem.startsWith(u8, line, "+++ ")) {
                 if (stripSidePrefix(line[4..])) |path| try replacePath(alloc, file, path);
             } else if (std.mem.startsWith(u8, line, "--- ")) {
                 if (stripSidePrefix(line[4..]) == null and file.status == .modified) file.status = .deleted;

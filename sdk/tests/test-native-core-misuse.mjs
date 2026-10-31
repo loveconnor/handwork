@@ -162,7 +162,7 @@ try {
   assert.equal(addon.finishCoreFetch(lifecycleCore, catalogFetch.handle), 1);
   const firstFetch = await Promise.race([takeFetch(), timeout("first host fetch")]);
   assert.equal(firstFetch.method, "POST");
-  assert.equal(firstFetch.url, "http://127.0.0.1:31337/chat");
+  assert.equal(firstFetch.url, "https://chatgpt.com/backend-api/codex/responses");
   assert.ok(Number.isInteger(firstFetch.handle) && firstFetch.handle > 0, "fetch request must carry a positive handle");
   const firstHandle = firstFetch.handle;
   const futureHandle = firstHandle + 1;

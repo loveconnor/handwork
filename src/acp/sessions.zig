@@ -2874,6 +2874,7 @@ test "ACP new and loaded sessions provide a writable subagent host" {
     defer capture.close(io_mod.getIo());
     {
         var state = try initAcpSessionTestState(arena, workspace_path, capture);
+        state.cfg.provider_set.codex.deferred_usage = @import("../core/session/generation_usage_provider.zig").unavailable_provider;
         defer state.deinit();
 
         var new_msg = jsonrpc.Message{

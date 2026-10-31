@@ -577,14 +577,15 @@ function hostPaths(home: string) {
   const dir = join(home, ".handwork", "terminal-host-v7");
   return {
     dir,
-    socket: join(dir, "host.sock"),
+    socket: terminalTransportPaths(home).socket,
     lock: join(dir, "host.lock"),
     identity: join(dir, "host.json"),
   };
 }
 
 function terminalTransportPaths(home: string) {
-  const durable = hostPaths(home);
+  const dir = join(home, ".handwork", "terminal-host-v7");
+  const durable = { dir, socket: join(dir, "host.sock") };
   const capacity = process.platform === "darwin"
     ? 104
     : process.platform === "linux"
@@ -605,11 +606,11 @@ function terminalTransportPaths(home: string) {
   const uid = process.getuid?.();
   if (uid === undefined) throw new Error("missing Unix uid");
   const base = process.platform === "darwin" ? "/private/tmp" : "/tmp";
-  const dir = join(base, `handwork-terminal-${uid}-${digest}`);
+  const fallbackDir = join(base, `handwork-terminal-${uid}-${digest}`);
   return {
-    dir,
-    socket: join(dir, "host.sock"),
-    tmuxSocket: join(dir, "tmux.sock"),
+    dir: fallbackDir,
+    socket: join(fallbackDir, "host.sock"),
+    tmuxSocket: join(fallbackDir, "tmux.sock"),
   };
 }
 
@@ -3288,7 +3289,7 @@ test.skipIf(!tmuxAvailable())("transient tmux recovery failures preserve the pan
       startupAttempts: 2,
     });
     const siblingId = (sibling.session as { session_id: string }).session_id;
-    const tmuxSocket = join(paths.dir, "tmux.sock");
+    const tmuxSocket = terminalTransportPaths(home).tmuxSocket;
     const backendIdentity = (durableTerminalRecordFor(home, sessionId) as {
       backend_identity: string;
     }).backend_identity;
@@ -3452,7 +3453,7 @@ test.skipIf(!tmuxAvailable())("private tmux teardown owns partial recovery resou
   if (!existsSync("/bin/zsh")) return;
   const home = makeHome();
   const paths = hostPaths(home);
-  const tmuxSocket = join(paths.dir, "tmux.sock");
+  const tmuxSocket = terminalTransportPaths(home).tmuxSocket;
   const firstHost = startHost(home, undefined, 30_000);
   await waitFor(() => existsSync(paths.socket));
   const first = await handshake(paths.socket, { minimum: 4, current: 5 });
@@ -3470,7 +3471,8 @@ test.skipIf(!tmuxAvailable())("private tmux teardown owns partial recovery resou
     ["-S", tmuxSocket, "list-sessions", "-F", "#{session_name}"],
     { encoding: "utf8" },
   ).trim();
-  const backendIdentity = sessionName.slice(3);
+  expect(sessionName.startsWith("handwork-")).toBe(true);
+  const backendIdentity = sessionName.slice("handwork-".length);
   const panePid = Number(execFileSync(
     "tmux",
     ["-S", tmuxSocket, "display-message", "-p", "-t", sessionName, "#{pane_pid}"],
@@ -3589,7 +3591,7 @@ test.skipIf(!tmuxAvailable())("alternate-screen host loss keeps tmux facts but r
     },
   );
   const sessionId = (started.session as { session_id: string }).session_id;
-  const tmuxSocket = join(paths.dir, "tmux.sock");
+  const tmuxSocket = terminalTransportPaths(home).tmuxSocket;
   const sessionName = execFileSync(
     "tmux",
     ["-S", tmuxSocket, "list-sessions", "-F", "#{session_name}"],
@@ -3759,13 +3761,14 @@ test.skipIf(!tmuxAvailable())("tmux recovery rejects a replaced pane without sig
     waitMs: 8_000,
   });
   const sessionId = (started.session as { session_id: string }).session_id;
-  const tmuxSocket = join(paths.dir, "tmux.sock");
+  const tmuxSocket = terminalTransportPaths(home).tmuxSocket;
   const sessionName = execFileSync(
     "tmux",
     ["-S", tmuxSocket, "list-sessions", "-F", "#{session_name}"],
     { encoding: "utf8" },
   ).trim();
-  const backendIdentity = sessionName.slice(3);
+  expect(sessionName.startsWith("handwork-")).toBe(true);
+  const backendIdentity = sessionName.slice("handwork-".length);
   const oldIdentity = readFileSync(paths.identity, "utf8");
   first.client.close();
   firstHost.kill("SIGKILL");
@@ -4917,7 +4920,7 @@ test("Bash and zsh preserve trusted normal startup and controlled clean startup"
   });
 
   const loginProfile = loginShellProfile();
-  if (loginProfile !== null) {
+  if (loginProfile !== null && tmuxAvailable()) {
     writeFileSync(join(home, loginProfile), "exit 41\n");
     const tmux = await requestAction(
       connected.client,
@@ -7026,8 +7029,8 @@ test("long profile homes use distinct private transport roots and retain durable
   const firstTransport = terminalTransportPaths(firstHome);
   const secondTransport = terminalTransportPaths(secondHome);
 
-  expect(Buffer.byteLength(firstDurable.socket)).toBe(141);
-  expect(Buffer.byteLength(secondDurable.socket)).toBe(142);
+  expect(Buffer.byteLength(join(firstDurable.dir, "host.sock"))).toBe(141);
+  expect(Buffer.byteLength(join(secondDurable.dir, "host.sock"))).toBe(142);
   expect(firstTransport.dir).not.toBe(firstDurable.dir);
   expect(secondTransport.dir).not.toBe(secondDurable.dir);
   expect(firstTransport.dir).not.toBe(secondTransport.dir);
@@ -7052,8 +7055,8 @@ test("long profile homes use distinct private transport roots and retain durable
     existsSync(secondDurable.identity)
   );
 
-  expect(existsSync(firstDurable.socket)).toBe(false);
-  expect(existsSync(secondDurable.socket)).toBe(false);
+  expect(existsSync(join(firstDurable.dir, "host.sock"))).toBe(false);
+  expect(existsSync(join(secondDurable.dir, "host.sock"))).toBe(false);
   expect(statSync(firstTransport.dir).mode & 0o777).toBe(0o700);
   expect(statSync(firstTransport.socket).mode & 0o777).toBe(0o600);
   expect(readFileSync(firstDurable.identity, "utf8")).not.toBe(

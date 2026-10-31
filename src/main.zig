@@ -3235,7 +3235,8 @@ pub fn runWasmTerminal(init: std.process.Init) !void {
         },
     };
     defer launch.deinit(alloc);
-    const outcome = try app_entry_runtime.runInteractiveCooperative(App, alloc, &launch, .local);
+    const auth_mode = try credentials.parseAuthMode(io_mod.getenv("HANDWORK_AUTH_MODE"));
+    const outcome = try app_entry_runtime.runInteractiveCooperative(App, alloc, &launch, auth_mode);
     switch (outcome) {
         .returned => {},
         .exit => |code| if (code != 0) return error.WasmTerminalExited,

@@ -1,0 +1,5 @@
+tests/e2e/tui-resume-brutal.test.ts:
+(pass) /resume survives repeated real-chat, tool, scope, pagination, resize, and reopen thrashing [15537.65ms]
+(skip) /resume sustains one hundred mixed interaction cycles without resource drift
+(skip) /resume native profiler captures sustained menu thrashing
+(skip) /resume survives a fifty-thousand-entry catalog and real fifty-thousand-line tool-heavy session

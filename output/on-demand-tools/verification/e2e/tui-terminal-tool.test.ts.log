@@ -1,0 +1,11 @@
+tests/e2e/tui-terminal-tool.test.ts:
+(pass) shell captured empty observation floors short waits without respawn [3260.12ms]
+(pass) running shell survives a model-completed turn without handoff policy [1638.18ms]
+(pass) force stop settles a stubborn captured command and permits later work [1354.26ms]
+(pass) reused provider call ids start distinct captured commands [1809.26ms]
+(pass) overlapping captured shell handles keep lifecycle output isolated [1642.11ms]
+(pass) shell TTY execution writes atomically drains final output and closes host state [1762.37ms]
+(pass) shell TTY writes advance one runtime-owned cursor without duplicate output [1874.25ms]
+(pass) shell interact sends exact control characters [6778.83ms]
+(pass) shell TTY timeout stops the owned process and reports the deadline [1994.84ms]
+(pass) resumed handwork reindexes and stops its durable managed TTY [3109.21ms]

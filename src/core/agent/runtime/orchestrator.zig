@@ -1,4 +1,5 @@
 const std = @import("std");
+const on_demand_tools = @import("on_demand_tools.zig");
 const skill_runtime = @import("../../skills/skill_runtime.zig");
 const skill_contract = @import("../../skills/skill_contract.zig");
 const skill_invocation = @import("../../skills/skill_invocation.zig");
@@ -3176,6 +3177,7 @@ fn finishPendingParallelCancelled(
     status_started: []const bool,
     status_terminalized: []const bool,
     advertised_dynamic_tool_names: []const []const u8,
+    remaining_calls: []const ToolCall,
 ) !void {
     for (calls, results, status_started, status_terminalized) |call, result, started, terminalized| {
         if (terminalized) continue;
@@ -3214,6 +3216,16 @@ fn finishPendingParallelCancelled(
             advertised_dynamic_tool_names,
         );
     }
+    try finishPendingCancelledCalls(
+        deps,
+        provisional_statuses,
+        provisional_alloc,
+        arena,
+        config,
+        turn_id,
+        remaining_calls,
+        advertised_dynamic_tool_names,
+    );
 }
 
 fn finishPreparedCallsOnCancellation(
@@ -3286,6 +3298,7 @@ fn finishPreparedCallsOnCancellation(
         status_started,
         status_terminalized,
         advertised_dynamic_tool_names,
+        &.{},
     );
 }
 
@@ -6374,6 +6387,12 @@ fn processQueuedPromptLoop(
     var last_tool_call_name: []const u8 = "none";
     var last_tool_call_id: []const u8 = "none";
     var last_provider_message_count: usize = stable_prefix.items.len + history_messages.items.len + 1;
+    const loadable_builtin_tool_names = try arena.alloc([]const u8, config.advertised_functions.len);
+    for (config.advertised_functions, 0..) |function, index| loadable_builtin_tool_names[index] = function.name;
+    var builtin_tool_state = on_demand_tools.State.init(config.advertised_functions, config.on_demand_tools orelse on_demand_tools.enabled());
+    defer builtin_tool_state.deinit(arena);
+    try builtin_tool_state.restore(arena, history_messages.items);
+    try builtin_tool_state.restore(arena, within_turn_suffix.items);
     var selected_dynamic_tools: std.ArrayList(agent_stream_provider.DynamicFunctionTool) = .empty;
     try selected_dynamic_tools.ensureTotalCapacity(arena, config.initial_dynamic_tools.len);
     for (config.initial_dynamic_tools) |tool| {
@@ -6882,12 +6901,12 @@ fn processQueuedPromptLoop(
                 .model = provider_model,
                 .instructions = request_instructions,
                 .messages = request_messages,
-                .tools = try runtime_provider_step.projectVisionTools(overlay_arena, .{
+                .tools = try runtime_provider_step.projectVisionTools(overlay_arena, try builtin_tool_state.project(overlay_arena, .{
                     .registry = deps.tool_registry,
                     .advertised_names = config.advertised_tool_names,
                     .advertised_functions = config.advertised_functions,
                     .selected_dynamic = advertised_dynamic_tools,
-                }, vision_mode),
+                }), vision_mode),
                 .tool_choice = tool_choice,
                 .vision_mode = vision_mode,
                 .provider_options = provider_opts,
@@ -9442,6 +9461,7 @@ fn processQueuedPromptLoop(
                             parallel_status_started,
                             parallel_status_terminalized,
                             advertised_dynamic_tool_names,
+                            effective_tool_calls[tool_call_index + parallel_len ..],
                         );
                         try runtime_tool_batch.drainPendingUserSuffix(arena, &step_batch, &within_turn_suffix);
                         try runtime_interruption.persistInterruptedTurnOnce(deps, finalization, job, partial_assistant, parallel_call, completed_tool_names.items, &interrupted_persisted, step_ctx, within_turn_suffix.items, stop_state.retained_candidate, &stop_state.terminal_materializing);
@@ -9503,6 +9523,7 @@ fn processQueuedPromptLoop(
                             parallel_status_started,
                             parallel_status_terminalized,
                             advertised_dynamic_tool_names,
+                            effective_tool_calls[tool_call_index + parallel_len ..],
                         );
                         try runtime_tool_batch.drainPendingUserSuffix(arena, &step_batch, &within_turn_suffix);
                         try runtime_interruption.persistInterruptedTurnOnce(deps, finalization, job, partial_assistant, parallel_call, completed_tool_names.items, &interrupted_persisted, step_ctx, within_turn_suffix.items, stop_state.retained_candidate, &stop_state.terminal_materializing);
@@ -9524,6 +9545,7 @@ fn processQueuedPromptLoop(
                             parallel_status_started,
                             parallel_status_terminalized,
                             advertised_dynamic_tool_names,
+                            effective_tool_calls[tool_call_index + parallel_len ..],
                         );
                         try runtime_tool_batch.drainPendingUserSuffix(arena, &step_batch, &within_turn_suffix);
                         try runtime_interruption.persistInterruptedTurnOnce(deps, finalization, job, partial_assistant, parallel_call, completed_tool_names.items, &interrupted_persisted, step_ctx, within_turn_suffix.items, stop_state.retained_candidate, &stop_state.terminal_materializing);
@@ -9590,6 +9612,7 @@ fn processQueuedPromptLoop(
                             parallel_status_started,
                             parallel_status_terminalized,
                             advertised_dynamic_tool_names,
+                            effective_tool_calls[tool_call_index + parallel_len ..],
                         );
                         try runtime_tool_batch.drainPendingUserSuffix(arena, &step_batch, &within_turn_suffix);
                         try runtime_interruption.persistInterruptedTurnOnce(deps, finalization, job, partial_assistant, parallel_call, completed_tool_names.items, &interrupted_persisted, step_ctx, within_turn_suffix.items, stop_state.retained_candidate, &stop_state.terminal_materializing);
@@ -9684,6 +9707,7 @@ fn processQueuedPromptLoop(
                             parallel_status_started,
                             parallel_status_terminalized,
                             advertised_dynamic_tool_names,
+                            effective_tool_calls[tool_call_index + parallel_len ..],
                         );
                         try runtime_tool_batch.drainPendingUserSuffix(arena, &step_batch, &within_turn_suffix);
                         try runtime_interruption.persistInterruptedTurnOnce(deps, finalization, job, partial_assistant, executable_calls.items[0], completed_tool_names.items, &interrupted_persisted, step_ctx, within_turn_suffix.items, stop_state.retained_candidate, &stop_state.terminal_materializing);
@@ -11056,6 +11080,7 @@ fn processQueuedPromptLoop(
                 .session_grants = execution_grants,
                 .live_authority = if (live_authority) |resolved| resolved.authority else null,
                 .advertised_dynamic_tool_names = advertised_dynamic_tool_names,
+                .loadable_tool_names = loadable_builtin_tool_names,
                 .max_tool_result_bytes = config.max_tool_result_bytes,
                 .expected_mcp_runtime_generation = expected_mcp_runtime_generation,
                 .expected_mcp_binding = for (advertised_dynamic_tools) |tool| {
@@ -11405,6 +11430,7 @@ fn processQueuedPromptLoop(
                 debug_trace.eventf("tool", "after_tool_execution", step_ctx, "call_id={s} name={s} result_kind={s} model_output_bytes={d}", .{ tool_call.id, tool_call.name, runtime_telemetry.toolExecutionResultKind(execution), safe_tool_output.len });
                 debug_trace.eventf("tool", "execution_result", step_ctx, "call_id={s} name={s} result_kind={s} model_output_bytes={d}", .{ tool_call.id, tool_call.name, runtime_telemetry.toolExecutionResultKind(execution), safe_tool_output.len });
             }
+            if (execution.status == .success and !execution.cancelled) try builtin_tool_state.select(arena, execution.selected_builtin_tool_names);
             try runtime_provider_step.recordSelectedDynamicTools(arena, &selected_dynamic_tools, execution);
             try runtime_tool_batch.appendOrdinaryExecutedResult(
                 deps.tool_registry,

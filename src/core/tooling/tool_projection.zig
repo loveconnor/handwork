@@ -588,7 +588,7 @@ fn appendBuiltinTool(
 }
 
 fn compactDescriptionsEnabled() bool {
-    return std.mem.eql(u8, io_mod.getenv("HANDWORK_EXPERIMENT_COMPACT_SCHEMAS") orelse "", "1");
+    return std.mem.eql(u8, io_mod.getenv("HANDWORK_EXPERIMENT_COMPACT_SCHEMAS") orelse "1", "1");
 }
 
 test "compact schema projection changes only reviewed wording and preserves tool authority" {

@@ -1,0 +1,17 @@
+tests/e2e/file-tool-paths.test.ts:
+(pass) filesystem path handling > empty optional search paths use the workspace root [158.32ms]
+(pass) filesystem path handling > active added roots reach read cwd and search admission without loading their instructions [242.60ms]
+(pass) filesystem path handling > captured commands write through an active added root [79.08ms]
+(skip) filesystem path handling > live Provider reads an active added root without adopting its instructions
+(pass) filesystem path handling > read_file expands home and canonicalizes relative and absolute external aliases [120.84ms]
+(pass) filesystem path handling > shell reviews and executes external working-directory aliases [243.71ms]
+(pass) filesystem path handling > trusted new writes bypass review while external overwrites use exact review [178.45ms]
+(pass) filesystem path handling > automatic review receives a large prepared overwrite before caution [69.83ms]
+(pass) filesystem path handling > headless automatic review caution returns advice without writing [57.05ms]
+(pass) filesystem path handling > registered typed write and edit use one canonical handwork ask mutation path [58.42ms]
+(pass) filesystem path handling > external relative read-only tools resolve their canonical roots [164.65ms]
+(pass) filesystem path handling > glob pattern cannot escape the separately approved search root [40.94ms]
+(pass) filesystem path handling > retained edit tool honors canonical external permission targets [57.15ms]
+(pass) filesystem path handling > missing HOME returns HomeNotSet without treating tilde as workspace-relative [48.80ms]
+(pass) filesystem path handling > removed filesystem tools are absent and shell completes the fallback flow [119.74ms]
+(skip) filesystem path handling > live Provider uses shell for removed filesystem operations

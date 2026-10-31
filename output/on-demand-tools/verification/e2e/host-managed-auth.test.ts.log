@@ -1,0 +1,4 @@
+tests/e2e/host-managed-auth.test.ts:
+(pass) host-managed authentication > runs Codex without local authentication headers and rejects disabled Grok [60.33ms]
+(pass) host-managed authentication > rejects malformed auth mode before provider I/O [25.84ms]
+(pass) host-managed authentication > final provider 401 does not enter local refresh or replay [50.70ms]

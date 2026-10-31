@@ -13,8 +13,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { HANDWORK_BIN, REPO_ROOT } from "../../evals/eval-helpers";
-import { fakeCodexTitleDefault, isVolatileTokenStatusRow, TITLE_GENERATION_MARKER } from "../tmux-helpers";
+import { HANDWORK_BIN, REPO_ROOT, providerVersionTestEnv } from "../../evals/eval-helpers";
+import { fakeCodexFunctionCallEvents, hasEmptyComposer, fakeCodexTitleDefault, isVolatileTokenStatusRow, TITLE_GENERATION_MARKER } from "../tmux-helpers";
 import {
   ACTIVE_TOOL_MARKER,
   analyzeRun,
@@ -100,11 +100,11 @@ function providerSse(events: object[]): Response {
 
 function permissionDecisionResponse(): Response {
   return providerSse([
-    { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "render_lab_permission_decision_1", name: "permission_decision", arguments: JSON.stringify({
+    ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "render_lab_permission_decision_1", name: "permission_decision", arguments: JSON.stringify({
         risk: "low",
         decision: "clear",
         rationale: "deterministic render-lab decision",
-      }) } },
+      }) }, 0),
     { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
   ]);
 }
@@ -417,7 +417,7 @@ async function runActiveToolPlacement(
     markers: {
       shell: [],
       submitted: ["exercise one active command placement"],
-      history: ["Run /help for commands"],
+      history: ["/help for commands"],
     },
     frames: [],
     failures: [],
@@ -441,7 +441,7 @@ async function runActiveToolPlacement(
     await launchHandwork(context, session, "active-tool", {
       stderrPath: join(artifactDir, "stderr.log"),
       providerApiKey: "render-lab-local-provider-key",
-      fetch: (_url, init) => globalThis.fetch(provider.chatUrl, init),
+      providerChatUrl: provider.chatUrl,
       providerModelsUrl: provider.modelsUrl,
     });
     await submitSlashCommand(
@@ -464,16 +464,17 @@ async function runActiveToolPlacement(
     );
     await capture(context, session, "active-tool-visible");
 
-    await session.resize(80, 18);
+    await session.resize(80, 8);
     await session.waitForPane(
-      (pane) => pane.includes(ACTIVE_TOOL_MARKER),
+      (pane) => /• Running(?: \(|$)/m.test(pane),
       ACTIVE_TOOL_RESIZE_CAPTURE_TIMEOUT_MS,
     );
     await capture(context, session, "active-tool-clipped");
 
     writeFileSync(activeToolReleasePath, "");
-    await session.waitForPane(
-      (pane) => pane.includes(TERMINAL_TOOL_MARKER),
+    await waitForFileText(
+      manifest.traceLogPath,
+      trace => trace.includes("event=lifecycle_reduced kind=terminal"),
       ACTIVE_TOOL_RESIZE_CAPTURE_TIMEOUT_MS,
     );
     await session.resize(80, 5);
@@ -661,7 +662,7 @@ async function runUserCardResizeReplayScrollback(
     markers: {
       shell: [],
       submitted: [promptHead, promptTail],
-      history: ["Run /help for commands"],
+      history: ["/help for commands"],
     },
     frames: [],
     failures: [],
@@ -684,7 +685,7 @@ async function runUserCardResizeReplayScrollback(
     await launchHandwork(context, session, "user-card", {
       stderrPath: join(artifactDir, "stderr.log"),
       providerApiKey: "render-lab-local-provider-key",
-      fetch: (_url, init) => globalThis.fetch(provider.chatUrl, init),
+      providerChatUrl: provider.chatUrl,
       providerModelsUrl: provider.modelsUrl,
     });
     await session.sendText(prompt);
@@ -800,7 +801,7 @@ async function runTuiObservabilityGauntlet(
       clearedShell: [shellMarker],
       submitted: [promptHead, promptTail],
       history: [
-        "Run /help for commands",
+        "/help for commands",
         OBSERVABILITY_TRANSCRIPT_HEAD,
         OBSERVABILITY_TRANSCRIPT_TAIL,
         "OBSERVABILITY_TOOL_OUTPUT",
@@ -836,7 +837,7 @@ async function runTuiObservabilityGauntlet(
     await launchHandwork(context, session, "observability", {
       stderrPath: join(artifactDir, "stderr.log"),
       providerApiKey: "render-lab-local-provider-key",
-      fetch: (_url, init) => globalThis.fetch(provider.chatUrl, init),
+      providerChatUrl: provider.chatUrl,
       providerModelsUrl: provider.modelsUrl,
       permissionMode: "ask",
     });
@@ -1065,7 +1066,7 @@ async function runStartupScrollbackOverflow(
         `SHELL_OVERFLOW_END_${markerSuffix}`,
       ],
       submitted: [promptTail],
-      history: [promptHead, "Run /help for commands"],
+      history: [promptHead, "/help for commands"],
     },
     frames: [],
     failures: [],
@@ -1115,7 +1116,7 @@ async function runStartupScrollbackOverflow(
     await launchHandwork(context, session, "overflow", {
       stderrPath: join(artifactDir, "stderr.log"),
       providerApiKey: "render-lab-local-provider-key",
-      fetch: (_url, init) => globalThis.fetch(provider.chatUrl, init),
+      providerChatUrl: provider.chatUrl,
       providerModelsUrl: provider.modelsUrl,
     });
     await capture(context, session, "overflow-initial-bottom-anchored-frame");
@@ -1138,7 +1139,7 @@ async function runStartupScrollbackOverflow(
     await session.waitForPane(
       (pane) =>
         pane.includes(promptTail) &&
-        pane.split("\n").some((row) => /^┃\s*$/.test(row)),
+        hasEmptyComposer(pane),
       10_000,
     );
     const submittedFrame = await capture(context, session, "overflow-submitted-prompt-tail-visible");
@@ -1618,6 +1619,11 @@ async function launchHandwork(
   label: string,
   options: HandworkLaunchOptions = {},
 ): Promise<void> {
+  if (options.providerChatUrl) providerVersionTestEnv({
+    HOME: context.fixture.home,
+    HANDWORK_AUTH_MODE: "host-managed",
+    HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: options.providerChatUrl,
+  });
   const environment = [
     options.providerChatUrl ? "HANDWORK_AUTH_MODE=host-managed" : null,
     options.providerChatUrl ? `HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL=${shQuote(options.providerChatUrl)}` : null,
@@ -1630,7 +1636,7 @@ async function launchHandwork(
     `${environmentPrefix}HANDWORK_RECORD=${shQuote(context.manifest.tapePath)} HANDWORK_RECORD_INPUT=1 ${shQuote(HANDWORK_BIN)}${stderrRedirect}`,
   );
   await capture(context, session, `${label}-handwork-launch-requested`);
-  await session.waitForPane((pane) => pane.includes("Run /help for commands"), 25_000);
+  await session.waitForPane((pane) => pane.includes("/help for commands"), 25_000);
   await capture(context, session, `${label}-handwork-prompt-visible`);
 }
 
@@ -1662,7 +1668,7 @@ function startLocalProviderFixture(expectedPromptTail: string): LocalProviderFix
               released: 1,
               tags: ["tool-use"],
             },
-          ].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+           , { id: "gpt-5.6-luna", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
 
       if (request.method === "POST" && url.pathname === LOCAL_PROVIDER_CHAT_PATH) {
@@ -1672,7 +1678,7 @@ function startLocalProviderFixture(expectedPromptTail: string): LocalProviderFix
         }
         await responseGate;
         const sse = [
-          `data: ${JSON.stringify({ type: "response.output_text.delta", delta: LOCAL_PROVIDER_COMPLETION })}`,
+          `data: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: LOCAL_PROVIDER_COMPLETION })}`,
           "",
           `data: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage: { input_tokens: ({
               inputTokens: { total: 1 },
@@ -1730,7 +1736,7 @@ function startActiveToolProviderFixture(): LocalProviderFixture {
       }
       if (request.method === "GET" && url.pathname === LOCAL_PROVIDER_MODELS_PATH) {
         requests.push(`${request.method} ${url.pathname}`);
-        return Response.json({ models: [{ id: "anthropic/claude-opus-4.7", type: "language", released: 1, tags: ["tool-use"] }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+        return Response.json({ models: [{ id: "anthropic/claude-opus-4.7", type: "language", released: 1, tags: ["tool-use"] } , { id: "gpt-5.6-luna", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
       if (request.method === "POST" && url.pathname === LOCAL_PROVIDER_CHAT_PATH) {
         const body = await request.text();
@@ -1744,7 +1750,7 @@ function startActiveToolProviderFixture(): LocalProviderFixture {
           ? [
               `data: ${JSON.stringify({ type: "tool-input-start", id: "active_tool_1", toolName: "shell" })}`,
               "",
-              `data: ${JSON.stringify({ type: "response.output_item.done", output_index: 1, item: { type: "function_call", call_id: "active_tool_1", name: "shell", arguments: JSON.stringify({ request: { action: "run", command: "sleep 1; i=1; sleep 3; while [ \"$i\" -le 32 ]; do printf 'ACTIVE_TOOL_LINE_%02d\\n' \"$i\"; i=$((i+1)); sleep 0.03; done; while [ ! -f .active-tool-release ]; do sleep 0.05; done", yield_time_ms: 30_000, timeout_ms: 600_000 } }) } })}`,
+              ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "active_tool_1", name: "shell", arguments: JSON.stringify({ action: "run", profile: "clean", command: "sleep 1; i=1; sleep 3; while [ \"$i\" -le 32 ]; do printf 'ACTIVE_TOOL_LINE_%02d\\n' \"$i\"; i=$((i+1)); sleep 0.03; done; while [ ! -f .active-tool-release ]; do sleep 0.05; done", yield_time_ms: 30_000, timeout_ms: 600_000 }) }, 0).flatMap(event => [`data: ${JSON.stringify(event)}`, ""]),
               "",
               `data: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage: { input_tokens: ({ inputTokens: { total: 1 }, outputTokens: { total: 1 } }).inputTokens?.total ?? 0, output_tokens: ({ inputTokens: { total: 1 }, outputTokens: { total: 1 } }).outputTokens?.total ?? 0 } } })}`,
               "",
@@ -1752,7 +1758,7 @@ function startActiveToolProviderFixture(): LocalProviderFixture {
               "",
             ].join("\n")
           : [
-              `data: ${JSON.stringify({ type: "response.output_text.delta", delta: LOCAL_PROVIDER_COMPLETION })}`,
+              `data: ${JSON.stringify({ type: "response.output_text.delta", output_index: 0, delta: LOCAL_PROVIDER_COMPLETION })}`,
               "",
               `data: ${JSON.stringify({ type: "response.completed", response: { status: "completed", usage: { input_tokens: ({ inputTokens: { total: 1 }, outputTokens: { total: 1 } }).inputTokens?.total ?? 0, output_tokens: ({ inputTokens: { total: 1 }, outputTokens: { total: 1 } }).outputTokens?.total ?? 0 } } })}`,
               "",
@@ -1818,7 +1824,7 @@ function startObservabilityProviderFixture(
               released: 1,
               tags: ["tool-use"],
             },
-          ].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+           , { id: "gpt-5.6-luna", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
       if (request.method === "POST" && url.pathname === LOCAL_PROVIDER_CHAT_PATH) {
         const body = await request.text();
@@ -1830,15 +1836,15 @@ function startObservabilityProviderFixture(
         if (chatRequestCount === 2) await responseGate;
         const events = chatRequestCount === 1
           ? [
-              { type: "response.output_text.delta", delta: transcript },
+              { type: "response.output_text.delta", output_index: 0, delta: transcript },
               {
                 type: "tool-input-start",
                 id: "observability-tool-1",
                 toolName: "shell",
               },
-              { type: "response.output_item.done", output_index: 2, item: { type: "function_call", call_id: "observability-tool-1", name: "shell", arguments: JSON.stringify({
-                  request: { action: "run", command, timeout_ms: 600_000 },
-                }) } },
+              ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "observability-tool-1", name: "shell", arguments: JSON.stringify({
+                  action: "run", profile: "clean", command, timeout_ms: 600_000,
+                }) }, 2),
               { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({
                   inputTokens: { total: 1 },
                   outputTokens: { total: 1 },
@@ -1848,7 +1854,7 @@ function startObservabilityProviderFixture(
                 }).outputTokens?.total ?? 0 } } },
             ]
           : [
-              { type: "response.output_text.delta", delta: OBSERVABILITY_FINAL_MARKER },
+              { type: "response.output_text.delta", output_index: 0, delta: OBSERVABILITY_FINAL_MARKER },
               { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({
                   inputTokens: { total: 1 },
                   outputTokens: { total: 1 },
@@ -2289,8 +2295,7 @@ function preflightBinaryOnly(): void {
 
 function testEnv(fixture: Fixture, manifest: RenderLabManifest): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
-  
-  
+
   env.HANDWORK_DISABLE_KEYCHAIN = "1";
   env.HANDWORK_SKIP_ONBOARDING = "1";
   env.HOME = fixture.home;
@@ -2592,7 +2597,7 @@ function pad(value: number): string {
 }
 
 function tmux(args: string[], env?: NodeJS.ProcessEnv): string {
-  return execFileSync("tmux", args, {
+  return execFileSync("tmux", ["-L", `handwork-render-lab-${process.pid}`, ...args], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     env: env ? { ...process.env, ...env } : process.env,

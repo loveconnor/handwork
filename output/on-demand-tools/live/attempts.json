@@ -1,0 +1,185 @@
+[
+  {
+    "task": "read_inventory",
+    "variant": "eager",
+    "seconds": 7.075,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 9545,
+    "output_tokens": 50,
+    "total_tokens": 9595,
+    "usage_details": {
+      "cached_input_tokens": 4608,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "steps": 1,
+    "tools": [
+      "read_file"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 9545,
+    "session_ledger_output_tokens": 50,
+    "session_ledger_total_tokens": 9595,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  },
+  {
+    "task": "read_inventory",
+    "variant": "on_demand",
+    "seconds": 5.852,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 3565,
+    "output_tokens": 50,
+    "total_tokens": 3615,
+    "usage_details": {
+      "cached_input_tokens": 1664,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "steps": 1,
+    "tools": [
+      "read_file"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 3565,
+    "session_ledger_output_tokens": 50,
+    "session_ledger_total_tokens": 3615,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  },
+  {
+    "task": "repair_clamp",
+    "variant": "on_demand",
+    "seconds": 27.931,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 21119,
+    "output_tokens": 641,
+    "total_tokens": 21760,
+    "usage_details": {
+      "cached_input_tokens": 12288,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 16
+    },
+    "steps": 6,
+    "tools": [
+      "load_tools",
+      "shell",
+      "read_file",
+      "edit_file",
+      "shell"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 24934,
+    "session_ledger_output_tokens": 756,
+    "session_ledger_total_tokens": 25690,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  },
+  {
+    "task": "repair_clamp",
+    "variant": "eager",
+    "seconds": 20.759,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 26019,
+    "output_tokens": 550,
+    "total_tokens": 26569,
+    "usage_details": {
+      "cached_input_tokens": 18432,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "steps": 5,
+    "tools": [
+      "read_file",
+      "shell",
+      "read_file",
+      "edit_file",
+      "shell"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 28548,
+    "session_ledger_output_tokens": 599,
+    "session_ledger_total_tokens": 29147,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  },
+  {
+    "task": "repair_pagination",
+    "variant": "eager",
+    "seconds": 25.063,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 37733,
+    "output_tokens": 587,
+    "total_tokens": 38320,
+    "usage_details": {
+      "cached_input_tokens": 29568,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 32
+    },
+    "steps": 8,
+    "tools": [
+      "shell",
+      "read_file",
+      "glob_files",
+      "read_file",
+      "read_file",
+      "edit_file",
+      "shell",
+      "shell"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 43410,
+    "session_ledger_output_tokens": 727,
+    "session_ledger_total_tokens": 44137,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  },
+  {
+    "task": "repair_pagination",
+    "variant": "on_demand",
+    "seconds": 21.101,
+    "success": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "input_tokens": 18282,
+    "output_tokens": 494,
+    "total_tokens": 18776,
+    "usage_details": {
+      "cached_input_tokens": 6656,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "steps": 7,
+    "tools": [
+      "load_tools",
+      "read_file",
+      "glob_files",
+      "shell",
+      "read_file",
+      "edit_file",
+      "shell"
+    ],
+    "error": null,
+    "session_ledger_input_tokens": 21946,
+    "session_ledger_output_tokens": 600,
+    "session_ledger_total_tokens": 22546,
+    "session_ledger_billing_states": [
+      "complete"
+    ]
+  }
+]

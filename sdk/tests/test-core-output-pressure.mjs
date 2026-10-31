@@ -131,7 +131,7 @@ try {
   console.log(`${backend}: queued tool stays cancelled`);
   pressure = null;
   let effects = 0;
-  const toolWire = "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"queued\",\"call_id\":\"queued\",\"name\":\"effect\",\"arguments\":\"{}\"}}\n\n" +
+  const toolWire = `data: ${JSON.stringify({ type: "response.output_item.added", output_index: 1, item: { type: "function_call", id: "queued", call_id: "queued", name: "effect", arguments: "" } })}\n\n` + "data: {\"type\":\"response.output_item.done\",\"output_index\":1,\"item\":{\"type\":\"function_call\",\"id\":\"queued\",\"call_id\":\"queued\",\"name\":\"effect\",\"arguments\":\"{}\"}}\n\n" +
     "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"usage\":{\"input_tokens\":0,\"output_tokens\":0}}}\n\ndata: [DONE]\n\n";
   await start(async () => new Response(delta(part).repeat(128) + toolWire), (event) => {
     if (event.type === "output.backpressure") pressure = event;

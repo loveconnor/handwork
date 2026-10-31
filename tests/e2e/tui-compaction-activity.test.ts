@@ -11,6 +11,8 @@ const {
   tmuxAvailable,
 } = await import("./tmux-helpers");
 
+const { providerVersionTestEnv } = await import("../evals/eval-helpers");
+
 const binary = resolve(import.meta.dir, "../../zig-out/bin/handwork");
 const HEAD = "HISTORY_HEAD_29b7";
 const TAIL = "HISTORY_TAIL_16d3";
@@ -48,7 +50,7 @@ async function fixture(trigger: Trigger, outcome: Outcome = "success", longResum
   mkdirSync(join(home, ".handwork"), { recursive: true });
   mkdirSync(workspace);
   writeFileSync(join(home, ".handwork/settings.json"), JSON.stringify({
-    model: FAKE_CODEX_MODEL, auto_upgrade: false, startup_scrollback: false,
+    provider: "codex", models: { codex: FAKE_CODEX_MODEL }, auto_upgrade: false, startup_scrollback: false,
   }));
   // Failure attempts need an older exchange outside the retained suffix, but
   // must leave the next ordinary request below the automatic pressure threshold.
@@ -65,7 +67,7 @@ async function fixture(trigger: Trigger, outcome: Outcome = "success", longResum
   const requests: object[] = [];
   const provider = startDynamicFakeCodex((raw) => {
     const request = JSON.parse(raw);
-    const summary = request.toolChoice?.type === "none" && request.tools?.length === 0;
+    const summary = request.tool_choice === "none" && (request.tools ?? []).length === 0;
     requests.push({ phase, summary, at: Date.now(), bytes: raw.length,
       head: raw.includes(HEAD), tail: raw.includes(TAIL), handoff: raw.includes("INTERNAL_HANDOFF_4e12"),
       followup: raw.includes("Follow the latest request.") || raw.includes("Recover with another request."),
@@ -110,11 +112,11 @@ async function fixture(trigger: Trigger, outcome: Outcome = "success", longResum
   const stderrPaths: string[] = [];
   const tapes: string[] = [];
   async function cli(args: string[]) {
-    const child = Bun.spawn([binary, ...args], { cwd: workspace, env, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+    const child = Bun.spawn([binary, ...args], { cwd: workspace, env: providerVersionTestEnv(env), stdin: "ignore", stdout: "pipe", stderr: "pipe" });
     const timer = setTimeout(() => child.kill(), 30_000);
     try {
       const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
-      expect(code).toBe(0);
+      expect(code, stderr || stdout).toBe(0);
       expect(stderr).toBe("");
       return JSON.parse(stdout);
     } finally { clearTimeout(timer); }
@@ -462,7 +464,7 @@ describe.skipIf(!tmuxAvailable())("tui: compaction activity", () => {
     let passed = false;
     try {
       const terminal = await f.launch(true);
-      const authMessage = "handwork needs a Codex subscription login";
+      const authMessage = "Codex needs a subscription login";
       async function authNotices(label: string) {
         await terminal.sendKeys("C-o");
         await terminal.waitForText("full detail", 5000);

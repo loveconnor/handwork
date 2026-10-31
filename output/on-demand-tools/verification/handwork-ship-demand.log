@@ -1,0 +1,10 @@
+test_denied_loader_falls_back_to_eager_without_losing_other_tools (__main__.OnDemand) ... ok
+test_every_schema_can_be_loaded_without_changing_contracts (__main__.OnDemand) ... ok
+test_load_execute_retry_and_resume (__main__.OnDemand) ... ok
+test_loading_cannot_restore_a_permission_denied_tool (__main__.OnDemand) ... ok
+test_resume_restores_successful_unused_selection_but_not_failed_selection (__main__.OnDemand) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.101s
+
+OK

@@ -1,0 +1,138 @@
+{
+  "status": "completed: all enabled checks in the local macOS verification matrix passed",
+  "focused_zig_checks": {
+    "on demand": {
+      "passed": 18
+    },
+    "load tools": {
+      "passed": 15
+    },
+    "built-in model-facing tool contract": {
+      "passed": 16
+    },
+    "Vision request projection": {
+      "passed": 15
+    },
+    "selected MCP schemas": {
+      "passed": 15
+    }
+  },
+  "debug_loopback_tests": {
+    "passed": 5
+  },
+  "known_limits": [
+    "Six authorized live attempts used an earlier frozen release; no further paid inference performed.",
+    "Local startup estimate excludes provider framing and user messages; configured workspace context can increase it. Pi count is user-reported, not independently measured.",
+    "Live/opt-in and platform-specific skipped tests are not verified by these local macOS runs. Signing, notarization and publication were not performed."
+  ],
+  "release_build": "passed",
+  "final_binary_sha256": "ab7545fe16f3be9eb4f07db4ca91cecbaa884b8e54504af3f2a3d127809dc305",
+  "final_release_loopback_tests": {
+    "passed": 5,
+    "log": "verification/handwork-demand-final87.log"
+  },
+  "final_startup": {
+    "eager": 5369,
+    "on_demand": 1584,
+    "system_tokens": 1264,
+    "tool_tokens": 320,
+    "method": "Local tokenization of captured system text and compact tool JSON; not provider usage; excludes user message and provider framing. Same isolated profile and empty workspace.",
+    "capture": "ship-final-startup/measurement.json",
+    "observed_range": [
+      1579,
+      1594
+    ]
+  },
+  "format_and_diff_check": "passed",
+  "full_native": {
+    "passed": 8725,
+    "skipped": 4,
+    "failed": 0,
+    "crashed": 0,
+    "leaks": 0,
+    "log": "verification/handwork-stabilization-full10.log"
+  },
+  "npm_launcher": {
+    "passed": 2
+  },
+  "native_provider_loopback": {
+    "passed": 6,
+    "skipped": 1
+  },
+  "api_key_entry_pty": {
+    "passed": 1
+  },
+  "offline_npm_updater": "passed",
+  "terminal_e2e": {
+    "passed": 1114,
+    "skipped": 52,
+    "failed": 0,
+    "files": 54,
+    "report": "e2e-verification.json",
+    "method": "Consolidated completed per-file and batch runs; not a single combined process."
+  },
+  "desktop_web": {
+    "passed": 5080,
+    "skipped": 13,
+    "failed": 0,
+    "node": "24.22.2",
+    "typecheck": "passed"
+  },
+  "desktop_host": {
+    "passed": 112,
+    "skipped": 6,
+    "failed": 0,
+    "typecheck_and_build": "passed"
+  },
+  "desktop_rust": {
+    "passed": 624,
+    "ignored": 1,
+    "failed": 0,
+    "fmt": "passed",
+    "clippy": "passed"
+  },
+  "desktop_release_contracts": {
+    "passed": 15,
+    "failed": 0
+  },
+  "packaging_scripts": {
+    "passed": 25,
+    "skipped": 6,
+    "failed": 0,
+    "skip_reason": "Retired engine workflow files are absent from this checkout; current desktop release contracts run separately."
+  },
+  "desktop_browser": {
+    "passed": 126,
+    "skipped": 2,
+    "failed": 0,
+    "method": "122 passing cases from the full run, plus four repaired cases rerun in Chromium and WebKit; the two opt-in performance cases remain skipped.",
+    "logs": [
+      "verification/handwork-desktop-browser53.log",
+      "verification/handwork-desktop-browser-final79.log"
+    ]
+  },
+  "desktop_build": "passed",
+  "mcp_conformance": {
+    "passed": 440,
+    "failed": 0,
+    "scenarios": 35,
+    "log": "verification/handwork-conformance45.log"
+  },
+  "sdk_browser": {
+    "passed": 5,
+    "failed": 0,
+    "log": "verification/handwork-sdk-browser74.log"
+  },
+  "sdk_native": {
+    "status": "passed",
+    "lane": "complete Node + N-API",
+    "log": "verification/handwork-sdk-napi-final86.log"
+  },
+  "sdk_wasm": {
+    "status": "passed",
+    "lane": "complete Node + WASM, including terminal integration",
+    "log": "verification/handwork-sdk-wasm-final85.log"
+  },
+  "opencode_server": "Restored; verified listening on 127.0.0.1:4096, PID 55817",
+  "release_build_log": "verification/handwork-ship-build80.log"
+}

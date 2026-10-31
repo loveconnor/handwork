@@ -1,0 +1,5 @@
+tests/e2e/prompt-history.test.ts:
+(pass) prompt history > accepted prompts and slash commands survive restart [3824.26ms]
+(pass) prompt history > read-only prompt-history bootstrap does not create state in an unwritable home [1068.05ms]
+(pass) prompt history > recording can be disabled from settings [5117.21ms]
+(pass) prompt history > startup scans beyond one mebibyte of newer interleaved workspace records [1204.38ms]

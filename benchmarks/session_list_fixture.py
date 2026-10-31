@@ -100,6 +100,7 @@ def generate(home: Path, workspace: Path, count: int, log_size: int, deny_event_
                 "checkpoint_seq": None,
                 "checkpoint_sha256": None,
                 "preferences": {
+                    "provider": "codex",
                     "model": "anthropic/claude-opus-4.7",
                     "effort": "auto",
                     "fast_mode": False,

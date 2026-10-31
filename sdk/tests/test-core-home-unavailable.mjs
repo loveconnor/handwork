@@ -20,13 +20,13 @@ const catalogModels = [
 let fetchCalls = 0;
 let workspaceExecs = 0;
 const mockFetch = async (url, init) => {
-  if (init.method === "GET" && String(url).endsWith("/v1/models")) {
-    return Response.json({ object: "list", data: catalogModels });
+  if (init.method === "GET") {
+    return Response.json({ models: catalogModels.map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
   }
   fetchCalls++;
   if (init.method !== "POST") throw new Error(`unexpected method ${init.method}`);
   const requestBody = JSON.parse(new TextDecoder().decode(init.body));
-  if (!Array.isArray(requestBody.prompt) && !Array.isArray(requestBody.messages)) {
+  if (!Array.isArray(requestBody.input)) {
     throw new Error("provider request did not contain prompt messages");
   }
   return new Response(new ReadableStream({

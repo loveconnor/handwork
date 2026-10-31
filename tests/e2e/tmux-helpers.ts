@@ -115,7 +115,9 @@ export function isComposerLine(line: string): boolean {
 }
 
 export function isEmptyComposerLine(line: string): boolean {
-  return isComposerLine(line) && line.trim().length === 1;
+  if (!isComposerLine(line)) return false;
+  const text = line.trim().slice(1).trim();
+  return text === "" || (text.length >= 3 && "Ask anything, or type / for commands".startsWith(text));
 }
 
 export function composerContains(pane: string, text: string): boolean {
@@ -127,18 +129,68 @@ export function hasEmptyComposer(pane: string): boolean {
 }
 
 // Fixture steps are semantic descriptions, serialized as Codex Responses SSE.
+export function fakeCodexFunctionCallEvents(
+  item: { call_id: string; name: string; arguments: string; type?: string },
+  outputIndex: number,
+): object[] {
+  return [
+    { type: "response.output_item.added", output_index: outputIndex,
+      item: { type: "function_call", call_id: item.call_id, name: item.name } },
+    { type: "response.function_call_arguments.done", output_index: outputIndex,
+      arguments: item.arguments },
+  ];
+}
+
 export function fakeCodexSse(events: any[]) {
   const output: object[] = [];
   let outputIndex = 0;
+  const textIndices = new Map<string, number>();
+  const calls = new Map<string, { index: number; name: string; arguments: string }>();
   for (const event of events) {
     switch (event.type) {
-      case "text-delta":
-        output.push({ type: "response.output_text.delta", delta: event.delta });
+      case "text-start":
+      case "text-end":
         break;
+      case "response.output_text.delta":
+      case "text-delta": {
+        const id = event.id ?? "answer";
+        if (!textIndices.has(id)) textIndices.set(id, outputIndex++);
+        output.push({ type: "response.output_text.delta", output_index: textIndices.get(id), delta: event.delta });
+        break;
+      }
       case "reasoning-delta":
         output.push({ type: "response.reasoning_summary_text.delta", delta: event.delta });
         break;
+      case "tool-input-start": {
+        const index = outputIndex++;
+        calls.set(event.id, { index, name: event.toolName, arguments: "" });
+        output.push({ type: "response.output_item.added", output_index: index,
+          item: { type: "function_call", call_id: event.id, name: event.toolName } });
+        break;
+      }
+      case "tool-input-delta": {
+        const call = calls.get(event.id);
+        if (!call) throw new Error(`Missing fixture call start: ${event.id}`);
+        call.arguments += event.delta;
+        output.push({ type: "response.function_call_arguments.delta", output_index: call.index, delta: event.delta });
+        break;
+      }
+      case "tool-input-end":
+        break;
+      case "response.output_item.done": {
+        if (event.item?.type !== "function_call") { output.push(event); break; }
+        const call = calls.get(event.item.call_id);
+        if (call) output.push({ type: "response.function_call_arguments.done", output_index: call.index, arguments: event.item.arguments });
+        else output.push(...fakeCodexFunctionCallEvents(event.item, outputIndex++));
+        break;
+      }
       case "tool-call": {
+        const call = calls.get(event.toolCallId);
+        if (call) {
+          output.push({ type: "response.function_call_arguments.done", output_index: call.index,
+            arguments: event.input === undefined ? call.arguments : typeof event.input === "string" ? event.input : JSON.stringify(event.input) });
+          break;
+        }
         const index = outputIndex++;
         output.push({ type: "response.output_item.added", output_index: index,
           item: { type: "function_call", call_id: event.toolCallId, name: event.toolName } });
@@ -398,12 +450,14 @@ function serveFakeCodex(
           ? await options.models(req)
           : options.models;
         if (models instanceof Response) return models;
-        return Response.json({ models: (models ?? [{ id: FAKE_CODEX_MODEL }]).map(model => ({
+        const catalog = [...(models ?? [{ id: FAKE_CODEX_MODEL }])];
+        if (!catalog.some(model => model.id === "gpt-5.6-luna")) catalog.push({ id: "gpt-5.6-luna" });
+        return Response.json({ models: catalog.map(model => ({
           slug: model.id, visibility: "list", supported_in_api: true, priority: 1,
           context_window: model.context_window ?? 272000,
           input_modalities: model.tags?.includes("vision") ? ["text", "image"] : ["text"],
-          supported_reasoning_levels: [{ effort: "low" }, { effort: "medium" }, { effort: "high" }],
-          additional_speed_tiers: [],
+          supported_reasoning_levels: (model.reasoning_options?.find(option => option.type === "effort")?.values ?? (models === undefined ? ["low", "medium", "high"] : [])).map(effort => ({ effort })),
+          additional_speed_tiers: model.fast_options?.some(option => option.type === "toggle") ? ["fast"] : [],
         })) });
       }
 
@@ -520,7 +574,7 @@ export class TmuxSession {
     const name = `handwork-test-${process.pid}-${sequence}`;
     const resolvedSocketName = socketName ?? (isolated
       ? `handwork-e2e-${process.pid}-${sequence}-${Date.now()}`
-      : undefined);
+      : `handwork-e2e-${process.pid}`);
     const startGate = `${name}-start`;
     const exitStatusPath = join(tmpdir(), `${name}.exit-status`);
     rmSync(exitStatusPath, { force: true });
@@ -668,11 +722,15 @@ export class TmuxSession {
           "-d",
           "-s",
           name,
+          "-c",
+          cwd,
           "-x",
           String(width),
           "-y",
           String(height),
           ...sessionEnvArgs,
+          "/bin/sh",
+          "-c",
           tmuxCommand,
           ...launchSuffix,
         ],

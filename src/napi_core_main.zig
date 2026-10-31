@@ -479,7 +479,7 @@ const Runtime = struct {
     stream_context: host_stream_provider.ProviderContext = undefined,
     input: InputQueue = .{},
     output: OutputQueue = .{},
-    credential: []u8,
+    credential: ?[]u8,
     model: ?[]u8,
     home: []u8,
     workspace_root: []u8,
@@ -540,6 +540,7 @@ const Runtime = struct {
                 .max_history_turns = 100,
                 .context_registry = .{ .default_provider = context_contract.empty_provider },
                 .mode_registry = builtin_modes.registry,
+                .auth_mode = if (self.credential != null) .local else .host_managed,
                 .credential_override = self.credential,
                 .model_override = self.model,
                 .home_override = self.home,
@@ -574,7 +575,7 @@ const Runtime = struct {
         self.fetch.deinit();
         self.input.deinit(self.alloc);
         self.output.deinit(self.alloc);
-        self.alloc.free(self.credential);
+        if (self.credential) |credential| self.alloc.free(credential);
         if (self.model) |model| self.alloc.free(model);
         self.alloc.free(self.home);
         self.alloc.free(self.workspace_root);
@@ -727,8 +728,7 @@ fn createRuntime(env: c.napi_env, options: c.napi_value) CreateError!*Runtime {
         error.OutOfMemory => return error.OutOfMemory,
         else => return error.InvalidApiKey,
     };
-    const api_key = credential orelse return error.InvalidApiKey;
-    errdefer alloc.free(api_key);
+    errdefer if (credential) |value| alloc.free(value);
     const model = getNamedString(env, options, "model", alloc, max_model_bytes) catch |err| switch (err) {
         error.JavaScriptException => return error.JavaScriptException,
         error.OutOfMemory => return error.OutOfMemory,
@@ -764,7 +764,7 @@ fn createRuntime(env: c.napi_env, options: c.napi_value) CreateError!*Runtime {
     errdefer ready.deinit();
     runtime.* = .{
         .alloc = alloc,
-        .credential = api_key,
+        .credential = credential,
         .model = model,
         .home = home,
         .workspace_root = workspace_root,
@@ -789,7 +789,7 @@ fn throwCreateError(env: c.napi_env, err: CreateError) c.napi_value {
     return switch (err) {
         error.JavaScriptException => null,
         error.TooManyRuntimes => throw(env, "LIBHANDWORK_NATIVE_LIMIT", "too many active native runtimes"),
-        error.InvalidApiKey => throw(env, "LIBHANDWORK_INVALID_ARGUMENT", "apiKey is required and must be a bounded string"),
+        error.InvalidApiKey => throw(env, "LIBHANDWORK_INVALID_ARGUMENT", "apiKey must be a bounded string when supplied"),
         error.InvalidModel => throw(env, "LIBHANDWORK_INVALID_ARGUMENT", "model must be a bounded string"),
         error.InvalidHome => throw(env, "LIBHANDWORK_INVALID_ARGUMENT", "home is required and must be a bounded string"),
         error.InvalidWorkspaceRoot => throw(env, "LIBHANDWORK_INVALID_ARGUMENT", "workspaceRoot is required and must be a bounded string"),

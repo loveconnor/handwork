@@ -19,6 +19,7 @@ fn filename(alloc: std.mem.Allocator, id: model.ProviderId) ![]u8 {
     return std.fmt.allocPrint(alloc, "api-key-{s}", .{@tagName(id)});
 }
 pub fn load(alloc: std.mem.Allocator, id: model.ProviderId) !?[]u8 {
+    if (comptime target.is_wasm) return error.CredentialStorageUnavailable;
     var dir = directory(false) catch |err| switch (err) {
         error.FileNotFound, error.HomeNotSet => return null,
         else => return err,
@@ -50,6 +51,7 @@ pub fn save(alloc: std.mem.Allocator, id: model.ProviderId, key: []const u8) !vo
     try io.durableReplaceVerified(alloc, &dir, name, key);
 }
 pub fn remove(alloc: std.mem.Allocator, id: model.ProviderId) !void {
+    if (comptime target.is_wasm) return error.CredentialStorageUnavailable;
     var dir = directory(false) catch |err| switch (err) {
         error.FileNotFound, error.HomeNotSet => return,
         else => return err,

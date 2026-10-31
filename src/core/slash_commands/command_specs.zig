@@ -1616,7 +1616,7 @@ test "rendered top-level help is a complete CLI navigation page" {
     try std.testing.expect(std.mem.find(u8, text, "command-specific options and examples") == null);
     try std.testing.expect(std.mem.find(u8, text, "Run `/help` inside an interactive session for slash commands.") != null);
     try std.testing.expect(std.mem.find(u8, text, "Learn more about handwork:  https://connorlove.com") != null);
-    try std.testing.expect(std.mem.find(u8, text, "\nReport a problem:       run `/feedback` inside handwork\n") != null);
+    try std.testing.expect(std.mem.find(u8, text, "\nReport a problem:           run `/feedback` inside handwork\n") != null);
     try std.testing.expect(std.mem.find(u8, text, "\n\n\nRun `handwork <command> --help`") == null);
     try std.testing.expect(std.mem.find(u8, text, "Start:") == null);
     try std.testing.expect(std.mem.find(u8, text, "  Work      ") == null);
@@ -1629,7 +1629,7 @@ test "login help describes model provider sign-in" {
     const login = try renderTopLevelCommandHelp(std.testing.allocator, testTopLevelRegistry(), .login);
     defer std.testing.allocator.free(login);
 
-    try std.testing.expect(std.mem.find(u8, login, "Sign in to a subscription provider") != null);
+    try std.testing.expect(std.mem.find(u8, login, "Connect a model provider") != null);
 }
 
 test "terminal top-level help adds styling without changing visible content" {
@@ -1860,6 +1860,11 @@ test "slash specs cover every SlashKind" {
     }
     inline for (std.meta.fields(SlashKind)) |field| {
         const kind: SlashKind = @enumFromInt(field.value);
+        if (kind == .login) {
+            try std.testing.expect(!seen[@intFromEnum(kind)]);
+            try std.testing.expect(matchesSlashExact(registry, "/login", .provider));
+            continue;
+        }
         try std.testing.expect(seen[@intFromEnum(kind)]);
         _ = slashSpec(registry, kind);
     }
@@ -2116,11 +2121,10 @@ test "slash completion descriptions follow completion matches" {
 }
 
 test "slash completion aliases participate in ranked order" {
-    try std.testing.expectEqualStrings("/balance", firstSlashCompletion(testSlashRegistry(), "/ba").?);
-    try std.testing.expectEqual(@as(usize, 2), slashCompletionCount(testSlashRegistry(), "/ba"));
-    try std.testing.expectEqualStrings("/balance", nthSlashCompletion(testSlashRegistry(), "/ba", 0).?);
-    try std.testing.expectEqualStrings("/feedback", nthSlashCompletion(testSlashRegistry(), "/ba", 1).?);
-    try std.testing.expectEqualStrings("/balance", firstSlashCompletion(testSlashRegistry(), "/bal").?);
+    try std.testing.expectEqualStrings("/cost", firstSlashCompletion(testSlashRegistry(), "/cos").?);
+    try std.testing.expectEqual(@as(usize, 1), slashCompletionCount(testSlashRegistry(), "/cos"));
+    try std.testing.expect(matchesSlashExact(testSlashRegistry(), "/cost", .usage));
+    try std.testing.expect(firstSlashCompletion(testSlashRegistry(), "/balance") == null);
 }
 
 test "rendered slash welcome excludes non-welcome help entries" {

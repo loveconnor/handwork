@@ -7,7 +7,6 @@ import { runHandwork } from "../evals/eval-helpers";
 const TIMEOUT = 15_000;
 const NO_PROVIDER_AUTH = {
 
-
   HANDWORK_DISABLE_KEYCHAIN: "1",
 };
 
@@ -43,7 +42,7 @@ describe("web_search permission progress", () => {
       ]);
 
       expect(result.code).toBe(1);
-      expect(result.stderr).toContain("handwork needs a Codex subscription login for this model. Run handwork login codex.");
+      expect(result.stderr).toContain("Set the provider API key environment variable and reconnect with /provider.");
       expectNoSearchProgress(result.stderr);
     },
     TIMEOUT,

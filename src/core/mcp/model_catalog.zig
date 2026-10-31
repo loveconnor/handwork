@@ -12,6 +12,7 @@ const header =
     "<mcp_servers>\n";
 const footer = "</mcp_servers>\n";
 const empty_entry = "  <none />\n";
+const empty_header = "<mcp_servers>\n";
 
 pub const Availability = enum {
     ready,
@@ -78,10 +79,10 @@ pub fn render(alloc: Allocator, snapshot: Snapshot) Allocator.Error!PromptSectio
 
 fn renderWithLimit(alloc: Allocator, snapshot: Snapshot, limit: usize) Allocator.Error!PromptSection {
     if (snapshot.servers.len == 0) {
-        if (!partsFit(limit, &.{ header, empty_entry, footer })) {
+        if (!partsFit(limit, &.{ empty_header, empty_entry, footer })) {
             return .{ .text = try alloc.dupe(u8, "") };
         }
-        return .{ .text = try std.mem.concat(alloc, u8, &.{ header, empty_entry, footer }) };
+        return .{ .text = try std.mem.concat(alloc, u8, &.{ empty_header, empty_entry, footer }) };
     }
 
     const sorted = try alloc.alloc(*const ServerSummary, snapshot.servers.len);
@@ -289,7 +290,7 @@ test "render explicitly reports an empty catalog" {
     var section = try render(alloc, snapshot);
     defer section.deinit(alloc);
 
-    try std.testing.expect(std.mem.find(u8, section.text, "<none />") != null);
+    try std.testing.expectEqualStrings("<mcp_servers>\n  <none />\n</mcp_servers>\n", section.text);
     try std.testing.expectEqual(@as(?[]u8, null), section.notice);
 }
 

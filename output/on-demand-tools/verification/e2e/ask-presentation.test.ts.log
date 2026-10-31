@@ -1,0 +1,13 @@
+tests/e2e/ask-presentation.test.ts:
+(pass) handwork ask presentation > redirected command output separates the next tool header [63.44ms]
+(pass) handwork ask presentation > no-save advertises process-local shell actions and preserves run profiles [231.13ms]
+(pass) handwork ask presentation > redirected and JSON stdout preserve raw assistant Markdown [53.32ms]
+(pass) handwork ask presentation > JSON separates accumulated assistant Markdown from the completed final response [39.62ms]
+(pass) handwork ask presentation > tool recovery keeps progress updates ordered before the final response [54.19ms]
+(pass) handwork ask presentation > TTY stdout uses the Minimal transcript and compact tool group [1467.41ms]
+(pass) handwork ask presentation > --no-color keeps the TTY layout without handwork styles or hyperlinks [1121.56ms]
+(pass) handwork ask presentation > light theme uses readable syntax colors in TTY code blocks with redirected stdin [1116.31ms]
+(pass) handwork ask presentation > TTY output taller than the pane survives in native scrollback [1104.66ms]
+(pass) handwork ask presentation > TTY prints the header before output and releases while the response is open [1216.59ms]
+(pass) handwork ask presentation > TTY wrapped output stays ordered and appears exactly once [1121.87ms]
+(pass) handwork ask presentation > TTY Minimal hides context and auto-approval notices [1110.77ms]

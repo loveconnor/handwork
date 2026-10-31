@@ -1,0 +1,5 @@
+tests/e2e/web-fetch-live.test.ts:
+(skip) live web_fetch public URL > robots endpoint returns non-empty content through the fresh binary
+(skip) live web_fetch public URL > models endpoint returns non-empty content through the fresh binary
+(skip) live web_fetch public URL > authorized public HTML URL reports progress and cache metadata
+(skip) live web_fetch public URL > authorized public binary URL stores a durable artifact without raw bytes in session JSON

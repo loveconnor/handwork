@@ -1,0 +1,10 @@
+tests/e2e/tui-render-replay.test.ts:
+(skip) tui: render record/replay > replays transient activity capture without layout validation failures
+(pass) tui: render record/replay > composer frames restore the visible cursor after synchronized updates [1511.55ms]
+(pass) tui: render record/replay > composer frames omit synchronized updates when disabled [1403.38ms]
+(pass) tui: render record/replay > replays read-only tools capture without layout validation failures [182.32ms]
+(pass) tui: render record/replay > opt-in input recording captures bracketed paste and Return without changing replay [1748.45ms]
+(pass) tui: render record/replay > recorded stdout and resize bytes replay to a valid final grid [2696.78ms]
+(pass) tui: render record/replay > automatic recording writes a private tape under the test home [1877.53ms]
+(pass) tui: render record/replay > silent automatic recording hides its banner inline but keeps it in Ctrl-O [1743.38ms]
+(pass) tui: render record/replay > frame trace scopes are metadata-only during prompt resize and replay [1926.64ms]

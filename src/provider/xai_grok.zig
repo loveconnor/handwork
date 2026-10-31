@@ -22,7 +22,7 @@ const max_sse_aggregate_bytes: usize = 64 * 1024 * 1024;
 const max_sse_events: usize = 100_000;
 const max_tool_calls: usize = 128;
 const max_tool_identity_bytes: usize = 1024;
-const max_tool_arguments_bytes: usize = 4 * 1024 * 1024;
+const max_tool_arguments_bytes = @import("../core/shared/tool_payload_limits.zig").arguments_json_bytes;
 const max_provider_state_bytes: usize = 4 * 1024 * 1024;
 const transfer_buffer_bytes: usize = 256 * 1024;
 const connect_timeout_ms: i64 = 30_000;
@@ -243,6 +243,16 @@ pub fn streamPrepared(
     payload: []const u8,
 ) !stream_provider.Result {
     try @import("../core/config/provider_policy.zig").requireNative(.grok);
+    return streamTransport(alloc, request, payload);
+}
+
+// Kept private so transport fixtures can exercise the wire contract without
+// enabling the disabled subscription integration through the public entry point.
+fn streamTransport(
+    alloc: Allocator,
+    request: stream_provider.ModelRequest,
+    payload: []const u8,
+) !stream_provider.Result {
     if (request.cancel_flag.load(.seq_cst)) return stream_provider.failResult(error.Cancelled);
     var auth_headers = try requestAuthHeaders(alloc, request.credential);
     defer auth_headers.deinit(alloc);
@@ -747,6 +757,12 @@ const TestResponseFixture = struct {
         if (self.thread) |thread| {
             const listener = std.Io.net.Stream{ .socket = self.server.socket };
             listener.shutdown(zio, .both) catch {};
+            // Darwin does not reliably interrupt accept when a listener is shut down.
+            var wake_io: std.Io.Threaded = .init_single_threaded;
+            const address = std.Io.net.IpAddress{ .ip4 = .loopback(self.port()) };
+            if (address.connect(wake_io.io(), .{ .mode = .stream })) |wake| {
+                wake.close(wake_io.io());
+            } else |_| {}
             thread.join();
             self.thread = null;
         }
@@ -777,6 +793,7 @@ const TestResponseFixture = struct {
         const zio = self.io();
         var stream = try self.server.accept(zio);
         defer stream.close(zio);
+        if (self.stopping.load(.seq_cst)) return;
         try readTestRequest(zio, stream);
         switch (self.mode) {
             .slow_head => {},
@@ -902,7 +919,23 @@ fn runXaiTestStream(deadline: ?std.Io.Clock.Timestamp) !stream_provider.Result {
     );
     request.content_capture_limit = 1024;
     request.deadline = deadline;
-    return agent_stream_provider.stream(std.testing.allocator, request);
+    const payload = try buildRequest(std.testing.allocator, request.data());
+    defer std.testing.allocator.free(payload);
+    return streamTransport(std.testing.allocator, request, payload) catch |err| {
+        if (requestDeadlineExpired(request)) return error.Timeout;
+        return err;
+    };
+}
+
+test "disabled Grok public entry points never open the transport" {
+    var delivery = stream_provider.DeliveryCertainty.init();
+    var evidence: stream_provider.AttemptEvidence = .{};
+    var cancelled = std.atomic.Value(bool).init(false);
+    var callback_context: u8 = 0;
+    const request = testModelRequest("fixture", .grok_subscription, "acct_grok_test", &delivery, &evidence, &cancelled, &callback_context);
+    try std.testing.expectError(error.ProviderIntegrationDisabled, agent_stream_provider.stream(std.testing.allocator, request));
+    try std.testing.expectError(error.ProviderIntegrationDisabled, streamPrepared(std.testing.allocator, request, "{}"));
+    try std.testing.expectEqual(stream_provider.DeliveryCertainty.State.definitely_unsent, delivery.load());
 }
 
 test "xAI Grok request deadline closes slow headers and stalled SSE" {
@@ -1046,9 +1079,10 @@ fn buildIgnoredAggregateSse(alloc: Allocator, wire_bytes: usize) ![]u8 {
 }
 
 fn buildToolArgumentsSse(alloc: Allocator, argument_bytes: usize) ![]u8 {
-    const chunk_count: usize = 8;
     const delta_prefix = "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"";
     const delta_suffix = "\"}\n\n";
+    const chunk_capacity = max_sse_line_bytes - delta_prefix.len - delta_suffix.len;
+    const chunk_count = (argument_bytes + chunk_capacity - 1) / chunk_capacity;
     const terminal = "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\"}}\n\n";
     var out: std.Io.Writer.Allocating = .init(alloc);
     errdefer out.deinit();

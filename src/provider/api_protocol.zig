@@ -3,6 +3,7 @@ const std = @import("std");
 const stream = @import("../core/agent/stream_provider.zig");
 const types = @import("../core/shared/types.zig");
 const responses = @import("responses_protocol.zig");
+const tool_payload_limits = @import("../core/shared/tool_payload_limits.zig");
 const sse = @import("sse.zig");
 const Allocator = std.mem.Allocator;
 const Value = std.json.Value;
@@ -44,7 +45,7 @@ pub fn buildWithTokenField(alloc: Allocator, anthropic: bool, request: stream.Re
     for (messages) |*message| message.provider_replay = null;
     var input: std.Io.Writer.Allocating = .init(a);
     try input.writer.writeByte('[');
-    try responses.writeInput(&input.writer, a, messages, request.verified_images, .{ .tool_calls = 128, .tool_identity_bytes = 1024, .tool_arguments_bytes = 4 * 1024 * 1024, .provider_state_bytes = 4 * 1024 * 1024 }, if (request.budget) |budget| .{ .deadline = budget.deadline, .cancel_flag = budget.cancel_flag } else .{});
+    try responses.writeInput(&input.writer, a, messages, request.verified_images, .{ .tool_calls = 128, .tool_identity_bytes = 1024, .tool_arguments_bytes = tool_payload_limits.arguments_json_bytes, .provider_state_bytes = 4 * 1024 * 1024 }, if (request.budget) |budget| .{ .deadline = budget.deadline, .cancel_flag = budget.cancel_flag } else .{});
     try input.writer.writeByte(']');
     const normalized = try std.json.parseFromSlice(Value, a, input.written(), .{});
     var out_messages = array(a);
@@ -202,7 +203,7 @@ fn updateUsage(usage: *types.Usage, value: Value, anthropic: bool) void {
 }
 
 pub fn consume(alloc: Allocator, anthropic: bool, reader: *std.Io.Reader, events: stream.EventSink, cancelled: *std.atomic.Value(bool), capture_limit: ?usize) !stream.Result {
-    var framing = sse.Reader{ .max_event_bytes = 1024 * 1024, .max_total_bytes = 64 * 1024 * 1024 };
+    var framing = sse.Reader{ .max_event_bytes = 32 * 1024 * 1024, .max_total_bytes = 64 * 1024 * 1024 };
     defer framing.deinit(alloc);
     var content: std.ArrayList(u8) = .empty;
     defer content.deinit(alloc);
@@ -249,7 +250,7 @@ pub fn consume(alloc: Allocator, anthropic: bool, reader: *std.Io.Reader, events
                 delta = field(root, "delta");
                 if (string(delta, "partial_json")) |args| {
                     tool = &pending[index];
-                    try appendBounded(alloc, &tool.?.args, args, 4 * 1024 * 1024);
+                    try appendBounded(alloc, &tool.?.args, args, tool_payload_limits.arguments_json_bytes);
                     events.emit(.{ .tool_input_delta = args });
                 }
             }
@@ -272,7 +273,7 @@ pub fn consume(alloc: Allocator, anthropic: bool, reader: *std.Io.Reader, events
                     const function = field(call, "function");
                     try appendBounded(alloc, &target.name, string(function, "name") orelse "", 1024);
                     if (string(function, "arguments")) |args| {
-                        try appendBounded(alloc, &target.args, args, 4 * 1024 * 1024);
+                        try appendBounded(alloc, &target.args, args, tool_payload_limits.arguments_json_bytes);
                         events.emit(.{ .tool_input_delta = args });
                     }
                     announce(events, target);

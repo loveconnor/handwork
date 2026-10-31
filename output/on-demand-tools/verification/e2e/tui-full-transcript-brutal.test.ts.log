@@ -1,0 +1,9 @@
+tests/e2e/tui-full-transcript-brutal.test.ts:
+(pass) handwork process discovery accepts basename and path process names [0.61ms]
+(pass) Ctrl-O keeps saved tool output intact across window replacement [4366.15ms]
+(pass) Ctrl-O fills a viewport taller than the prepared overscan cache [1578.63ms]
+(pass) Ctrl-O resized close preserves long history within ordinary resize cost [5820.84ms]
+(pass) Ctrl-O repeatedly survives mixed long chats, dense tool batches, live output, resize storms, and resume [32551.57ms]
+(skip) Ctrl-O extended brutal soak holds under four thousand chat lines and ninety six tools
+(skip) Ctrl-O profiler captures latency, memory, and native stacks during sustained thrashing
+(skip) Ctrl-O load test survives a realistic fifty-thousand-line session with large tool sidecars

@@ -1,0 +1,6 @@
+tests/e2e/permission-errors.test.ts:
+(pass) generic permission typed errors > returns typed JSON for denied terminal [41.27ms]
+(pass) generic permission typed errors > JSON prompt-permissions approval and denial preserve stdout and exact execution [2431.95ms]
+(pass) generic permission typed errors > JSON prompt-permissions does not prompt after repeated advisory cautions [1047.33ms]
+(pass) generic permission typed errors > quiet prompt-permissions approval and denial keep stdout empty [2434.78ms]
+(pass) generic permission typed errors > JSON and quiet permission prompting remain fail-closed without a TTY or explicit opt in [208.37ms]

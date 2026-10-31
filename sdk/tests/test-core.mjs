@@ -25,9 +25,9 @@ const mockFetch = async (url, init) => {
   const headers = new Headers(init.headers);
   requestedSessionId = headers.get("x-session-id");
   requestedAuthorization = headers.get("authorization");
-  requestedModel = headers.get("ai-language-model-id");
   const payload = JSON.parse(new TextDecoder().decode(init.body));
-  assert.ok(Array.isArray(payload.prompt) || Array.isArray(payload.messages));
+  assert.ok(Array.isArray(payload.input));
+  requestedModel = payload.model;
   return new Response(new ReadableStream({
     start(controller) {
       controller.enqueue(encoded.encode("data: {\"type\":\"response.output_text.delta\",\"delta\":\"hello\"}\n\n"));
@@ -63,7 +63,7 @@ assert.deepEqual(await turn.result, {
 });
 assert.equal(fetchCalls, 1);
 assert.ok(requestedSessionId);
-assert.equal(requestedAuthorization, "Bearer sdk-test-key");
+assert.equal(requestedAuthorization, null, "the host fetch adapter owns authentication");
 assert.equal(requestedModel, "sdk/core-model");
 assert.ok((await agent.checkpoint()).length > 48);
 assert.equal(await agent.close(), undefined);

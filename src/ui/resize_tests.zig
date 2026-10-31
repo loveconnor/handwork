@@ -1426,7 +1426,7 @@ fn expectActiveInputSurvivesResize(
 
     try renderTestFooter(&h, &input, &approval, &h.frame_redraw);
     try h.flush();
-    try expectGridContains(&h, "test-mod");
+    try expectGridContains(&h, "ask · te");
 }
 
 test "active hard-newline footer survives every valid tiny height" {
@@ -4526,7 +4526,7 @@ test "render engine preserves transcript footer activity behavior" {
     try renderTestFooter(&h, &input, &approval, &h.frame_redraw);
     try h.flush();
 
-    const welcome_row = try findRowContaining(&h, "Run /help");
+    const welcome_row = try findRowContaining(&h, "/help for commands");
     const tool_row = try findRowContaining(&h, "Listed src/ui");
     const assistant_row = try findRowContaining(&h, "preserve exactly one paragraph gap");
     const subagent_row = try findRowContaining(&h, "Ran subagent:");
@@ -6270,7 +6270,7 @@ test "slash main page renders header categories selection range and contextual c
     try renderTestFooter(&h, &input, &approval, &h.frame_redraw);
     try h.flush();
 
-    try expectGridContains(&h, "Commands 35 · type to filter");
+    try expectGridContains(&h, "Commands 39 · type to filter");
     try expectGridContains(&h, "1–6");
     try expectGridContains(&h, "/help");
     try expectGridContains(&h, "General");
@@ -6291,7 +6291,7 @@ test "slash main page renders header categories selection range and contextual c
 
     try expectGridContains(&h, "ask");
     try expectGridContains(&h, "test-model");
-    try expectGridNotContains(&h, "Commands 35");
+    try expectGridNotContains(&h, "Commands 39");
     try expectGridNotContains(&h, "↑↓ navigate");
 }
 

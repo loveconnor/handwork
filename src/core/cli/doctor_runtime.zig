@@ -109,7 +109,7 @@ pub fn collect(
         return snapshot;
     };
     defer detailed.deinit(alloc);
-    snapshot.provider = detailed.settings.provider orelse .codex;
+    snapshot.provider = detailed.settings.provider orelse (if (@import("../hosts/target.zig").is_wasm) model_provider.ProviderId.codex else model_provider.ProviderId.openai);
 
     snapshot.auth = try auth_runtime.loadStatusSnapshotForProvider(
         alloc,
@@ -126,7 +126,7 @@ pub fn collect(
         .model = if (detailed.settings.models.get(snapshot.provider)) |model| @constCast(model) else null,
         .permission_mode = detailed.settings.permission_mode,
         .max_agent_steps = detailed.settings.max_agent_steps,
-    }, default_model, default_agent_step_limit);
+    }, if (@import("../config/api_providers.zig").find(snapshot.provider)) |provider| provider.default_model else default_model, default_agent_step_limit);
     try appendStateChecks(&checks, alloc, snapshot.workspace_root);
     try appendGitCheck(&checks, alloc, snapshot.workspace_root);
     try appendGhCheck(&checks, alloc);

@@ -30,7 +30,7 @@ const fetch = async (url, init = {}) => {
   const response = turn === 1 ? "first answer" : "second answer";
   return new Response(new ReadableStream({
     start(controller) {
-      controller.enqueue(encoder.encode(`data: {"type":"text-delta","delta":"${response}"}\n\n`));
+      controller.enqueue(encoder.encode(`data: {"type":"response.output_text.delta","delta":"${response}"}\n\n`));
       controller.enqueue(encoder.encode("data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2}}}\n\n"));
       controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       controller.close();
@@ -104,7 +104,7 @@ await waitFor(() => grid().includes("full detail"), "full transcript detail");
 runtime.write("\x0f");
 await waitFor(() => terminal.buffer.active.type === "normal", "full transcript close");
 
-await command("/login", "Authentication is managed by the host.");
+await command("/login", "Provider sign-in is managed by the embedding SDK");
 await command("/resume", "Session resume is owned by the embedding SDK");
 await command("/mcp list", "No MCP servers configured");
 await command("/skills list", "Skills are unavailable in this host");

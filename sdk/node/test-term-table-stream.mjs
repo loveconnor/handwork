@@ -49,7 +49,7 @@ const grid = () => {
   return lines.join("\n");
 };
 const deadline = performance.now() + 5000;
-while (!grid().includes("Run /help for commands")) {
+while (!grid().includes("Ask anything, or type / for commands")) {
   await flush();
   if (performance.now() >= deadline) throw new Error(`timed out waiting for startup:\n${grid()}`);
   await new Promise((resolveDelay) => setTimeout(resolveDelay, 10));
@@ -69,7 +69,8 @@ const lines = rendered.split("\n");
 if (!rendered.includes("┌")) throw new Error(`streamed markdown did not render a boxed table:\n${rendered}`);
 if (!lines.some((line) => line.includes("│ name"))) throw new Error(`boxed table omitted the name header:\n${rendered}`);
 if (rendered.includes("|--")) throw new Error(`streamed markdown leaked a table delimiter fragment:\n${rendered}`);
-if (lines.some((line) => /^─{90,}$/.test(line.trim()))) {
+const tableLines = lines.slice(lines.findIndex(line => line.includes("┌")), lines.findLastIndex(line => line.includes("┘")) + 1);
+if (tableLines.some((line) => /^─{90,}$/.test(line.trim()))) {
   throw new Error(`streamed table emitted a terminal-width thematic rule:\n${rendered}`);
 }
 

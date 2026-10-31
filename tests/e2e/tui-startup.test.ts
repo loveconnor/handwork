@@ -40,11 +40,11 @@ describe.skipIf(SKIP)("tui: startup and exit", () => {
       session = await TmuxSession.create();
       await session.waitForComposer(10_000);
       await session.sendText("/help");
-      const pane = await session.waitForText("Commands 35", 5_000);
+      const pane = await session.waitForText("Commands 39", 5_000);
       expect(pane).toContain("[All]");
       expect(pane).toContain("tab category");
       expect(pane).toContain("enter open");
-      expect(pane).toContain("Run /help for commands");
+      expect(pane).toContain("/help for commands");
     },
     TIMEOUT,
   );
@@ -80,7 +80,6 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
           cwd: workspace,
           env: {
             HOME: home,
-
 
             HANDWORK_AUTO_UPGRADE: "0",
             HANDWORK_DISABLE_KEYCHAIN: "1",
@@ -189,7 +188,6 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
           env: {
             HOME: home,
 
-
             HANDWORK_AUTO_UPGRADE: "0",
             HANDWORK_DISABLE_KEYCHAIN: "1",
             HANDWORK_SKIP_ONBOARDING: "1",
@@ -247,7 +245,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       writeFileSync(stderrPath, "");
 
       const version = execFileSync(HANDWORK_BIN, ["--version"], { encoding: "utf8" }).trim();
-      const banner = `handwork v${version} · Run /help for commands`;
+      const banner = `handwork · v${version}`;
 
       try {
         session = await TmuxSession.create({
@@ -372,43 +370,34 @@ describe.skipIf(SKIP_TMUX)("tui: MCP startup", () => {
 
 describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
   test(
-    "/setup opens the inline provider picker columns",
+    "/provider opens the picker and native API-key entry",
     async () => {
       const home = realpathSync(mkdtempSync(join(tmpdir(), "handwork-e2e-direct-setup-")));
       session = await TmuxSession.create({
         env: {
 
-
           HOME: home,
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_DISABLE_KEYCHAIN: "1",
-          HANDWORK_SKIP_ONBOARDING: "0",
+          HANDWORK_SKIP_ONBOARDING: "1",
         },
       });
 
       await session.waitForComposer(TIMEOUT);
-      await session.sendText("/setup");
+      await session.sendText("/provider");
       const picker = await session.waitForPane(
         (pane) =>
           pane.includes("/provider") &&
           pane.includes("codex") &&
-          pane.includes("grok"),
+          pane.includes("openai"),
         TIMEOUT,
       );
       expect(picker).not.toContain("Connections");
       expect(picker).not.toContain("Credential source");
 
-      await session.sendKeys("Enter");
-      await session.waitForPane(
-        (pane) => pane.includes("oauth") && pane.includes("api-key"),
-        TIMEOUT,
-      );
-
-      // No key exists anywhere in this environment, so the api-key leaf skips
-      // the which-key column and opens the paste field directly.
       await session.sendKeys("Down");
       await session.sendKeys("Enter");
-      await session.waitForText("Paste or type a key", TIMEOUT);
+      await session.waitForText("Type or paste your API key", TIMEOUT);
 
       await session.sendKeys("Escape");
       await session.waitForComposer(TIMEOUT);
@@ -422,7 +411,6 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
       const home = realpathSync(mkdtempSync(join(tmpdir(), "handwork-e2e-login-onboarding-")));
       const env = {
 
-
         HOME: home,
         USER: "handwork-e2e-login-onboarding",
         HANDWORK_AUTO_UPGRADE: "0",
@@ -433,26 +421,25 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
 
       session = await TmuxSession.create({ env });
 
-      const initial = await session.waitForText("Welcome to handwork", TIMEOUT);
-      expect(initial).toContain("Sign in with Codex");
-      expect(initial).toContain("Add an API key");
-      expect(initial).toContain("esc to set up later");
+      const initial = await session.waitForText("Subscription provider", TIMEOUT);
+      expect(initial).toContain("Codex subscription");
+      expect(initial).toContain("OpenAI");
       expect(initial).not.toContain("Change team");
       expect(initial).not.toContain("Switch credential");
       expect(initial).not.toContain("Skip for now");
 
       await session.sendKeys("Escape");
       const skipped = await session.waitForPane(
-        (pane) => !pane.includes("Welcome to handwork") && !pane.includes("Sign in with Codex"),
+        (pane) => !pane.includes("Subscription provider") && !pane.includes("Codex subscription"),
         TIMEOUT,
       );
-      expect(skipped).not.toContain("Add an API key");
+      expect(skipped).not.toContain("OpenAI");
 
       await session.kill();
       session = await TmuxSession.create({ env });
-      const restarted = await session.waitForText("Welcome to handwork", TIMEOUT);
-      expect(restarted).toContain("Sign in with Codex");
-      expect(restarted).toContain("Add an API key");
+      const restarted = await session.waitForText("Subscription provider", TIMEOUT);
+      expect(restarted).toContain("Codex subscription");
+      expect(restarted).toContain("OpenAI");
     },
     60_000,
   );

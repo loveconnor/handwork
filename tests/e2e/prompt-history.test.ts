@@ -47,7 +47,7 @@ function currentComposerLine(pane: string): string {
 
 function slashMenuRows(pane: string): string[] {
   return pane.split("\n").filter((line) =>
-    !isComposerLine(line) && line.trimStart().startsWith("/")
+    !isComposerLine(line) && line.trim() !== "/help for commands" && line.trimStart().startsWith("/")
   );
 }
 
@@ -112,11 +112,11 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
           cwd: workspaceRoot,
           env: rejectedProviderEnv(home, provider),
         });
-        await session.waitForText("Run /help", TIMEOUT);
+        await session.waitForPane(hasEmptyComposer, TIMEOUT);
         await session.sendText("PLAN10_PROMPT_HISTORY_SENTINEL");
         await session.waitForText("HTTP 401", TIMEOUT);
         await session.sendText("/help");
-        await session.waitForText("Commands 35", TIMEOUT);
+        await session.waitForText("Commands 39", TIMEOUT);
         await session.sendKeys("Escape");
         await session.waitForPane((pane) => !pane.includes("enter open"), TIMEOUT);
         await session.sendText("/quit");
@@ -133,7 +133,7 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
           cwd: workspaceRoot,
           env: rejectedProviderEnv(home, provider),
         });
-        await session.waitForText("Run /help", TIMEOUT);
+        await session.waitForPane(hasEmptyComposer, TIMEOUT);
 
         await session.sendLiteral("/");
         await session.waitForPane((current) => slashMenuRows(current).length > 0, TIMEOUT);
@@ -209,7 +209,7 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
               HOME: realpathSync(home),
             },
           });
-          await session.waitForText("Run /help", TIMEOUT);
+          await session.waitForPane(hasEmptyComposer, TIMEOUT);
           expect(existsSync(join(home, ".handwork"))).toBe(false);
         } finally {
           chmodSync(home, 0o700);
@@ -247,7 +247,7 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
             cwd: realpathSync(workspace),
             env: rejectedProviderEnv(home, provider),
           });
-          await session.waitForText("Run /help", TIMEOUT);
+          await session.waitForPane(hasEmptyComposer, TIMEOUT);
           await session.sendText(prompt);
           await session.waitForText("HTTP 401", TIMEOUT);
           await session.sendText("/quit");
@@ -267,7 +267,7 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
           cwd: realpathSync(workspaceA),
           env: rejectedProviderEnv(home, provider),
         });
-        await session.waitForText("Run /help", TIMEOUT);
+        await session.waitForPane(hasEmptyComposer, TIMEOUT);
         await disablePromptHistory(session, join(home, ".handwork", "settings.json"));
         await session.sendText("PLAN10_HISTORY_DISABLED");
         await session.waitForText("HTTP 401", TIMEOUT);
@@ -383,7 +383,7 @@ describe.skipIf(!tmuxAvailable())("prompt history", () => {
             HOME: home,
           },
         });
-        await session.waitForText("Run /help", TIMEOUT);
+        await session.waitForPane(hasEmptyComposer, TIMEOUT);
         await session.sendKeys("Up");
         const pane = await session.waitForText("PLAN10_HISTORY_KEPT_099", TIMEOUT);
         expect(pane).toContain("PLAN10_HISTORY_KEPT_099");

@@ -79,7 +79,7 @@ async function launchNoKeyAndWait(record = false): Promise<{
 
     },
   });
-  await terminal.waitForText("Run /help for commands", 10_000);
+  await terminal.waitForText("/help for commands", 10_000);
   await terminal.waitForStableComposer(10_000);
   return { terminal, stderrPath, root };
 }
@@ -96,7 +96,7 @@ describe.skipIf(TMUX_SKIP)("tui: no-key slash commands", () => {
         await session.waitForPane((pane) => !pane.includes("No context to compact."), 5_000);
         await session.waitForComposer(5_000);
         const scrollback = await session.captureFullScrollbackEscapes();
-        expect(scrollback).toContain("Run /help for commands");
+        expect(scrollback).toContain("/help for commands");
         expect(scrollback).not.toMatch(/No context to compact|Context:|Compacting/);
         await session.sendKeys("C-o");
         const transcript = await session.waitForText("full detail", 5_000);
@@ -184,7 +184,7 @@ describe.skipIf(TMUX_SKIP)("tui: no-key slash commands", () => {
         },
       });
       await session.waitForComposer(10_000);
-      expect((await session.captureFullScrollback()).split("Run /help for commands")).toHaveLength(2);
+      expect((await session.captureFullScrollback()).split("/help for commands")).toHaveLength(2);
 
       await session.sendText("/status");
       await session.waitForText("agent_step_limit=", 5_000);
@@ -192,7 +192,7 @@ describe.skipIf(TMUX_SKIP)("tui: no-key slash commands", () => {
       const scrollback = await session.captureFullScrollback();
 
       for (const field of [
-        "Run /help for commands",
+        "/help for commands",
         "auth_refreshable=",
         "permission_mode=auto",
       ]) {

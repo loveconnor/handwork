@@ -1,0 +1,7 @@
+tests/e2e/tui-performance.test.ts:
+(pass) overlapping skill commands keep the latest action and the shell alive [1383.93ms]
+(pass) missing HOME admits the prompt and reports unavailable credentials [1303.82ms]
+(pass) skills refresh discovers SKILL.md added inside an existing candidate directory [1477.62ms]
+(pass) skills refresh preserves the canonical catalog for a symlinked HOME [1547.36ms]
+(skip) interactive terminal surfaces stay within one frame at p95
+(skip) live provider preserves the fast menu and prepared transcript pipeline

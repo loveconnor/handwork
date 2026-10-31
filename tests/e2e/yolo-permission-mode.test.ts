@@ -220,7 +220,6 @@ describe("yolo permission mode", () => {
         env: {
           HOME: fixture.home,
 
-
           HANDWORK_PERMISSION_MODE: undefined,
         },
       });
@@ -311,7 +310,6 @@ describe.skipIf(!tmuxAvailable())("yolo interactive mode", () => {
         height: 40,
         env: {
           HOME: fixture.home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_PERMISSION_MODE: undefined,
@@ -556,21 +554,22 @@ describe.skipIf(!tmuxAvailable())("yolo interactive mode", () => {
         env: {
           HOME: fixture.home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_PERMISSION_MODE: undefined,
         },
       });
 
-      await session.waitForText(WARNING, TIMEOUT);
+      await session.waitForText("full access", TIMEOUT);
 
       await session.sendKeys("C-c");
       const quitPane = await session.waitForText(QUIT_HINT, TIMEOUT);
       expect(quitPane).not.toContain(WARNING);
       expect(quitPane).not.toContain(COMPACT_WARNING);
 
-      // The quit arm lapses after 3s. The warning only survives that long
-      // because its visible budget paused while the hint owned the footer.
+      // Narrow panes retain the persistent mode label and defer the expanded
+      // warning budget. Reveal it after the quit hint expires and the pane grows.
+      await session.waitForPane(pane => !pane.includes(QUIT_HINT), TIMEOUT);
+      await session.resizeWindow(80, 24);
       const resumedPane = await session.waitForText(WARNING, TIMEOUT);
       expect(resumedPane).not.toContain(QUIT_HINT);
       expect(session.isAlive()).toBe(true);

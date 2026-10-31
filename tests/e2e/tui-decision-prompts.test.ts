@@ -20,6 +20,7 @@ import {
 } from "./tui-render-assertions";
 import {
   fakeCodexFinalText,
+  fakeCodexFunctionCallEvents,
   fakeCodexPermissionDecision,
   fakeCodexSerializedToolCall,
   fakeCodexTitleDefault,
@@ -141,7 +142,7 @@ afterEach(async () => {
 
 function sse(events: object[], done = true) {
   return new Response(
-    events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") +
+    events.flatMap((event: any, index) => event.type === "response.output_item.done" && event.item?.type === "function_call" ? fakeCodexFunctionCallEvents(event.item, index) : [event]).map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") +
       (done ? "data: [DONE]\n\n" : ""),
     { headers: { "content-type": "text/event-stream" } },
   );
@@ -912,8 +913,8 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       expect(finalPane).not.toContain("Request failed");
       expect(ctx.provider.requests).toHaveLength(2);
       const followup = ctx.provider.requests[1].body;
-      expect(followup).toContain(`"toolCallId":"${ARGUMENT_RECOVERY_CALL_ID}"`);
-      expect(followup).toContain(`"toolName":"${ARGUMENT_RECOVERY_TOOL_NAME}"`);
+      expect(followup).toContain(`"call_id":"${ARGUMENT_RECOVERY_CALL_ID}"`);
+      expect(followup).toContain(`"name":"${ARGUMENT_RECOVERY_TOOL_NAME}"`);
       expect(followup).toContain("Run tests");
       expect(followup).not.toContain("tool_execution_failed");
       await assertProcessAliveAndClean(ctx);
@@ -950,9 +951,9 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       expect(pane).not.toContain("Request failed");
       expect(ctx.provider.requests).toHaveLength(2);
       expect(ctx.provider.requests[1].body).toContain(
-        `"toolCallId":"${ARGUMENT_RECOVERY_CALL_ID}"`,
+        `"call_id":"${ARGUMENT_RECOVERY_CALL_ID}"`,
       );
-      expect(ctx.provider.requests[1].body).toContain('"input":{}');
+      expect(ctx.provider.requests[1].body).toContain('\"arguments\":\"{}\"');
       expect(ctx.provider.requests[1].body).toContain("tool_execution_failed");
       expect(ctx.provider.requests[1].body).not.toContain(MALFORMED_ARGUMENTS);
       await assertProcessAliveAndClean(ctx);
@@ -977,18 +978,13 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
         [
           sse([
             { type: "response.output_text.delta", delta: "I need to inspect one file before continuing." },
-            {
-              type: "tool-input-start",
-              id: malformedCallId,
-              toolName: "read_file",
-            },
-            {
-              type: "tool-input-delta",
-              id: malformedCallId,
-              delta: MALFORMED_STREAMED_ARGUMENTS,
-            },
-            { type: "tool-input-end", id: malformedCallId },
-            { type: "tool-call", toolCallId: malformedCallId },
+            { type: "response.output_item.added", output_index: 1, item: {
+              type: "function_call", call_id: malformedCallId, name: "read_file",
+            } },
+            { type: "response.function_call_arguments.delta", output_index: 1,
+              delta: MALFORMED_STREAMED_ARGUMENTS },
+            { type: "response.function_call_arguments.done", output_index: 1,
+              arguments: MALFORMED_STREAMED_ARGUMENTS },
             { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
           ]),
           fakeCodexFinalText("Malformed streamed read recovered."),
@@ -1010,9 +1006,9 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       expect(pane).not.toContain("Request failed");
       expect(ctx.provider.requests).toHaveLength(2);
       expect(ctx.provider.requests[1].body).toContain(
-        `"toolCallId":"${malformedCallId}"`,
+        `"call_id":"${malformedCallId}"`,
       );
-      expect(ctx.provider.requests[1].body).toContain('"input":{}');
+      expect(ctx.provider.requests[1].body).toContain('\"arguments\":\"{}\"');
       expect(ctx.provider.requests[1].body).toContain("tool_execution_failed");
       expect(ctx.provider.requests[1].body).not.toContain(
         MALFORMED_STREAMED_ARGUMENTS,
@@ -2701,7 +2697,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
         (value) => value.includes("shift+↑↓ options"),
       );
       expect(pane).toContain(
-        "↑↓ cursor · shift+↑↓ options · tab questions · enter answer · esc cancel",
+        "shift+↑↓ options · tab questions · enter answer · esc cancel",
       );
       expect(ctx.provider.requests).toHaveLength(1);
 

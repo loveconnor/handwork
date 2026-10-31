@@ -1,0 +1,9 @@
+tests/e2e/web-fetch-fake-network.test.ts:
+(pass) web_fetch Provider fixture > representative providers receive the same strict public web_fetch schema [111.85ms]
+(pass) web_fetch Provider fixture > invalid credentialed web_fetch persists no URL credentials [49.99ms]
+(pass) web_fetch Provider fixture > default policy validates malformed web_fetch before transport [41.78ms]
+(pass) web_fetch Provider fixture > default handwork ask validates malformed web_fetch before transport [49.20ms]
+(pass) web_fetch Provider fixture > auto parallel invalid web_fetch does not suppress a valid read_file sibling [45.14ms]
+(pass) web_fetch Provider fixture > parallel fallback reports invalid web_fetch once in Ask JSON [43.07ms]
+(pass) web_fetch Provider fixture > parallel fallback emits one invalid web_fetch ACP lifecycle [161.46ms]
+(pass) web_fetch Provider fixture > ACP explicit deny emits no web_fetch progress or target request [149.82ms]

@@ -63,7 +63,7 @@ const workspace = {
 
 function sse(events) {
   return new Response(
-    `${events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("")}data: [DONE]\n\n`,
+    `${events.flatMap((event) => event.type === "response.output_item.done" ? [{ ...event, type: "response.output_item.added", item: { ...event.item, arguments: "" } }, event] : [event]).map((event) => `data: ${JSON.stringify(event)}\n\n`).join("")}data: [DONE]\n\n`,
     { headers: { "content-type": "text/event-stream" } },
   );
 }
@@ -76,17 +76,16 @@ function toolCall(id, command) {
 }
 
 function shellToolCalls(calls) {
-  const events = calls.flatMap(({ id, input }) => {
+  const events = calls.flatMap(({ id, input }, output_index) => {
     const serialized = JSON.stringify(input);
     const deltas = [];
     for (let offset = 0; offset < serialized.length; offset += 4096) {
-      deltas.push({ type: "tool-input-delta", id, delta: serialized.slice(offset, offset + 4096) });
+      deltas.push({ type: "response.function_call_arguments.delta", output_index, delta: serialized.slice(offset, offset + 4096) });
     }
     return [
-      { type: "tool-input-start", id, toolName: "shell" },
+      { type: "response.output_item.added", output_index, item: { type: "function_call", id, call_id: id, name: "shell", arguments: "" } },
       ...deltas,
-      { type: "tool-input-end", id },
-      { type: "response.output_item.done", output_index: 0, item: { type: "function_call", id: id, call_id: id, name: "shell", arguments: JSON.stringify({}) } },
+      { type: "response.function_call_arguments.done", output_index, arguments: serialized },
     ];
   });
   const responseEvents = [
@@ -112,7 +111,7 @@ function textResponse(value) {
 }
 
 function toolResult(body, id) {
-  const prompt = body.prompt || [];
+  const prompt = body.input || [];
   let lastUser = -1;
   for (let index = prompt.length - 1; index >= 0; index -= 1) {
     if (prompt[index].role === "user") {
@@ -121,13 +120,12 @@ function toolResult(body, id) {
     }
   }
   return prompt.slice(lastUser + 1)
-    .flatMap((message) => Array.isArray(message.content) ? message.content : [])
-    .find((part) => part.type === "tool-result" && part.toolCallId === id);
+    .find((part) => part.type === "function_call_output" && part.call_id === id);
 }
 
 function latestUserText(body) {
-  for (let index = (body.prompt || []).length - 1; index >= 0; index -= 1) {
-    const message = body.prompt[index];
+  for (let index = (body.input || []).length - 1; index >= 0; index -= 1) {
+    const message = body.input[index];
     if (message.role === "user") return JSON.stringify(message.content);
   }
   return "";
@@ -149,7 +147,7 @@ const fetch = async (_url, init = {}) => {
   }
   const body = JSON.parse(requestDecoder.decode(init.body));
   if (!checkedBrowserCapabilityContext) {
-    const serializedPrompt = JSON.stringify(body.prompt || []);
+    const serializedPrompt = body.instructions;
     for (const guidance of [
       "embedded browser version of handwork",
       "Public web fetch, web search, and general outbound network access are unavailable",
@@ -166,7 +164,7 @@ const fetch = async (_url, init = {}) => {
     if (body.tools?.length !== 1 || body.tools[0]?.name !== "shell") {
       throw new Error(`workspace advertised unexpected tools: ${JSON.stringify(body.tools)}`);
     }
-    const schema = body.tools[0]?.inputSchema;
+    const schema = body.tools[0]?.parameters;
     if (JSON.stringify(schema?.required) !== JSON.stringify(["action", "command"]) ||
         schema?.properties?.action?.enum?.[0] !== "run" ||
         schema?.properties?.command?.maxLength !== 65_536 ||

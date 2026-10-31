@@ -1,0 +1,18 @@
+test
++- run test w
+bounded prompt bytes: default=6122 parent=3791 child=3670
+schema footprint original=21613 compact=20187 saved_bytes=1426
+failed command: HANDWORK_TEST_PRODUCT_EXE=/tmp/handwork-stabilization-v10/bin/handwork ./.zig-cache/o/e3ff89331c724e43886440b229753d88/test --cache-dir=./.zig-cache --seed=0xc384eedc --listen=-
+
+Build Summary: 10/10 steps succeeded; 8725/8729 tests passed (4 skipped)
+test success
++- run test 8724 pass, 4 skip (8728 total) 8m MaxRSS:1G
+|  +- compile test Debug native success 51s MaxRSS:4G
+|  |  +- options cached
+|  +- install success
+|     +- install handwork success
+|     |  +- compile exe handwork Debug native success 23s MaxRSS:1G
+|     |     +- options (reused)
+|     +- install runtime/ success
++- run test 1 pass (1 total) 250ms MaxRSS:2M
+   +- compile test Debug native success 1s MaxRSS:293M

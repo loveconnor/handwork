@@ -1,0 +1,17 @@
+tests/e2e/tui-slash-extra.test.ts:
+(pass) tui: skills command recovery > invalid /skills create name reports an inline error and preserves the session [1429.32ms]
+(pass) tui: clipboard host > /copy sends exact reply bytes to the host clipboard and reports process failure [1697.80ms]
+(skip) tui: extra slash commands > /clear clears the screen
+(skip) tui: extra slash commands > /clear resets projected history before the next prompt
+(skip) tui: extra slash commands > /new resets to a fresh prompt
+(skip) tui: extra slash commands > /stats shows session statistics
+(skip) tui: extra slash commands > /usage and /cost open the same compact local usage dashboard
+(pass) tui: MCP commands > /mcp HTTP add and remove use the menu transport form [2164.46ms]
+(pass) tui: MCP commands > /mcp bulk trust approval and reset preserve the profile connection [1871.88ms]
+(pass) tui: MCP commands > /mcp opens an inline menu without changing the transcript [2132.00ms]
+(pass) tui: MCP commands > /mcp browses live typed catalogs and inserts previews without submitting [6276.31ms]
+(pass) tui: MCP commands > /mcp add and remove stay inside the menu and use the profile owner [2359.57ms]
+(pass) tui: MCP commands > /mcp project trust approval and rejection remain menu-owned [2392.01ms]
+(skip) tui: extra slash commands > /skills opens the skills menu
+(skip) tui: extra slash commands > /alias shows alias list
+(skip) tui: extra slash commands > /copy handles empty history gracefully

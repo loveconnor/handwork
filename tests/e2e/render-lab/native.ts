@@ -366,7 +366,7 @@ async function launchHandwork(
     `HANDWORK_RECORD=${shQuote(context.manifest.tapePath)} HANDWORK_RECORD_INPUT=1 ${shQuote(HANDWORK_BIN)}`,
   );
   await capture(context, controller, `${label}-handwork-launch-requested`);
-  await waitForText(controller, "Run /help for commands", 30_000);
+  await waitForText(controller, "/help for commands", 30_000);
   await capture(context, controller, `${label}-handwork-prompt-visible`);
 }
 

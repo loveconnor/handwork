@@ -43,7 +43,7 @@ const server = createServer((request, response) => {
       return;
     }
     if (requestCount === 3) {
-      response.end(`data: ${JSON.stringify({ type: "response.output_text.delta", delta: unicodeText })}\n\ndata: {"type":"finish","finishReason":{"unified":"stop","raw":"stop"}}\n\ndata: [DONE]\n\n`);
+      response.end(`data: ${JSON.stringify({ type: "response.output_text.delta", delta: unicodeText })}\n\ndata: {"type":"response.completed","response":{"status":"completed"}}\n\ndata: [DONE]\n\n`);
       return;
     }
     assert.equal(requestCount, 2, "unexpected Provider request");
@@ -73,7 +73,8 @@ try {
     fetch: routeProviderFetch(async function(input,init){
       if (init.method === "GET") {
         catalogCalls += 1;
-        return Response.json({ models: [{ id: "native/test-model", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 272000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
+        // Keep the large Unicode transport fixture below the compaction threshold.
+        return Response.json({ models: [{ id: "native/test-model", type: "language" }].filter(model => model.type === "language").map(model => ({ slug: model.id, visibility: "list", supported_in_api: true, context_window: 2000000, supported_reasoning_levels: [], input_modalities: ["text"] })) });
       }
       assert.equal(init.method, "POST");
       fetchCalls += 1;

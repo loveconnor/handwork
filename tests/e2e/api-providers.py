@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import socket
 import tempfile
 import textwrap
 import threading
@@ -79,6 +80,39 @@ class Providers(unittest.TestCase):
                     self.assertNotIn('authorization',lower)
                     self.assertNotIn('must-not-leak-to-local',json.dumps(self.server.requests))
                 else: self.assertEqual(lower['authorization'],'Bearer '+secret)
+    def test_compact_descriptions_preserve_first_request_contracts(self):
+        with tempfile.TemporaryDirectory(prefix='handwork-compact-') as home:
+            workspace = Path(home) / 'workspace'
+            workspace.mkdir()
+            env = {'PATH': os.environ['PATH'], 'HOME': home, 'USER': 'test', 'TERM': 'dumb',
+                   'OPENAI_API_KEY': 'local-test-only', 'HANDWORK_ON_DEMAND_TOOLS': '0',
+                   'HANDWORK_OPENAI_BASE_URL': f'http://127.0.0.1:{self.server.server_port}/v1'}
+            def run(*args):
+                result = subprocess.run([str(EXE), *args], cwd=workspace, env=env,
+                                        text=True, capture_output=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr)
+            run('login', 'openai')
+            bodies = []
+            for setting in ('0', '1', None):
+                if setting is None:
+                    env.pop('HANDWORK_EXPERIMENT_COMPACT_SCHEMAS', None)
+                else:
+                    env['HANDWORK_EXPERIMENT_COMPACT_SCHEMAS'] = setting
+                run('ask', '--json', 'hello')
+                bodies.append(self.server.requests[-1][2])
+            original, compact, default = bodies
+            self.assertEqual(compact['tools'], default['tools'])
+            self.assertEqual(original['messages'], compact['messages'])
+            self.assertEqual(len(original['tools']), len(compact['tools']))
+            self.assertIn('subagent', [tool['function']['name'] for tool in compact['tools']])
+            for before, after in zip(original['tools'], compact['tools']):
+                self.assertEqual(before['type'], after['type'])
+                self.assertEqual(
+                    {k: v for k, v in before['function'].items() if k != 'description'},
+                    {k: v for k, v in after['function'].items() if k != 'description'},
+                )
+            self.assertLess(len(json.dumps(compact['tools'])), len(json.dumps(original['tools'])))
+
     def test_opencode_connects_to_local_server_without_api_key(self):
         with tempfile.TemporaryDirectory(prefix='handwork-opencode-') as home:
             env={'PATH':os.environ['PATH'],'HOME':home,'USER':'test','TERM':'dumb','HANDWORK_OPENCODE_BASE_URL':f'http://127.0.0.1:{self.server.server_port}'}
@@ -102,6 +136,12 @@ class Providers(unittest.TestCase):
             self.assertIn('format',body)
             self.assertNotIn('authorization',{key.lower():value for key,value in headers.items()})
     def test_opencode_starts_local_server_on_demand(self):
+        # Never probe or reuse a developer's server as the startup fixture.
+        with socket.socket() as port_check:
+            try:
+                port_check.bind(('127.0.0.1', 4096))
+            except OSError:
+                self.skipTest('OpenCode startup fixture requires port 4096 to be free')
         with tempfile.TemporaryDirectory(prefix='handwork-opencode-autostart-') as home:
             root=Path(home);bin_dir=root/'bin';bin_dir.mkdir()
             args_path=root/'opencode-args.json'

@@ -1,0 +1,6 @@
+tests/e2e/notifications.test.ts:
+(pass) /sound toggles both events immediately and persists the profile [1740.77ms]
+(pass) notifications sound handler runs after a real interactive turn [1251.39ms]
+(pass) handwork ask keeps redirected stdout JSON and stderr byte-clean with notifications enabled [27.27ms]
+(pass) handwork ask correlates permission attention and turn-end notifications [1251.77ms]
+(pass) notifications sound handler runs once when a real permission blocks [1649.42ms]

@@ -453,17 +453,6 @@ function startFakeGrokOAuth(options: {
   };
 }
 
-async function completeDisplayedGrokLogin(
-  activeSession: TmuxSession,
-  fixture: ReturnType<typeof startFakeGrokOAuth>,
-) {
-  await completeDisplayedSubscriptionLogin(
-    activeSession,
-    "Authorize with Grok",
-    `${fixture.baseUrl}/oauth2/authorize?`,
-  );
-}
-
 async function completeDisplayedCodexLogin(
   activeSession: TmuxSession,
   fixture: ReturnType<typeof startFakeChatGptOAuth>,
@@ -550,155 +539,44 @@ function startFakeCodexToolLoop(options: {
   };
 }
 
-function startFakeGrokToolLoop(options: {
-  responses?: Response[];
-  model?: string;
-  toolCallId?: string;
-  toolName?: string;
-  toolArguments?: object;
-  finalText?: string;
-} = {}) {
-  const bodies: string[] = [];
-  const accessToken = "grok-tool-loop-token";
-  const toolName = options.toolName ?? "read_file";
-  const toolArguments = options.toolArguments ?? { path: "README.md" };
-  const finalText = options.finalText ?? "GROK_TOOL_LOOP_OK";
-  const server = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    async fetch(request) {
-      const path = new URL(request.url).pathname;
-      if (path === "/models") {
-        return Response.json({ data: [grokSubscriptionModel(options.model ?? "grok-4.20", 1_000_000)] });
-      }
-      if (path === "/modalities") {
-        return Response.json({ models: [grokModalityModel(options.model ?? "grok-4.20", true)] });
-      }
-      const titleBody = await request.text();
-      if (titleBody.includes(TITLE_GENERATION_MARKER)) return fakeResponsesTitleDefault();
-      bodies.push(titleBody);
-      if (options.responses) return options.responses.shift() ?? new Response("unexpected request", { status: 400 });
-      if (bodies.length === 1) {
-        return new Response(
-          'data: {"type":"response.output_item.added","output_index":0,"item":{"type":"reasoning"}}\n\n' +
-            'data: {"type":"response.output_item.done","output_index":0,"item":{"id":"rs_tool","type":"reasoning","summary":[],"encrypted_content":"opaque-grok-tool-loop"}}\n\n' +
-            `data: ${JSON.stringify({ type: "response.output_item.added", output_index: 1, item: { type: "function_call", call_id: options.toolCallId ?? "call_tool", name: toolName } })}\n\n` +
-            `data: ${JSON.stringify({ type: "response.function_call_arguments.done", output_index: 1, arguments: JSON.stringify(toolArguments) })}\n\n` +
-            'data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":5,"output_tokens":2}}}\n\n',
-          { headers: { "content-type": "text/event-stream" } },
-        );
-      }
-      return new Response(
-        `data: ${JSON.stringify({ type: "response.output_text.delta", delta: finalText })}\n\n` +
-          'data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":7,"output_tokens":3}}}\n\n',
-        { headers: { "content-type": "text/event-stream" } },
-      );
-    },
-  });
-  return {
-    accessToken,
-    bodies,
-    responsesUrl: `http://127.0.0.1:${server.port}/responses`,
-    modelsUrl: `http://127.0.0.1:${server.port}/models`,
-    modalitiesUrl: `http://127.0.0.1:${server.port}/modalities`,
-    stop() { server.stop(true); },
-  };
-}
-
-function startFakeGrokResourceRecovery() {
-  const accessToken = "grok-resource-limit-token";
-  const bodies: string[] = [];
-  let responseCalls = 0;
-  const server = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    async fetch(request) {
-      const path = new URL(request.url).pathname;
-      if (path === "/models") {
-        return Response.json({ data: [grokSubscriptionModel("grok-4.20", 500_000)] });
-      }
-      if (path === "/modalities") {
-        return Response.json({ models: [grokModalityModel("grok-4.20", false)] });
-      }
-      const titleBody = await request.text();
-      if (titleBody.includes(TITLE_GENERATION_MARKER)) return fakeResponsesTitleDefault();
-      bodies.push(titleBody);
-      responseCalls += 1;
-      if (responseCalls === 1) {
-        return new Response(
-          'data: {"type":"response.output_text.delta","delta":"' +
-            "x".repeat(1024 * 1024) +
-            '"}\n\n',
-          { headers: { "content-type": "text/event-stream" } },
-        );
-      }
-      const text = responseCalls === 2 ? "GROK_LIMIT_RECOVERED" : "GROK_AFTER_LIMIT_OK";
-      return new Response(
-        `data: ${JSON.stringify({ type: "response.output_text.delta", delta: text })}\n\n` +
-          'data: {"type":"response.completed","response":{"status":"completed"}}\n\n',
-        { headers: { "content-type": "text/event-stream" } },
-      );
-    },
-  });
-  return {
-    accessToken,
-    bodies,
-    responsesUrl: `http://127.0.0.1:${server.port}/responses`,
-    modelsUrl: `http://127.0.0.1:${server.port}/models`,
-    modalitiesUrl: `http://127.0.0.1:${server.port}/modalities`,
-    stop() { server.stop(true); },
-  };
-}
-
 for (const subscription of ["codex", "grok"] as const) {
-  tmuxTest(`provider recovery activates ${subscription} sign-in after a cancelled turn`, async () => {
+  tmuxTest(`provider recovery handles ${subscription} after a cancelled turn`, async () => {
     home = mkdtempSync(join(tmpdir(), `handwork-cancel-login-${subscription}-`));
     stderrPath = join(home, "stderr.log");
-    writeFileSync(stderrPath, "");
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => { release = resolve; });
-    provider = startFakeCodex([async () => {
-      await held;
-      return fakeCodexFinalText("CANCELLED_PROVIDER_RESPONSE");
-    }]);
-    chatgptOauth = startFakeChatGptOAuth();
+    provider = startFakeCodex([]);
+    chatgptOauth = startFakeChatGptOAuth({ responseDelayMs: 1000 });
     const grok = startFakeGrokOAuth();
     try {
+      writeSeededChatGptLogin(home, chatgptOauth.accessToken);
+      writeFileSync(join(home, ".handwork", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
       session = await startHandwork(home, stderrPath, provider, undefined, undefined, {
         ...chatgptOauth.env, ...grok.env, HANDWORK_MODEL: undefined,
       });
       await session.waitForComposer(TIMEOUT);
-      await session.sendText("Hold this request until cancelled.");
+      await session.sendText("Cancel this request.");
       const deadline = Date.now() + TIMEOUT;
-      while (provider.requests.length === 0) {
-        if (Date.now() > deadline) throw new Error("Provider request did not start");
-        await Bun.sleep(20);
+      while (!chatgptOauth.requests.some(request => request.path === "/chatgpt/responses")) {
+        if (Date.now() > deadline) throw new Error("Codex request did not start");
+        await Bun.sleep(10);
       }
       await session.sendKeys("C-c");
       await session.waitForText("What can handwork do differently?", TIMEOUT);
-      release();
-      await openProviderPicker(session);
-      await session.sendKeys("Down");
-      if (subscription === "grok") await session.sendKeys("Down");
-      await session.sendKeys("Enter");
-      if (subscription === "codex") await completeDisplayedCodexLogin(session, chatgptOauth);
-      else await completeDisplayedGrokLogin(session, grok);
-      const label = subscription === "codex" ? "Codex" : "Grok";
-      const outcome = await session.waitForPane(
-        (pane) => pane.includes(`Switched to ${label} subscription`) ||
-          pane.includes("Subscription sign-in completed, but"),
-        TIMEOUT,
-      );
-      expect(outcome).toContain(`Switched to ${label} subscription`);
-      await session.sendText("Use the subscription immediately after sign-in.");
-      await session.waitForText(subscription === "codex" ? "CHATGPT_DIRECT_RESPONSE" : "GROK_DIRECT_RESPONSE", TIMEOUT);
-      expect(provider.requests).toHaveLength(1);
-      expect(JSON.parse(readFileSync(join(home, ".handwork", "settings.json"), "utf8")).provider).toBe(provider);
+      if (subscription === "grok") {
+        await session.sendText("/provider grok");
+        await session.waitForText("Unknown command", TIMEOUT);
+        expect(grok.requests).toHaveLength(0);
+      } else {
+        await session.sendText("/logout");
+        await session.waitForText("Signed out", TIMEOUT);
+        await session.sendText("/provider codex");
+        await completeDisplayedCodexLogin(session, chatgptOauth);
+        await session.waitForText("Switched to Codex subscription", TIMEOUT);
+        await session.sendText("Use the subscription immediately after sign-in.");
+        await session.waitForText("CHATGPT_DIRECT_RESPONSE", TIMEOUT);
+      }
+      expect(JSON.parse(readFileSync(join(home, ".handwork", "settings.json"), "utf8")).provider).toBe("codex");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
-    } finally {
-      release();
-      grok.stop();
-    }
+    } finally { grok.stop(); }
   }, 60_000);
 }
 
@@ -744,7 +622,7 @@ tmuxTest("provider recovery refuses active logout before deleting a busy subscri
   expect(readFileSync(stderrPath, "utf8")).toBe("");
 }, 60_000);
 
-for (const command of ["/provider", "/login", "/setup"]) {
+for (const command of ["/provider", "/login"]) {
   tmuxTest(`provider picker retains type-ahead after ${command} Enter`, async () => {
     home = mkdtempSync(join(tmpdir(), "handwork-provider-typeahead-"));
     stderrPath = join(home, "stderr.log");
@@ -753,7 +631,7 @@ for (const command of ["/provider", "/login", "/setup"]) {
     await session.waitForComposer(TIMEOUT);
 
     await session.sendLiteral(`${command}\rcodex`);
-    const prefix = command === "/login" ? "/login" : "/provider";
+    const prefix = "/provider";
     await session.waitForPane(
       (pane) => pane.split("\n").some((line) => line.trim() === `┃ ${prefix} codex`) && /^\s+codex\s*$/m.test(pane),
       TIMEOUT,
@@ -797,7 +675,6 @@ tmuxTest("provider picker consumes selection keys while inventory is pending", a
 
 for (const scenario of [
   { name: "bare provider", command: "/provider" },
-  { name: "setup alias", command: "/setup" },
   { name: "login alias", command: "/login" },
   { name: "typed provider query", command: "/provider " },
 ]) {
@@ -817,6 +694,8 @@ for (const scenario of [
         clearInterval(heartbeat);
       },
     }), { headers: { "content-type": "text/event-stream" } })]);
+    writeSeededChatGptLogin(home);
+    writeFileSync(join(home, ".handwork", "settings.json"), JSON.stringify({ provider: "codex" }), { mode: 0o600 });
     try {
       session = await startHandwork(home, stderrPath, provider);
       await session.waitForComposer(TIMEOUT);
@@ -836,7 +715,7 @@ for (const scenario of [
       await session.waitForText("What can handwork do differently?", TIMEOUT);
       await session.sendText(scenario.command.trim());
       await session.waitForPane(
-        (pane) => pane.includes("codex") && pane.includes("grok"),
+        (pane) => pane.includes("codex") && pane.includes("openai"),
         TIMEOUT,
       );
       expect(cancelled).toBe(true);
@@ -862,7 +741,7 @@ tmuxTest(
         ...grok.env,
       });
       await session.waitForComposer(TIMEOUT);
-      for (const [provider, label] of [["codex", "Codex"], ["grok", "Grok"]]) {
+      for (const [provider, label] of [["codex", "Codex"]]) {
         await openProviderPicker(session);
         await session.sendText(provider);
         await session.waitForText(`Authorize with ${label}`, TIMEOUT);
@@ -883,8 +762,8 @@ tmuxTest(
         expect(readFileSync(original, "utf8")).toBe(readFileSync(join(home, `${name}.alias`), "utf8"));
         await session.waitForComposer(TIMEOUT);
       }
-      await session.sendText("Use the original Provider credential.");
-      await session.waitForText("PROVIDER_AFTER_FAILED_SIGNIN", TIMEOUT);
+      expect(provider.requests).toHaveLength(0);
+      expect(session.isAlive()).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       grok.stop();
@@ -900,7 +779,7 @@ tmuxTest(
     stderrPath = join(home, "stderr.log");
     writeSeededChatGptLogin(home);
     writeSeededGrokLogin(home, "grok-initial-access-token");
-    for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
+    for (const name of ["chatgpt-auth.json"]) {
       linkSync(join(home, ".handwork", name), join(home, `${name}.alias`));
     }
     provider = startFakeCodex([]);
@@ -912,7 +791,7 @@ tmuxTest(
         ...grok.env,
       });
       await session.waitForComposer(TIMEOUT);
-      for (const [provider, label] of [["codex", "Codex"], ["grok", "Grok"]]) {
+      for (const [provider, label] of [["codex", "Codex"]]) {
         await openProviderPicker(session);
         await session.sendText(provider);
         await session.waitForText(`${label} subscription: Saved credential storage is unavailable`, 10_000);
@@ -932,7 +811,7 @@ tmuxTest(
         await session.sendText(`Use the saved ${label} credential.`);
         await session.waitForText(provider === "codex" ? "CHATGPT_DIRECT_RESPONSE" : "GROK_DIRECT_RESPONSE", TIMEOUT);
       }
-      for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
+      for (const name of ["chatgpt-auth.json"]) {
         expect(statSync(join(home, ".handwork", name)).nlink).toBe(1);
       }
       expect(session.isAlive()).toBe(true);
@@ -964,7 +843,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/login");
     await session.waitForPane(
-      (pane) => pane.includes("codex") && pane.includes("grok"),
+      (pane) => pane.includes("codex") && pane.includes("openai"),
       TIMEOUT,
     );
     await session.sendLiteral("codex");
@@ -979,7 +858,7 @@ tmuxTest(
     );
     expect(signInScreen).toMatch(/^Sign in with Codex\s+Waiting for authorization…$/m);
     expect(signInScreen).toMatch(/^  Open\s+Authorize with Codex$/m);
-    expect(signInScreen).toMatch(/^enter reopens browser · esc cancels$/m);
+    expect(signInScreen).toMatch(/^(?:auto · )?enter reopens browser · esc cancels$/m);
     expect(signInScreen).not.toContain("Code   ");
     expect(signInScreen).not.toContain(`${chatgptOauth.baseUrl}/oauth/authorize?`);
     const signInEscapes = await session.capturePaneEscapes();
@@ -1016,7 +895,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/login");
     await session.waitForPane(
-      (pane) => pane.includes("codex") && pane.includes("grok"),
+      (pane) => pane.includes("codex") && pane.includes("openai"),
       TIMEOUT,
     );
     await session.sendLiteral("codex");
@@ -1045,7 +924,7 @@ tmuxTest(
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
     writeFileSync(
       join(home, ".handwork", "settings.json"),
-      JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
+      JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }) + "\n",
       { mode: 0o600 },
     );
 
@@ -1108,7 +987,7 @@ async function waitForTrace(
 async function openProviderPicker(pickerSession: TmuxSession): Promise<void> {
   await pickerSession.sendText("/provider");
   await pickerSession.waitForPane(
-    (pane) => pane.includes("codex") && pane.includes("grok"),
+    (pane) => pane.includes("codex") && pane.includes("openai"),
     TIMEOUT,
   );
 }
@@ -1117,10 +996,8 @@ async function openProviderPicker(pickerSession: TmuxSession): Promise<void> {
 // handwork login now goes through the oauth method; with no teams to refine it, the
 // choice commits the credential directly.
 
-
 // Selecting the environment key goes through the api-key method's which-key
 // column, which lists it as `env`.
-
 
 test("Grok logout removes local credentials when remote revocation fails", async () => {
   home = mkdtempSync(join(tmpdir(), "handwork-grok-logout-revoke-failure-"));
@@ -1190,158 +1067,6 @@ test("Grok logout removes malformed and unsafe local credentials", async () => {
   }
 });
 
-tmuxTest(
-  "interactive Grok login auto-expands for a bracketed-paste authorization code",
-  async () => {
-    home = mkdtempSync(join(tmpdir(), "handwork-grok-tui-code-"));
-    stderrPath = join(home, "stderr.log");
-    provider = startFakeCodex([]);
-    const grok = startFakeGrokOAuth();
-    try {
-      session = await startHandwork(home, stderrPath, provider, undefined, undefined, {
-        HANDWORK_MODEL: undefined,
-        ...grok.env,
-      });
-      await session.waitForComposer(TIMEOUT);
-      await session.sendText("/login");
-      await session.waitForPane(
-        (pane) => pane.includes("codex") && pane.includes("grok"),
-        TIMEOUT,
-      );
-      await session.sendLiteral("grok");
-      await session.sendKeys("Enter");
-      await session.waitForText("Browser didn't return? press tab to enter a code", TIMEOUT);
-      await session.pasteText("grok-code");
-      await session.waitForPane(
-        (pane) => pane.includes("•••••••••") && pane.includes("enter submits"),
-        TIMEOUT,
-      );
-      const expanded = await session.capturePane();
-      expect(expanded).toMatch(/^  Open\s+Authorize with Grok\n\s*\n  Paste the code shown by xAI$/m);
-      await session.resizeWindow(80, 5);
-      const compactEntry = await session.waitForPane(
-        (pane) =>
-          pane.includes("•••••••••") &&
-          pane.includes("enter submits") &&
-          pane.includes("esc cancels"),
-        TIMEOUT,
-      );
-      expect(compactEntry).not.toContain("Paste the code shown by xAI");
-      await session.sendKeys("Tab");
-      const collapsedWithDraft = await session.waitForText("tab enters code", TIMEOUT);
-      expect(collapsedWithDraft).not.toContain("•••••••••");
-      await session.sendKeys("Tab");
-      await session.waitForPane(
-        (pane) => pane.includes("•••••••••") && pane.includes("enter submits"),
-        TIMEOUT,
-      );
-      await session.sendKeys("Enter");
-      await session.waitForText("Switched to Grok subscription with grok-4.20.", TIMEOUT);
-
-      const scrollback = await session.captureFullScrollback();
-      expect(scrollback).not.toContain("grok-code");
-      expect(grok.tokenCalls()).toBe(1);
-      expect(existsSync(join(home, ".handwork", "grok-auth.json"))).toBe(true);
-      expect(readFileSync(stderrPath, "utf8")).toBe("");
-    } finally {
-      grok.stop();
-    }
-  },
-  60_000,
-);
-
-tmuxTest(
-  "Grok model selection uses provider-advertised context and effort metadata",
-  async () => {
-    home = mkdtempSync(join(tmpdir(), "handwork-grok-effort-selection-"));
-    stderrPath = join(home, "stderr.log");
-    provider = startFakeCodex([]);
-    const grok = startFakeGrokOAuth();
-    try {
-      writeSeededGrokLogin(home, grok.initialAccessToken);
-      writeFileSync(
-        join(home, ".handwork", "settings.json"),
-        JSON.stringify({ provider: "grok", grok_model: "grok-4.20", statusLine: { context: true } }) + "\n",
-        { mode: 0o600 },
-      );
-      session = await startHandwork(home, stderrPath, provider, undefined, undefined, {
-        HANDWORK_MODEL: undefined,
-        ...grok.env,
-      });
-      await session.waitForComposer(TIMEOUT);
-      const catalogDeadline = Date.now() + TIMEOUT;
-      while (!grok.requests.some((request) => request.path === "/v1/language-models")) {
-        if (Date.now() >= catalogDeadline) throw new Error("Grok catalog did not load");
-        await Bun.sleep(25);
-      }
-      await session.sendText("/model grok-4.6 xhigh");
-      await session.waitForText("Switched to grok-4.6", TIMEOUT);
-      await session.sendText("Use the selected effort.");
-      await session.waitForText("GROK_DIRECT_RESPONSE", TIMEOUT);
-
-      const response = grok.requests.find((request) => request.path === "/v1/responses");
-      expect(response).toBeDefined();
-      const body = JSON.parse(response!.body ?? "{}") as {
-        model?: string;
-        reasoning?: { effort?: string };
-      };
-      expect(body.model).toBe("grok-4.6");
-      expect(body.reasoning?.effort).toBe("xhigh");
-      expect(await session.capturePane()).toContain("/500k");
-      expect(readFileSync(join(home, ".handwork", "settings.json"), "utf8")).toContain('"effort":"xhigh"');
-      expect(readFileSync(stderrPath, "utf8")).toBe("");
-    } finally {
-      grok.stop();
-    }
-  },
-  60_000,
-);
-
-tmuxTest(
-  "Grok resource exhaustion stays on-provider and leaves later input usable",
-  async () => {
-    home = mkdtempSync(join(tmpdir(), "handwork-grok-resource-recovery-"));
-    stderrPath = join(home, "stderr.log");
-    provider = startFakeCodex([]);
-    const grok = startFakeGrokResourceRecovery();
-    try {
-      writeSeededGrokLogin(home, grok.accessToken, "acct_resource_limit");
-      writeFileSync(
-        join(home, ".handwork", "settings.json"),
-        JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
-        { mode: 0o600 },
-      );
-      session = await startHandwork(home, stderrPath, provider, undefined, undefined, {
-        HANDWORK_MODEL: undefined,
-        HANDWORK_E2E_XAI_GROK_RESPONSES_URL: grok.responsesUrl,
-        HANDWORK_E2E_XAI_GROK_MODELS_URL: grok.modelsUrl,
-        HANDWORK_E2E_XAI_GROK_MODALITIES_URL: grok.modalitiesUrl,
-      });
-      await session.waitForComposer(TIMEOUT);
-      const failureVisible = session.waitForText("request failed: XaiGrokSseEventTooLarge", TIMEOUT);
-      await session.sendText("Recover from a bounded Grok response.");
-      await failureVisible;
-      await session.sendText("Accept another prompt after recovery.");
-      await session.waitForText("GROK_LIMIT_RECOVERED", TIMEOUT);
-      await session.sendText("Accept one more prompt after recovery.");
-      await session.waitForText("GROK_AFTER_LIMIT_OK", TIMEOUT);
-
-      const scrollback = await session.captureFullScrollback();
-      expect(scrollback).toContain("XaiGrokSseEventTooLarge");
-      expect(grok.bodies).toHaveLength(3);
-      expect(provider.requests).toHaveLength(0);
-      expect(readFileSync(stderrPath, "utf8")).toBe("");
-    } finally {
-      grok.stop();
-    }
-  },
-  60_000,
-);
-
-for (const scenario of ["replace", "conflict", "invalid-index"] as const) {
-  
-}
-
 test(
   "Codex rejects the vision fallback without another provider request",
   async () => {
@@ -1357,7 +1082,7 @@ test(
       writeSeededChatGptLogin(home, codex.accessToken);
       writeFileSync(
         join(home, ".handwork", "settings.json"),
-        JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
+        JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }) + "\n",
         { mode: 0o600 },
       );
       const result = await runHandwork(
@@ -1399,57 +1124,31 @@ test(
   60_000,
 );
 
-test(
-  "Grok rejects the vision fallback because native image input owns OCR",
-  async () => {
-    home = mkdtempSync(join(tmpdir(), "handwork-grok-vision-disabled-"));
-    provider = startFakeCodex([]);
-    const grok = startFakeGrokToolLoop({
-      toolName: "vision",
-      toolArguments: { image_ids: [1], focus: "Inspect the image." },
-      finalText: "GROK_VISION_DISABLED_OK",
-    });
+for (const command of ["models", "ask"] as const) {
+  test(`disabled Grok rejects ${command} before version, catalog, or response transport`, async () => {
+    home = mkdtempSync(join(tmpdir(), "handwork-grok-disabled-"));
+    const grok = startFakeGrokOAuth();
     try {
-      writeSeededGrokLogin(home, grok.accessToken, "acct_vision");
-      writeFileSync(
-        join(home, ".handwork", "settings.json"),
-        JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
-        { mode: 0o600 },
-      );
-      const result = await runHandwork(
-        ["ask", "--json", "--auto", "--no-save", "Answer without a vision fallback."],
-        {
-          env: {
-            HOME: home,
-            HANDWORK_AUTH_MODE: "host-managed",
-
-            HANDWORK_DISABLE_KEYCHAIN: "1",
-            HANDWORK_AUTO_UPGRADE: "0",
-            HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
-            HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
-            HANDWORK_E2E_XAI_GROK_RESPONSES_URL: grok.responsesUrl,
-            HANDWORK_E2E_XAI_GROK_MODELS_URL: grok.modelsUrl,
-            HANDWORK_E2E_XAI_GROK_MODALITIES_URL: grok.modalitiesUrl,
-          },
-          timeoutMs: TIMEOUT,
-        },
-      );
-      expect(result.code, `stdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
-      expect(result.stdout).toContain("GROK_VISION_DISABLED_OK");
-      expect(grok.bodies).toHaveLength(2);
-      expect(grok.bodies[0]).not.toContain('"name":"vision"');
-      const continuation = JSON.parse(grok.bodies[1]) as {
-        input: Array<{ type?: string; output?: string }>;
-      };
-      const toolResult = continuation.input.find((item) => item.type === "function_call_output");
-      expect(toolResult?.output).toContain("Vision is unavailable for this request.");
-      expect(provider.requests).toHaveLength(0);
-    } finally {
-      grok.stop();
-    }
-  },
-  60_000,
-);
+      writeSeededGrokLogin(home, grok.initialAccessToken);
+      const settingsPath = join(home, ".handwork", "settings.json");
+      const settings = JSON.stringify({ provider: "grok", models: { grok: "grok-4.20" } });
+      writeFileSync(settingsPath, settings, { mode: 0o600 });
+      const credentialPath = join(home, ".handwork", "grok-auth.json");
+      const credential = readFileSync(credentialPath, "utf8");
+      const args = command === "models" ? ["models", "--json"] : ["ask", "--json", "--no-save", "Do not use another provider."];
+      const result = await runHandwork(args, { env: {
+        HOME: home, HANDWORK_AUTH_MODE: "host-managed", HANDWORK_DISABLE_KEYCHAIN: "1",
+        HANDWORK_AUTO_UPGRADE: "0", ...grok.env,
+      }, timeoutMs: TIMEOUT });
+      expect(result.code).toBe(1);
+      expect(result.stdout + result.stderr).toMatch(/ProviderIntegrationDisabled|unavailable|transport/i);
+      expect(grok.requests).toHaveLength(0);
+      expect(readFileSync(settingsPath, "utf8")).toBe(settings);
+      expect(readFileSync(credentialPath, "utf8")).toBe(credential);
+      expect(existsSync(join(home, ".handwork", "provider-versions", "grok.json"))).toBe(false);
+    } finally { grok.stop(); }
+  }, TIMEOUT);
+}
 
 for (const outcome of ["failure", "cancel"] as const) {
   
@@ -1511,6 +1210,14 @@ for (const provider of ["codex", "grok"] as const) {
 
       const listed = await runHandwork(["models", "--json"], { env, timeoutMs: 8000 });
       expect(listed.timedOut).toBe(false);
+      if (provider === "grok") {
+        expect(listed.code).toBe(1);
+        expect(listed.stderr).toContain("unavailable");
+        expect(releaseRequests).toBe(0);
+        expect(grok!.requests).toHaveLength(0);
+        expect(statSync(cachePath).isFIFO()).toBe(true);
+        return;
+      }
       expect(listed.code, listed.stderr).toBe(0);
       expect(JSON.parse(listed.stdout).models.map((entry: { id: string }) => entry.id)).toContain(model);
       expect(listed.stderr).toBe("");
@@ -1618,84 +1325,6 @@ tmuxTest("Codex discovers upstream versions and refreshes models in an open sess
   }
 }, 120_000);
 
-test("Grok refreshes upstream versions for catalogs and responses and survives lookup failures", async () => {
-  home = mkdtempSync(join(tmpdir(), "handwork-grok-version-discovery-"));
-  const grok = startFakeGrokOAuth();
-  let latest = "1.999.1";
-  let failure: "none" | "unavailable" | "malformed" | "slow" = "none";
-  const releaseHeaders: Headers[] = [];
-  const releases = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    async fetch(request) {
-      releaseHeaders.push(request.headers);
-      if (failure === "slow") await Bun.sleep(5000);
-      if (failure === "unavailable") return new Response("unavailable", { status: 503 });
-      return new Response(failure === "malformed" ? "1.2.3\r\nInjected: bad" : latest);
-    },
-  });
-  try {
-    writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".handwork", "settings.json"), JSON.stringify({
-      provider: "grok", models: { grok: "grok-4.20" },
-    }) + "\n", { mode: 0o600 });
-    const env = {
-      HOME: home,
-      PATH: "/usr/bin:/bin",
-      HANDWORK_DISABLE_KEYCHAIN: "1",
-      HANDWORK_AUTO_UPGRADE: "0",
-      HANDWORK_SOUND: "0",
-      ...grok.env,
-      HANDWORK_E2E_GROK_VERSION_URL: `http://127.0.0.1:${releases.port}/stable`,
-      HANDWORK_E2E_GROK_CLIENT_VERSION: undefined,
-    };
-    const cachePath = join(home, ".handwork", "provider-versions", "grok.json");
-    const expireCache = () => {
-      const cached = JSON.parse(readFileSync(cachePath, "utf8"));
-      cached.checked_at_ms = 0;
-      writeFileSync(cachePath, JSON.stringify(cached));
-    };
-    const first = await runHandwork(["models", "--json"], { env });
-    expect(first.code, first.stderr).toBe(0);
-    expect(releaseHeaders).toHaveLength(1);
-    expect(grok.requests.find((request) => request.path === "/v1/models")?.clientVersion).toBe(latest);
-    expect(grok.requests.find((request) => request.path === "/v1/language-models")?.clientVersion).toBeNull();
-
-    latest = "2.0.0";
-    expireCache();
-    const asked = await runHandwork(["ask", "--json", "--auto", "--no-save", "Reply briefly."], { env });
-    expect(asked.code, asked.stderr).toBe(0);
-    expect(asked.stdout).toContain("GROK_DIRECT_RESPONSE");
-    expect(grok.requests.find((request) => request.path === "/v1/responses")?.clientVersion).toBe(latest);
-    expect(releaseHeaders).toHaveLength(2);
-
-    for (const mode of ["unavailable", "malformed"] as const) {
-      failure = mode;
-      expireCache();
-      const result = await runHandwork(["models", "--json"], { env });
-      expect(result.code, result.stderr).toBe(0);
-      expect(JSON.parse(readFileSync(cachePath, "utf8")).version).toBe("2.0.0");
-    }
-    rmSync(cachePath);
-    const malformed = await runHandwork(["models", "--json"], { env });
-    expect(malformed.code).toBe(1);
-    expect(existsSync(cachePath)).toBe(false);
-    expect(existsSync(join(home, ".handwork", "grok-auth.json"))).toBe(true);
-    failure = "slow";
-    const started = Date.now();
-    const timedOut = await runHandwork(["models", "--json"], { env, timeoutMs: 8000 });
-    expect(timedOut.code).toBe(1);
-    expect(Date.now() - started).toBeLessThan(6500);
-    for (const headers of releaseHeaders) {
-      for (const name of ["authorization", "cookie", "x-userid", "x-xai-token-auth"]) {
-        expect(headers.get(name)).toBeNull();
-      }
-    }
-  } finally {
-    grok.stop();
-    releases.stop(true);
-  }
-}, 30_000);
 tmuxTest("provider preparation does not delay double Ctrl+C shutdown", async () => {
   home = mkdtempSync(join(tmpdir(), "handwork-provider-preparation-exit-"));
   stderrPath = join(home, "stderr.log");
@@ -1727,18 +1356,45 @@ for (const outcome of ["cancel", "failure"] as const) {
   
 }
 
-tmuxTest("provider preparation cancellation stops logout fallback", async () => {
-  home = mkdtempSync(join(tmpdir(), "handwork-logout-preparation-cancel-"));
+tmuxTest("provider preparation cancellation keeps the connected provider usable", async () => {
+  home = mkdtempSync(join(tmpdir(), "handwork-preparation-cancel-"));
   stderrPath = join(home, "stderr.log");
   writeFileSync(stderrPath, "");
   let entered = false;
   let release!: () => void;
   const held = new Promise<void>((resolve) => { release = resolve; });
-  provider = startFakeCodex([], { models: async () => {
+  provider = startFakeCodex([]);
+  chatgptOauth = startFakeChatGptOAuth({ modelsResponse: async () => {
     entered = true;
     await held;
     return new Response("unavailable", { status: 503 });
   } });
+  try {
+    writeSeededChatGptLogin(home, chatgptOauth.accessToken);
+    session = await startHandwork(home, stderrPath, provider, undefined, undefined, { ...chatgptOauth.env, HANDWORK_MODEL: undefined, HANDWORK_SOUND: "0" });
+    await session.waitForComposer(TIMEOUT);
+    await openProviderPicker(session);
+    await session.sendLiteral("codex");
+    await session.sendKeys("Enter");
+    await session.waitForPane(() => entered, 5000);
+    await session.sendKeys("C-c");
+    await session.waitForText("Provider preparation cancelled.", 1500);
+    release();
+    await Bun.sleep(100);
+    expect(existsSync(join(home, ".handwork", "chatgpt-auth.json"))).toBe(true);
+    expect(chatgptOauth.requests.filter((request) => request.path === "/chatgpt/responses")).toHaveLength(0);
+    expect(readFileSync(stderrPath, "utf8")).toBe("");
+    await session.sendText("/quit");
+    await session.waitForSessionEnd(3000);
+    session = null;
+  } finally { release(); }
+}, TIMEOUT);
+
+tmuxTest("logout does not fall back to a disabled provider with saved credentials", async () => {
+  home = mkdtempSync(join(tmpdir(), "handwork-provider-disabled-fallback-"));
+  stderrPath = join(home, "stderr.log");
+  writeFileSync(stderrPath, "");
+  provider = startFakeCodex([]);
   chatgptOauth = startFakeChatGptOAuth();
   const grok = startFakeGrokOAuth();
   try {
@@ -1748,55 +1404,15 @@ tmuxTest("provider preparation cancellation stops logout fallback", async () => 
     session = await startHandwork(home, stderrPath, provider, undefined, undefined, { ...chatgptOauth.env, ...grok.env, HANDWORK_MODEL: undefined, HANDWORK_SOUND: "0" });
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    await session.waitForPane(() => entered, 5000);
-    await session.sendKeys("C-c");
-    await session.waitForText("Provider preparation cancelled.", 1500);
-    release();
-    await Bun.sleep(100);
-    expect(grok.requests.filter((request) => request.path === "/v1/models")).toHaveLength(0);
+    await session.waitForText("No connected provider is available", 5000);
     expect(existsSync(join(home, ".handwork", "chatgpt-auth.json"))).toBe(false);
     expect(existsSync(join(home, ".handwork", "grok-auth.json"))).toBe(true);
-    expect(readFileSync(stderrPath, "utf8")).toBe("");
-    await session.sendText("/quit");
-    await session.waitForSessionEnd(3000);
-    session = null;
-  } finally { release(); grok.stop(); }
-}, TIMEOUT);
-
-tmuxTest("provider recovery continues after a held prompt and failed catalog", async () => {
-  home = mkdtempSync(join(tmpdir(), "handwork-provider-fallback-prompt-"));
-  stderrPath = join(home, "stderr.log");
-  writeFileSync(stderrPath, "");
-  let entered = false;
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => { release = resolve; });
-  provider = startFakeCodex([], { models: async () => {
-    entered = true;
-    await held;
-    return new Response("unavailable", { status: 503 });
-  } });
-  chatgptOauth = startFakeChatGptOAuth();
-  const grok = startFakeGrokOAuth();
-  try {
-    writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-    writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".handwork", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
-    const trace = join(home, "trace.log");
-    session = await startHandwork(home, stderrPath, provider, undefined, trace, { ...chatgptOauth.env, ...grok.env, HANDWORK_MODEL: undefined, HANDWORK_SOUND: "0", HANDWORK_TRACE_SCOPES: "auth,provider,input,prompt" });
-    await session.waitForComposer(TIMEOUT);
-    await session.sendText("/logout");
-    await session.waitForPane(() => entered, 5000);
-    await session.sendText("Use the remaining subscription after recovery.");
-    await waitForTrace(trace, "pending_prompt_adopted", 3000);
-    release();
-    await session.waitForText("GROK_DIRECT_RESPONSE", 5000);
-    expect(JSON.parse(readFileSync(join(home, ".handwork", "settings.json"), "utf8")).provider).toBe("grok");
-    expect(grok.requests.filter((request) => request.path === "/v1/responses")).toHaveLength(1);
+    expect(JSON.parse(readFileSync(join(home, ".handwork", "settings.json"), "utf8")).provider).toBe("codex");
+    expect(grok.requests).toHaveLength(0);
     expect(provider.requests).toHaveLength(0);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
-  } finally { release(); grok.stop(); }
+  } finally { grok.stop(); }
 }, TIMEOUT);
-
 
 tmuxTest("provider preparation resumes a held prompt after explicit provider retry", async () => {
   home = mkdtempSync(join(tmpdir(), "handwork-preparation-explicit-retry-"));

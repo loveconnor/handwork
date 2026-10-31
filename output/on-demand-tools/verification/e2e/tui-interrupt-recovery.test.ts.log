@@ -1,0 +1,10 @@
+tests/e2e/tui-interrupt-recovery.test.ts:
+(pass) tui: interrupt recovery > quit reports final history persistence failure with fault=false [1670.19ms]
+(pass) tui: interrupt recovery > quit reports final history persistence failure with fault=true [1660.77ms]
+(pass) tui: interrupt recovery > Ctrl-C clears the composer before cancelling an active response [1713.76ms]
+(pass) tui: interrupt recovery > immediate prompt after cancellation keeps thinking visible and remains cancellable [1840.25ms]
+(pass) tui: interrupt recovery > submitted text interrupts a tool-free response and continues immediately [1380.23ms]
+(pass) tui: interrupt recovery > up arrow retracts a tool-queued steer into the composer for editing [1742.47ms]
+(pass) tui: interrupt recovery > partial output survives cancellation and the next prompt completes [2130.25ms]
+(pass) tui: interrupt recovery > workspace mutation waits for cancelled worker unwind [3040.20ms]
+(pass) tui: interrupt recovery > late successful tool settlement stays truthful after Escape [7452.56ms]

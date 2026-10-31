@@ -11,7 +11,7 @@ import {
 } from "./tmux-helpers";
 
 const MAIN_MODEL = "openai/gpt-5.5";
-const TITLE_MODEL = "openai/gpt-5.6-luna";
+const TITLE_MODEL = "gpt-5.6-luna";
 const GENERATED_TITLE = "Renderer Loop Refactor";
 
 type FixtureRoot = {
@@ -88,7 +88,7 @@ test("handwork ask generates a model title for a fresh session", async () => {
 
     const titleCalls = titleRequests(provider);
     expect(titleCalls.length).toBe(1);
-    expect(titleCalls[0].headers.get("ai-language-model-id")).toBe(TITLE_MODEL);
+    expect(JSON.parse(titleCalls[0].body).model).toBe(TITLE_MODEL);
     expect(titleCalls[0].body).toContain("refactor the renderer loop");
 
     expect(sessionTitles(root)).toContain(GENERATED_TITLE);

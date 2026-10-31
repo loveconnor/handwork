@@ -205,17 +205,17 @@ function userParts(requestIndex = 0): Array<{
   text?: string;
 }> {
   const body = JSON.parse(provider!.requests[requestIndex]!.body) as {
-    prompt: Array<{
+    input: Array<{
       role: string;
       content: Array<{ type: string; text?: string }>;
     }>;
   };
-  const message = body.prompt.findLast((entry) => entry.role === "user");
+  const message = body.input.findLast((entry) => entry.role === "user");
   return message?.content ?? [];
 }
 
 function finalUserText(requestIndex = 0): string {
-  return userParts(requestIndex).find((part) => part.type === "text")?.text ??
+  return userParts(requestIndex).find((part) => part.type === "input_text")?.text ??
     "";
 }
 
@@ -235,9 +235,10 @@ function nestedText(content: unknown): string {
 
 function providerPromptText(requestIndex = 0): string {
   const body = JSON.parse(provider!.requests[requestIndex]!.body) as {
-    prompt: Array<{ content: unknown }>;
+    instructions: string;
+    input: Array<{ content: unknown }>;
   };
-  return body.prompt.map((message) => nestedText(message.content)).join("\n");
+  return [body.instructions, ...body.input.map((message) => nestedText(message.content))].join("\n");
 }
 
 function expectCleanRuntime(active: TmuxSession): void {
@@ -290,8 +291,6 @@ tmuxTest(
   },
   TIMEOUT,
 );
-
-
 
 tmuxTest(
   "embedded paste terminator cannot execute its same-epoch suffix",
@@ -346,8 +345,6 @@ tmuxTest(
   TIMEOUT,
 );
 
-
-
 tmuxTest(
   "tiny clipped composer exposes hidden rows and preserves the submitted draft",
   async () => {
@@ -378,10 +375,6 @@ tmuxTest(
   TIMEOUT,
 );
 
-
-
-
-
 tmuxTest(
   "multi-megabyte bracketed paste survives edits and resize byte-for-byte",
   async () => {
@@ -402,9 +395,8 @@ tmuxTest(
 
     expect(finalUserText()).toBe(`HEAD-EDIT-${prompt}-TAIL-EDIT`);
     expect(provider!.modelRequests).toHaveLength(1);
-    expect(JSON.parse(provider!.requests[0]!.body)).toMatchObject({
-      maxOutputTokens: 64_000,
-    });
+    // Codex controls its output budget; the public Responses limit is unsupported.
+    expect(JSON.parse(provider!.requests[0]!.body)).not.toHaveProperty("max_output_tokens");
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -597,7 +589,7 @@ tmuxTest(
     await waitForProviderRequest();
 
     expect(finalUserText()).toBe("[Image #2][Image #3]");
-    expect(userParts().filter((part) => part.type === "file")).toHaveLength(2);
+    expect(userParts().filter((part) => part.type === "input_image")).toHaveLength(2);
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -616,7 +608,7 @@ tmuxTest(
     await waitForProviderRequest();
 
     expect(finalUserText()).toBe("[Image #2]");
-    expect(userParts().filter((part) => part.type === "file")).toHaveLength(1);
+    expect(userParts().filter((part) => part.type === "input_image")).toHaveLength(1);
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -698,8 +690,8 @@ tmuxTest(
 
     expect(finalUserText(0)).toBe("[Image #1] describe history image");
     expect(finalUserText(1)).toBe("[Image #2] describe history image");
-    expect(userParts(0).filter((part) => part.type === "file")).toHaveLength(1);
-    expect(userParts(1).filter((part) => part.type === "file")).toHaveLength(1);
+    expect(userParts(0).filter((part) => part.type === "input_image")).toHaveLength(1);
+    expect(userParts(1).filter((part) => part.type === "input_image")).toHaveLength(1);
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -848,7 +840,7 @@ tmuxTest(
     await waitForProviderRequest();
 
     expect(finalUserText()).toBe("inspect [Image #1],");
-    expect(userParts().filter((part) => part.type === "file")).toHaveLength(1);
+    expect(userParts().filter((part) => part.type === "input_image")).toHaveLength(1);
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -866,7 +858,7 @@ tmuxTest(
     await waitForProviderRequest();
 
     expect(finalUserText()).toBe("[Image #2] duplicate [Image #1]");
-    expect(userParts().filter((part) => part.type === "file")).toHaveLength(1);
+    expect(userParts().filter((part) => part.type === "input_image")).toHaveLength(1);
     expectCleanRuntime(active);
   },
   TIMEOUT,
@@ -885,7 +877,7 @@ tmuxTest(
     await waitForProviderRequest();
 
     expect(finalUserText()).toBe("[Image #1] TAIL");
-    expect(userParts().filter((part) => part.type === "file")).toHaveLength(1);
+    expect(userParts().filter((part) => part.type === "input_image")).toHaveLength(1);
     expectCleanRuntime(active);
   },
   TIMEOUT,

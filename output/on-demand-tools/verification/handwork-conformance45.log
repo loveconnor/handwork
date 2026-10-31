@@ -1,0 +1,158 @@
+
+> test
+> bun run.ts
+
+MCP conformance 2026-07-28, runner 0.2.0-alpha.10 (a9896553900a2ef61787b57adfcbbe936a8ab1f9)
+Running all suite (32 scenarios) in parallel...
+
+Starting scenario: tools_call
+Starting scenario: request-metadata
+Starting scenario: auth/metadata-default
+Starting scenario: auth/metadata-var1
+Starting scenario: auth/metadata-var2
+Starting scenario: auth/metadata-var3
+Starting scenario: auth/basic-cimd
+Starting scenario: auth/scope-from-www-authenticate
+Starting scenario: auth/scope-from-scopes-supported
+Starting scenario: auth/scope-omitted-when-undefined
+Starting scenario: auth/scope-step-up
+Starting scenario: auth/scope-retry-limit
+Starting scenario: auth/token-endpoint-auth-basic
+Starting scenario: auth/token-endpoint-auth-post
+Starting scenario: auth/token-endpoint-auth-none
+Starting scenario: auth/pre-registration
+Starting scenario: auth/resource-mismatch
+Starting scenario: auth/offline-access-scope
+Starting scenario: auth/offline-access-not-supported
+Starting scenario: auth/authorization-server-migration
+Starting scenario: auth/iss-supported
+Starting scenario: auth/iss-not-advertised
+Starting scenario: auth/iss-supported-missing
+Starting scenario: auth/iss-wrong-issuer
+Starting scenario: auth/iss-unexpected
+Starting scenario: auth/iss-normalized
+Starting scenario: auth/metadata-issuer-mismatch
+Starting scenario: sep-2322-client-request-state
+Starting scenario: http-standard-headers
+Starting scenario: http-custom-headers
+Starting scenario: http-invalid-tool-headers
+Starting scenario: json-schema-ref-no-deref
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50607/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50611/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50612/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50613/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50614/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50615/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50616/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50617/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50618/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50619/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50620/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50621/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50622/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50623/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50624/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50625/mcp
+With context: {"client_id":"pre-registered-client","client_secret":"pre-registered-secret"}
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50626/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50627/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50628/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50630/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50631/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50632/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50633/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50634/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50635/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50636/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50637/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50581
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50608
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50610
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50580/mcp
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:50609
+With context: {"toolCalls":[{"name":"test_custom_headers","arguments":{"region":"us-west1","priority":42,"verbose":false,"debug":true,"empty_val":"","method_val":"test-method","float_val":3.14159,"non_ascii_val":"Hello, 世界","whitespace_val":" padded ","leading_space_val":" us-west1","trailing_space_val":"us-west1 ","internal_space_val":"us west 1","control_char_val":"line1\nline2","crlf_val":"line1\r\nline2","tab_val":"\tindented","query":"SELECT * FROM users"}},{"name":"test_custom_headers_null","arguments":{"region":"us-east1","priority":1,"verbose":null,"query":"SELECT 1"}}]}
+
+=== SUITE SUMMARY ===
+
+✓ tools_call: 1 passed, 0 failed
+✓ request-metadata: 5 passed, 0 failed
+✓ auth/metadata-default: 16 passed, 0 failed
+✓ auth/metadata-var1: 16 passed, 0 failed
+✓ auth/metadata-var2: 16 passed, 0 failed
+✓ auth/metadata-var3: 16 passed, 0 failed
+✓ auth/basic-cimd: 15 passed, 0 failed
+✓ auth/scope-from-www-authenticate: 17 passed, 0 failed
+✓ auth/scope-from-scopes-supported: 17 passed, 0 failed
+✓ auth/scope-omitted-when-undefined: 17 passed, 0 failed
+✓ auth/scope-step-up: 29 passed, 0 failed
+✓ auth/scope-retry-limit: 21 passed, 0 failed
+✓ auth/token-endpoint-auth-basic: 21 passed, 0 failed
+✓ auth/token-endpoint-auth-post: 21 passed, 0 failed
+✓ auth/token-endpoint-auth-none: 21 passed, 0 failed
+✓ auth/pre-registration: 15 passed, 0 failed
+✓ auth/resource-mismatch: 2 passed, 0 failed
+✓ auth/offline-access-scope: 15 passed, 0 failed
+✓ auth/offline-access-not-supported: 17 passed, 0 failed
+✓ auth/authorization-server-migration: 30 passed, 0 failed
+✓ auth/iss-supported: 17 passed, 0 failed
+✓ auth/iss-not-advertised: 17 passed, 0 failed
+✓ auth/iss-supported-missing: 8 passed, 0 failed
+✓ auth/iss-wrong-issuer: 8 passed, 0 failed
+✓ auth/iss-unexpected: 8 passed, 0 failed
+✓ auth/iss-normalized: 8 passed, 0 failed
+✓ auth/metadata-issuer-mismatch: 3 passed, 0 failed
+✓ sep-2322-client-request-state: 5 passed, 0 failed
+✓ http-standard-headers: 3 passed, 0 failed
+✓ http-custom-headers: 18 passed, 0 failed
+✓ http-invalid-tool-headers: 11 passed, 0 failed
+✓ json-schema-ref-no-deref: 1 passed, 0 failed
+
+Total: 435 passed, 0 failed, 0 warnings
+
+[32mBaseline check passed: all failures are expected.[0m
+MCP conformance 2025-11-25: initialize
+Starting scenario: initialize
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:51435
+Checks:
+[90m2026-10-31T16:01:30.430Z[0m [mcp-client-initialization] [32mSUCCESS[0m Validates that MCP client properly initializes with server
+[90m2026-10-31T16:01:30.431Z[0m [server-info              ] [36mINFO   [0m Test server info returned to client
+
+Test Results:
+Passed: 1/1, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED
+MCP conformance 2025-11-25: tools_call
+Starting scenario: tools_call
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:51445/mcp
+Checks:
+[90m2026-10-31T16:01:30.798Z[0m [tool-add-numbers] [32mSUCCESS[0m Validates that the add_numbers tool works correctly
+
+Test Results:
+Passed: 1/1, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED
+MCP conformance 2025-11-25: sse-retry
+Starting scenario: sse-retry
+Executing client: bun "/Users/connorlove/Work/Handwork/handwork/tests/e2e/conformance/client.ts" http://localhost:51458
+Checks:
+[90m2026-10-31T16:01:31.090Z[0m [incoming-request             ] [36mINFO   [0m Received POST request for / (method: initialize)
+[90m2026-10-31T16:01:31.091Z[0m [outgoing-response            ] [36mINFO   [0m Sent initialize response
+
+[90m2026-10-31T16:01:31.095Z[0m [incoming-request             ] [36mINFO   [0m Received POST request for / (method: notifications/initialized)
+[90m2026-10-31T16:01:31.097Z[0m [incoming-request             ] [36mINFO   [0m Received POST request for / (method: tools/list)
+[90m2026-10-31T16:01:31.097Z[0m [outgoing-response            ] [36mINFO   [0m Sent tools/list response
+
+[90m2026-10-31T16:01:31.114Z[0m [incoming-request             ] [36mINFO   [0m Received POST request for / (method: tools/call)
+[90m2026-10-31T16:01:31.115Z[0m [outgoing-sse-event           ] [36mINFO   [0m Sent SSE priming event for tools/call (id: event-1, retry: 500ms)
+[90m2026-10-31T16:01:31.166Z[0m [outgoing-stream-close        ] [36mINFO   [0m Closed tools/call SSE stream to trigger client reconnection
+[90m2026-10-31T16:01:31.675Z[0m [incoming-request             ] [36mINFO   [0m Received GET request for / (Last-Event-ID: event-1)
+[90m2026-10-31T16:01:31.675Z[0m [outgoing-sse-event           ] [36mINFO   [0m Sent SSE priming event on GET stream (id: event-2, retry: 500ms)
+[90m2026-10-31T16:01:31.675Z[0m [outgoing-sse-event           ] [36mINFO   [0m Sent tool response on GET stream after reconnection (id: event-3)
+[90m2026-10-31T16:01:31.699Z[0m [client-sse-graceful-reconnect] [32mSUCCESS[0m Client reconnects via GET after SSE stream is closed gracefully
+[90m2026-10-31T16:01:31.699Z[0m [client-sse-retry-timing      ] [32mSUCCESS[0m Client MUST respect the retry field, waiting the given number of milliseconds before attempting to reconnect
+[90m2026-10-31T16:01:31.699Z[0m [client-sse-last-event-id     ] [32mSUCCESS[0m Client SHOULD send Last-Event-ID header on reconnection for resumability
+
+Test Results:
+Passed: 3/3, 0 failed, 0 warnings
+
+✅ OVERALL: PASSED

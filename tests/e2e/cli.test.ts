@@ -29,6 +29,7 @@ import {
 import {
   FAKE_CODEX_MODEL,
   fakeCodexFinalText,
+  fakeCodexFunctionCallEvents,
   fakeCodexSse,
   startFakeCodex,
 } from "./tmux-helpers";
@@ -36,10 +37,9 @@ import {
 const TIMEOUT = 15_000;
 const NO_PROVIDER_AUTH = {
 
-
 };
 const MISSING_AUTH_MESSAGE =
-  "handwork needs a Codex subscription login for this model. Run handwork login codex.";
+  "Set the provider API key environment variable and reconnect with /provider.";
 const MODERN_MCP_FIXTURE = join(
   import.meta.dirname,
   "fixtures",
@@ -51,10 +51,7 @@ function maxLineWidth(text: string): number {
 }
 
 function sourceVersion(): string {
-  const source = readFileSync(join(REPO_ROOT, "src/main.zig"), "utf8");
-  const match = source.match(/pub const version = "([^"]+)";/);
-  if (!match) throw new Error("src/main.zig version declaration not found");
-  return match[1];
+  return JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")).version;
 }
 
 function doctorSessionDiagnosticsLimit(): number {
@@ -134,7 +131,7 @@ function snapshotTree(root: string): string[] {
   return entries;
 }
 
-function writeLegacySession(
+function writeSavedSession(
   home: string,
   workspaceRoot: string,
   sessionId: string,
@@ -144,28 +141,11 @@ function writeLegacySession(
     historyLen?: number;
   } = {},
 ): void {
-  const sessionDir = join(home, ".handwork", "sessions", sessionId);
-  mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-  chmodSync(join(home, ".handwork"), 0o700);
-  chmodSync(join(home, ".handwork", "sessions"), 0o700);
-  chmodSync(sessionDir, 0o700);
-  const historyLen = opts.historyLen ?? 0;
-  writeFileSync(
-    join(sessionDir, "session.json"),
-    JSON.stringify({
-      schema_version: 2,
-      id: sessionId,
-      created_at_ms: opts.createdAtMs ?? 1,
-      updated_at_ms: opts.updatedAtMs ?? 2,
-      workspace_root: workspaceRoot,
-      conversation_language: "en",
-      history_len: historyLen,
-      history: historyLen > 0 ? [{ role: "user", content: "saved" }] : [],
-      total_input_tokens: 0,
-      total_output_tokens: 0,
-    }) + "\n",
-    { mode: 0o600 },
-  );
+  writeConversationSession(home, workspaceRoot, sessionId, {
+    createdAtMs: opts.createdAtMs,
+    updatedAtMs: opts.updatedAtMs,
+    turns: Array.from({ length: opts.historyLen ?? 0 }, () => "saved"),
+  });
 }
 
 function writeConversationSession(
@@ -233,7 +213,6 @@ function writeConversationSession(
 }
 
 describe("cli: help", () => {
-  
 
   test(
     "handwork ask help renders documented options through both aliases",
@@ -357,7 +336,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
         expect(r.stderr).toBe("");
         expect(r.stdout).toContain("Commands:");
         expect(r.stdout).toContain("ask");
-        expect(r.stdout).toContain("setup");
+        expect(r.stdout).toContain("provider");
         expect(r.stdout).toContain("status");
         expect(r.stdout).toContain("doctor");
         expect(maxLineWidth(r.stdout)).toBeLessThanOrEqual(60);
@@ -419,6 +398,7 @@ describe("cli: status", () => {
       mkdirSync(workspace);
       writeFileSync(join(handworkDir, "mcp.json"), "{invalid json", { mode: 0o600 });
       const provider = startFakeCodex([]);
+      writeFileSync(join(handworkDir, "settings.json"), JSON.stringify({ provider: "codex" }), { mode: 0o600 });
 
       try {
         const env = {
@@ -457,7 +437,8 @@ describe("cli: status", () => {
           "[fail] mcp_config: failed to load ~/.handwork/mcp.json: McpConfigInvalidJson\n",
         );
         const doctorJson = JSON.parse(doctorJsonResult.stdout);
-        expect(doctorJson.fail_count).toBe(1);
+        expect(doctorJson.fail_count).toBe(2);
+        expect(doctorJson.checks).toContainEqual({ name: "auth", status: "fail", detail: "handwork needs a Codex subscription login for this model. Run handwork login codex." });
         expect(
           doctorJson.checks.filter(
             (check: { name: string }) => check.name === "mcp_config",
@@ -545,6 +526,7 @@ describe("cli: status", () => {
           auth_help: MISSING_AUTH_MESSAGE,
         });
         expect(statusJson).not.toHaveProperty("sandbox");
+        expect(doctorJson.model).toBe(statusJson.model);
         expect(doctorJson).toMatchObject({
           auth: "missing",
           auth_refreshable: false,
@@ -619,12 +601,8 @@ describe("cli: status", () => {
     );
   }
 
-  
-
-  
-
   test(
-    "status and doctor inspect an expired login without refreshing it",
+    "status and doctor ignore an expired retired login without refreshing it",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "handwork-e2e-status-expired-auth-"));
       const requestCatcher = startRequestCatcher();
@@ -653,9 +631,8 @@ describe("cli: status", () => {
         expect(status.code).toBe(0);
         expect(doctor.code).toBe(0);
         const expectedAuth = {
-          auth: "handwork login",
-          auth_refreshable: true,
-          team: "loveconnor",
+          auth: "missing",
+          auth_refreshable: false,
         };
         expect(JSON.parse(status.stdout.trim())).toMatchObject(expectedAuth);
         expect(JSON.parse(doctor.stdout.trim())).toMatchObject(expectedAuth);
@@ -667,8 +644,6 @@ describe("cli: status", () => {
     },
     TIMEOUT,
   );
-
-  
 
   test(
     "handwork status --json returns valid status JSON",
@@ -822,7 +797,8 @@ describe("cli: status", () => {
         writeFileSync(
           join(home, ".handwork", "settings.json"),
           JSON.stringify({
-            model: "anthropic/claude-sonnet-4.6",
+            provider: "anthropic",
+            models: { anthropic: "claude-sonnet-4.6" },
             permission_mode: "auto",
           }) + "\n",
         );
@@ -844,7 +820,7 @@ describe("cli: status", () => {
         });
         expect(status.code).toBe(0);
         const first = JSON.parse(status.stdout.trim());
-        expect(first.model).toBe("anthropic/claude-sonnet-4.6");
+        expect(first.model).toBe("claude-sonnet-4.6");
         expect(first.permission_mode).toBe("auto");
         expect(first.agent_step_limit).toBe(7);
         expect(status.stderr).toContain(
@@ -864,7 +840,8 @@ describe("cli: status", () => {
         writeFileSync(
           join(home, ".handwork", "settings.json"),
           JSON.stringify({
-            model: "anthropic/claude-sonnet-4.6",
+            provider: "anthropic",
+            models: { anthropic: "claude-sonnet-4.6" },
             permission_mode: "auto",
             workspaces: {
               [workspaceRoot]: {
@@ -881,7 +858,7 @@ describe("cli: status", () => {
         });
         expect(overridden.code).toBe(0);
         const second = JSON.parse(overridden.stdout.trim());
-        expect(second.model).toBe("anthropic/claude-sonnet-4.6");
+        expect(second.model).toBe("claude-sonnet-4.6");
         expect(second.permission_mode).toBe("auto");
         expect(second.agent_step_limit).toBe(4);
       } finally {
@@ -1029,7 +1006,7 @@ describe("cli: doctor", () => {
 
         expect(r.code).toBe(0);
         expect(JSON.parse(r.stdout.trim()).kind).toBe("doctor");
-        expect(existsSync(join(home, ".handwork"))).toBe(false);
+        expect(existsSync(join(home, ".handwork", "sessions"))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -1050,7 +1027,7 @@ describe("cli: doctor", () => {
         const limit = doctorSessionDiagnosticsLimit();
         const sessionCount = limit + 32;
         for (let i = 0; i < sessionCount; i += 1) {
-          writeLegacySession(
+          writeSavedSession(
             home,
             workspaceRoot,
             `doctor-bounded-${String(i).padStart(3, "0")}`,
@@ -1145,7 +1122,7 @@ describe("cli: read-only no-create matrix", () => {
             expect(result.stderr).toBe("");
           }
           expect(snapshotTree(home)).toEqual(before);
-          expect(existsSync(join(home, ".handwork"))).toBe(false);
+          expect(existsSync(join(home, ".handwork", "sessions"))).toBe(false);
         } finally {
           rmSync(root, { recursive: true, force: true });
         }
@@ -1156,7 +1133,6 @@ describe("cli: read-only no-create matrix", () => {
 });
 
 describe("cli: missing durable home", () => {
-  
 
   test(
     "session commands fail precisely while doctor remains available without HOME",
@@ -1518,13 +1494,13 @@ describe("cli: sessions", () => {
         const workspaceARoot = realpathSync(workspaceA);
         const workspaceBRoot = realpathSync(workspaceB);
 
-        writeLegacySession(home, workspaceARoot, "workspace-a-older", {
+        writeSavedSession(home, workspaceARoot, "workspace-a-older", {
           updatedAtMs: 20,
         });
-        writeLegacySession(home, workspaceARoot, "workspace-a-latest", {
+        writeSavedSession(home, workspaceARoot, "workspace-a-latest", {
           updatedAtMs: 40,
         });
-        writeLegacySession(home, workspaceBRoot, "workspace-b-newest", {
+        writeSavedSession(home, workspaceBRoot, "workspace-b-newest", {
           updatedAtMs: 80,
         });
 
@@ -1586,7 +1562,7 @@ describe("cli: sessions", () => {
         mkdirSync(home);
         mkdirSync(workspace);
         const workspaceRoot = realpathSync(workspace);
-        writeLegacySession(home, workspaceRoot, "readable-session", {
+        writeSavedSession(home, workspaceRoot, "readable-session", {
           updatedAtMs: 30,
         });
         for (const [id, contents] of [
@@ -1645,7 +1621,7 @@ describe("cli: sessions", () => {
         mkdirSync(home);
         mkdirSync(original);
         const originalRoot = realpathSync(original);
-        writeLegacySession(home, originalRoot, "renamed-workspace-session", {
+        writeSavedSession(home, originalRoot, "renamed-workspace-session", {
           updatedAtMs: 40,
         });
         renameSync(original, renamed);
@@ -1728,7 +1704,7 @@ describe("cli: sessions", () => {
           "--allow-large",
           "x".repeat(255),
         ];
-        for (const id of ids) writeLegacySession(home, workspaceRoot, id);
+        for (const id of ids) writeSavedSession(home, workspaceRoot, id);
 
         for (const id of ids) {
           const result = await runHandwork(
@@ -1821,7 +1797,7 @@ describe("cli: removed task and background commands", () => {
         mkdirSync(home, { recursive: true });
         mkdirSync(workspace, { recursive: true });
         const workspaceRoot = realpathSync(workspace);
-        writeLegacySession(home, workspaceRoot, "legacy-tasks-session");
+        writeSavedSession(home, workspaceRoot, "legacy-tasks-session");
         const tasksDir = join(home, ".handwork", "sessions", "legacy-tasks-session", "tasks");
         mkdirSync(tasksDir, { recursive: true });
         writeFileSync(join(tasksDir, "unreadable-legacy-shape.json"), "not json\n");
@@ -1905,8 +1881,8 @@ describe("cli: session", () => {
         const parentId = "visible-parent";
         const childId = "private-child";
 
-        writeLegacySession(home, workspaceRoot, parentId);
-        writeLegacySession(home, workspaceRoot, childId);
+        writeSavedSession(home, workspaceRoot, parentId);
+        writeSavedSession(home, workspaceRoot, childId);
         const childControl = join(
           home,
           ".handwork",
@@ -2061,8 +2037,6 @@ describe("cli: ask success", () => {
     TIMEOUT,
   );
 
-  
-
   test(
     "handwork ask stdin resource overflow has distinct text and JSON errors",
     async () => {
@@ -2092,8 +2066,6 @@ describe("cli: ask success", () => {
     },
     120_000,
   );
-
-  
 
   test.each([
     {
@@ -2131,10 +2103,10 @@ describe("cli: ask success", () => {
       const answer = "Usage fixture complete.\n";
       const provider = startFakeCodex([
         fakeCodexSse([
-          toolLoop
-            ? { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "read_usage_fixture", name: "read_file", arguments: JSON.stringify(JSON.stringify({ path: "fixture.txt" })) } }
-            : { type: "response.output_text.delta", delta: answer },
-          { type: "response.completed", response: { status: "completed", usage: { input_tokens: (reportedUsage).inputTokens?.total ?? 0, output_tokens: (reportedUsage).outputTokens?.total ?? 0 } } },
+          ...(toolLoop
+            ? fakeCodexFunctionCallEvents({ type: "function_call", call_id: "read_usage_fixture", name: "read_file", arguments: JSON.stringify({ path: "fixture.txt" }) }, 0)
+            : [{ type: "response.output_text.delta", delta: answer }]),
+          { type: "response.completed", response: { status: "completed", ...(reportedUsage ? { usage: { input_tokens: reportedUsage.inputTokens.total, output_tokens: reportedUsage.outputTokens.total } } : {}) } },
         ]),
         ...(toolLoop ? [fakeCodexFinalText(answer)] : []),
       ]);
@@ -2161,7 +2133,6 @@ describe("cli: ask success", () => {
 
               HANDWORK_DISABLE_KEYCHAIN: "1",
               HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
-              HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
               HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
               HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
               HANDWORK_MODEL: FAKE_CODEX_MODEL,
@@ -2193,7 +2164,7 @@ describe("cli: ask success", () => {
         }
         expect(provider.requests).toHaveLength(toolLoop ? 2 : 1);
         expect(provider.classifierRequests).toHaveLength(0);
-        expect(existsSync(join(home, ".handwork"))).toBe(false);
+        expect(existsSync(join(home, ".handwork", "sessions"))).toBe(false);
       } finally {
         provider.stop();
         rmSync(root, { recursive: true, force: true });
@@ -2230,7 +2201,6 @@ describe("cli: ask success", () => {
 
               HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
               HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-              HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
               HANDWORK_MODEL: FAKE_CODEX_MODEL,
               HANDWORK_AUTO_UPGRADE: "0",
             },
@@ -2243,15 +2213,13 @@ describe("cli: ask success", () => {
         expect(firstJson.usage).toEqual({ input_tokens: 3, output_tokens: 5 });
         expect(typeof firstJson.session_id).toBe("string");
         expect(firstJson.session_id.length).toBeGreaterThan(0);
-        expect(provider.requests[0]?.headers.get("x-session-id")).toBe(
+        expect(provider.requests[0]?.headers.get("session-id")).toBe(
           firstJson.session_id,
         );
-        expect(provider.requests[0]?.headers.get("x-session-affinity")).toBe(
+        expect(provider.requests[0]?.headers.get("x-client-request-id")).toBe(
           firstJson.session_id,
         );
-        expect(
-          provider.requests[0]?.headers.get("x-handwork-provider-extended-time"),
-        ).toBe("true");
+        expect(provider.requests[0]?.headers.get("x-handwork-provider-extended-time")).toBeNull();
         expect(
           existsSync(
             join(savedHome, ".handwork", "sessions", firstJson.session_id),
@@ -2275,7 +2243,6 @@ describe("cli: ask success", () => {
 
               HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
               HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-              HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
               HANDWORK_MODEL: FAKE_CODEX_MODEL,
               HANDWORK_AUTO_UPGRADE: "0",
             },
@@ -2287,10 +2254,10 @@ describe("cli: ask success", () => {
         const resumedJson = JSON.parse(resumed.stdout.trim());
         expect(resumedJson.session_id).toBe(firstJson.session_id);
         expect(resumedJson.usage).toEqual({ input_tokens: 3, output_tokens: 5 });
-        expect(provider.requests[1]?.headers.get("x-session-id")).toBe(
+        expect(provider.requests[1]?.headers.get("session-id")).toBe(
           firstJson.session_id,
         );
-        expect(provider.requests[1]?.headers.get("x-session-affinity")).toBe(
+        expect(provider.requests[1]?.headers.get("x-client-request-id")).toBe(
           firstJson.session_id,
         );
         const detail = await runHandwork(
@@ -2314,7 +2281,6 @@ describe("cli: ask success", () => {
 
               HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: `${provider.baseUrl}/models`,
               HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
-              HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
               HANDWORK_MODEL: FAKE_CODEX_MODEL,
               HANDWORK_AUTO_UPGRADE: "0",
             },
@@ -2326,9 +2292,9 @@ describe("cli: ask success", () => {
         const noSaveJson = JSON.parse(noSave.stdout.trim());
         expect(noSaveJson.session_id).toBe("");
         expect(noSaveJson.usage).toEqual({ input_tokens: 3, output_tokens: 5 });
-        expect(provider.requests[2]?.headers.get("x-session-id")).toBeNull();
-        expect(provider.requests[2]?.headers.get("x-session-affinity")).toBeNull();
-        expect(existsSync(join(noSaveHome, ".handwork"))).toBe(false);
+        expect(provider.requests[2]?.headers.get("session-id")).toBeNull();
+        expect(provider.requests[2]?.headers.get("x-client-request-id")).toBeNull();
+        expect(existsSync(join(noSaveHome, ".handwork", "sessions"))).toBe(false);
         expect(provider.requests).toHaveLength(3);
       } finally {
         provider.stop();
@@ -2353,10 +2319,16 @@ describe("cli: ask success", () => {
         mkdirSync(workspace);
         const workspaceRoot = realpathSync(workspace);
         const sessionId = "legacy-ask-convert";
-        writeLegacySession(home, workspaceRoot, sessionId);
+        writeSavedSession(home, workspaceRoot, sessionId);
         const sessionDir = join(home, ".handwork", "sessions", sessionId);
         const legacyPath = join(sessionDir, "session.json");
-        const legacy = JSON.parse(readFileSync(legacyPath, "utf8"));
+        const legacy = {
+          schema_version: 2, id: sessionId,
+          created_at_ms: 1, updated_at_ms: 2,
+          workspace_root: workspaceRoot, conversation_language: "en",
+          history_len: 0, history: [] as unknown[],
+          total_input_tokens: 0, total_output_tokens: 0,
+        };
         const legacyOutput = "LEGACY_AVAILABLE_RESULT_BYTES";
         const legacySummary = "LEGACY_ONLY_EARLIER_CONTEXT: deploy to eu-west-1.";
         legacy.history_len = 2;

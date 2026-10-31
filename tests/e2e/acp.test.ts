@@ -1,3 +1,4 @@
+import { fakeCodexFunctionCallEvents } from "./tmux-helpers";
 import { afterEach, describe, expect, test } from "bun:test";
 import { spawn as nodeSpawn, type ChildProcess } from "node:child_process";
 import {
@@ -147,16 +148,16 @@ function fileToolCall(id: string, path: string, content: string) {
 function lengthLimitedCommandCall(command: string) {
   return fakeCodexSse([
     { type: "response.output_text.delta", delta: "ACP partial output" },
-    { type: "response.output_item.done", output_index: 0, item: { type: "function_call", call_id: "command_1", name: "shell", arguments: JSON.stringify({
+    ...fakeCodexFunctionCallEvents({ type: "function_call", call_id: "command_1", name: "shell", arguments: JSON.stringify({
         request: { action: "run", yield_time_ms: 30_000, timeout_ms: 600_000, command },
-      }) } },
-    { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
+      }) }, 1),
+    { type: "response.incomplete", response: { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
   ]);
 }
 
 function noToolLength() {
   return fakeCodexSse([
-    { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
+    { type: "response.incomplete", response: { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
   ]);
 }
 
@@ -211,10 +212,11 @@ function acpContentText(content: unknown): string {
 
 function acpProviderRequest(body: string) {
   return JSON.parse(body) as {
-    prompt: Array<{ role?: string; content: unknown }>;
+    instructions?: string;
+    input: Array<{ role?: string; content?: unknown; type?: string; call_id?: string; output?: unknown }>;
     tools: Array<{
       name: string;
-      inputSchema: {
+      parameters: {
         type: string;
         properties: Record<string, { type: string; description?: string }>;
         required?: string[];
@@ -224,8 +226,15 @@ function acpProviderRequest(body: string) {
   };
 }
 
+function acpProviderMessages(request: ReturnType<typeof acpProviderRequest>) {
+  return [
+    ...(request.instructions ? [{ role: "system", content: request.instructions }] : []),
+    ...request.input.filter((item) => item.role !== undefined),
+  ];
+}
+
 function acpTaggedBlock(body: string, tag: string): string {
-  const text = acpProviderRequest(body).prompt
+  const text = acpProviderMessages(acpProviderRequest(body))
     .map((message) => acpContentText(message.content))
     .join("\n");
   const start = text.indexOf(`<${tag}>`);
@@ -255,11 +264,8 @@ function acpSkillPath(body: string, location: string): string {
 }
 
 function acpToolResultText(body: string, callId: string): string {
-  const parts = acpProviderRequest(body).prompt.flatMap((message) =>
-    Array.isArray(message.content) ? message.content : []
-  ) as Array<Record<string, unknown>>;
-  const result = parts.find((part) =>
-    part.type === "tool-result" && part.toolCallId === callId
+  const result = acpProviderRequest(body).input.find((item) =>
+    item.type === "function_call_output" && item.call_id === callId
   );
   if (!result) throw new Error(`Missing tool result for ${callId}`);
   return acpContentText(result.output);
@@ -296,13 +302,13 @@ function expectRestartedAcpResponse(
 }
 
 function acpPromptText(body: string): string {
-  return acpProviderRequest(body).prompt
+  return acpProviderMessages(acpProviderRequest(body))
     .map((message) => acpContentText(message.content))
     .join("\n");
 }
 
 function acpLatestPromptText(body: string): string {
-  const prompt = acpProviderRequest(body).prompt;
+  const prompt = acpProviderMessages(acpProviderRequest(body));
   return acpContentText(prompt.at(-1)?.content);
 }
 
@@ -1048,8 +1054,6 @@ describe("acp: model-independent", () => {
     if (client) await client.close();
   });
 
-  
-
   test(
     "ACP session adopts a generated title from the first prompt",
     async () => {
@@ -1228,7 +1232,7 @@ describe("acp: model-independent", () => {
         const commandNames = notification.params.update.availableCommands.map(
           (command: any) => command.name,
         );
-        expect(commandNames).toEqual([]);
+        expect(commandNames).toEqual(["help", "clear", "new", "resume", "usage", "status", "reasoning", "model", "permissions", "context"]);
         expect(client.stderr).toBe("");
       } finally {
         await client?.close();
@@ -1262,6 +1266,7 @@ describe("acp: model-independent", () => {
           "Preserve this ACP prompt through recovery.",
           TIMEOUT,
         );
+        expect(paused.promptResult.error).toBeUndefined();
         expect(paused.promptResult.result.stopReason).toBe("refused");
         expect(provider.requests).toHaveLength(10);
         const pausedUpdates = JSON.stringify(paused.messages);
@@ -1330,10 +1335,8 @@ describe("acp: model-independent", () => {
         });
         const sessionId = await startCodeSession(client);
         sendPrompt(client, 40, "Explain the repository findings in English without using tools.");
-        await waitForCondition("both response text events", () => {
-          if (!existsSync(tracePath)) return false;
-          return (readFileSync(tracePath, "utf8").match(/event type=text-delta/g) ?? []).length === 2;
-        }, TIMEOUT);
+        await waitForCondition("replacement request after the accepted preview", () =>
+          provider.requests.length === 2 && client!.rawLines.join("\n").includes(partialText), TIMEOUT);
         expect(client.rawLines.join("\n")).toContain(partialText);
         expect(client.rawLines.join("\n")).not.toContain(rejectedText);
         expect(provider.requests).toHaveLength(2);
@@ -1408,23 +1411,15 @@ describe("acp: model-independent", () => {
         expect(provider.requests).toHaveLength(1);
         const request = acpProviderRequest(provider.requests[0]!.body);
         const oracleRequest = parseProviderRequest(provider.requests[0]!.body);
-        const prompt = request.prompt
+        const prompt = acpProviderMessages(request)
           .map((message) => acpContentText(message.content))
           .join("\n");
         expect(prompt).toContain(submitted);
-        expect(request.tools).toHaveLength(17);
+        expect(request.tools).toHaveLength(3);
         const toolNames = serializedToolNames(oracleRequest);
-        expect(toolNames).toEqual(
-          AUTO_EXA_SERIALIZED_TOOL_NAMES,
-        );
-        expect(toolNames.filter((name) => name === "shell")).toHaveLength(1);
-        expect(toolNames.filter((name) => name === "exa_search"))
-          .toHaveLength(1);
-        expect(findUnavailableCapabilityReferences(oracleRequest)).toEqual([]);
-        expect(customProviderGuidanceState(oracleRequest)).toEqual({
-          providerToolIndices: [14],
-          guidanceMessageIndices: [1],
-        });
+        expect(toolNames).toEqual(["web_search", "load_tools", "read_file"]);
+        const loader = request.tools.find((tool) => tool.name === "load_tools");
+        expect(loader).toBeDefined();
         expect(provider.requests[0]!.body).not.toContain(
           "Treat it as interrupting any previous tool plan.",
         );
@@ -1477,7 +1472,7 @@ describe("acp: model-independent", () => {
         expect(provider.requests).toHaveLength(1);
         const request = acpProviderRequest(provider.requests[0]!.body);
         expect(request.tools.some((tool) => tool.name === "private_lookup")).toBe(false);
-        expect(request.tools.some((tool) => tool.name === "shell")).toBe(true);
+        expect(request.tools.find((tool) => tool.name === "load_tools")?.description).toContain("shell");
         expect(provider.requests[0]!.body).not.toContain("PRIVATE_LIBHANDWORK_INSTRUCTIONS");
         expect(client.stderr).toBe("");
       } finally {
@@ -1634,7 +1629,7 @@ describe("acp: model-independent", () => {
       const provider = startFakeCodex(
         [
           finalText("Metadata published."),
-          fakeCodexSse([{ type: "response.output_text.delta", delta: "Usage omitted." }, { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } }]),
+          fakeCodexSse([{ type: "response.output_text.delta", delta: "Usage omitted." }, { type: "response.completed", response: { status: "completed" } }]),
         ],
         {
           models: [{
@@ -1852,7 +1847,7 @@ describe("acp: model-independent", () => {
 
         const prompt = await runPrompt(client, "Say EFFORT_APPLIED.", TIMEOUT);
         expect(prompt.promptResult.result.stopReason).toBe("end_turn");
-        expect(provider.requests.at(-1)!.body).toContain("\"reasoning\":\"high\"");
+        expect(JSON.parse(provider.requests.at(-1)!.body).reasoning.effort).toBe("high");
 
         await client.close();
         client = await AcpClient.create({
@@ -2012,7 +2007,7 @@ describe("acp: model-independent", () => {
       ]);
       const proc = nodeSpawn(HANDWORK_BIN, ["acp"], {
         cwd: root.workspace,
-        env: { ...process.env, ...fakeCodexEnv(root, provider), NO_COLOR: "1" },
+        env: providerVersionTestEnv({ ...process.env, ...fakeCodexEnv(root, provider), NO_COLOR: "1" }),
         stdio: ["pipe", "pipe", "pipe"],
       });
       try {
@@ -2102,9 +2097,10 @@ describe("acp: model-independent", () => {
           maxOutputTokens?: number;
           prompt: Array<{ role: string; content: Array<{ type: string; text?: string }> }>;
         };
-        expect(request.maxOutputTokens).toBe(64_000);
-        const user = request.prompt.findLast((message) => message.role === "user");
-        expect(user?.content.find((part) => part.type === "text")?.text).toBe(submitted);
+        expect(request.maxOutputTokens).toBeUndefined();
+        expect(request.max_output_tokens).toBeUndefined();
+        const user = acpProviderMessages(request).findLast((message) => message.role === "user");
+        expect(user?.content.find((part) => part.type === "input_text")?.text).toBe(submitted);
         expect(client.stderr).toBe("");
       } finally {
         await client?.close();
@@ -2277,7 +2273,7 @@ describe("acp: model-independent", () => {
 
         expect(provider.requests).toHaveLength(2);
         for (const request of provider.requests) {
-          const prompt = acpProviderRequest(request.body).prompt
+          const prompt = acpProviderMessages(acpProviderRequest(request.body))
             .map((message) => acpContentText(message.content))
             .join("\n");
           expect(prompt).toContain("ACP_RULE_PREFIX");
@@ -2326,7 +2322,7 @@ describe("acp: model-independent", () => {
 
           expect(result.promptResult.result.stopReason).toBe("end_turn");
           expect(provider.requests).toHaveLength(1);
-          const prompt = acpProviderRequest(provider.requests[0]!.body).prompt
+          const prompt = acpProviderMessages(acpProviderRequest(provider.requests[0]!.body))
             .map((message) => acpContentText(message.content))
             .join("\n");
           const omission = [...prompt.matchAll(/<project-rules-omitted[^>]+\/>/g)]
@@ -2376,7 +2372,7 @@ describe("acp: model-independent", () => {
 
         expect(result.promptResult.result.stopReason).toBe("end_turn");
         expect(provider.requests).toHaveLength(1);
-        const prompt = acpProviderRequest(provider.requests[0]!.body).prompt
+        const prompt = acpProviderMessages(acpProviderRequest(provider.requests[0]!.body))
           .map((message) => acpContentText(message.content))
           .join("\n");
         expect(prompt).toContain('reason="oversized rule file"');
@@ -2433,7 +2429,7 @@ describe("acp: model-independent", () => {
 
           expect(result.promptResult.result.stopReason).toBe("end_turn");
           expect(provider.requests).toHaveLength(1);
-          const prompt = acpProviderRequest(provider.requests[0]!.body).prompt
+          const prompt = acpProviderMessages(acpProviderRequest(provider.requests[0]!.body))
             .map((message) => acpContentText(message.content))
             .join("\n");
           expect(prompt.length).toBeLessThan(64 * 1024);
@@ -2462,8 +2458,6 @@ describe("acp: model-independent", () => {
     },
     90_000,
   );
-
-  
 
   test(
     "ACP session/new calls a supplied modern HTTP MCP server",
@@ -2519,7 +2513,7 @@ describe("acp: model-independent", () => {
         expect(acpToolResultText(provider.requests[requestStart + 3]!.body, "call_http"))
           .toContain(MODERN_HTTP_TOOL_RESULT + ":acp");
 
-        const initialPrompt = acpProviderRequest(provider.requests[0]!.body).prompt
+        const initialPrompt = acpProviderMessages(acpProviderRequest(provider.requests[0]!.body))
           .map((message) => acpContentText(message.content))
           .join("\n");
         expect(initialPrompt).toContain(
@@ -5141,10 +5135,6 @@ describe("acp: model-independent", () => {
     LIVE_TIMEOUT,
   );
 
-  
-
-  
-
   test(
     "session-scoped requests reject a stale active-session target",
     async () => {
@@ -5218,11 +5208,9 @@ describe("acp: model-independent", () => {
     const root = createIsolatedRoot("handwork-acp-checkpoint-image-");
     const imageData = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlXYX0AAAAASUVORK5CYII=";
     const provider = startFakeCodex([
-      finalText("INVALID_FINAL_WITHOUT_VISION"),
-      fakeCodexToolCall("recover_vision", "vision", { image_ids: [continueSaved ? 1 : 2], focus: "describe" }),
-      finalText(JSON.stringify({ images: [{ image_id: continueSaved ? 1 : 2, status: "ok", summary: "small fixture", visible_text: [], details: [] }] })),
+      fakeCodexSse([{ type: "response.failed", response: { status: "failed", error: { code: "invalid_request_error", message: "fixture failure after image admission" } } }]),
       finalText("ACP_RECOVERY_IMAGE_COMPLETE"),
-    ]);
+    ], { models: [{ id: FAKE_CODEX_MODEL, tags: ["vision", "tool-use"] }] });
     try {
       client = await AcpClient.create({ cwd: root.workspace, env: fakeCodexEnv(root, provider) });
       const sessionId = await startCodeSession(client);
@@ -5230,7 +5218,7 @@ describe("acp: model-independent", () => {
         { type: "text", text: "Describe the image." },
         { type: "image", data: imageData, mimeType: "image/png" },
       ], TIMEOUT);
-      expect(JSON.stringify(failed)).toContain("RequiredVisionToolCallMissing");
+      expect(JSON.stringify(failed)).toContain("ModelError");
       const source = join(root.home, ".handwork", "sessions", sessionId);
       const checkpoint = JSON.parse(readFileSync(join(source, "recovery.json"), "utf8")).checkpoint;
       const snapshot = join(source, checkpoint.user.images[0].snapshot_path);
@@ -5248,8 +5236,8 @@ describe("acp: model-independent", () => {
         ], TIMEOUT);
       expect(resumed.promptResult.error).toBeUndefined();
       expect(resumed.promptResult.result.stopReason).toBe("end_turn");
-      expect(provider.requests).toHaveLength(4);
-      expect(provider.requests[2]!.body).toContain(imageData);
+      expect(provider.requests).toHaveLength(2);
+      expect(provider.requests[1]!.body).toContain(imageData);
       expect(readFileSync(snapshot).toString("base64")).toBe(imageData);
       expect(existsSync(join(source, "recovery.json"))).toBe(false);
       expect(client.stderr).toBe("");
@@ -5259,8 +5247,6 @@ describe("acp: model-independent", () => {
       rmSync(root.root, { recursive: true, force: true });
     }
   }, TIMEOUT * 2);
-
-  
 
   test(
     "image-only prompt publishes and reloads the shared image title",
@@ -5487,8 +5473,6 @@ describe("acp: model-independent", () => {
     TIMEOUT,
   );
 
-  
-
   test(
     "session load reports an unavailable saved image without failing",
     async () => {
@@ -5562,8 +5546,6 @@ describe("acp: model-independent", () => {
     },
     TIMEOUT,
   );
-
-  
 
   test(
     "ACP keeps the session active after repeated advisory cautions",
@@ -5752,7 +5734,7 @@ describe("acp: model-independent", () => {
       const boundary = createPromptTerminalBoundary(root.root);
       const provider = startFakeCodex([
         fakeCodexSse([
-          { type: "response.completed", response: { status: "completed", usage: { input_tokens: ({}).inputTokens?.total ?? 0, output_tokens: ({}).outputTokens?.total ?? 0 } } },
+          { type: "response.failed", response: { status: "failed", error: { code: "invalid_request_error", message: "fixture rejected" } } },
         ]),
       ]);
       try {
@@ -5795,9 +5777,6 @@ describe("acp: model-independent", () => {
     },
     TIMEOUT,
   );
-
-  
-
 
   test(
     "running prompt rejects non-cancel requests",
@@ -5986,8 +5965,8 @@ describe("acp: model-independent", () => {
           ),
         ).toBe(false);
         expect(provider.requests).toHaveLength(2);
-        expect(provider.requests[1].body).toContain(`"toolCallId":"${malformedCallId}"`);
-        expect(provider.requests[1].body).toContain('"input":{}');
+        expect(provider.requests[1].body).toContain(`"call_id":"${malformedCallId}"`);
+        expect(acpToolResultText(provider.requests[1].body, malformedCallId)).toContain("tool_execution_failed");
         expect(provider.requests[1].body).toContain("tool_execution_failed");
         expect(provider.requests[1].body).not.toContain(malformedArguments);
         expect(readFileSync(tracePath, "utf8")).not.toContain(malformedArguments);
@@ -6003,16 +5982,6 @@ describe("acp: model-independent", () => {
     },
     TIMEOUT,
   );
-
-  
-
-  
-
-  
-
-  
-
-  
 
   test(
     "session/list without cwd returns all sessions and filters by absolute cwd",
@@ -6145,12 +6114,6 @@ describe("acp: model-independent", () => {
     TIMEOUT,
   );
 
-  
-
-  
-
-  
-
   test(
     "session/load reports contention and succeeds after the owner exits",
     async () => {
@@ -6219,12 +6182,6 @@ describe("acp: model-independent", () => {
     },
     TIMEOUT,
   );
-
-  
-
-  
-
-  
 
   test(
     "session load omits synthetic execution for summary-only turns",
@@ -6781,6 +6738,7 @@ describe("acp: model-independent", () => {
         `---\nname: acp-malformed-neighbor\nname: duplicate-acp-name\n---\n\n${malformedBody}\n`,
       );
       const provider = startFakeCodex([
+        fakeCodexToolCall("load_skill", "load_tools", { names: ["skill"] }),
         finalText("ACP skill diagnostic probe complete"),
       ]);
       try {
@@ -6801,13 +6759,13 @@ describe("acp: model-independent", () => {
 
         expect(result.promptResult.error).toBeUndefined();
         expect(result.promptResult.result.stopReason).toBe("end_turn");
-        expect(provider.requests).toHaveLength(1);
+        expect(provider.requests).toHaveLength(2);
         const request = acpProviderRequest(provider.requests[0]!.body);
         const available = acpTaggedBlock(
           provider.requests[0]!.body,
           "available_skills",
         );
-        const promptText = request.prompt
+        const promptText = acpProviderMessages(request)
           .map((message) => acpContentText(message.content))
           .join("\n");
         expect(promptText).toContain(
@@ -6819,13 +6777,13 @@ describe("acp: model-independent", () => {
         expect(available).not.toContain("acp-malformed-neighbor");
         expect(available).not.toContain(malformedBody);
 
-        const skillSchema = request.tools.find((tool) => tool.name === "skill");
+        const skillSchema = acpProviderRequest(provider.requests[1]!.body).tools.find((tool) => tool.name === "skill");
         expect(skillSchema).toBeDefined();
-        expect(skillSchema?.inputSchema.type).toBe("object");
-        expect(skillSchema?.inputSchema.properties.name).toBeUndefined();
-        expect(skillSchema?.inputSchema.properties.location.type).toBe("string");
-        expect(skillSchema?.inputSchema.properties.resource.type).toBe("string");
-        expect(skillSchema?.inputSchema.required).toEqual(["location"]);
+        expect(skillSchema?.parameters.type).toBe("object");
+        expect(skillSchema?.parameters.properties.name).toBeUndefined();
+        expect(skillSchema?.parameters.properties.location.type).toBe("string");
+        expect(skillSchema?.parameters.properties.resource.type).toBe("string");
+        expect(skillSchema?.parameters.required).toEqual(["location"]);
 
         const diagnosticNotices = result.messages.filter((message: any) =>
           message.method === "session/update" &&
@@ -7194,7 +7152,7 @@ describe("acp: model-independent", () => {
       const childPrompt = "Inspect the workspace without making changes.";
       const createId = "acp_direct_child";
       const route = (body: string) => {
-        if (body.includes(`\"toolCallId\":\"${createId}\"`)) {
+        if (body.includes(`\"call_id\":\"${createId}\"`)) {
           expect(acpToolResultText(body, createId)).toContain("child inspection complete");
           return finalText("ACP_DIRECT_SUBAGENT_COMPLETE");
         }
@@ -7217,7 +7175,7 @@ describe("acp: model-independent", () => {
         const result = await runPrompt(client, "Delegate workspace inspection.", TIMEOUT);
         expect(result.promptResult.result.stopReason).toBe("end_turn");
         expect(provider.requests).toHaveLength(3);
-        expect(provider.requests[0]!.body).toContain('"name":"subagent"');
+        expect(acpProviderRequest(provider.requests[0]!.body).tools.find(tool => tool.name === "load_tools")?.description).toContain("subagent");
         expect(client.stderr).toBe("");
       } finally {
         await client?.close();
@@ -7364,11 +7322,8 @@ describe("acp: model-independent", () => {
         sendPrompt(client, 196, "Hold the code-mode prompt.");
         await waitForCondition("the code-mode Provider request", () => provider.requests.length === 1);
         const codeRequest = parseProviderRequest(provider.requests[0]!.body);
-        expect(serializedToolNames(codeRequest)).toEqual(
-          AUTO_EXA_SERIALIZED_TOOL_NAMES,
-        );
-        expect(findUnavailableCapabilityReferences(codeRequest)).toEqual([]);
-        expect(customProviderGuidanceState(codeRequest).guidanceMessageIndices).toEqual([1]);
+        expect(serializedToolNames(codeRequest)).toEqual(["web_search", "load_tools", "read_file"]);
+        expect(JSON.parse(provider.requests[0]!.body).tools.find((tool: any) => tool.name === "load_tools").description).toContain("write_file");
 
         client.send({
           jsonrpc: "2.0",
@@ -7470,7 +7425,6 @@ describe("acp: model-independent", () => {
     },
     TIMEOUT,
   );
-
 
   test(
     "stdin shutdown cancels a pending permission request",
@@ -7584,11 +7538,13 @@ describe("acp: model catalog authentication", () => {
       const provider = startFakeCodex([]);
       const codex = startAcpFakeCodex({ unauthorizedResponses: 1 });
       writeSeededAcpChatGptLogin(root.home, codex.accessToken);
+        writeFileSync(join(root.home, ".handwork", "settings.json"), JSON.stringify({ provider: "codex" }));
       try {
         client = await AcpClient.create({
           cwd: root.workspace,
           env: {
             ...fakeCodexEnv(root, provider),
+              HANDWORK_AUTH_MODE: "local",
             HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: codex.responsesUrl,
             HANDWORK_E2E_OPENAI_CODEX_MODELS_URL: codex.modelsUrl,
             HANDWORK_E2E_CHATGPT_TOKEN_URL: codex.tokenUrl,
@@ -7605,7 +7561,7 @@ describe("acp: model catalog authentication", () => {
         expect(changed.result.configOptions.find((option: any) => option.id === "provider").currentValue)
           .toBe("codex");
         expect(changed.result.configOptions.find((option: any) => option.id === "model").currentValue)
-          .toBe("gpt-5.6-sol");
+          .toBe("gpt-5.6");
 
         const prompt = await runPrompt(client, "Answer directly.", TIMEOUT);
         expect(prompt.promptResult.result.stopReason).toBe("end_turn");
@@ -7639,12 +7595,14 @@ describe("acp: model catalog authentication", () => {
         const codex = startAcpFakeCodex();
         const grok = startAcpFakeGrok();
         writeSeededAcpChatGptLogin(root.home, codex.accessToken);
+        writeFileSync(join(root.home, ".handwork", "settings.json"), JSON.stringify({ provider: "codex" }));
         writeSeededAcpGrokLogin(root.home, grok.accessToken);
         try {
           client = await AcpClient.create({
             cwd: root.workspace,
             env: {
               ...fakeCodexEnv(root, provider),
+              HANDWORK_AUTH_MODE: subscription === "codex" ? "local" : "host-managed",
               HANDWORK_DISABLE_KEYCHAIN: "1",
               HANDWORK_SOUND: "0",
               HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: codex.responsesUrl,
@@ -7671,6 +7629,13 @@ describe("acp: model catalog authentication", () => {
             configId: "provider",
             value: subscription,
           }, 4) as any;
+          if (subscription === "grok") {
+            expect(changed.error).toMatchObject({ code: -32600, message: "Selected provider is unavailable in this host" });
+            expect(grok.requests).toHaveLength(0);
+            expect(grok.modelRequests).toHaveLength(0);
+            expect(grok.tokenRequests).toHaveLength(0);
+            return;
+          }
           expect(changed.error).toBeUndefined();
           expect(changed.result.configOptions.find((option: any) => option.id === "provider").currentValue)
             .toBe(subscription);
@@ -7740,7 +7705,7 @@ describe("acp: model catalog authentication", () => {
   }, 120_000);
 
   test(
-    "session provider changes use Grok credentials with byte-identical account-stable replay",
+    "disabled Grok selection never sends stored credentials",
     async () => {
       const root = createIsolatedRoot("handwork-acp-grok-route-");
       const provider = startFakeCodex([]);
@@ -7766,39 +7731,13 @@ describe("acp: model catalog authentication", () => {
           configId: "provider",
           value: "grok",
         }, 3) as any;
-        expect(changed.result.configOptions.find((option: any) => option.id === "provider").currentValue)
-          .toBe("grok");
-        expect(changed.result.configOptions.find((option: any) => option.id === "model").currentValue)
-          .toBe("grok-4.20");
-
-        const prompt = await runPrompt(client, "Answer directly.", TIMEOUT);
-        expect(prompt.promptResult.result.stopReason).toBe("end_turn");
-        expect(JSON.stringify(prompt.messages)).toContain("ACP_GROK_RESPONSE");
-        const secondPrompt = await runPrompt(client, "Answer again.", TIMEOUT);
-        expect(secondPrompt.promptResult.result.stopReason).toBe("end_turn");
-
-        expect(grok.requests).toHaveLength(3);
-        expect(grok.requests[0]!.body).toBe(grok.requests[1]!.body);
-        expect(grok.requests[0]!.conversationId).toBeTruthy();
-        expect(grok.requests[0]!.conversationId).toBe(grok.requests[1]!.conversationId);
-        expect(grok.modelRequests.map((request) => request.path)).toEqual(["/models", "/modalities"]);
-        expect(grok.requests[0]!.authorization).toBe(`Bearer ${grok.accessToken}`);
-        expect(grok.requests[1]!.authorization).toBe(`Bearer ${grok.refreshedAccessToken}`);
-        expect(grok.requests[2]!.authorization).toBe(`Bearer ${grok.refreshedAccessToken}`);
-        for (const request of grok.requests) {
-          expect(request.tokenAuth).toBe("xai-grok-cli");
-          expect(request.authenticateResponse).toBe("authenticate-response");
-          expect(request.clientIdentifier).toBe("handwork");
-          expect(request.clientVersion).toBe("1.0.6");
-          expect(request.modelOverride).toBe("grok-4.20");
-          expect(request.grokUserId).toBe("acct_grok_acp");
-        }
-        expect(grok.tokenRequests).toHaveLength(1);
-        expect(grok.tokenRequests[0]!.body).toContain("grant_type=refresh_token");
-        expect(grok.userinfoRequests).toHaveLength(1);
-        expect(grok.userinfoRequests[0]!.authorization).toBe(`Bearer ${grok.refreshedAccessToken}`);
+        expect(changed.error).toMatchObject({ code: -32600, message: "Selected provider is unavailable in this host" });
+        expect(grok.requests).toHaveLength(0);
+        expect(grok.modelRequests).toHaveLength(0);
+        expect(grok.tokenRequests).toHaveLength(0);
+        expect(grok.userinfoRequests).toHaveLength(0);
         for (const request of [...provider.requests, ...provider.modelRequests]) {
-          expect(request.headers.get("authorization")).not.toContain("grok-acp-");
+          expect(request.headers.get("authorization") ?? "").not.toContain("grok-acp-");
         }
       } finally {
         await client?.close();

@@ -1,0 +1,5 @@
+tests/e2e/tui-native-clear-recovery.test.ts:
+(pass) direct native-clear recovery resets the view and replays the held draft [1105.10ms]
+(pass) direct healthy screens retain an ordinary burst without resetting [1102.04ms]
+(pass) native-clear replay settles a complete paste before the next key [1260.51ms]
+(pass) tmux leaves native-clear probing disabled and preserves ordinary input [1095.31ms]

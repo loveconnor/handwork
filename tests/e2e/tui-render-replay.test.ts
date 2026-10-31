@@ -63,7 +63,7 @@ async function launch(options: {
   mkdirSync(join(workDir, ".handwork"), { recursive: true });
   writeFileSync(
     join(workDir, ".handwork", "settings.json"),
-    JSON.stringify({}),
+    JSON.stringify({ provider: "codex" }),
   );
 
   const s = await TmuxSession.create({
@@ -108,7 +108,7 @@ async function launchAutomaticRecording(options: {
   mkdirSync(join(home, ".handwork"), { recursive: true });
   writeFileSync(
     join(home, ".handwork", "settings.json"),
-    JSON.stringify({}),
+    JSON.stringify({ provider: "codex" }),
   );
 
   const goldenPath = join(workDir, "grid.txt");
@@ -329,14 +329,14 @@ describe("tui: render record/replay", () => {
         { length: 33 },
         (_, index) => `captured input line ${index + 1}: ${"x".repeat(32)}`,
       ).join("\n");
-      const authNotice = "● Auth: handwork needs a Codex subscription login for this model. Run handwork login codex.";
+      const authNotice = "● Auth: Codex needs a subscription login. Run /provider and choose Codex.";
       const launched = await launch({ recordInput: true });
       session = launched.session;
 
       await session.pasteText(pasted);
       await session.waitForText("[Pasted text #1, 33 lines]", 5_000);
       await session.sendKeys("Enter");
-      await session.waitForText("● Auth: handwork needs access", 5_000);
+      await session.waitForText("● Auth: Codex needs a subscription login", 5_000);
       expect((await session.captureFullScrollback()).replace(/\s+/g, " ")).toContain(authNotice);
 
       const stdin = readTapeFrames(launched.tapePath)
@@ -371,7 +371,7 @@ describe("tui: render record/replay", () => {
       session = launched.session;
 
       await session.sendText(marker);
-      await session.waitForText("handwork needs a Codex subscription login", 5_000);
+      await session.waitForText("Codex needs a subscription login", 5_000);
       await session.sendKeys("C-u");
       await session.sendText("/status");
       await session.waitForText("permission_mode", 5_000);
@@ -428,7 +428,7 @@ describe("tui: render record/replay", () => {
         "visual terminal capture:",
       );
       await session.sendText(marker);
-      await session.waitForText("handwork needs a Codex subscription login", 5_000);
+      await session.waitForText("Codex needs a subscription login", 5_000);
       await session.sendKeys(`-l '${inputTail}'`);
       await session.waitForText(inputTail, 5_000);
       await session.resizeWindow(120, 28);
@@ -478,7 +478,7 @@ describe("tui: render record/replay", () => {
       );
 
       await session.sendText(marker);
-      await session.waitForText("handwork needs a Codex subscription login", 5_000);
+      await session.waitForText("Codex needs a subscription login", 5_000);
       execFileSync(HANDWORK_BIN, [
         "replay",
         launched.tapePath,
@@ -501,7 +501,7 @@ describe("tui: render record/replay", () => {
       const forbiddenPrompt = "trace_secret_prompt_token_6179";
       const forbiddenTokens = [
         forbiddenPrompt,
-        "handwork needs a Codex subscription login",
+        "Codex needs a subscription login",
         "footer row preview secret",
         "shimmer label secret",
         "command output secret",
@@ -512,7 +512,7 @@ describe("tui: render record/replay", () => {
       session = launched.session;
 
       await session.sendText(forbiddenPrompt);
-      await session.waitForText("handwork needs a Codex subscription login", 5_000);
+      await session.waitForText("Codex needs a subscription login", 5_000);
       await session.resizeWindow(72, 24);
       await session.sendKeys("C-u");
       await session.sendText("/status");

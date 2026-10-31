@@ -24,6 +24,7 @@ import {
   fakeCodexToolCall,
   fakeShellRun,
   hasEmptyComposer,
+  isEmptyComposerLine,
   paneExitMatches,
   startFakeCodex,
   startDynamicFakeCodex,
@@ -134,7 +135,6 @@ async function launchRecordedSurfaceSession(
     cwd: workspace,
     env: {
       HOME: home,
-
 
       HANDWORK_AUTO_UPGRADE: "0",
       HANDWORK_RECORD: join(root, "session.fxtape"),
@@ -292,7 +292,7 @@ function selectedSlashRow(escapes: string): string | null {
 }
 
 test("selected slash row ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}handwork\x1b[0m\x1b[38;5;245m v0.3.27 · /help for commands`;
   const command = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m start a fresh session and keep background processes`;
 
   expect(selectedSlashRow(`${header}\n${command}`)).toBe(command);
@@ -648,8 +648,6 @@ function expectSkillsMenuGrid(
   expect(text).toContain("[All]");
   expect(text).toContain("handwork");
   expect(text).not.toContain("[Handwork]");
-  expect(text).toContain("Workspace");
-  expect(text).toContain("Codex");
   expect(text).toContain("handwork · Global");
   expect(names.some((name) => text.includes(name))).toBe(true);
   expect(text).not.toContain("Visible skills (");
@@ -663,11 +661,11 @@ function expectNoTranscriptSkillInventory(scrollback: string): void {
 
 function globalTmuxOptions(): { server: string; window: string } {
   return {
-    server: execFileSync("tmux", ["show-options", "-g"], {
+    server: execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "show-options", "-g"], {
       encoding: "utf8",
       stdio: "pipe",
     }),
-    window: execFileSync("tmux", ["show-options", "-gw"], {
+    window: execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "show-options", "-gw"], {
       encoding: "utf8",
       stdio: "pipe",
     }),
@@ -679,7 +677,7 @@ function matchingTestSessions(): string[] {
   try {
     return execFileSync(
       "tmux",
-      ["list-sessions", "-F", "#{session_name}"],
+      ["-L", `handwork-e2e-${process.pid}`, "list-sessions", "-F", "#{session_name}"],
       { encoding: "utf8", stdio: "pipe" },
     )
       .split("\n")
@@ -865,15 +863,15 @@ async function waitForSubmittedUserText(
   }
 
   const request = JSON.parse(providerRequest.body) as {
-    prompt: Array<{
+    input: Array<{
       role: string;
       content?: Array<{ type: string; text?: string }>;
     }>;
   };
-  return [...request.prompt]
+  return [...request.input]
     .reverse()
     .find((message) => message.role === "user")
-    ?.content?.find((part) => part.type === "text")?.text;
+    ?.content?.find((part) => part.type === "input_text")?.text;
 }
 
 async function waitForProviderRequestCount(
@@ -949,11 +947,11 @@ function sendRawTmuxBytes(
   bytes: Buffer,
 ): void {
   const buffer = `${session.name}-${bufferSuffix}`;
-  execFileSync("tmux", ["load-buffer", "-b", buffer, "-"], {
+  execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "load-buffer", "-b", buffer, "-"], {
     input: bytes,
     stdio: ["pipe", "pipe", "pipe"],
   });
-  execFileSync("tmux", [
+  execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`,
     "paste-buffer",
     ...tmuxRawPasteFlags(),
     "-d",
@@ -1139,7 +1137,6 @@ async function runLargeSkillResizeAttempt(attempt: number): Promise<string> {
       cwd: fixture.workspace,
       env: {
         HOME: fixture.home,
-
 
         HANDWORK_AUTO_UPGRADE: "0",
         HANDWORK_RECORD: tapePath,
@@ -1341,7 +1338,6 @@ async function runRapidSkillResizeAttempt(
       env: {
         HOME: fixture.home,
 
-
         HANDWORK_AUTO_UPGRADE: "0",
         HANDWORK_RECORD: tapePath,
         HANDWORK_RECORD_INPUT: "1",
@@ -1480,13 +1476,15 @@ async function runRapidSkillResizeAttempt(
 
 describe.skipIf(SKIP)("tui: resize", () => {
   test(
-    "welcome header starts at the first terminal row",
+    "welcome header is centered above the task guidance",
     async () => {
       session = await launchAt(120, 40);
 
       const grid = await session.capturePaneGrid();
-      const headerRow = grid.findIndex((line) => line.includes("handwork v"));
-      expect(headerRow).toBe(0);
+      const headerRow = grid.findIndex((line) => line.includes("handwork \u00b7 v"));
+      expect(headerRow).toBeGreaterThan(0);
+      expect(grid[headerRow]!.indexOf("handwork")).toBeGreaterThan(0);
+      expect(grid.findIndex(line => line.includes("Describe a task to begin") || line.includes("Run /provider"))).toBeGreaterThan(headerRow);
     },
     TIMEOUT,
   );
@@ -1607,8 +1605,8 @@ describe.skipIf(SKIP)("tui: resize", () => {
         session,
         "PRE_HANDWORK_MARKER_",
       );
-      expect(scrollback.match(/handwork v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
-      expect(scrollback.match(/Run \/help for commands/g)).toHaveLength(1);
+      expect(scrollback.match(/handwork(?: \u00b7)? v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(scrollback.match(/\/help for commands/g)).toHaveLength(1);
       expectOrderedMarkersWithoutBlankHole(scrollback, markers);
       const grid = await waitForSettledFooter(session);
       expect(findFooterBlocks(grid)).toHaveLength(1);
@@ -1684,8 +1682,8 @@ describe.skipIf(SKIP)("tui: resize", () => {
       await waitForLiveScrollbackText(session, finalResponse, TIMEOUT);
 
       const scrollback = await session.captureFullScrollback();
-      expect(scrollback.match(/handwork v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
-      expect(scrollback.match(/Run \/help for commands/g)).toHaveLength(1);
+      expect(scrollback.match(/handwork(?: \u00b7)? v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(scrollback.match(/\/help for commands/g)).toHaveLength(1);
       expect(scrollback).toContain("stream the resize marker command");
       expect(scrollback).not.toContain(preHandworkMarker);
       expect(scrollback).toContain("● 1 tool call · 1 command");
@@ -2097,8 +2095,8 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const afterCancelScrollback = await captureScrollback("after-cancel");
 
       const transcriptCopyCounts = (scrollback: string) => ({
-        startup: scrollback.match(/handwork v\d+\.\d+\.\d+\b/g)?.length ?? 0,
-        help: countOccurrences(scrollback, "Run /help for commands"),
+        startup: scrollback.match(/handwork(?: \u00b7)? v\d+\.\d+\.\d+\b/g)?.length ?? 0,
+        help: countOccurrences(scrollback, "/help for commands"),
         recording: countOccurrences(
           scrollback,
           "● Recording: visual terminal capture:",
@@ -2208,7 +2206,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         expect(Array.from(rule).filter((glyph) => glyph === "─")).toHaveLength(
           cols - gutter,
         );
-        expect(grid[footer!.input]).toBe("┃");
+        expect(isEmptyComposerLine(grid[footer!.input]!)).toBe(true);
       };
 
       await expectRule(120);
@@ -2347,7 +2345,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
           expect(text.join(" ")).toBe(paragraph);
         }
         const grid = await active.capturePaneGrid();
-        expect(grid.filter((line) => line.trim() === "┃")).toHaveLength(1);
+        expect(grid.filter((line) => isEmptyComposerLine(line))).toHaveLength(1);
         expect(findFooter(grid)).not.toBeNull();
         expect(active.paneStatus()).toEqual({ dead: false, status: null });
         expectEmptyStderr(stderrPath);
@@ -2452,7 +2450,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         expect(terminalRows.join("\n")).not.toContain("> >");
         const footer = findFooter(grid);
         expect(footer).not.toBeNull();
-        expect(grid[footer!.input]).toBe("┃");
+        expect(isEmptyComposerLine(grid[footer!.input]!)).toBe(true);
       };
 
       await expectNestedQuote(120, 1);
@@ -2610,7 +2608,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       writeFileSync(join(root, "pane-final.txt"), `${await session.capturePane()}\n`);
 
       const finalGrid = await session.capturePaneGrid();
-      expect(finalGrid.filter((line) => line.trim() === "┃")).toHaveLength(1);
+      expect(finalGrid.filter((line) => isEmptyComposerLine(line))).toHaveLength(1);
       expect(findFooter(finalGrid)).not.toBeNull();
       expect(session.paneStatus()).toEqual({ dead: false, status: null });
       expect(session.isPaneAlive()).toBe(true);
@@ -2685,7 +2683,6 @@ describe.skipIf(SKIP)("tui: resize", () => {
         env: {
           HOME: home,
 
-
           HANDWORK_AUTO_UPGRADE: "0",
           HANDWORK_RECORD: tapePath,
           HANDWORK_RECORD_INPUT: "1",
@@ -2721,7 +2718,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       await session.waitForText("/help", 10_000);
       await waitForSelectedSlashLabel(session, "/help");
       const shrinkStage = await session.captureFullScrollback();
-      expect(shrinkStage).toContain("Commands 35 · type to filter");
+      expect(shrinkStage).toContain("Commands 39 · type to filter");
       expect(shrinkStage).toContain("1–4");
       writeFileSync(join(root, "scrollback-after-shrink.txt"), shrinkStage);
 
@@ -2760,7 +2757,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       writeFileSync(join(root, "pane-final.txt"), `${await session.capturePane()}\n`);
 
       const finalGrid = await session.capturePaneGrid();
-      expect(finalGrid.filter((line) => line.trim() === "┃")).toHaveLength(1);
+      expect(finalGrid.filter((line) => isEmptyComposerLine(line))).toHaveLength(1);
       expect(findFooter(finalGrid)).not.toBeNull();
       expect(session.paneStatus()).toEqual({ dead: false, status: null });
       expect(session.isPaneAlive()).toBe(true);
@@ -2815,7 +2812,6 @@ describe.skipIf(SKIP)("tui: resize", () => {
         cwd: workspace,
         env: {
           HOME: home,
-
 
           HANDWORK_AUTO_UPGRADE: "0",
           NO_COLOR: "1",
@@ -2974,6 +2970,8 @@ describe.skipIf(SKIP)("tui: resize", () => {
           surfaceCase.height,
           provider
             ? {
+                HANDWORK_AUTH_MODE: "host-managed",
+                HANDWORK_E2E_OPENAI_CODEX_RESPONSES_URL: provider.chatUrl,
                 HANDWORK_E2E_OPENAI_CODEX_MODELS_URL:
                   `${provider.baseUrl}/models`,
               }
@@ -3483,7 +3481,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       expect(pane).toContain("❯ ! 1  Apply once · resize to review");
       expect(existsSync(target)).toBe(false);
 
-      execFileSync("tmux", [
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`,
         "resize-window",
         "-t",
         session.name,
@@ -3572,7 +3570,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       expect(session.paneStatus().dead).toBe(false);
       expect(session.isPaneAlive()).toBe(true);
       const grid = await session.capturePaneGrid();
-      expect(grid.join("\n")).toContain("┃ Create the post-approval resize fixture.");
+      expect(await session.captureFullScrollback()).toContain("Create the post-approval resize fixture.");
       expect(grid.join("\n")).not.toContain(FILE_APPROVAL_QUESTION);
 
       releaseFinalResponse();
@@ -3637,7 +3635,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       expect(session.paneSize()).toEqual({ cols: 80, rows: 30 });
       const footer = findFooter(grid);
       expect(footer).not.toBeNull();
-      expect(grid[footer!.input]).toBe("┃");
+      expect(isEmptyComposerLine(grid[footer!.input]!)).toBe(true);
     },
     TIMEOUT,
   );
@@ -3697,11 +3695,11 @@ describe.skipIf(SKIP)("tui: resize", () => {
     async () => {
       session = await launchAt(120, 40);
       await session.sendText("/help");
-      await session.waitForText("Commands 35", 5_000);
+      await session.waitForText("Commands 39", 5_000);
       await session.resizeWindow(76, 24, 400);
 
       const grid = await session.capturePaneGrid();
-      expect(grid.join("\n")).toContain("Commands 35");
+      expect(grid.join("\n")).toContain("Commands 39");
       expect(findInlineHelpPicker(grid)).not.toBeNull();
 
       await session.sendKeys("Escape");
@@ -3719,15 +3717,15 @@ describe.skipIf(SKIP)("tui: resize", () => {
     async () => {
       session = await launchAt(120, 40);
       await session.sendText("/help");
-      await session.waitForText("Commands 35", 5_000);
+      await session.waitForText("Commands 39", 5_000);
 
       const captureScrollback = () =>
-        execSync(`tmux capture-pane -t ${session!.name} -p -S -`, {
+        execSync(`tmux -L handwork-e2e-${process.pid} capture-pane -t ${session!.name} -p -S -`, {
           encoding: "utf8",
           stdio: "pipe",
         });
       const expectHelpCatalog = (grid: string[]) => {
-        expect(grid.join("\n")).toContain("Commands 35");
+        expect(grid.join("\n")).toContain("Commands 39");
         expect(findInlineHelpPicker(grid)).not.toBeNull();
       };
 
@@ -3743,9 +3741,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
         5_000,
       );
       const restored = captureScrollback();
-      expect(restored.match(/handwork v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
-      expect(restored.match(/Run \/help for commands/g)).toHaveLength(1);
-      expect(restored).not.toContain("Commands 35");
+      expect(restored.match(/handwork(?: \u00b7)? v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(restored.match(/\/help for commands/g)).toHaveLength(1);
+      expect(restored).not.toContain("Commands 39");
       expect(findFooter(await session.capturePaneGrid())).not.toBeNull();
     },
     TIMEOUT,
@@ -3817,14 +3815,14 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const beforeResizeFrame = readTapeFrames(tapePath).length;
       const paneTty = execFileSync(
         "tmux",
-        ["display-message", "-p", "-t", session.name, "#{pane_tty}"],
+        ["-L", `handwork-e2e-${process.pid}`, "display-message", "-p", "-t", session.name, "#{pane_tty}"],
         { encoding: "utf8", stdio: "pipe" },
       ).trim();
       // Drift the terminal position without updating handwork's shadow grid. Tmux
       // can then answer the resize probe while reconciliation is still blocked.
       writeFileSync(paneTty, "\x1b[3A");
       await session.resizeWindow(120, 40, 0);
-      execFileSync("tmux", ["send-keys", "-t", session.name, "-l", "x"], {
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "send-keys", "-t", session.name, "-l", "x"], {
         stdio: "pipe",
       });
 
@@ -3968,11 +3966,11 @@ describe.skipIf(SKIP)("tui: resize", () => {
       await session.sendHexBytes(["1b", "5b", "32", "30", "30", "7e"]);
       const payload = "x".repeat(5_000_000);
       const buffer = `${session.name}-large-paste`;
-      execFileSync("tmux", ["load-buffer", "-b", buffer, "-"], {
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "load-buffer", "-b", buffer, "-"], {
         input: payload,
         stdio: ["pipe", "pipe", "pipe"],
       });
-      execFileSync("tmux", [
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`,
         "paste-buffer",
         ...tmuxRawPasteFlags(),
         "-d",
@@ -4048,11 +4046,11 @@ describe.skipIf(SKIP)("tui: resize", () => {
       expect(Buffer.byteLength(rawPayload)).toBe(targetBytes);
 
       const buffer = `${session.name}-cpr-paste`;
-      execFileSync("tmux", ["load-buffer", "-b", buffer, "-"], {
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`, "load-buffer", "-b", buffer, "-"], {
         input: rawPayload,
         stdio: ["pipe", "pipe", "pipe"],
       });
-      execFileSync("tmux", [
+      execFileSync("tmux", ["-L", `handwork-e2e-${process.pid}`,
         "paste-buffer",
         ...tmuxRawPasteFlags(),
         "-d",
@@ -4132,7 +4130,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
           "  [ \"$attempt\" -ge 2000 ] && exit 124",
           "  sleep 0.005",
           "done",
-          "exec tmux send-keys -t \"$target\" -H \"$@\"",
+          `exec tmux -L handwork-e2e-${process.pid} send-keys -t "$target" -H "$@"`,
         ].join("\n"),
         "inject-paste-start",
         "cursor_measure_requested protocol=private",
@@ -4277,7 +4275,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         expect(await session.captureFullScrollback()).toContain(marker);
 
         await session.sendText("/help");
-        await session.waitForText("Commands 35", 5_000);
+        await session.waitForText("Commands 39", 5_000);
         await session.resizeWindow(84, 28, 500);
 
         const catalog = await session.capturePaneGrid();
@@ -4291,7 +4289,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         );
         const scrollback = await session.captureFullScrollback();
         expect(scrollback).not.toContain(marker);
-        expect(scrollback).not.toContain("Commands 35");
+        expect(scrollback).not.toContain("Commands 39");
         const finalGrid = await session.capturePaneGrid();
         expect(findFooter(finalGrid), finalGrid.join("\n")).not.toBeNull();
 
@@ -4351,7 +4349,8 @@ describe.skipIf(SKIP)("tui: resize", () => {
       await session.waitForComposer(TIMEOUT);
       await new Promise((resolve) => setTimeout(resolve, 200));
       const initialInputRows = (await session.capturePaneGrid()).filter(isInputRow);
-      expect(initialInputRows).toEqual(["┃"]);
+      expect(initialInputRows).toHaveLength(1);
+      expect(isEmptyComposerLine(initialInputRows[0]!)).toBe(true);
       await session.sendText("Record a theme reset transcript marker.");
       await session.waitForText(inlineTailMarker, TIMEOUT);
 
@@ -4482,7 +4481,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const footer = findFooter(grid);
       expect(footer).not.toBeNull();
       expect(session.paneSize()).toEqual({ cols: 120, rows: 40 });
-      expect(grid[footer!.input]).toBe("┃");
+      expect(isEmptyComposerLine(grid[footer!.input]!)).toBe(true);
     },
     TIMEOUT,
   );

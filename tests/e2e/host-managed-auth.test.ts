@@ -109,7 +109,6 @@ describe("host-managed authentication", () => {
     return {
       HOME: home,
 
-
       HANDWORK_AUTH_MODE: "host-managed",
       HANDWORK_AUTO_UPGRADE: "0",
       HANDWORK_DISABLE_KEYCHAIN: "1",
@@ -123,11 +122,16 @@ describe("host-managed authentication", () => {
     };
   }
 
-  
-
-  test("runs Codex and Grok without local authentication headers", async () => {
+  test("runs Codex without local authentication headers and rejects disabled Grok", async () => {
     for (const [provider, marker] of [["codex", "CODEX_HOST_MANAGED_OK"], ["grok", "GROK_HOST_MANAGED_OK"]]) {
+      const before = requests.length;
       const selected = await runHandwork(["provider", provider!], { cwd: workspace, env: env() });
+      if (provider === "grok") {
+        expect(selected.code).toBe(1);
+        expect(selected.stderr).toContain("unavailable");
+        expect(requests.length).toBe(before);
+        continue;
+      }
       expect(selected.code).toBe(0);
       const asked = await runHandwork(["ask", "--json", "--no-save", "Reply once."], { cwd: workspace, env: env(), timeoutMs: TIMEOUT });
       expect(asked.code).toBe(0);
@@ -176,5 +180,4 @@ describe("host-managed authentication", () => {
     expect(existsSync(join(home, ".handwork", "auth.json"))).toBe(false);
   }, TIMEOUT);
 
-  
 });

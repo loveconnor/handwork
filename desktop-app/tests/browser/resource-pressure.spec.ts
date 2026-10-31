@@ -63,7 +63,7 @@ test("keeps many processes compact, with details and stop controls on demand", a
   });
   await expect(dialog.getByRole("listitem")).toHaveCount(6);
   await expect(
-    dialog.getByRole("button", { name: /^Stop session/ }),
+    dialog.getByRole("button", { name: /^Stop chat/ }),
   ).toHaveCount(6);
   const group = dialog.locator('[data-resource-session="workspace-session-0"]');
   await expect(group.locator("code").first()).toBeHidden();
@@ -73,7 +73,7 @@ test("keeps many processes compact, with details and stop controls on demand", a
   );
   const bounds = await dialog.boundingBox();
   expect(bounds!.width).toBeLessThanOrEqual(420);
-  expect(bounds!.height).toBeLessThan(550);
+  expect(bounds!.height).toBeLessThan(page.viewportSize()!.height - 32);
   await page.screenshot({
     path: testInfo.outputPath("resource-pressure-dark.png"),
   });

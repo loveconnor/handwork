@@ -1,0 +1,36 @@
+{
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "provider": "codex",
+  "runs": 6,
+  "timeout_seconds_per_run": 120,
+  "binary_sha256": "f4eabdb10f2418dcbb1335f00623a785120922d6a0e24c5bc30bb5b52d0f9f76",
+  "permission_mode": "auto",
+  "tasks": [
+    {
+      "name": "read_inventory",
+      "files": {
+        "inventory.json": "[{\"sku\": \"a\", \"quantity\": 7, \"in_stock\": true}, {\"sku\": \"b\", \"quantity\": 30, \"in_stock\": false}, {\"sku\": \"c\", \"quantity\": 8, \"in_stock\": true}]"
+      },
+      "prompt": "Read inventory.json. Sum quantity only for entries whose in_stock is true. Reply with the number only; do not change files."
+    },
+    {
+      "name": "repair_clamp",
+      "files": {
+        "src/clamp.cjs": "exports.clamp = (x, low, high) => Math.min(low, Math.max(high, x));\n",
+        "test.cjs": "const assert = require('node:assert/strict'); const {clamp} = require('./src/clamp.cjs'); assert.equal(clamp(5,0,10),5); assert.equal(clamp(-2,0,10),0); assert.equal(clamp(12,0,10),10);\n"
+      },
+      "prompt": "Fix src/clamp.cjs so clamp(x, low, high) returns x within inclusive bounds. Preserve the exported API. Run node test.cjs and report the result. Do not edit the tests."
+    },
+    {
+      "name": "repair_pagination",
+      "files": {
+        "src/page.cjs": "exports.page = (items, offset, limit) => items.slice(offset, offset + limit - 1);\n",
+        "src/format.cjs": "exports.label = x => String(x);\n",
+        "test.cjs": "const assert = require('node:assert/strict'); const {page} = require('./src/page.cjs'); assert.deepEqual(page([1,2,3,4,5],1,3),[2,3,4]); assert.deepEqual(page([1,2],0,0),[]);\n"
+      },
+      "prompt": "The pagination function under src/ drops the last requested item. Find and fix the implementation, preserving the API. Offset and limit are nonnegative integers. Run node test.cjs. Do not edit the tests."
+    }
+  ],
+  "method": "Same binary, HANDWORK_ON_DEMAND_TOOLS=0/1; alternating pair order; clean profile/workspace per attempt. Both main-agent usage and durable session-ledger usage (including automatic reviews) are retained; cached input is already included. Ledger totals require checking billing coverage, pending records and incidents. Startup payload token estimates are measured separately. One attempt per arm per task is a pilot, not quality parity evidence."
+}
