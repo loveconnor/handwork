@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "next dev",
     "registry": "node scripts/build-registry.mjs",
+    "styles:chat": "node scripts/build-chat-styles.mjs",
     "build": "node scripts/build-genui-prompt.mjs && node scripts/build-registry.mjs && next build",
     "start": "next start",
     "lint": "tsc --noEmit",
@@ -124,7 +125,6 @@
     }
   },
   "devDependencies": {
-    "@base-ui-components/react": "^1.0.0-rc.0",
     "@base-ui/react": "^1.6.0",
     "@electron/notarize": "2.5.0",
     "@tailwindcss/postcss": "^4.1.8",
@@ -143,7 +143,7 @@
     "electron-builder": "^26.15.3",
     "glimm": "^0.3.0",
     "happy-dom": "^20.14.0",
-    "honestui": "^0.2.3",
+    "honestui": "^0.3.0",
     "js-yaml": "4.3.2",
     "katex": "0.18.2",
     "liveline": "^0.0.7",

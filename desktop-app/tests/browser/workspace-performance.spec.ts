@@ -204,7 +204,6 @@ test("preserves following and a reader's position through real file-pane resizin
     (window as WorkspaceFixture).workspaceHasStore?.(),
   );
   await page.keyboard.press("Meta+w");
-  await page.keyboard.press("Meta+1");
   await expect(pane).toBeVisible({ timeout: 60_000 });
   await page.evaluate(() =>
     (window as WorkspaceFixture).workspaceBeginStreams(),
@@ -292,7 +291,6 @@ test("preserves following and a reader's position through real file-pane resizin
     .click();
   await expect(page.locator(".cm-editor")).toHaveCount(0);
   await expect.poll(readerShift).toBeLessThanOrEqual(3);
-  await page.getByRole("button", { name: /^Toggle right sidebar/ }).click();
   await page.getByRole("tab", { name: /^Changes/ }).click();
   await page.getByTitle("sample.ts", { exact: true }).click();
   await expect(page.locator("[data-diff-file]")).toBeVisible();

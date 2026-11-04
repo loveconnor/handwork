@@ -199,17 +199,15 @@ export class DesktopBackend extends EventEmitter {
   listProjects() { return this.projects.list(); }
   removeProject(folder) { return this.projects.remove(folder); }
 
-  projectChanges() { return this.changesReader.snapshot(this.workspace || ''); }
+  /** A project's uncommitted changes: the one a chat is connected to, or another added project, as the IDE view shows. */
+  projectChanges(workspace) { return this.changesReader.snapshot(workspace === undefined ? this.workspace || '' : this.gitProject(workspace)); }
   geocodePlace(query) { return geocodePlace(query); }
-  projectFileDiff(workspace, file, context = 3) {
-    if (!workspace || workspace !== this.workspace) throw new Error('The selected project changed. Refresh its changes.');
-    return this.changesReader.file(workspace, file, context);
-  }
+  projectFileDiff(workspace, file, context = 3) { return this.changesReader.file(this.gitProject(workspace), file, context); }
 
   // Picking files never touches the engine, so it must not wait behind a running prompt.
-  /** Git reads and writes act on the selected project's repository only. */
+  /** Git reads and writes act on a project the person has added: the chat's, or the one the IDE view shows. */
   gitProject(workspace) {
-    if (!workspace || workspace !== this.workspace) throw new Error('The selected project changed. Refresh its changes.');
+    if (!workspace || (workspace !== this.workspace && !this.projects.list().includes(workspace))) throw new Error('The selected project changed. Refresh its changes.');
     return workspace;
   }
   gitState(workspace) { return this.git.state(this.gitProject(workspace)); }

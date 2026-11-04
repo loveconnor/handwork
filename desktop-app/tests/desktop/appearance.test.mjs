@@ -8,11 +8,15 @@ const preferences = { theme: 'dark', uiFontSize: 20, codeFontSize: 15 };
 test('interface text size scales control and small-text tokens with their line heights', () => {
   const normal = appearanceTokens(14);
   assert.equal(normal['--hui-font-size-mini'], '11px');
-  assert.equal(normal['--hui-font-size-control'], '13px');
+  assert.equal(normal['--hui-font-size-control'], '14px');
+  assert.equal(normal['--hui-font-size-control-sm'], '13px');
+  assert.equal(normal['--hui-font-size-control-xs'], '12px');
   assert.equal(normal['--hui-line-height-regular'], '20px');
   const large = appearanceTokens(20);
   assert.equal(large['--hui-font-size-mini'], '17px');
-  assert.equal(large['--hui-font-size-control'], '19px');
+  assert.equal(large['--hui-font-size-control'], '20px');
+  assert.equal(large['--hui-font-size-control-sm'], '19px');
+  assert.equal(large['--hui-font-size-control-xs'], '18px');
   assert.equal(large['--hui-line-height-mini'], '20px');
   assert.equal(large['--hui-line-height-control'], '22px');
   for (const [key, value] of Object.entries(appearanceTokens(11))) if (key.includes('font-size')) assert.ok(parseFloat(value) >= 10);
@@ -34,8 +38,8 @@ test('tab and menu typography scales at 20px without changing 14px density', () 
   for (const [selector, font, line] of [
     ['.handwork-tab-label', 12.5, 28],
     ['.handwork-model-options [data-slot="menu-label"]', 11, 16],
-    ['.handwork-model-options [role^="menuitem"]', 13, 18],
-    ['.handwork-option-submenu [role^="menuitem"]', 13, 18],
+    ['.handwork-model-options [role^="menuitem"]', 14, 18],
+    ['.handwork-option-submenu [role^="menuitem"]', 14, 18],
     ['.handwork-option-description', 12, 17],
     ['.handwork-option-value', 12],
     ['.handwork-composer .handwork-model-trigger', 12],
@@ -75,7 +79,7 @@ test('theme changes suppress transitions through the next paint and restore them
     for (const [name, value] of Object.entries(values)) Object.defineProperty(globalThis, name, { value, configurable: true, writable: true });
     applyAppearance(preferences);
     assert.ok(classes.has('dark')); assert.ok(!classes.has('light'));
-    assert.equal(tokens.get('--hui-font-size-control'), '19px');
+    assert.equal(tokens.get('--hui-font-size-control'), '20px');
     assert.equal(sheets.size, 1);
     assert.match([...sheets][0].textContent, /transition:none !important/);
     applyAppearance(preferences);

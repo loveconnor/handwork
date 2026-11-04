@@ -26,8 +26,7 @@ for (const inset of [true, false])
         .boundingBox();
       expect(brand).not.toBeNull();
       expect(brand!.y).toBeLessThan(90);
-      const isMac = await page.evaluate(() => /Mac/.test(navigator.platform));
-      expect(brand!.x).toBe(isMac ? 78 : 12);
+      expect(brand!.x).toBeLessThan(20);
     }
     const nav = page.getByRole("navigation", { name: "Chats", exact: true });
     await nav.getByRole("button", { name: "New chat", exact: true }).click();

@@ -3,7 +3,8 @@ export function appearanceTokens(uiFontSize: number): Record<string, string> {
   const tokens: Record<string, string> = {};
   for (const [name, baseSize, baseLine] of [
     ['micro', 10, 12], ['mini', 11, 14], ['small', 13, 16],
-    ['control', 13, 16], ['regular', 14, 20], ['large', 16, 24],
+    ['control', 14, 16], ['control-sm', 13, 16], ['control-xs', 12, 16],
+    ['regular', 14, 20], ['large', 16, 24],
   ] as const) {
     const size = Math.max(10, baseSize + uiFontSize - 14);
     tokens[`--hui-font-size-${name}`] = `${size}px`;
@@ -22,7 +23,7 @@ export function applyAppearance(preferences: Pick<DesktopPreferences, 'theme' | 
     document.head.append(transitionOverride);
   }
   root.classList.toggle('dark', dark); root.classList.toggle('light', !dark);
-  root.dataset.theme = dark ? 'dark' : 'light'; root.dataset.style = 'modern';
+  root.dataset.theme = dark ? 'dark' : 'light';
   root.style.setProperty('--handwork-ui-font-size', `${preferences.uiFontSize}px`);
   for (const [name, value] of Object.entries(appearanceTokens(preferences.uiFontSize))) root.style.setProperty(name, value);
   root.style.setProperty('--handwork-code-font-size', `${preferences.codeFontSize}px`);

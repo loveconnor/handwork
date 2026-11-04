@@ -207,7 +207,8 @@ export interface DesktopAPI {
   getModelPreferences(): Promise<ModelPreferences>;
   setModelFavorite(provider: string, model: string, name: string, favorite: boolean): Promise<ModelPreferences>;
   projectSuggestions(): Promise<ProjectSuggestion[]>;
-  projectChanges(): Promise<ProjectChangesSnapshot>;
+  /** Without a workspace, the project the chat is connected to. */
+  projectChanges(workspace?: string): Promise<ProjectChangesSnapshot>;
   projectFileDiff(workspace: string, path: string, context: number): Promise<ProjectFileDiff>;
   gitState(workspace: string): Promise<GitRepositoryState>;
   gitFileDiff(workspace: string, path: string, area: 'staged' | 'unstaged', context: number): Promise<ProjectFileDiff>;

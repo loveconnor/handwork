@@ -93,7 +93,7 @@ const signatures = {
   gitBranches: [text], gitSwitchBranch: [text, validRefName], gitCreateBranch: [text, validRefName],
   gitLog: [text, value => Number.isSafeInteger(value) && value >= 1 && value <= 200], gitCommitDetails: [text, validObjectId], gitCommitFileDiff: [text, validObjectId, validRepositoryPath, diffContext],
   gitOpenTerminal: [text],
-  projectSuggestions: [], projectChanges: [], projectFileDiff: [value => text(value), value => text(value), value => Number.isSafeInteger(value) && value >= 0 && value <= 1000000], listProjects: [], removeProject: [value => text(value)], selectProject: [(value) => text(value)], selectChat: [], newChat: [],
+  projectSuggestions: [], projectChanges: [value => value === undefined || text(value)], projectFileDiff: [value => text(value), value => text(value), value => Number.isSafeInteger(value) && value >= 0 && value <= 1000000], listProjects: [], removeProject: [value => text(value)], selectProject: [(value) => text(value)], selectChat: [], newChat: [],
   chooseWorkspace: [], chooseFiles: [value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_ATTACHMENTS], chatDetails: [], voiceStatus: [], transcribeVoice: [validVoiceAudio], cancelVoice: [], connect: [], cancel: [], continueResponse: [], newSession: [], listSessions: [],
   prompt: [(value) => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0'), attachments],
   rewindSession: [(value) => Number.isSafeInteger(value) && value >= 0 && value <= 100000, (value) => typeof value === 'string' && Buffer.byteLength(value) <= 1024 * 1024 && !value.includes('\0')],
@@ -134,7 +134,7 @@ export function validateArguments(method, args) {
   const signature = Object.hasOwn(signatures, method) ? signatures[method] : null;
   if (!signature || !Array.isArray(args)) throw new Error('Invalid desktop API arguments');
   // Older renderers send only text; match the backend's empty-attachments default.
-  let values = method === 'prompt' && args.length === 1 ? [args[0], []] : method === 'chooseFiles' && args.length === 0 ? [MAX_ATTACHMENTS] : args;
+  let values = method === 'prompt' && args.length === 1 ? [args[0], []] : method === 'chooseFiles' && args.length === 0 ? [MAX_ATTACHMENTS] : method === 'projectChanges' && args.length === 0 ? [undefined] : args;
   if (['prompt', 'cancel', 'continueResponse', 'respondPermission'].includes(method) && values.length === signature.length + 1) {
     if (!text(values.at(-1), 512) || !/^[a-zA-Z0-9_.:-]+$/.test(values.at(-1))) throw new Error('Invalid desktop session ID');
     values = values.slice(0, -1);

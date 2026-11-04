@@ -17,7 +17,7 @@ export function useProjectChanges(api: DesktopAPI | undefined, workspace: string
       if (document.hidden) { timer = setTimeout(load, 2000); return; }
       pending = true;
       try {
-        const snapshot = await api.projectChanges();
+        const snapshot = await api.projectChanges(workspace);
         if (cancelled) return;
         if (snapshot.workspace !== workspace) throw new Error('Waiting for the selected project.');
         setState({ workspace, snapshot, loading: false });

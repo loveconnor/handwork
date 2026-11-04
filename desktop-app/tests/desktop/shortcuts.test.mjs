@@ -37,7 +37,7 @@ test('listed app shortcuts match the handlers that implement them', () => {
   assert.match(harness, /key === '\/'/);
   assert.match(harness, /key === 'f'/);
   for (const keys of ['Mod+Shift+E', 'Mod+J', 'Mod+P', 'Mod+Shift+F']) assert.ok(listed.has(keys), `${keys} is listed`);
-  assert.match(harness, /key === 'e' && showProjectTools/);
+  assert.match(harness, /key === 'e' && ideAvailable/);
   assert.match(harness, /key === 'j' && ideView/);
   assert.match(source('components/site/HandworkCommandPalette.tsx'), /event\.key\.toLowerCase\(\) === 'k'/);
   assert.match(source('components/site/HandworkFindBar.tsx'), /event\.key\.toLowerCase\(\) !== 'g'/);

@@ -1120,10 +1120,19 @@ export default function HandworkHarness() {
   const showProjectTools = !!workspace && (!pendingChat || pendingChat.workspace === workspace);
   // The project on screen is where a switch is going, from the moment it starts: the IDE view
   // and the workbench follow it at once, while the chat catches up beside them.
-  const [projectTarget, setProjectTarget] = useState<string>();
-  const viewedProject = projectTarget ?? (pendingChat ? pendingChat.workspace ?? '' : workspace);
-  useEffect(() => { if (projectTarget && (workspace === projectTarget || error)) setProjectTarget(undefined); }, [projectTarget, workspace, error]);
-  const ideView = ideRequested && !!viewedProject;
+  // The IDE view has a project of its own, kept between launches, so it works without a chat:
+  // opening a project's chat moves it to that project, a general chat leaves it where it is, and
+  // the switcher above the tree changes it without opening anything.
+  const [ideProjectChoice, setIdeProjectChoice] = useState(() => { try { return localStorage.getItem('handwork.ideProject') ?? ''; } catch { return ''; } });
+  const chooseIdeProject = (project: string) => {
+    setIdeProjectChoice(project);
+    try { localStorage.setItem('handwork.ideProject', project); } catch { /* storage is optional */ }
+  };
+  const chatProject = pendingChat ? pendingChat.workspace ?? '' : workspace;
+  useEffect(() => { if (chatProject) chooseIdeProject(chatProject); }, [chatProject]);
+  const ideProject = projects.includes(ideProjectChoice) ? ideProjectChoice : chatProject || projects[0] || '';
+  const ideAvailable = !!ideProject;
+  const ideView = ideRequested && ideAvailable;
   const peekable = ideView && sidebarCollapsed && !narrowSidebar;
   const contextKey = editorContext ? `${editorContext.path}:${editorContext.selection?.from ?? ''}-${editorContext.selection?.to ?? ''}` : '';
   const sharedContext = ideView && editorContext && contextKey !== contextSetAside ? editorContext : null;
@@ -1203,13 +1212,15 @@ export default function HandworkHarness() {
   }, [firstMessage, pendingChat, sessionId, working, configuring, navigating]);
   const blocked = working || configuring || picking || navigating || recoveringDraft || !!pendingChat;
   const tools = shownConversation.entries.filter(entry => entry.kind === "tool");
-  const projectChangeState = useProjectChanges(api, workspace);
+  // Source control follows the code on screen: the IDE view's project there, the chat's otherwise.
+  const changesProject = ideView ? ideProject : workspace;
+  const projectChangeState = useProjectChanges(api, changesProject);
   const changes = projectChangeState.snapshot?.files ?? [];
   const changesComplete = !projectChangeState.snapshot?.truncated && changes.every(file => file.complete && !file.binary);
   const addedLines = changes.reduce((total, file) => total + file.added, 0);
   const removedLines = changes.reduce((total, file) => total + file.removed, 0);
   useEffect(() => {
-    if (!showProjectTools) return;
+    if (!showProjectTools && !ideView) return;
     const onKey = (event: KeyboardEvent) => {
       if (!event.ctrlKey || event.key !== '`') return;
       event.preventDefault();
@@ -1227,7 +1238,7 @@ export default function HandworkHarness() {
   // In the IDE view the column beside the code holds the chat, or source control or activity in its place.
   const ideSide = changesOpen ? 'changes' : activityOpen ? 'activity' : ideChat ? 'chat' : 'none';
   const toggleIdeView = () => {
-    if (!showProjectTools) return;
+    if (!ideAvailable) return;
     setIdeRequested(!ideView);
     setFilesOpen(false);
     if (!ideView) setIdeChat(true);
@@ -1239,7 +1250,7 @@ export default function HandworkHarness() {
   };
   // Files named in the chat open in the editor beside it, when they are in the project.
   const openFileTarget = (file: FileTarget) => {
-    const root = (ideView ? viewedProject : workspace).replace(/[\\/]+$/, '');
+    const root = (ideView ? ideProject : workspace).replace(/[\\/]+$/, '');
     const named = file.target && /^file:\/\//i.test(file.target) ? decodeURIComponent(file.target.replace(/^file:\/\/(localhost)?/i, '')).replace(/^\/([a-zA-Z]:)/, '$1') : file.target;
     const target = named?.replace(/\\/g, '/');
     const relative = target && !file.data && root && target.startsWith(`${root.replace(/\\/g, '/')}/`) ? target.slice(root.length + 1) : undefined;
@@ -1250,10 +1261,11 @@ export default function HandworkHarness() {
   const openProject = () => void sessionAction("open");
   /** Another project from the IDE view: its latest chat, or a new one there, brings its workbench with it. */
   const switchProject = (project: string) => {
-    setProjectTarget(project);
+    chooseIdeProject(project);
+    // The code shows first; the project's latest chat, if it has one, opens just behind it.
+    // A project without chats needs none to be worked on.
     const latest = recents.find(chat => chat.workspace === project && !chat.archived);
-    // The code shows first; the chat's own switch renders just behind it.
-    startTransition(() => { if (latest) openChat(latest); else openNewTab(project); });
+    if (latest) startTransition(() => openChat(latest));
   };
   // Merge saved activity into open tabs, then sort every sidebar group by recency.
   const recents: SavedSession[] = sortChatsByRecency(mergeSidebarChats(
@@ -1555,7 +1567,7 @@ export default function HandworkHarness() {
         else if (event.code === 'BracketLeft') run('previous');
         else if (key === 't') run('reopen');
         else if (key === 'a') run('attention');
-        else if (key === 'e' && showProjectTools) { event.preventDefault(); toggleIdeView(); }
+        else if (key === 'e' && ideAvailable) { event.preventDefault(); toggleIdeView(); }
         return;
       }
       if (event.repeat) return;
@@ -1600,7 +1612,7 @@ export default function HandworkHarness() {
   const paletteActions: PaletteAction[] = [
     ...desktopSlashCommands.map(command => ({ id: `slash:${command.name}`, label: `/${command.name}`, description: command.description, group: 'commands' as const, icon: commandIcons[command.category] || <SettingsIcon aria-hidden />, keywords: command.aliases.map(alias => `/${alias}`).join(' '), disabled: blocked || !api, run: () => { void runCommand(command.name, '').catch(cause => setError(String(cause))); } })),
     { id: "new-chat", label: "New chat", icon: <SquarePen aria-hidden />, shortcut: "Mod+N", keywords: "start conversation", disabled: blocked || !api, run: () => void sessionAction("chat") },
-    ...(showProjectTools ? [{ id: "ide-view", label: ideView ? "Leave IDE view" : "IDE view", icon: <CodeXml aria-hidden />, shortcut: "Mod+Shift+E", keywords: "code editor layout workbench files", run: toggleIdeView }] : []),
+    ...(ideAvailable ? [{ id: "ide-view", label: ideView ? "Leave IDE view" : "IDE view", icon: <CodeXml aria-hidden />, shortcut: "Mod+Shift+E", keywords: "code editor layout workbench files", run: toggleIdeView }] : []),
     ...(ideView ? [{ id: "ide-chat", label: ideSide === "chat" ? "Hide chat" : "Show chat", icon: <MessageSquare aria-hidden />, shortcut: "Mod+J", keywords: "conversation column panel", run: toggleIdeChat }] : []),
     { id: "open-project", label: "Open project…", icon: <FolderPlus aria-hidden />, keywords: "folder workspace add", disabled: blocked || !api, run: openProject },
     { id: "find", label: "Find in chat", icon: <TextSearch aria-hidden />, shortcut: "Mod+F", keywords: "search text conversation", disabled: !shownConversation.entries.length, run: () => openFind() },
@@ -1800,21 +1812,23 @@ export default function HandworkHarness() {
         {ideView ? <div className="handwork-ide-file-tabs" ref={setIdeTabsHost} /> : chatTabs}
         <div className="handwork-header-drag" aria-hidden />
         {!ideView && detailsButton}
-        {(showProjectTools || ideView) && <div className="handwork-header-actions">
+        {(showProjectTools || ideAvailable) && <div className="handwork-header-actions">
           {ideView && <div className="handwork-ide-pane-actions" ref={setIdeActionsHost} />}
           <Button id="handwork-ide-trigger" size="icon-sm" variant="ghost" aria-pressed={ideView} aria-label="IDE view" title={`${ideView ? "Leave IDE view" : "IDE view"} (${shortcutLabel("Mod+Shift+E")})`} onClick={toggleIdeView}><CodeXml aria-hidden width={15} height={15} /></Button>
+          {(showProjectTools || ideView) && <>
           {ideView
             ? <Button id="handwork-chat-trigger" size="xs" variant="ghost" aria-pressed={ideSide === "chat"} title={`${ideSide === "chat" ? "Hide chat" : "Show chat"} (${shortcutLabel("Mod+J")})`} onClick={toggleIdeChat}><MessageSquare aria-hidden width={14} height={14} />Chat</Button>
             : <Button id="handwork-files-trigger" size="xs" variant="ghost" aria-pressed={filesOpen} onClick={() => { setFilesOpen(value => !value); setChangesOpen(false); setActivityOpen(false); }}>Files</Button>}
           <ChangesTrigger open={changesOpen} fileCount={projectChangeState.snapshot?.totalFiles ?? 0} added={changesComplete ? addedLines : undefined} removed={changesComplete ? removedLines : undefined} onClick={() => { setChangesOpen(value => !value); setActivityOpen(false); setFilesOpen(false); }} />
           <Button id="handwork-activity-trigger" size="xs" variant="ghost" aria-pressed={activityOpen && !filesOpen && !changesOpen} onClick={() => { setActivityOpen(value => !value || filesOpen || changesOpen); setChangesOpen(false); setFilesOpen(false); }}>Activity</Button>
+          </>}
 
         </div>}
       </header>
       {error && !(shownConversation.canContinue && failedPrompt?.session === sessionId && failedPrompt.error === error) && <div role="alert" className="handwork-notice" data-attention="error"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
       {!api && <p className="handwork-notice">Open the Electron app with npm run desktop:dev to use local Handwork. This browser preview cannot access your files or run commands.</p>}
       <div ref={workspaceBody} className="handwork-workspace-body" data-switching={loadingVersion || undefined} data-layout={ideView ? "ide" : undefined} data-side={ideView ? ideSide : undefined} style={ideView && ideSideWidth ? { "--handwork-ide-side-width": `${ideSideWidth}px` } as CSSProperties : undefined}>
-      {ideView && <><aside className="handwork-review-panel handwork-ide-main" data-panel="files" aria-label="Code"><div className="handwork-panel-content"><HandworkWorkbench api={api} workspace={viewedProject} request={workbenchRequest} treeHost={ideTreeHost} tabsHost={ideTabsHost ?? undefined} actionsHost={ideActionsHost ?? undefined} onContext={setEditorContext} onAsk={askAboutSelection} refresh={replies}
+      {ideView && <><aside className="handwork-review-panel handwork-ide-main" data-panel="files" aria-label="Code"><div className="handwork-panel-content"><HandworkWorkbench api={api} workspace={ideProject} request={workbenchRequest} treeHost={ideTreeHost} tabsHost={ideTabsHost ?? undefined} actionsHost={ideActionsHost ?? undefined} onContext={setEditorContext} onAsk={askAboutSelection} refresh={replies}
           projects={{ list: projects, onSwitch: switchProject, onOpen: openProject }} /></div></aside>
         {ideSide === "chat" && <div className="handwork-ide-chat-head" role="group" aria-label="Chats">{chatTabs}{detailsButton}</div>}
         {/* With the column closed, a tab on the code's edge says where the chat went. */}
@@ -1857,7 +1871,7 @@ export default function HandworkHarness() {
           measure={() => reviewPanel.current?.getBoundingClientRect().width} onResize={setReviewWidth} />}
       <aside id="handwork-review-panel" ref={reviewPanel} tabIndex={-1} className="handwork-review-panel" data-panel={filesOpen && !ideView ? "files" : changesOpen ? "changes" : "activity"} data-sized={reviewWidth && !ideView ? "" : undefined} style={reviewWidth && !ideView ? { "--handwork-review-width": `${reviewWidth}px` } as CSSProperties : undefined} aria-label={changesOpen ? "Changes" : "Activity"} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeReviewPanel(); } }}>
         {(!filesOpen || ideView) && <div className="handwork-panel-header"><h2>{changesOpen ? "Source control" : "Activity"}</h2><div className="handwork-panel-actions">{changesOpen && !!workspace && <Button size="icon-sm" variant="link" aria-label="Refresh project changes" title="Refresh project changes" disabled={projectChangeState.loading} onClick={projectChangeState.refresh}><RefreshCw size={14} aria-hidden /></Button>}<Button size="icon-sm" variant="ghost" aria-label="Close panel" title="Close panel (Escape)" onClick={closeReviewPanel}><IconClose size={16} /></Button></div></div>}
-        <div className="handwork-panel-content">{filesOpen && !ideView ? <HandworkWorkbench api={api} workspace={viewedProject} request={workbenchRequest} onClose={closeReviewPanel} refresh={replies} /> : changesOpen ? <HandworkChanges modelLabel={currentModel ? modelDisplayName(currentModel.options.find(choice => choice.value === currentModel.currentValue)?.name ?? currentModel.currentValue) : undefined} modelPending={configuring || navigating} onWrite={api ? async () => { await configTail.current; return api.gitCommitMessage(workspace); } : undefined} key={workspace} api={api} workspace={workspace} snapshot={projectChangeState.snapshot} loading={projectChangeState.loading} error={projectChangeState.error} onChanged={projectChangeState.refresh} /> : <HandworkActivity entries={shownConversation.entries} workspaceName={workspaceName} used={shownUsage.used} capacity={shownUsage.capacity} />}</div>
+        <div className="handwork-panel-content">{filesOpen && !ideView ? <HandworkWorkbench api={api} workspace={chatProject} request={workbenchRequest} onClose={closeReviewPanel} refresh={replies} /> : changesOpen ? <HandworkChanges modelLabel={currentModel ? modelDisplayName(currentModel.options.find(choice => choice.value === currentModel.currentValue)?.name ?? currentModel.currentValue) : undefined} modelPending={configuring || navigating} onWrite={api ? async () => { await configTail.current; return api.gitCommitMessage(changesProject); } : undefined} key={changesProject} api={api} workspace={changesProject} snapshot={projectChangeState.snapshot} loading={projectChangeState.loading} error={projectChangeState.error} onChanged={projectChangeState.refresh} /> : <HandworkActivity entries={shownConversation.entries} workspaceName={workspaceName} used={shownUsage.used} capacity={shownUsage.capacity} />}</div>
       </aside></>}
       </div>
     </section>

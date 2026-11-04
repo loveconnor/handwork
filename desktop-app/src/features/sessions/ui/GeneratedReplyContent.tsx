@@ -54,7 +54,6 @@ export default function GeneratedReplyContent({
     <div
       className={`generated-chat-ui not-prose ${scheme === "dark" ? "dark" : ""}`}
       data-theme={scheme}
-      data-style="modern"
       data-density="default"
       style={{ colorScheme: scheme }}
     >

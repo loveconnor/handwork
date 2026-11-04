@@ -122,8 +122,8 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
             </div>
           </div>
           {(effort || fast || (mode && !standalone)) && <div className="handwork-details-badges">
-            {effort && <Badge variant="neutral" size="sm">{capitalized(effort)} effort</Badge>}
-            {fast && <Badge variant={fastOn ? 'accent' : 'neutral'} size="sm">Fast mode {fastOn ? 'on' : 'off'}</Badge>}
+            {effort && <Badge variant="secondary" size="sm">{capitalized(effort)} effort</Badge>}
+            {fast && <Badge variant={fastOn ? 'default' : 'secondary'} size="sm">Fast mode {fastOn ? 'on' : 'off'}</Badge>}
             {mode && !standalone && <Badge variant="outline" size="sm">{mode} mode</Badge>}
           </div>}
           <div className="handwork-details-context">
@@ -147,7 +147,7 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
               </li>
               {details.directories.map(folder => <li key={folder}>
                 <Folder aria-hidden width={15} height={15} />
-                <div className="handwork-details-row-text"><span>{folderName(folder)} <Badge variant="neutral" size="micro">Extra folder</Badge></span><HoverTooltip content={folder}><code >{shortPath(folder, details.home)}</code></HoverTooltip></div>
+                <div className="handwork-details-row-text"><span>{folderName(folder)} <Badge variant="secondary" size="sm">Extra folder</Badge></span><HoverTooltip content={folder}><code >{shortPath(folder, details.home)}</code></HoverTooltip></div>
                 <RevealButton label={folder} onClick={() => reveal(folder)} />
               </li>)}
             </ul>}
@@ -171,7 +171,7 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
             <dl className="handwork-details-tools">{tools.map(([id, label]) => {
               const project = rule(details.permissions.project[id]);
               const action = project ?? rule(details.permissions.global[id]);
-              return <div key={id}><dt>{label}</dt><dd>{action ? <HoverTooltip content={project ? 'Set for this project' : 'Set for all projects'}><Badge variant={actions[action].variant} size="sm" >{actions[action].label}{project ? ' · project' : ''}</Badge></HoverTooltip> : <Badge variant="neutral" size="sm">Default</Badge>}</dd></div>;
+              return <div key={id}><dt>{label}</dt><dd>{action ? <HoverTooltip content={project ? 'Set for this project' : 'Set for all projects'}><Badge variant={actions[action].variant} size="sm" >{actions[action].label}{project ? ' · project' : ''}</Badge></HoverTooltip> : <Badge variant="secondary" size="sm">Default</Badge>}</dd></div>;
             })}</dl>
             <p className="handwork-details-footnote">Path-specific rules can still apply. Changes take effect after you reconnect.</p>
           </>}
