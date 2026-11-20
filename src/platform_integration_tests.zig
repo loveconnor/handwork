@@ -11,8 +11,18 @@ const types = @import("core/shared/types.zig");
 const commands = @import("core/execution/command_runner.zig");
 const shells = @import("core/terminal/shell_resolver.zig");
 
+fn reportFailure(comptime label: []const u8, result: anytype) @TypeOf(result) {
+    return result catch |err| {
+        std.debug.print(label ++ " integration failed: {s}\n", .{@errorName(err)});
+        return err;
+    };
+}
+
 test "platform integration persists settings history and a resumable session in Unicode paths" {
-    errdefer |err| std.debug.print("storage integration failed: {s}\n", .{@errorName(err)});
+    try reportFailure("storage", storageJourney());
+}
+
+fn storageJourney() !void {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -81,7 +91,10 @@ test "platform integration persists settings history and a resumable session in 
 
 test "platform integration Windows commands preserve quotes streams exit and timeout" {
     if (comptime builtin.os.tag != .windows) return error.SkipZigTest;
-    errdefer |err| std.debug.print("Windows command integration failed: {s}\n", .{@errorName(err)});
+    try reportFailure("Windows command", windowsCommandJourney());
+}
+
+fn windowsCommandJourney() !void {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -123,7 +136,10 @@ test "platform integration Windows commands preserve quotes streams exit and tim
 }
 
 test "platform integration private read snapshots survive unlink while mutation handles reject it" {
-    errdefer |err| std.debug.print("snapshot integration failed: {s}\n", .{@errorName(err)});
+    try reportFailure("snapshot", snapshotJourney());
+}
+
+fn snapshotJourney() !void {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     var file = try io_mod.createPrivateFile(tmp.dir, io_mod.getIo(), "snapshot", .{ .exclusive = true });
@@ -144,7 +160,11 @@ test "platform integration public DNS and HTTPS use system certificate trust" {
     };
     defer alloc.free(enabled);
     if (!std.mem.eql(u8, enabled, "1")) return error.SkipZigTest;
-    errdefer |err| std.debug.print("DNS/TLS integration failed: {s}\n", .{@errorName(err)});
+    try reportFailure("DNS/TLS", publicHttpsJourney());
+}
+
+fn publicHttpsJourney() !void {
+    const alloc = std.testing.allocator;
     const http = @import("tools/web/http_fetch.zig");
     const policy = @import("tools/web/url_policy.zig");
     var url = try policy.normalize(alloc, "https://ziglang.org/download/index.json");

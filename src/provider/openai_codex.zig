@@ -350,7 +350,7 @@ pub fn streamPrepared(
         const retry_after_seconds = provider_client.retryAfterSeconds(response.head);
         var transfer: [16 * 1024]u8 = undefined;
         const reader = response.reader(&transfer);
-        const body = reader.allocRemaining(alloc, .limited(max_error_body_bytes)) catch |err| switch (err) {
+        const body = io_mod.allocRemainingBelowLimit(reader, alloc, .limited(max_error_body_bytes)) catch |err| switch (err) {
             error.StreamTooLong => try alloc.dupe(u8, "OpenAI Codex error response exceeded the local limit"),
             else => return err,
         };

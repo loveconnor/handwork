@@ -2,6 +2,7 @@ const std = @import("std");
 const stream_provider = @import("../agent/stream_provider.zig");
 const tool_dispatch = @import("tool_dispatch.zig");
 const tool_set = @import("tool_set.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -205,7 +206,7 @@ test "host tool runtime validates and preserves raw schemas" {
 
 test "host tool runtime preserves long MCP descriptions" {
     const alloc = std.testing.allocator;
-    const description = "Tool parameter guidance. " ** 100;
+    const description = repeat("Tool parameter guidance. ", 100);
     const parsed = try std.json.parseFromSlice(
         std.json.Value,
         alloc,

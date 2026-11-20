@@ -12,6 +12,7 @@ const types = @import("../core/shared/types.zig");
 const context_contract = @import("../core/workspace/context_contract.zig");
 const context_limits = @import("../core/config/context_limits.zig");
 const prompt_policy_contract = @import("../core/config/prompt_policy.zig");
+const comptimeRepeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const ChatMessage = types.ChatMessage;
@@ -706,7 +707,7 @@ fn renderCandidateLessThan(_: void, lhs: *RuleCandidate, rhs: *RuleCandidate) bo
 
 fn omissionLessThan(_: void, lhs: context_contract.ContextOmissionInput, rhs: context_contract.ContextOmissionInput) bool {
     if (!std.mem.eql(u8, lhs.source, rhs.source)) return std.mem.lessThan(u8, lhs.source, rhs.source);
-    return @intFromEnum(lhs.reason) < @intFromEnum(rhs.reason);
+    return @backingInt(lhs.reason) < @backingInt(rhs.reason);
 }
 
 fn stringLessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
@@ -796,7 +797,7 @@ fn appendOmissionSummaryNotice(scratch: *SelectionScratch) !void {
         .{ scratch.omission_summary.omitted_count, digest },
     );
 
-    const hidden_count = scratch.omission_summary.reason_counts[@intFromEnum(context_contract.OmissionReason.home_outside_workspace)];
+    const hidden_count = scratch.omission_summary.reason_counts[@backingInt(context_contract.OmissionReason.home_outside_workspace)];
     const actionable_count = scratch.omission_summary.omitted_count - hidden_count;
     if (actionable_count == 0) return;
 
@@ -813,12 +814,12 @@ fn appendOmissionSummaryNotice(scratch: *SelectionScratch) !void {
 
 fn writeOmissionReasonCounts(
     writer: *std.Io.Writer,
-    counts: [std.meta.fields(context_contract.OmissionReason).len]usize,
+    counts: [@typeInfo(context_contract.OmissionReason).@"enum".field_names.len]usize,
     actionable_only: bool,
 ) !void {
     var wrote_any = false;
     for (counts, 0..) |count, index| {
-        const reason: context_contract.OmissionReason = @enumFromInt(index);
+        const reason: context_contract.OmissionReason = @fromBackingInt(@intCast(index));
         if (count == 0 or (actionable_only and reason == .home_outside_workspace)) continue;
         if (wrote_any) try writer.writeAll(", ");
         try writer.print("{s}:{d}", .{ reason.label(), count });
@@ -1273,9 +1274,9 @@ test "combined project instruction cap keeps global and closest whole sections i
     defer arena_state.deinit();
     const arena = arena_state.allocator();
     var scratch = SelectionScratch{ .arena = arena };
-    const full = "GUIDE\n\nGLOBAL_BODY\n" ++ ("g" ** 160) ++
-        "\n\nMIDDLE_BODY\n" ++ ("m" ** 400) ++
-        "\n\nCLOSE_BODY\n" ++ ("c" ** 160) ++
+    const full = "GUIDE\n\nGLOBAL_BODY\n" ++ (comptimeRepeat("g", 160)) ++
+        "\n\nMIDDLE_BODY\n" ++ (comptimeRepeat("m", 400)) ++
+        "\n\nCLOSE_BODY\n" ++ (comptimeRepeat("c", 160)) ++
         "\n\n<project-rules-omitted from=\"/unsafe/AGENTS.md\" reason=\"unsafe target\" />";
     const global_start = std.mem.find(u8, full, "\n\nGLOBAL_BODY").?;
     const middle_start = std.mem.find(u8, full, "\n\nMIDDLE_BODY").?;
@@ -1534,7 +1535,7 @@ test "automatic instruction loading missing lookup metadata is bounded escaped a
     scratch.addMissing("/disabled/AGENTS.md");
     try std.testing.expectEqual(@as(usize, 0), scratch.missing_count);
     scratch.report_missing = true;
-    scratch.addMissing("/" ++ "x" ** 256);
+    scratch.addMissing("/" ++ comptimeRepeat("x", 256));
     try std.testing.expectEqual(@as(usize, 0), scratch.missing_count);
     scratch.addMissing("/work/</injected>\n/AGENTS.md");
     scratch.addMissing("/work/</injected>\n/AGENTS.md");
@@ -2203,12 +2204,14 @@ test "later applicable selection cleans partial allocation failures" {
     const target = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "work/src/feature/main.zig");
     defer alloc.free(target);
 
-    var probe = std.testing.FailingAllocator.init(alloc, .{});
+    // Zig 0.17's testing allocator can grow in place; fail resizes so every
+    // growth is a counted allocation and runs are comparable.
+    var probe = std.testing.FailingAllocator.init(alloc, .{ .resize_fail_index = 0 });
     try checkLaterSelectionAllocationFailures(probe.allocator(), workspace, target);
     try std.testing.expectEqual(probe.allocated_bytes, probe.freed_bytes);
 
     for (0..probe.alloc_index) |fail_index| {
-        var failing = std.testing.FailingAllocator.init(alloc, .{ .fail_index = fail_index });
+        var failing = std.testing.FailingAllocator.init(alloc, .{ .fail_index = fail_index, .resize_fail_index = 0 });
         checkLaterSelectionAllocationFailures(failing.allocator(), workspace, target) catch |err| switch (err) {
             error.OutOfMemory, error.WriteFailed => {},
             else => return err,
@@ -3241,10 +3244,6 @@ const PromptContextFixture = struct {
             .interactive = self.interactive,
             .permission_mode = self.permission_mode,
         };
-    }
-
-    fn staticInput(self: *PromptContextFixture) StaticContextInput {
-        return .{ .project_context = self.project_context };
     }
 };
 

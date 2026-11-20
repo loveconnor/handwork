@@ -173,10 +173,6 @@ pub const FooterViewport = struct {
         self.cursor_visible = true;
     }
 
-    pub fn hideCursor(self: *FooterViewport) void {
-        self.cursor_visible = false;
-    }
-
     pub fn eraseCurrentFrame(self: *FooterViewport, shell: anytype, metrics: *Metrics) !void {
         _ = metrics;
         if (!self.has_frame) return;
@@ -332,13 +328,6 @@ const FrameSink = struct {
         return .complete;
     }
 };
-
-fn expectGridRow(grid: *vt_emulator.Grid, row: u16, expected: []const u8) !void {
-    var buf: std.ArrayList(u8) = .empty;
-    defer buf.deinit(std.testing.allocator);
-    try grid.rowTextTrimmed(row, &buf);
-    try std.testing.expectEqualStrings(expected, buf.items);
-}
 
 fn footerSurfaceTestPlan(cols: u16) paint_plan.PaintPlan {
     return .{

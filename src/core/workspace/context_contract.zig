@@ -79,20 +79,20 @@ pub const ContextOmissionInput = struct {
 
 pub const ContextOmissionSummary = struct {
     omitted_count: usize,
-    reason_counts: [std.meta.fields(OmissionReason).len]usize,
+    reason_counts: [@typeInfo(OmissionReason).@"enum".field_names.len]usize,
     digest: [std.crypto.hash.sha2.Sha256.digest_length]u8,
 };
 
 pub const ContextOmissionSummaryBuilder = struct {
     omitted_count: usize = 0,
-    reason_counts: [std.meta.fields(OmissionReason).len]usize = @splat(0),
+    reason_counts: [@typeInfo(OmissionReason).@"enum".field_names.len]usize = @splat(0),
     hasher: std.crypto.hash.sha2.Sha256 = std.crypto.hash.sha2.Sha256.init(.{}),
 
     pub fn add(self: *ContextOmissionSummaryBuilder, source: []const u8, reason: OmissionReason) void {
         self.omitted_count += 1;
-        self.reason_counts[@intFromEnum(reason)] += 1;
+        self.reason_counts[@backingInt(reason)] += 1;
         self.hasher.update("handwork.context.omission-record\x00");
-        self.hasher.update(&.{@intFromEnum(reason)});
+        self.hasher.update(&.{@backingInt(reason)});
         hashUsize(&self.hasher, source.len);
         self.hasher.update(source);
     }

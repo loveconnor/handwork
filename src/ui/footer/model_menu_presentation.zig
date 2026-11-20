@@ -205,7 +205,7 @@ const ProviderTabs = struct {
     fn build(items: []const model_cache_runtime.ModelMenuItem) ProviderTabs {
         var tabs: ProviderTabs = .{};
         for (0..model_cache_runtime.model_provider_filter_count) |index| {
-            const filter: model_cache_runtime.ModelProviderFilter = @enumFromInt(index);
+            const filter: model_cache_runtime.ModelProviderFilter = @fromBackingInt(@intCast(index));
             if (!model_cache_runtime.modelProviderFilterAvailable(items, filter)) continue;
             tabs.indices[tabs.len] = index;
             tabs.len += 1;
@@ -231,9 +231,13 @@ fn appendHeaderTitle(alloc: Allocator, row: *std.ArrayList(u8), count: usize) !v
 
 fn appendProviderTab(alloc: Allocator, row: *std.ArrayList(u8), label: []const u8, active: bool) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, label);
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 
@@ -253,7 +257,7 @@ fn appendProviderOverflowMarker(alloc: Allocator, row: *std.ArrayList(u8)) !void
 }
 
 fn providerTabLabel(index: usize) []const u8 {
-    const filter: model_cache_runtime.ModelProviderFilter = @enumFromInt(index);
+    const filter: model_cache_runtime.ModelProviderFilter = @fromBackingInt(@intCast(index));
     return switch (filter) {
         .all => "All",
         .anthropic => "Anthropic",
@@ -313,7 +317,7 @@ fn composeTitleRow(
     var row: std.ArrayList(u8) = .empty;
     errdefer row.deinit(alloc);
     const indent_width: u16 = if (width <= 2) 0 else 2;
-    if (indent_width > 0) try row.appendSlice(alloc, "  ");
+    if (indent_width > 0) try ui_render.appendSelectionGutter(alloc, &row, selected);
     try row.appendSlice(alloc, if (selected) ui_render.selected_completion_style else ui_render.dim_style);
 
     var facts: std.ArrayList(u8) = .empty;
@@ -519,7 +523,7 @@ test "model menu keeps active provider visible and omits unknown metadata" {
         .active = true,
         .load_state = .ready,
         .items = &items,
-        .provider_index = @intFromEnum(model_cache_runtime.ModelProviderFilter.others),
+        .provider_index = @backingInt(model_cache_runtime.ModelProviderFilter.others),
     };
 
     const rows = menuRowCount(projection, 42, 5);
@@ -711,7 +715,7 @@ test "model menu labels OpenCode Zen models with provider display names" {
         .active = true,
         .load_state = .ready,
         .items = &items,
-        .provider_index = @intFromEnum(model_cache_runtime.ModelProviderFilter.opencode),
+        .provider_index = @backingInt(model_cache_runtime.ModelProviderFilter.opencode),
     };
 
     var header = try composeModelMenuRow(alloc, projection, 0, 80, 3);

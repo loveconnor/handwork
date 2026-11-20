@@ -573,8 +573,11 @@ test "compact conversation scroll hides expanded tool details and command output
     }};
     defer details[0].deinit(alloc);
     const styles: transcript_blocks.Styles = .{
-        .system_notice_label_style = "", .system_notice_text_style = "",
-        .reset_style = "", .dim_style = "", .red_style = "",
+        .system_notice_label_style = "",
+        .system_notice_text_style = "",
+        .reset_style = "",
+        .dim_style = "",
+        .red_style = "",
     };
     var compact = try buildCompactProjection(alloc, &entries, &details, styles, 80);
     defer compact.deinit(alloc);
@@ -3570,8 +3573,17 @@ pub fn buildCompactProjection(
     );
     defer groups.deinit(alloc);
     return buildProjectionWithEntryActionsMode(
-        alloc, entries, details, &.{}, styles, cols, null, null,
-        groups.entry_actions.items, true, null,
+        alloc,
+        entries,
+        details,
+        &.{},
+        styles,
+        cols,
+        null,
+        null,
+        groups.entry_actions.items,
+        true,
+        null,
     );
 }
 
@@ -3588,8 +3600,17 @@ pub fn buildProjectionWithEntryActionsInterruptible(
     checkpoint: ?*build_checkpoint.BuildCheckpoint,
 ) !Projection {
     return buildProjectionWithEntryActionsMode(
-        alloc, entries, details, command_blocks, styles, cols, anchor_entry_id,
-        full_diff_resolver, entry_actions, false, checkpoint,
+        alloc,
+        entries,
+        details,
+        command_blocks,
+        styles,
+        cols,
+        anchor_entry_id,
+        full_diff_resolver,
+        entry_actions,
+        false,
+        checkpoint,
     );
 }
 
@@ -4653,7 +4674,7 @@ const RecordOrderReader = struct {
             const tagged = try self.bytes.next(alloc) orelse {
                 inline for ([_]command_output_content.Stream{ .stdout, .stderr }) |stream| {
                     var sink = RecordOrderSink{ .reader = self, .stream = stream };
-                    try self.decoders[@intFromEnum(stream)].finish(&sink);
+                    try self.decoders[@backingInt(stream)].finish(&sink);
                 }
                 self.finished = true;
                 if (self.created) |stream| {
@@ -4662,7 +4683,7 @@ const RecordOrderReader = struct {
                 }
                 return null;
             };
-            const index = @intFromEnum(tagged.stream);
+            const index = @backingInt(tagged.stream);
             if (!self.open[index]) {
                 self.open[index] = true;
                 self.pending_byte = tagged;
@@ -4679,7 +4700,7 @@ const RecordOrderReader = struct {
     fn consume(self: *RecordOrderReader, tagged: TaggedCommandByte) !void {
         const one = [_]u8{tagged.byte};
         var sink = RecordOrderSink{ .reader = self, .stream = tagged.stream };
-        try self.decoders[@intFromEnum(tagged.stream)].append(&one, &sink);
+        try self.decoders[@backingInt(tagged.stream)].append(&one, &sink);
     }
 };
 
@@ -4688,7 +4709,7 @@ const RecordOrderSink = struct {
     stream: command_output_content.Stream,
 
     fn ensureOpen(self: *RecordOrderSink) void {
-        const index = @intFromEnum(self.stream);
+        const index = @backingInt(self.stream);
         if (self.reader.open[index]) return;
         self.reader.open[index] = true;
         self.reader.created = self.stream;
@@ -4700,7 +4721,7 @@ const RecordOrderSink = struct {
 
     pub fn finishLine(self: *RecordOrderSink) !void {
         self.ensureOpen();
-        self.reader.open[@intFromEnum(self.stream)] = false;
+        self.reader.open[@backingInt(self.stream)] = false;
     }
 
     pub fn replaceLine(self: *RecordOrderSink) !void {
@@ -4930,7 +4951,7 @@ fn appendMergedCommandSource(
 
     var record_ordinal: usize = 0;
     while (try order.nextRecord(alloc)) |stream| {
-        const index = @intFromEnum(stream);
+        const index = @backingInt(stream);
         const generation = try generations[index].nextRecord(alloc) orelse
             return error.CommandProjectionRecordMissing;
         const in_range = record_ordinal >= stored.start_record and

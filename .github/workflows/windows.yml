@@ -14,13 +14,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install Zig 0.16.0 with its published checksum
+      - name: Install Zig 0.17.1 with its published checksum
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $index = Invoke-RestMethod https://ziglang.org/download/index.json
-          $release = $index.'0.16.0'.'x86_64-windows'
-          if (-not $release) { throw 'Zig 0.16.0 Windows release is unavailable' }
+          $release = $index.'0.17.1'.'x86_64-windows'
+          if (-not $release) { throw 'Zig 0.17.1 Windows release is unavailable' }
           $archive = Join-Path $env:RUNNER_TEMP 'zig.zip'
           Invoke-WebRequest $release.tarball -OutFile $archive
           if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $release.shasum) { throw 'Zig checksum mismatch' }

@@ -146,8 +146,8 @@ pub fn authorityGeneration(view: View) u64 {
     hashU64(&hash, @intFromBool(view.features_visible));
     for (view.servers) |server_identity| {
         hashString(&hash, server_identity.name);
-        hashU64(&hash, @intFromEnum(server_identity.source));
-        hashU64(&hash, @intFromEnum(server_identity.scope));
+        hashU64(&hash, @backingInt(server_identity.source));
+        hashU64(&hash, @backingInt(server_identity.scope));
         hashU64(&hash, server_identity.connection_generation);
         hashU64(&hash, server_identity.catalog_generation);
         hashU64(&hash, server_identity.auth_generation);

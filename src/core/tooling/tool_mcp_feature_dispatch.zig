@@ -202,8 +202,8 @@ fn stringField(object: std.json.ObjectMap, name: []const u8) ?[]const u8 {
 }
 
 fn parseAction(value: []const u8) ?tool_mcp_runtime.FeatureAction {
-    inline for (std.meta.fields(tool_mcp_runtime.FeatureAction)) |field| {
-        if (std.mem.eql(u8, value, field.name)) return @enumFromInt(field.value);
+    inline for (@typeInfo(tool_mcp_runtime.FeatureAction).@"enum".field_names, @typeInfo(tool_mcp_runtime.FeatureAction).@"enum".field_values) |field_name, field_value| {
+        if (std.mem.eql(u8, value, field_name)) return @fromBackingInt(@intCast(field_value));
     }
     return null;
 }

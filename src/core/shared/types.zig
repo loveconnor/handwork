@@ -1,6 +1,7 @@
 const std = @import("std");
 const text_utils = @import("text_utils.zig");
 const skill_contract = @import("../skills/skill_contract.zig");
+const repeat = @import("comptime_repeat.zig").repeat;
 
 pub const Layout = struct {
     rows: u16,
@@ -326,7 +327,7 @@ pub const ModelRecoveryRequiredAction = enum {
 pub const ModelFailureDiagnostic = struct {
     pub const max_bytes: usize = 256;
 
-    bytes: [max_bytes]u8 = [_]u8{0} ** max_bytes,
+    bytes: [max_bytes]u8 = @as([max_bytes]u8, @splat(0)),
     len: u16 = 0,
 
     pub fn defaultTextForCause(cause: ModelRecoveryCause) []const u8 {
@@ -652,7 +653,7 @@ test "route recovery label includes a value-owned diagnostic" {
 }
 
 test "model failure diagnostic truncation is bounded and utf8 safe" {
-    const long = "provider_error: " ++ ("é" ** 200);
+    const long = "provider_error: " ++ repeat("é", 200);
     const diagnostic = ModelFailureDiagnostic.init(long);
 
     try std.testing.expect(diagnostic.view().len <= ModelFailureDiagnostic.max_bytes);
@@ -730,7 +731,7 @@ pub const McpToolBinding = struct {
     catalog_generation: u64,
     auth_generation: u64,
     authority_id: u64 = 0,
-    definition_digest: [32]u8 = .{0} ** 32,
+    definition_digest: [32]u8 = @splat(0),
 
     /// Transport renewal may change epochs without changing the advertised action.
     pub fn sameDefinition(self: McpToolBinding, other: McpToolBinding) bool {
@@ -780,7 +781,7 @@ pub const WebFetchArtifactState = enum {
 pub const WebFetchCompletion = struct {
     pub const max_url_len: usize = 192;
 
-    url_buf: [max_url_len]u8 = [_]u8{0} ** max_url_len,
+    url_buf: [max_url_len]u8 = @as([max_url_len]u8, @splat(0)),
     url_len: u8 = 0,
     bytes: u64 = 0,
     status: u16 = 0,
@@ -1694,7 +1695,7 @@ test "authoritative tool admission rejects blank current call ids" {
 }
 
 test "authoritative tool admission rejects unstorable names" {
-    const oversized = [_]u8{'n'} ** 257;
+    const oversized = @as([257]u8, @splat('n'));
     const cases = [_]struct { value: []const u8, reason: ConversationIdentity.Failure }{
         .{ .value = "", .reason = .empty },
         .{ .value = &oversized, .reason = .too_long },
@@ -1712,7 +1713,7 @@ test "authoritative tool admission rejects unstorable names" {
 }
 
 test "authoritative tool admission rejects unstorable correlation identities" {
-    const oversized = [_]u8{'i'} ** 257;
+    const oversized = @as([257]u8, @splat('i'));
     const cases = [_]struct { value: []const u8, reason: ConversationIdentity.Failure }{
         .{ .value = &oversized, .reason = .too_long },
         .{ .value = "\xff", .reason = .invalid_utf8 },
@@ -1737,8 +1738,8 @@ test "authoritative tool admission rejects unstorable correlation identities" {
 }
 
 test "authoritative tool admission preserves bounded canonical identity formats" {
-    const boundary = [_]u8{'i'} ** 256;
-    const unicode_boundary = "é" ** 128;
+    const boundary = @as([256]u8, @splat('i'));
+    const unicode_boundary = repeat("é", 128);
     for ([_][]const u8{ &boundary, unicode_boundary, "functions.read_file:0", "unknown/tool" }) |identity| {
         for ([_]ToolExecutionProvenance{ .handwork_local, .provider_executed }) |provenance| {
             const calls = [_]ToolCall{.{ .id = identity, .name = identity, .provisional_id = identity, .arguments_json = "{}", .provenance = provenance, .provider_result = "result" }};
@@ -1823,7 +1824,7 @@ test "authoritative tool admission rejects malformed provider arguments but admi
 pub const ConversationLanguage = struct {
     pub const max_len: usize = 24;
 
-    bytes: [max_len]u8 = [_]u8{0} ** max_len,
+    bytes: [max_len]u8 = @as([max_len]u8, @splat(0)),
     len: u8 = 0,
 
     pub fn default() ConversationLanguage {
@@ -2017,7 +2018,7 @@ pub const ReasoningEffort = union(enum) {
             }
 
             var name = Name{
-                .bytes = [_]u8{0} ** max_name_bytes,
+                .bytes = @as([max_name_bytes]u8, @splat(0)),
                 .len = @intCast(raw.len),
             };
             @memcpy(name.bytes[0..raw.len], raw);

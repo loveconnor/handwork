@@ -35,7 +35,7 @@ function resolveBinary(root, platform = process.platform, arch = process.arch) {
   for (const candidate of candidates) {
     if (existsSync(candidate) && matchesTarget(candidate, platform, arch)) return candidate;
   }
-  throw new Error(`The Handwork executable for ${target} is missing or has the wrong architecture. Reinstall handwork, or build this checkout with Zig 0.16.0.`);
+  throw new Error(`The Handwork executable for ${target} is missing or has the wrong architecture. Reinstall handwork, or build this checkout with Zig 0.17.1.`);
 }
 
 if (require.main === module) {

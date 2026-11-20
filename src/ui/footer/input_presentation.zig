@@ -11,13 +11,13 @@ const skill_runtime = @import("../../core/skills/skill_runtime.zig");
 const types = @import("../../core/shared/types.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
 const text_utils = @import("../../core/shared/text_utils.zig");
-const paste_blocks = @import("../../core/input/pasted_blocks.zig");
 const core_input_runtime = @import("../../core/input/runtime.zig");
 const visual_layout = @import("../input/visual_layout.zig");
 const ui_render = @import("../render.zig");
 const picker_presentation = @import("picker_presentation.zig");
 const render_input = @import("render_input.zig");
 const row_text = @import("row_text.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const InputRuntime = core_input_runtime.Runtime;
@@ -178,17 +178,17 @@ test "steering rows visibly escape terminal control bytes" {
 // Ordered widest-first; every fallback keeps the enter/esc controls so narrow
 // terminals never lose the submit and cancel instructions.
 const freeform_question_hints = [_][]const u8{
-    "↑↓ cursor · shift+↑↓ options · tab questions · enter answer · esc cancel",
-    "shift+↑↓ options · tab questions · enter answer · esc cancel",
-    "tab questions · enter answer · esc cancel",
-    "enter answer · esc cancel",
+    "↑↓ cursor    shift+↑↓ options    tab questions    enter answer    esc cancel",
+    "shift+↑↓ options    tab questions    enter answer    esc cancel",
+    "tab questions    enter answer    esc cancel",
+    "enter answer    esc cancel",
     "enter/esc",
 };
 
 const predefined_question_hints = [_][]const u8{
-    "↑↓ options · tab questions · enter answer · esc cancel",
-    "tab questions · enter answer · esc cancel",
-    "enter answer · esc cancel",
+    "↑↓ options    tab questions    enter answer    esc cancel",
+    "tab questions    enter answer    esc cancel",
+    "enter answer    esc cancel",
     "enter/esc",
 };
 
@@ -403,37 +403,37 @@ fn authPickerInteractionHint(view: auth_runtime.PickerView, width: u16) ?[]const
     if (!view.active or view.include_skip) return null;
 
     const root_variants = [_][]const u8{
-        "↑↓ navigate     enter open     esc close",
+        "↑↓ navigate    enter open    esc close",
         "↑↓ move  enter open  esc",
         "enter open  esc close",
         "enter esc",
     };
     const connections_variants = [_][]const u8{
-        "↑↓ navigate     enter open     esc back",
+        "↑↓ navigate    enter open    esc back",
         "↑↓ move  enter open  esc",
         "enter open  esc back",
         "enter esc",
     };
     const selection_variants = [_][]const u8{
-        "↑↓ navigate     enter use     esc back",
+        "↑↓ navigate    enter use    esc back",
         "↑↓ move  enter use  esc",
         "enter use  esc back",
         "enter esc",
     };
     const codex_sign_in_variants = [_][]const u8{
-        "enter reopens browser · esc cancels",
+        "enter reopens browser    esc cancels",
         "enter reopens  esc cancels",
         "enter  esc",
         "enter esc",
     };
     const grok_browser_variants = [_][]const u8{
-        "enter reopens browser · tab enters code · esc cancels",
+        "enter reopens browser    tab enters code    esc cancels",
         "enter reopens  tab code  esc cancels",
         "enter  tab  esc",
         "enter tab esc",
     };
     const grok_manual_variants = [_][]const u8{
-        "enter submits code · tab returns to browser · esc cancels",
+        "enter submits code    tab returns to browser    esc cancels",
         "enter submits  tab browser  esc cancels",
         "enter  tab  esc",
         "enter tab esc",
@@ -560,13 +560,17 @@ pub fn composeHintRow(
     else
         width;
 
+    // Inset one column so the status aligns with the prompt glyph inside the
+    // composer panel above it.
+    const inset: u16 = @intFromBool(left_width > 1);
     var row: std.ArrayList(u8) = .empty;
+    if (inset > 0) try row.append(alloc, ' ');
     try row.appendSlice(alloc, if (question_hint != null) ui_render.dim_style else ui_render.statusline_style);
-    try row_text.appendClipped(alloc, &row, hint_line, left_width);
+    try row_text.appendClipped(alloc, &row, hint_line, left_width - inset);
     try row.appendSlice(alloc, ui_render.reset_style);
 
     const hint_width = @min(
-        display_width.visibleWidthIgnoringAnsi(hint_line),
+        display_width.visibleWidthIgnoringAnsi(hint_line) + inset,
         @as(usize, left_width),
     );
     if (right_text.len > 0 and right_width > 0 and
@@ -636,22 +640,22 @@ pub fn composeMcpMenuHintRow(
     }
 
     const root_variants = [_][]const u8{
-        "↑↓ move  tab section  enter inspect  a add  r reload  c help  esc close",
+        "↑↓ navigate    tab section    enter inspect    a add    r reload    c help    esc close",
         "↑↓ move  tab section  enter  a add  r reload  c help  esc",
         "tab enter a r c esc",
     };
     const catalog_variants = [_][]const u8{
-        "↑↓ navigate     tab section     enter open     / filter     esc back",
+        "↑↓ navigate    tab section    enter open    / filter    esc back",
         "↑↓ move  tab section  enter  / filter  esc",
         "tab enter / esc",
     };
     const preview_variants = [_][]const u8{
-        "↑↓ scroll     i insert     esc back",
+        "↑↓ scroll    i insert    esc back",
         "↑↓ scroll  i insert  esc",
         "↑↓ i esc",
     };
     const add_variants = [_][]const u8{
-        "type field     enter next/save     tab transport     esc cancel",
+        "type field    enter next/save    tab transport    esc cancel",
         "type  enter next/save  tab transport  esc",
         "enter tab esc",
     };
@@ -675,7 +679,7 @@ pub fn composeMcpMenuHintRow(
     try details.appendSlice(alloc, "c help  esc back");
     const details_variants = [_][]const u8{ details.items, "c help  esc back", "c esc" };
     const confirm_variants = [_][]const u8{
-        "enter confirm     esc cancel",
+        "enter confirm    esc cancel",
         "enter confirm  esc",
         "enter esc",
     };
@@ -720,7 +724,7 @@ pub fn composeHelpMenuHintRow(alloc: Allocator, width: u16, ctrl_c_pending: bool
     }
 
     const variants = [_][]const u8{
-        "↑↓ navigate     tab category     enter open     esc close",
+        "↑↓ navigate    tab category    enter open    esc close",
         "↑↓ navigate  tab category  enter open  esc close",
         "↑↓ move  tab category  enter  esc",
         "tab category  enter open  esc",
@@ -757,7 +761,7 @@ pub fn composeSettingsMenuHintRow(
     }
 
     const variants = [_][]const u8{
-        "↑↓ navigate     tab category     ←→ change     esc close",
+        "↑↓ navigate    tab category    ←→ change    esc close",
         "↑↓ navigate  tab category  ←→ change  esc close",
         "↑↓ move  tab category  ←→ change  esc",
         "tab category  ←→ change  esc",
@@ -786,17 +790,17 @@ pub fn composeCompactCommandMenuHintRow(
 ) !std.ArrayList(u8) {
     const variants = switch (menu) {
         .statusline => [_][]const u8{
-            "↑↓ navigate     ←→ change     esc close",
+            "↑↓ navigate    ←→ change    esc close",
             "↑↓ move  ←→ change  esc",
             "←→ esc",
         },
         .usage => [_][]const u8{
-            "tab scope     ↑↓ model     enter expand     r refresh     esc close",
+            "↑↓ model    tab scope    enter expand    r refresh    esc close",
             "tab scope  ↑↓ model  enter expand  r refresh  esc",
             "tab ↑↓  enter  r  esc",
         },
         .workspace => [_][]const u8{
-            "↑↓ navigate     enter use     esc close",
+            "↑↓ navigate    enter use    esc close",
             "↑↓ move  enter use  esc",
             "enter esc",
         },
@@ -834,21 +838,21 @@ fn composeCatalogMenuHintRow(alloc: Allocator, width: u16, ctrl_c_pending: bool,
     }
 
     const source_variants = [_][]const u8{
-        "↑↓ navigate     tab source     enter use     esc close",
+        "↑↓ navigate    tab source    enter use    esc close",
         "↑↓ navigate  tab source  enter use  esc close",
         "↑↓ move  tab source  enter  esc",
         "enter use  esc close",
         "enter esc",
     };
     const provider_variants = [_][]const u8{
-        "↑↓ navigate     tab provider     enter use     esc close",
+        "↑↓ navigate    tab provider    enter use    esc close",
         "↑↓ navigate  tab provider  enter use  esc close",
         "↑↓ move  tab provider  enter  esc",
         "enter use  esc close",
         "enter esc",
     };
     const scope_variants = [_][]const u8{
-        "↑↓ navigate     tab scope     enter resume     esc close",
+        "↑↓ navigate    tab scope    enter resume    esc close",
         "↑↓ navigate  tab scope  enter resume  esc close",
         "↑↓ move  tab scope  enter  esc",
         "enter resume  esc close",
@@ -876,8 +880,28 @@ fn composeCatalogMenuHintRow(alloc: Allocator, width: u16, ctrl_c_pending: bool,
 }
 
 pub fn composeSlashMenuHintRow(alloc: Allocator, width: u16) !std.ArrayList(u8) {
+    return composeSlashMenuHintRowWithRange(alloc, width, "");
+}
+
+/// Slash palette hints with the result range ("1–8 of 39") right-aligned.
+pub fn composeSlashMenuHintRowWithRange(alloc: Allocator, width: u16, range: []const u8) !std.ArrayList(u8) {
+    var row = try composeSlashMenuHintRowPlain(alloc, width -| 1);
+    errdefer row.deinit(alloc);
+    try row.insert(alloc, 0, ' ');
+    const used = display_width.visibleWidthIgnoringAnsi(row.items);
+    const range_width = display_width.visibleWidth(range);
+    if (range_width > 0 and used + range_width + 3 <= width) {
+        try row.appendNTimes(alloc, ' ', width - 1 - range_width - used);
+        try row.appendSlice(alloc, ui_render.divider_style);
+        try row.appendSlice(alloc, range);
+        try row.appendSlice(alloc, ui_render.reset_style);
+    }
+    return row;
+}
+
+fn composeSlashMenuHintRowPlain(alloc: Allocator, width: u16) !std.ArrayList(u8) {
     const variants = [_][]const u8{
-        "↑↓ navigate     enter use     esc close",
+        "↑↓ navigate    enter use    esc close",
         "↑↓ navigate  enter use  esc close",
         "↑↓ move  enter  esc",
         "enter use  esc close",
@@ -902,7 +926,7 @@ pub fn composeSlashMenuHintRow(alloc: Allocator, width: u16) !std.ArrayList(u8) 
 test "slash menu hint keeps navigation and selection controls width safe" {
     var wide = try composeSlashMenuHintRow(std.testing.allocator, 80);
     defer wide.deinit(std.testing.allocator);
-    try std.testing.expect(std.mem.find(u8, wide.items, "↑↓ navigate     enter use     esc close") != null);
+    try std.testing.expect(std.mem.find(u8, wide.items, "↑↓ navigate    enter use    esc close") != null);
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(wide.items) <= 80);
 
     var narrow = try composeSlashMenuHintRow(std.testing.allocator, 12);
@@ -1003,10 +1027,13 @@ fn startComposedInputRow(
     if (started.*) return;
     started.* = true;
     const prefix = visual_layout.inputPrefix(row_index);
+    // A single prompt glyph on the first row; wrapped rows align under it.
+    const glyph: []const u8 = if (hidden_above) "↑" else if (row_index == 0) "›" else " ";
+    if (width > 0) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.hint_style);
-    try row_text.appendClipped(alloc, row, if (hidden_above) "┃↑" else "┃", width);
+    if (width > 1) try row_text.appendClipped(alloc, row, glyph, width - 1);
     try row.appendSlice(alloc, ui_render.reset_style);
-    if (!hidden_above and width > 1) try row_text.appendClipped(alloc, row, " ", width - 1);
+    if (width > 2) try row_text.appendClipped(alloc, row, " ", width - 2);
     const width_usize: usize = width;
     remaining_cells.* = if (width_usize > prefix.cell_width) width_usize - prefix.cell_width else 0;
 }
@@ -1345,7 +1372,7 @@ test "footer raw geometry windows capped input around the cursor" {
     const alloc = std.testing.allocator;
     var input = InputRuntime{};
     defer input.deinit(alloc);
-    try input.edit_state.input.appendSlice(alloc, "x" ** 5000);
+    try input.edit_state.input.appendSlice(alloc, repeat("x", 5000));
     input.edit_state.cursor = input.edit_state.input.items.len;
     const geometry = measureRawInputGeometry(testRenderContext(&input), 80, 8, true, false, false, false);
     try std.testing.expect(geometry.summary.total_rows > geometry.window.row_count);
@@ -1745,17 +1772,17 @@ test "compose hint row replaces model status with subscription sign-in controls"
         .{
             .source = .chatgpt_subscription,
             .manual_code_visible = false,
-            .expected = "enter reopens browser · esc cancels",
+            .expected = "enter reopens browser    esc cancels",
         },
         .{
             .source = .grok_subscription,
             .manual_code_visible = false,
-            .expected = "enter reopens browser · tab enters code · esc cancels",
+            .expected = "enter reopens browser    tab enters code    esc cancels",
         },
         .{
             .source = .grok_subscription,
             .manual_code_visible = true,
-            .expected = "enter submits code · tab returns to browser · esc cancels",
+            .expected = "enter submits code    tab returns to browser    esc cancels",
         },
     };
 

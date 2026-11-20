@@ -4,6 +4,7 @@ const std = @import("std");
 const debug_trace = @import("../../core/shared/debug_trace.zig");
 const display_width = @import("../../core/shared/display_width.zig");
 const render_request = @import("../render_request.zig");
+const io_mod = @import("../../core/shared/io.zig");
 const ui_render = @import("../render.zig");
 const render_engine = @import("../render_engine.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
@@ -219,11 +220,10 @@ fn paintPlannedActivityRow(
     defer preview.deinit(surface.alloc);
     var buf: [4096]u8 = undefined;
     const text = switch (input.style) {
-        .thinking => writeThinkingBlinkText(
-            &buf,
-            preview.bytes,
-            input.static_activity or (input.thinking_blink orelse markerBlinkVisible(input.shimmer_pos)),
-        ),
+        .thinking => if (input.static_activity)
+            writeThinkingBlinkText(&buf, preview.bytes, true)
+        else
+            writeThinkingPulseText(&buf, preview.bytes, input.shimmer_pos),
         .tool_marker => writeToolMarkerBlinkText(&buf, preview.bytes, if (input.static_activity) -render_request.animation_padding else input.shimmer_pos),
         .neutral => writeStaticStyledText(&buf, preview.bytes, ui_render.dim_style),
         .warning => writeStaticStyledText(&buf, preview.bytes, ui_render.warning_style),
@@ -262,6 +262,81 @@ fn markerBlinkVisible(shimmer_pos: i16) bool {
     return @mod(shimmer_pos + render_request.animation_padding, 2 * half) < half;
 }
 
+// Breathing marker: eight steps from a faint dot to a full disc over one
+// 40-frame (2s) cycle, size and brightness rising together.
+const pulse_glyphs = [_][]const u8{ "·", "·", "•", "•", "•", "●", "●", "●" };
+const pulse_dark = [_][]const u8{ "\x1b[38;5;239m", "\x1b[38;5;242m", "\x1b[38;5;244m", "\x1b[38;5;247m", "\x1b[38;5;250m", "\x1b[38;5;252m", "\x1b[38;5;254m", "\x1b[38;5;255m" };
+const pulse_light = [_][]const u8{ "\x1b[38;5;252m", "\x1b[38;5;249m", "\x1b[38;5;247m", "\x1b[38;5;245m", "\x1b[38;5;243m", "\x1b[38;5;240m", "\x1b[38;5;237m", "\x1b[38;5;235m" };
+const pulse_cycle_frames: f32 = 40.0;
+
+fn pulseFrame(shimmer_pos: i16) f32 {
+    return @floatFromInt(@mod(@as(i32, shimmer_pos) + render_request.animation_padding, 40));
+}
+
+fn pulseLevel(shimmer_pos: i16) usize {
+    const t = pulseFrame(shimmer_pos) / pulse_cycle_frames;
+    const v = 0.5 - 0.5 * @cos(t * 2.0 * std.math.pi);
+    const level: usize = @intFromFloat(@round(v * @as(f32, pulse_glyphs.len - 1)));
+    return @min(level, pulse_glyphs.len - 1);
+}
+
+// Live-work marker: a three-dot comet orbiting the rim of one braille cell.
+// Ring order walks the cell's outer dots clockwise from the top-left.
+const comet_ring = [_]u8{ 0x01, 0x08, 0x10, 0x20, 0x80, 0x40, 0x04, 0x02 };
+const comet_step_ms: i64 = 90;
+
+fn writeComet(w: *std.Io.Writer) !void {
+    const step: usize = @intCast(@mod(@divTrunc(io_mod.milliTimestamp(), comet_step_ms), comet_ring.len));
+    const n = comet_ring.len;
+    const bits = comet_ring[step] | comet_ring[(step + n - 1) % n] | comet_ring[(step + n - 2) % n];
+    var glyph: [4]u8 = undefined;
+    const len = std.unicode.utf8Encode(@as(u21, 0x2800) + bits, &glyph) catch return;
+    const ramp = if (ui_render.is_light) &pulse_light else &pulse_dark;
+    try w.writeAll(ramp[7]);
+    try w.writeAll(glyph[0..len]);
+    try w.writeAll(ui_render.reset_style);
+}
+
+/// Writes `text` with a soft highlight sweeping across it once per 2s cycle.
+fn writeSweptText(w: *std.Io.Writer, text: []const u8, shimmer_pos: i16) !void {
+    const ramp = if (ui_render.is_light) &pulse_light else &pulse_dark;
+    const span: f32 = @floatFromInt(display_width.visibleWidth(text) + 6);
+    const centre = pulseFrame(shimmer_pos) / pulse_cycle_frames * span - 3.0;
+    var col: f32 = 0;
+    var i: usize = 0;
+    while (i < text.len) {
+        const unit = display_width.displayUnitAt(text, i);
+        const len = @max(unit.byte_len, 1);
+        const distance = @abs(col - centre);
+        const boost: usize = if (distance < 1.0) 3 else if (distance < 2.0) 2 else if (distance < 3.0) 1 else 0;
+        try w.writeAll(ramp[4 + boost]);
+        try w.writeAll(text[i..@min(i + len, text.len)]);
+        i += len;
+        col += 1;
+    }
+}
+
+/// The live thinking row: a breathing marker, then the verb with a soft
+/// highlight sweeping across it, then the receding counters.
+fn writeThinkingPulseText(out: []u8, label: []const u8, shimmer_pos: i16) []const u8 {
+    const marker = "•";
+    if (!std.mem.startsWith(u8, label, marker)) return writeThinkingBlinkText(out, label, true);
+    var w: std.Io.Writer = .fixed(out);
+    writeComet(&w) catch return label;
+
+    const rest = label[marker.len..];
+    const verb_end = std.mem.findScalar(u8, rest, '(') orelse rest.len;
+    writeSweptText(&w, rest[0..verb_end], shimmer_pos) catch return label;
+    w.writeAll(ui_render.dim_style) catch return label;
+    for (rest[verb_end..]) |byte| switch (byte) {
+        '(' => w.writeAll("· ") catch return label,
+        ')' => {},
+        else => w.writeByte(byte) catch return label,
+    };
+    w.writeAll(ui_render.reset_style) catch return label;
+    return w.buffered();
+}
+
 fn writeThinkingBlinkText(out: []u8, label: []const u8, marker_visible: bool) []const u8 {
     const marker = "•";
     if (!std.mem.startsWith(u8, label, marker)) {
@@ -274,16 +349,17 @@ fn writeThinkingBlinkText(out: []u8, label: []const u8, marker_visible: bool) []
         w.writeAll(" ") catch return label;
     }
     const rest = label[marker.len..];
-    // The token suffix recedes into the muted gray; the verb and elapsed
-    // counter keep the brighter label gray.
-    if (std.mem.find(u8, rest, " (↑")) |token_suffix| {
-        w.print("{s}{s}{s}{s}{s}", .{
-            ui_render.permission_auto_style,
-            rest[0..token_suffix],
-            ui_render.dim_style,
-            rest[token_suffix..],
-            ui_render.reset_style,
-        }) catch return label;
+    // "Thinking (10s) (↑5 ↓133)" renders as "Thinking · 10s · ↑5 ↓133": the
+    // verb in the label gray, the counters receding. Same cell width, so
+    // nothing downstream shifts.
+    if (std.mem.findScalar(u8, rest, '(')) |open_paren| {
+        w.print("{s}{s}{s}", .{ ui_render.permission_auto_style, rest[0..open_paren], ui_render.dim_style }) catch return label;
+        for (rest[open_paren..]) |byte| switch (byte) {
+            '(' => w.writeAll("· ") catch return label,
+            ')' => {},
+            else => w.writeByte(byte) catch return label,
+        };
+        w.writeAll(ui_render.reset_style) catch return label;
     } else {
         w.print("{s}{s}{s}", .{
             ui_render.permission_auto_style,
@@ -357,35 +433,22 @@ fn writeToolMarkerBlinkText(out: []u8, label: []const u8, shimmer_pos: i16) []co
     const marker = label[marker_start..marker_end];
     if (!std.mem.eql(u8, marker, "●") and !std.mem.eql(u8, marker, "└")) return label;
 
-    var marker_buf: [64]u8 = undefined;
-    var marker_writer: std.Io.Writer = .fixed(&marker_buf);
-    if (markerBlinkVisible(shimmer_pos)) {
-        marker_writer.print("{s}{s}{s}", .{
-            ui_render.permission_auto_style,
-            label[marker_start..marker_end],
-            ui_render.reset_style,
-        }) catch return label;
-    } else {
-        marker_writer.writeAll(" ") catch return label;
-    }
-    const animated_marker = marker_writer.buffered();
-    const prefix = label[0..marker_start];
-    const suffix = label[marker_end..];
-    const required = prefix.len * 2 + animated_marker.len + suffix.len + ui_render.reset_style.len;
-    if (required > out.len) return label;
-
-    var end: usize = 0;
-    @memcpy(out[end .. end + prefix.len], prefix);
-    end += prefix.len;
-    @memcpy(out[end .. end + animated_marker.len], animated_marker);
-    end += animated_marker.len;
-    @memcpy(out[end .. end + prefix.len], prefix);
-    end += prefix.len;
-    @memcpy(out[end .. end + suffix.len], suffix);
-    end += suffix.len;
-    @memcpy(out[end .. end + ui_render.reset_style.len], ui_render.reset_style);
-    end += ui_render.reset_style.len;
-    return out[0..end];
+    // The running call: the comet takes the marker cell so the verb lines up
+    // with the finished calls above, the verb carries the sweep and the
+    // target recedes.
+    var w: std.Io.Writer = .fixed(out);
+    w.writeAll(label[0..marker_start]) catch return label;
+    writeComet(&w) catch return label;
+    const rest = label[marker_end..];
+    var verb_start: usize = 0;
+    while (verb_start < rest.len and rest[verb_start] == ' ') verb_start += 1;
+    w.writeAll(rest[0..verb_start]) catch return label;
+    const verb_len = std.mem.findScalar(u8, rest[verb_start..], ' ') orelse rest.len - verb_start;
+    writeSweptText(&w, rest[verb_start .. verb_start + verb_len], shimmer_pos) catch return label;
+    w.writeAll(ui_render.statusline_style) catch return label;
+    w.writeAll(rest[verb_start + verb_len ..]) catch return label;
+    w.writeAll(ui_render.reset_style) catch return label;
+    return w.buffered();
 }
 
 test "tool marker shimmer accepts the minimal final connector" {

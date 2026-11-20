@@ -33,7 +33,6 @@ const subagent_tool_host = @import("../subagent/tool_host.zig");
 const subagent_tool_provider = @import("../subagent/tool_provider.zig");
 const session_runtime = @import("../session/session.zig");
 const session_permission_state = @import("../permissions/session_permission_state.zig");
-const session_codec_mod = @import("../session/session_codec.zig");
 const session_child_store = @import("../session/session_child_store.zig");
 const command_replay_store = @import("../session/command_replay_store.zig");
 const session_store = @import("../session/session_store.zig");
@@ -65,6 +64,7 @@ const credential_authority = @import("../auth/credential_authority.zig");
 const worker_runtime = @import("../agent/worker_runtime.zig");
 const execution_budget = @import("../agent/execution_budget.zig");
 const context_contract = @import("../workspace/context_contract.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const test_builtin_tools = if (builtin.is_test)
     @import("../../builtins/tools.zig")
 else
@@ -79,11 +79,6 @@ else
     struct {};
 const js_host_workspace = @import("../hosts/js_host_workspace.zig");
 
-const agent_test_support = if (builtin.is_test)
-    @import("../agent/runtime/tests/support.zig")
-else
-    struct {};
-
 const Allocator = std.mem.Allocator;
 const ToolCall = types.ToolCall;
 const ChatMessage = types.ChatMessage;
@@ -91,11 +86,9 @@ const ChatMessage = types.ChatMessage;
 const PermissionGrant = types.PermissionGrant;
 const PermissionMode = types.PermissionMode;
 const ToolPermissionDecision = types.ToolPermissionDecision;
-const subagent_tool_name = "subagent";
 const ToolExecutionResult = tool_contracts.ToolExecutionResult;
 const SessionRuntime = session_runtime.SessionRuntime;
 const WorkerRuntime = worker_runtime.WorkerRuntime;
-const max_file_mutation_success_bytes: usize = 8 * 1024;
 
 const helpers = struct {
     const requiredStringArg = tool_args.requiredStringArg;
@@ -2419,46 +2412,12 @@ const CancelTestCommandOnOutput = struct {
     }
 };
 
-const TestCommandOutputCapture = struct {
-    alloc: Allocator,
-    bytes: std.ArrayList(u8) = .empty,
-    stdout_chunks: usize = 0,
-    stderr_chunks: usize = 0,
-
-    fn deinit(self: *@This()) void {
-        self.bytes.deinit(self.alloc);
-    }
-
-    fn onChunk(
-        raw_ctx: *anyopaque,
-        _: ?types.ToolLifecycleId,
-        stream: command_contract.CommandOutputStream,
-        chunk: []const u8,
-    ) !void {
-        const self: *@This() = @ptrCast(@alignCast(raw_ctx));
-        try self.bytes.appendSlice(self.alloc, chunk);
-        switch (stream) {
-            .stdout => self.stdout_chunks += 1,
-            .stderr => self.stderr_chunks += 1,
-        }
-    }
-};
-
 fn runCommandArgsForTest(alloc: Allocator, command: []const u8) ![]u8 {
     var out: std.Io.Writer.Allocating = .init(alloc);
     defer out.deinit();
     try out.writer.writeAll("{\"action\":\"run\",\"command\":");
     try std.json.Stringify.value(command, .{}, &out.writer);
     try out.writer.writeAll(",\"timeout_ms\":600000}");
-    return out.toOwnedSlice();
-}
-
-fn runCommandArgsWithCleanProfileForTest(alloc: Allocator, command: []const u8) ![]u8 {
-    var out: std.Io.Writer.Allocating = .init(alloc);
-    defer out.deinit();
-    try out.writer.writeAll("{\"action\":\"run\",\"command\":");
-    try std.json.Stringify.value(command, .{}, &out.writer);
-    try out.writer.writeAll(",\"profile\":\"clean\",\"timeout_ms\":600000}");
     return out.toOwnedSlice();
 }
 
@@ -2777,7 +2736,7 @@ fn readTraceFileForTest(alloc: Allocator, trace_path: []const u8) ![]u8 {
     defer file.close(io_mod.getIo());
     var read_buf: [1024]u8 = undefined;
     var reader = file.reader(std.testing.io, &read_buf);
-    return reader.interface.allocRemaining(alloc, std.Io.Limit.limited(64 * 1024));
+    return io_mod.allocRemainingBelowLimit(&reader.interface, alloc, std.Io.Limit.limited(64 * 1024));
 }
 
 const WebSearchBackendFixture = struct {
@@ -6203,20 +6162,12 @@ const McpFixture = struct {
         return true;
     }
 
-    fn hasFalse(_: *anyopaque, _: []const u8) bool {
-        return false;
-    }
-
     fn validateArguments(raw_ctx: *anyopaque, arena: Allocator, _: []const u8, arguments_json: []const u8, _: tool_mcp_runtime.Access) anyerror!tool_mcp_runtime.ValidationResult {
         if (std.mem.eql(u8, arguments_json, "{\"path\":7}")) {
             return .{ .invalid = try arena.dupe(u8, "path must be a string") };
         }
         const ctx: *CountingContext = @ptrCast(@alignCast(raw_ctx));
         return .{ .valid = ctx.runtime_generation };
-    }
-
-    fn callOk(_: *anyopaque, arena: Allocator, _: []const u8, _: []const u8, _: usize, _: tool_mcp_runtime.CallOptions) anyerror!?tool_mcp_runtime.CallResult {
-        return .{ .model_output = try arena.dupe(u8, "mcp ok") };
     }
 
     fn callCounting(raw_ctx: *anyopaque, arena: Allocator, _: []const u8, _: []const u8, _: usize, _: tool_mcp_runtime.CallOptions) anyerror!?tool_mcp_runtime.CallResult {
@@ -6612,7 +6563,7 @@ test "skill tool preserves resource and discovery notices separately" {
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(
             io_mod.getIo(),
-            "---\nname: workflow\ndescription: workflow helper\n---\n\nuse the workflow skill\n" ++ ("bounded instruction line\n" ** 8),
+            "---\nname: workflow\ndescription: workflow helper\n---\n\nuse the workflow skill\n" ++ repeat("bounded instruction line\n", 8),
         );
     }
     {
@@ -7818,7 +7769,7 @@ test "vision runtime honors configured provider bounds without a hidden twenty K
     defer tmp.cleanup();
     const catalog = try makeVisionCatalog(alloc, tmp.dir, 1);
     defer types.freeImageAttachmentSlice(alloc, catalog);
-    const evidence = "x" ** 3500;
+    const evidence = repeat("x", 3500);
     var large_out: std.Io.Writer.Allocating = .init(alloc);
     defer large_out.deinit();
     try large_out.writer.writeAll("{\"images\":[{\"image_id\":1,\"status\":\"ok\",\"summary\":\"large\",\"visible_text\":[");

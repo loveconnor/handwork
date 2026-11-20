@@ -1,4 +1,5 @@
 const std = @import("std");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 pub const description_max_bytes: usize = 1024;
 pub const truncation_marker = "... [truncated]";
@@ -433,7 +434,7 @@ test "object alternatives reject contradictory ordinary object metadata" {
 
 test "cappedDescriptionAlloc appends explicit truncation marker" {
     const alloc = std.testing.allocator;
-    const oversized = "x" ** (description_max_bytes + 20);
+    const oversized = repeat("x", description_max_bytes + 20);
 
     const capped = try cappedDescriptionAlloc(alloc, oversized);
     defer alloc.free(capped);
@@ -559,7 +560,7 @@ test "builtinFunctionSchemaJsonAlloc serializes every supported property shape" 
 
 test "dynamicFunctionSchemaJsonAlloc wraps rendered input schema in the flattened envelope" {
     const alloc = std.testing.allocator;
-    const description = ("d" ** (description_max_bytes + 1)) ++ "tail";
+    const description = repeat("d", description_max_bytes + 1) ++ "tail";
     const json = try dynamicFunctionSchemaJsonAlloc(alloc, "mcp_fs_read", description, "{\"type\":\"object\",\"properties\":{}}");
     defer alloc.free(json);
 

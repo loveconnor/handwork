@@ -4,6 +4,7 @@ const model_provider = @import("../../config/model_provider.zig");
 const image_attachments = @import("../../images/image_attachments.zig");
 const types = @import("../../shared/types.zig");
 const tool_result_errors = @import("../../tooling/tool_result_errors.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -1080,7 +1081,7 @@ test "Vision request parsing enforces nonempty ids and focus bounds" {
         error.FocusTooLong,
         parse_vision_request(
             std.testing.allocator,
-            "{\"image_ids\":[1],\"focus\":\"" ++ ("x" ** (max_focus_bytes + 1)) ++ "\"}",
+            "{\"image_ids\":[1],\"focus\":\"" ++ repeat("x", max_focus_bytes + 1) ++ "\"}",
         ),
     );
 }
@@ -1160,7 +1161,7 @@ test "Vision provider parsing accepts forty evidence items within the total byte
 test "Vision provider parsing accepts one long evidence string within the total byte limit" {
     const provider_json =
         "{\"images\":[{\"image_id\":3,\"status\":\"ok\",\"summary\":\"long text\",\"visible_text\":[\"" ++
-        ("x" ** 5000) ++
+        repeat("x", 5000) ++
         "\"],\"details\":[]}]}";
     const parsed = try parse_vision_provider_result(
         std.testing.allocator,
@@ -1319,17 +1320,17 @@ test "Vision provider parsing has no hidden twenty kibibyte ceiling" {
     const evidence_chunk_bytes = 4096;
     const large_provider_json =
         "{\"images\":[{\"image_id\":3,\"status\":\"ok\",\"summary\":\"ok\",\"visible_text\":[\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\",\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\",\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\",\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\",\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\",\"" ++
-        ("x" ** evidence_chunk_bytes) ++
+        repeat("x", evidence_chunk_bytes) ++
         "\"],\"details\":[]}]}";
     try std.testing.expect(large_provider_json.len > 20 * 1024);
 

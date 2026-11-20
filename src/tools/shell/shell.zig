@@ -25,6 +25,7 @@ const result_commit = @import("../../core/tooling/result_commit.zig");
 const result_store = @import("../../core/session/result_store.zig");
 const types = @import("../../core/shared/types.zig");
 const workspace_access = @import("../../core/workspace/workspace_access.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -57,9 +58,9 @@ pub const Input = struct {
 };
 
 pub const public_field_names = blk: {
-    const fields = @typeInfo(Input).@"struct".fields;
+    const fields = @typeInfo(Input).@"struct".field_names;
     var names: [fields.len][]const u8 = undefined;
-    for (fields, 0..) |field, index| names[index] = field.name;
+    for (fields, 0..) |field_name, index| names[index] = field_name;
     break :blk names;
 };
 
@@ -265,10 +266,10 @@ fn request_correction(alloc: Allocator, args_json: []const u8, supports_tty: boo
     }
 
     var canonical: std.json.ObjectMap = .empty;
-    inline for (@typeInfo(Input).@"struct".fields) |field| {
-        if (object.get(field.name)) |original| {
+    inline for (@typeInfo(Input).@"struct".field_names, @typeInfo(Input).@"struct".field_types) |field_name, field_type| {
+        if (object.get(field_name)) |original| {
             var value = original;
-            const T = if (@typeInfo(field.type) == .optional) @typeInfo(field.type).optional.child else field.type;
+            const T = if (@typeInfo(field_type) == .optional) @typeInfo(field_type).optional.child else field_type;
             const expected = comptime switch (@typeInfo(T)) {
                 .int => "an integer",
                 .bool => "a boolean",
@@ -279,7 +280,7 @@ fn request_correction(alloc: Allocator, args_json: []const u8, supports_tty: boo
             var type_reported = false;
             if (comptime @typeInfo(T) == .int) {
                 if (value == .string) {
-                    try problems.append(arena, "request." ++ field.name ++ " must be an integer.");
+                    try problems.append(arena, "request." ++ field_name ++ " must be an integer.");
                     type_reported = true;
                     if (std.fmt.parseInt(T, value.string, 10)) |number| {
                         value = if (std.math.cast(i64, number)) |integer|
@@ -291,22 +292,22 @@ fn request_correction(alloc: Allocator, args_json: []const u8, supports_tty: boo
                     }
                 }
             }
-            if (std.json.parseFromValueLeaky(field.type, arena, value, .{})) |_| {
+            if (std.json.parseFromValueLeaky(field_type, arena, value, .{})) |_| {
                 if (comptime T == ShellInput) {
                     var shell: std.json.ObjectMap = .empty;
-                    inline for (@typeInfo(ShellInput).@"struct".fields) |member| {
-                        if (value.object.get(member.name)) |supplied| {
-                            try shell.put(arena, member.name, supplied);
+                    inline for (@typeInfo(ShellInput).@"struct".field_names) |member_name| {
+                        if (value.object.get(member_name)) |supplied| {
+                            try shell.put(arena, member_name, supplied);
                         }
                     }
                     value = .{ .object = shell };
                 }
             } else |err| {
                 if (err == error.OutOfMemory) return error.OutOfMemory;
-                if (!type_reported) try problems.append(arena, "request." ++ field.name ++ " must be " ++ expected ++ ".");
+                if (!type_reported) try problems.append(arena, "request." ++ field_name ++ " must be " ++ expected ++ ".");
                 repairable = false;
             }
-            try canonical.put(arena, field.name, value);
+            try canonical.put(arena, field_name, value);
         }
     }
     const candidate = std.json.parseFromValueLeaky(Input, arena, .{ .object = canonical }, .{}) catch |err| switch (err) {
@@ -1919,7 +1920,7 @@ test "shell request correction canonicalizes nested shell members" {
 test "shell request correction bounds feedback and preserves input bytes" {
     const alloc = std.testing.allocator;
     const command = "printf '\u{1f308}\\n'; echo \"$VALUE\"";
-    const key = "x" ** 63 ++ "\u{1f308}";
+    const key = repeat("x", 63) ++ "\u{1f308}";
     const source = try std.json.Stringify.valueAlloc(alloc, .{
         .command = command,
         .x = null,
@@ -2264,7 +2265,7 @@ test "completed shell snapshot reports incomplete output without losing status" 
 
 test "shell snapshot keeps bounded head tail and control metadata" {
     const alloc = std.testing.allocator;
-    const output = "HEAD_SENTINEL\n" ++ ("x" ** (70 * 1024)) ++ "\nTAIL_SENTINEL";
+    const output = "HEAD_SENTINEL\n" ++ repeat("x", 70 * 1024) ++ "\nTAIL_SENTINEL";
     const body = try formatSnapshot(alloc, .{
         .execution_id = @constCast("shell-large"),
         .command = @constCast("large-output"),
@@ -2327,7 +2328,7 @@ test "shell snapshot projects hostile bytes as readable terminal-safe text" {
 
 test "shell snapshot keeps a hostile output tail within the result limit" {
     const alloc = std.testing.allocator;
-    const raw = ("\xff" ** (70 * 1024)) ++ "\nCONTROL_TAIL";
+    const raw = repeat("\xff", 70 * 1024) ++ "\nCONTROL_TAIL";
     const body = try formatSnapshot(alloc, .{
         .execution_id = @constCast("shell-hostile-large"),
         .command = @constCast("hostile-large-output"),

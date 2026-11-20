@@ -3,7 +3,6 @@ const credentials = @import("../auth/credentials.zig");
 const model_provider = @import("../config/model_provider.zig");
 const collections = @import("../shared/collections.zig");
 const debug_trace = @import("../shared/debug_trace.zig");
-const io_mod = @import("../shared/io.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const sort_utils = @import("../shared/sort_utils.zig");
 const types = @import("../shared/types.zig");
@@ -70,7 +69,7 @@ pub fn failureForHttpStatus(status: std.http.Status) Failure {
         return .{ .category = .rate_limited, .http_status = status, .retryable = true };
     }
 
-    const code = @intFromEnum(status);
+    const code = @backingInt(status);
     if (code >= 500 and code < 600) {
         return .{
             .category = .provider_unavailable,
@@ -239,7 +238,7 @@ fn traceCatalogLoadOutcome(
             "model_catalog_load",
             .{},
             common_format ++ " http_status={d} retryable={s}",
-            common_args ++ .{ @intFromEnum(status), retryable },
+            common_args ++ .{ @backingInt(status), retryable },
         );
     } else {
         debug_trace.eventf(

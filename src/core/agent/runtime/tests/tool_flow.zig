@@ -29,10 +29,10 @@ const runtime_tool_admission = @import("../tool_admission.zig");
 const runtime_tool_batch = @import("../tool_batch.zig");
 const runtime_tool_contracts = @import("../tool_contracts.zig");
 const runtime_tool_presentation = @import("../tool_presentation.zig");
-const runtime_telemetry = @import("../telemetry.zig");
 const command_admission = @import("../../../permissions/command_admission.zig");
 const permission_auto_classifier = @import("../../../permissions/auto_classifier.zig");
 const auto_classifier_context = @import("../../../permissions/auto_classifier_context.zig");
+const repeat = @import("../../../shared/comptime_repeat.zig").repeat;
 
 const test_support = @import("support.zig");
 
@@ -77,9 +77,7 @@ const PostEffectTerminalFailure = struct {
     }
 };
 
-const read_file_advertised_names = [_][]const u8{"read_file"};
 const terminal_advertised_names = [_][]const u8{"shell"};
-const read_file_advertised_functions = [_]model_tool_schema.FunctionSchema{builtin_tools.read_file.model_schema};
 const terminal_advertised_functions = [_]model_tool_schema.FunctionSchema{builtin_tools.shell.model_schema};
 
 fn makeOwnedVisionCatalog(
@@ -154,19 +152,6 @@ fn expectGrantListsEqual(
             expected_grant.target_path,
             actual_grant.target_path,
         );
-    }
-}
-
-fn expectNoGrantPermission(
-    grants: []const PermissionGrant,
-    permission: []const u8,
-) !void {
-    for (grants) |grant| {
-        try std.testing.expect(!std.mem.eql(
-            u8,
-            grant.tool_name,
-            permission,
-        ));
     }
 }
 
@@ -2028,7 +2013,7 @@ fn expectRejectedPrompt(completion: FakeCompletion, expected_error: anyerror) !v
 }
 
 test "processQueuedPrompt rejects unstorable tool batches before permissions or execution" {
-    const oversized = [_]u8{'i'} ** 257;
+    const oversized = @as([257]u8, @splat('i'));
     const invalid = [_]ToolCall{
         .{ .id = "bad", .name = "", .arguments_json = "{}" },
         .{ .id = &oversized, .name = "read_file", .arguments_json = "{}" },
@@ -5281,7 +5266,7 @@ test "processQueuedPrompt caps chatty grep_files model output" {
     defer provider.deinit();
     var hooks = FakeAgentRuntimeDeps.init(alloc);
     hooks.exec_plans = &.{.{ .result = .{
-        .model_output = "match\n" ++ ("x" ** 2048),
+        .model_output = "match\n" ++ repeat("x", 2048),
     } }};
     defer hooks.deinit();
     var fixture = PromptFixture{};
@@ -5305,7 +5290,7 @@ test "processQueuedPrompt caps chatty terminal exec result with explicit marker"
     defer provider.deinit();
     var hooks = FakeAgentRuntimeDeps.init(alloc);
     hooks.exec_plans = &.{.{ .result = .{
-        .model_output = "{\"truncated\":true,\"stdout\":\"" ++ ("x" ** 2048) ++ "\",\"stderr\":\"\",\"stdout_bytes\":2048}",
+        .model_output = "{\"truncated\":true,\"stdout\":\"" ++ repeat("x", 2048) ++ "\",\"stderr\":\"\",\"stdout_bytes\":2048}",
     } }};
     defer hooks.deinit();
     var fixture = PromptFixture{};

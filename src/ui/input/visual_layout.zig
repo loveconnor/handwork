@@ -5,6 +5,7 @@ const entity_spans = @import("../../core/shared/entity_spans.zig");
 const types = @import("../../core/shared/types.zig");
 const paste_blocks = @import("../../core/input/pasted_blocks.zig");
 const registered_entities = @import("../../core/input/registered_entities.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 pub const Direction = enum { up, down };
 pub const BreakKind = enum { hard_newline, soft_wrap, input_end };
@@ -692,10 +693,11 @@ pub fn visibleWindow(cursor_row: usize, total_rows: usize, row_limit: usize) Vis
 }
 
 pub fn inputPrefix(row_index: usize) InputPrefix {
+    // One column of panel padding, the prompt glyph, then a gap.
     return if (row_index == 0)
-        .{ .bytes = "❯ ", .cell_width = 2 }
+        .{ .bytes = " › ", .cell_width = 3 }
     else
-        .{ .bytes = "  ", .cell_width = 2 };
+        .{ .bytes = "   ", .cell_width = 3 };
 }
 
 pub fn terminalColumn(point: CursorPoint, terminal_cols: u16) u16 {
@@ -752,18 +754,18 @@ fn rowAt(source: Source, index: usize) ?Row {
 test "visual layout exposes exact input prefixes and terminal projection" {
     const first = inputPrefix(0);
     const continuation = inputPrefix(1);
-    try std.testing.expectEqualStrings("❯ ", first.bytes);
-    try std.testing.expectEqual(@as(usize, 4), first.bytes.len);
-    try std.testing.expectEqual(@as(usize, 2), first.cell_width);
+    try std.testing.expectEqualStrings(" › ", first.bytes);
+    try std.testing.expectEqual(@as(usize, 5), first.bytes.len);
+    try std.testing.expectEqual(@as(usize, 3), first.cell_width);
     try std.testing.expectEqual(first.cell_width, display_width.visibleWidth(first.bytes));
-    try std.testing.expectEqualStrings("  ", continuation.bytes);
-    try std.testing.expectEqual(@as(usize, 2), continuation.bytes.len);
-    try std.testing.expectEqual(@as(usize, 2), continuation.cell_width);
+    try std.testing.expectEqualStrings("   ", continuation.bytes);
+    try std.testing.expectEqual(@as(usize, 3), continuation.bytes.len);
+    try std.testing.expectEqual(@as(usize, 3), continuation.cell_width);
     try std.testing.expectEqual(continuation.cell_width, display_width.visibleWidth(continuation.bytes));
 
-    try std.testing.expectEqual(@as(u16, 3), terminalColumn(.{ .raw_offset = 0, .row_index = 0, .content_column = 0 }, 80));
-    try std.testing.expectEqual(@as(u16, 3), terminalColumn(.{ .raw_offset = 0, .row_index = 1, .content_column = 0 }, 80));
-    try std.testing.expectEqual(@as(u16, 6), terminalColumn(.{ .raw_offset = 3, .row_index = 0, .content_column = 3 }, 80));
+    try std.testing.expectEqual(@as(u16, 4), terminalColumn(.{ .raw_offset = 0, .row_index = 0, .content_column = 0 }, 80));
+    try std.testing.expectEqual(@as(u16, 4), terminalColumn(.{ .raw_offset = 0, .row_index = 1, .content_column = 0 }, 80));
+    try std.testing.expectEqual(@as(u16, 7), terminalColumn(.{ .raw_offset = 3, .row_index = 0, .content_column = 3 }, 80));
     try std.testing.expectEqual(@as(u16, 1), terminalColumn(.{ .raw_offset = 3, .row_index = 0, .content_column = 3 }, 0));
 }
 
@@ -786,7 +788,7 @@ test "visual layout targets registered paste placeholders only at boundaries" {
     const input = "x\n[Pasted text #7, 1 line]";
     const blocks = [_]paste_blocks.PastedBlock{.{
         .id = 7,
-        .text = @constCast("P" ** 1001),
+        .text = @constCast(repeat("P", 1001)),
         .line_count = 1,
         .span = .{
             .raw_start = "x\n".len,
@@ -1321,8 +1323,8 @@ test "visual layout word wrap keeps trailing space on the previous row" {
 }
 
 test "visual layout handles direct-limit and longer restored input without allocation" {
-    const direct = "x" ** 4096;
-    const longer = "y" ** 5000;
+    const direct = repeat("x", 4096);
+    const longer = repeat("y", 5000);
     const direct_summary = summarize(testSource(direct, direct.len, 80), null);
     const longer_summary = summarize(testSource(longer, longer.len, 80), null);
     try std.testing.expect(direct_summary.total_rows > 1);

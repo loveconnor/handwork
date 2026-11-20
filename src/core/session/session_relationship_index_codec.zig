@@ -38,7 +38,7 @@ pub const Header = struct {
     pending_slot: u64 = no_slot,
     pending_next_free: u64 = no_slot,
     pending_child_len: u16 = 0,
-    pending_child: [255]u8 = [_]u8{0} ** 255,
+    pending_child: [255]u8 = @as([255]u8, @splat(0)),
 
     pub fn pendingChild(self: *const Header) []const u8 {
         return self.pending_child[0..self.pending_child_len];
@@ -49,24 +49,13 @@ pub const Header = struct {
         self.pending_child_len = @intCast(child_id.len);
         @memcpy(self.pending_child[0..child_id.len], child_id);
     }
-
-    pub fn clearPending(self: *Header) void {
-        self.pending_kind = .none;
-        self.pending_slot = no_slot;
-        self.pending_next_free = no_slot;
-        self.pending_child_len = 0;
-    }
 };
 
 pub const Slot = struct {
     occupied: bool = false,
     next_free: u64 = no_slot,
     child_len: u16 = 0,
-    child: [255]u8 = [_]u8{0} ** 255,
-
-    pub fn childId(self: *const Slot) []const u8 {
-        return self.child[0..self.child_len];
-    }
+    child: [255]u8 = @as([255]u8, @splat(0)),
 
     pub fn setOccupied(self: *Slot, child_id: []const u8) void {
         std.debug.assert(child_id.len <= self.child.len);
@@ -86,7 +75,7 @@ pub const Slot = struct {
 pub const PageData = struct {
     number: u64,
     storage_epoch: u64,
-    slots: [page_slots]Slot = [_]Slot{.{}} ** page_slots,
+    slots: [page_slots]Slot = @as([page_slots]Slot, @splat(.{})),
 
     // Field-wise init; a partial `.{}` literal materializes a page-sized
     // (~17KB) const template at every call site.
@@ -115,7 +104,7 @@ pub fn encodeHeader(alloc: Allocator, header: Header) Allocator.Error![]u8 {
     writeInt(&out.writer, u64, header.migration_size) catch return error.OutOfMemory;
     writeInt(&out.writer, i128, header.migration_mtime_ns) catch return error.OutOfMemory;
     writeInt(&out.writer, u64, header.migration_offset) catch return error.OutOfMemory;
-    out.writer.writeByte(@intFromEnum(header.pending_kind)) catch return error.OutOfMemory;
+    out.writer.writeByte(@backingInt(header.pending_kind)) catch return error.OutOfMemory;
     writeInt(&out.writer, u64, header.pending_slot) catch return error.OutOfMemory;
     writeInt(&out.writer, u64, header.pending_next_free) catch return error.OutOfMemory;
     writeInt(&out.writer, u16, header.pending_child_len) catch return error.OutOfMemory;

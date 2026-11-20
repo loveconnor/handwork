@@ -653,10 +653,6 @@ pub fn Bindings(comptime App: type) type {
             app_worker_runtime.Runtime(App).pushWebFetchProgress(app, call_id, progress) catch {};
         }
 
-        pub fn onInnerToolUsage(ctx: *anyopaque, tool_name: []const u8, usage: types.ToolUsage) void {
-            agentReportInnerToolUsage(ctx, tool_name, usage);
-        }
-
         fn supportsSubagentSteering() bool {
             return !@import("builtin").single_threaded and @hasField(App, "session_persistence") and
                 @hasField(@TypeOf(@as(App, undefined).session_persistence), "subagent_host") and
@@ -730,7 +726,7 @@ pub fn Bindings(comptime App: type) type {
             try app.appendRuntimeContextMessage(arena, messages);
         }
 
-        fn cooperativeTransportPulse(ctx: *anyopaque) !void {
+        pub fn cooperativeTransportPulse(ctx: *anyopaque) !void {
             const app: *App = @ptrCast(@alignCast(ctx));
             try app.cooperativeTransportPulse();
         }
@@ -998,7 +994,7 @@ pub fn Bindings(comptime App: type) type {
             try app_worker_runtime.Runtime(App).propagateHistoryTurn(app, turn, app.session.max_history_turns);
         }
 
-        fn beginCompactionActivity(ctx: *anyopaque, origin: compaction_activity.Origin, turn_id: ?u64) compaction_activity.OperationId {
+        pub fn beginCompactionActivity(ctx: *anyopaque, origin: compaction_activity.Origin, turn_id: ?u64) compaction_activity.OperationId {
             const app: *App = @ptrCast(@alignCast(ctx));
             return app.worker.beginCompactionActivity(origin, turn_id);
         }
@@ -1008,7 +1004,7 @@ pub fn Bindings(comptime App: type) type {
             app.worker.runCompactionActivity(id, stage);
         }
 
-        fn settleCompactionActivity(ctx: *anyopaque, id: compaction_activity.OperationId, feedback: compaction_activity.Feedback) void {
+        pub fn settleCompactionActivity(ctx: *anyopaque, id: compaction_activity.OperationId, feedback: compaction_activity.Feedback) void {
             const app: *App = @ptrCast(@alignCast(ctx));
             app.worker.settleCompactionActivity(id, feedback);
         }
@@ -1430,7 +1426,7 @@ pub fn Bindings(comptime App: type) type {
             try app.writeDomainNotice(notice, true);
         }
 
-        fn appendHistoryTurn(app: *App, finished: types.FinishedPrompt) !assistant_pacer.FinishResult {
+        pub fn appendHistoryTurn(app: *App, finished: types.FinishedPrompt) !assistant_pacer.FinishResult {
             if (comptime @hasDecl(App, "finishPromptPresentation")) {
                 return app.finishPromptPresentation(finished);
             }
@@ -1516,10 +1512,6 @@ const FakeWorker = struct {
         self.propagated_grants += 1;
     }
 
-    pub fn transferActivePromptSnapshots(self: *FakeWorker) void {
-        self.active_snapshot_transfers += 1;
-    }
-
     pub fn activeTurnId(self: *FakeWorker) u64 {
         return self.active_turn_id;
     }
@@ -1546,11 +1538,6 @@ const FakeSession = struct {
     pub fn commitPreparedHistoryEntry(self: *FakeSession, alloc: std.mem.Allocator, turn: types.HistoryTurn) void {
         self.history_appends += 1;
         types.freeHistoryTurn(alloc, turn);
-    }
-
-    fn languageSnapshot(self: *FakeSession) types.ConversationLanguage {
-        _ = self;
-        return types.ConversationLanguage.default();
     }
 
     pub fn appendHistoryEntry(self: *FakeSession, alloc: std.mem.Allocator, turn: types.HistoryTurn) !void {
@@ -1862,7 +1849,7 @@ const FakeApp = struct {
         return .{ .model_output = "tool output" };
     }
 
-    fn registerAndEmitDiffBlock(self: *FakeApp, payload: agent_runtime.DiffEntryPayload) !void {
+    pub fn registerAndEmitDiffBlock(self: *FakeApp, payload: agent_runtime.DiffEntryPayload) !void {
         defer diff_mod.freeDiffEntryPayload(std.heap.c_allocator, payload);
         self.diff_register_count += 1;
         try self.transcript.appendSlice(self.alloc, payload.preview);
@@ -1898,7 +1885,7 @@ const FakeApp = struct {
         self.command_output_count += 1;
     }
 
-    fn writeCommandOutputChunkForLifecycle(self: *FakeApp, lifecycle_id: ?types.ToolLifecycleId, stream: command_output_content.Stream, text: []const u8, record: bool) !void {
+    pub fn writeCommandOutputChunkForLifecycle(self: *FakeApp, lifecycle_id: ?types.ToolLifecycleId, stream: command_output_content.Stream, text: []const u8, record: bool) !void {
         storeLifecycleId(
             &self.last_command_output_lifecycle_turn_id,
             &self.last_command_output_lifecycle_call_id,
@@ -1911,7 +1898,7 @@ const FakeApp = struct {
         try self.flushCommandOutputSummaryForLifecycle(null, record);
     }
 
-    fn flushCommandOutputSummaryForLifecycle(self: *FakeApp, lifecycle_id: ?types.ToolLifecycleId, record: bool) !void {
+    pub fn flushCommandOutputSummaryForLifecycle(self: *FakeApp, lifecycle_id: ?types.ToolLifecycleId, record: bool) !void {
         _ = record;
         storeLifecycleId(
             &self.last_command_output_complete_lifecycle_turn_id,
@@ -2013,7 +2000,7 @@ const NoOverridePersistentApp = struct {
         _ = prompt;
     }
 
-    fn writeDomainNotice(self: *NoOverridePersistentApp, notice: types.SemanticNotice, record: bool) !void {
+    pub fn writeDomainNotice(self: *NoOverridePersistentApp, notice: types.SemanticNotice, record: bool) !void {
         _ = self;
         _ = notice;
         _ = record;
@@ -2051,7 +2038,7 @@ const NoOverridePersistentApp = struct {
         try self.writeTranscript(text, record);
     }
 
-    fn registerAndEmitDiffBlock(self: *NoOverridePersistentApp, payload: agent_runtime.DiffEntryPayload) !void {
+    pub fn registerAndEmitDiffBlock(self: *NoOverridePersistentApp, payload: agent_runtime.DiffEntryPayload) !void {
         _ = self;
         diff_mod.freeDiffEntryPayload(std.heap.c_allocator, payload);
     }

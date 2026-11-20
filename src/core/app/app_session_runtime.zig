@@ -63,6 +63,7 @@ const ui_input = @import("../../ui/input/runtime.zig");
 const ui_render = @import("../../ui/render.zig");
 const update_notes = @import("../upgrade/update_notes.zig");
 const update_target = @import("../upgrade/update_target.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -1092,7 +1093,7 @@ pub const Persistence = struct {
     /// in a static release-binary template.
     pub fn initInto(storage: *Persistence) void {
         comptime {
-            if (std.meta.fields(Persistence).len != 21) {
+            if (@typeInfo(Persistence).@"struct".field_names.len != 21) {
                 @compileError("update Persistence.initInto for the changed field set");
             }
         }
@@ -2272,11 +2273,20 @@ pub fn Runtime(comptime App: type) type {
             app: *App,
             checkpoint: session_codec.RecoveryCheckpoint,
         ) !void {
-            errdefer |err| if (err == error.SessionPersistenceUncertain) {
-                if (comptime @hasDecl(@TypeOf(app.worker), "preservePromptSnapshots")) {
-                    app.worker.preservePromptSnapshots(checkpoint.turn_id, checkpoint.user.images);
+            setRecoveryCheckpointInner(app, checkpoint) catch |err| {
+                if (err == error.SessionPersistenceUncertain) {
+                    if (comptime @hasDecl(@TypeOf(app.worker), "preservePromptSnapshots")) {
+                        app.worker.preservePromptSnapshots(checkpoint.turn_id, checkpoint.user.images);
+                    }
                 }
+                return err;
             };
+        }
+
+        fn setRecoveryCheckpointInner(
+            app: *App,
+            checkpoint: session_codec.RecoveryCheckpoint,
+        ) !void {
             if (comptime !@hasField(App, "session_persistence")) {
                 return error.SessionPersistenceUnavailable;
             }
@@ -2706,7 +2716,7 @@ pub fn Runtime(comptime App: type) type {
             try app.session_title.appendSlice(app.alloc, title[start..]);
         }
 
-        fn terminalTitle(app: *App) host_capability.TerminalTitle {
+        pub fn terminalTitle(app: *App) host_capability.TerminalTitle {
             if (comptime @hasDecl(App, "terminalTitle")) {
                 return app.terminalTitle();
             }
@@ -3083,7 +3093,7 @@ pub fn Runtime(comptime App: type) type {
                     try self.app.flushCommandOutputSummary(true);
                 }
 
-                fn attachHistoricalToolDetail(
+                pub fn attachHistoricalToolDetail(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3094,7 +3104,7 @@ pub fn Runtime(comptime App: type) type {
                     }
                 }
 
-                fn attachHistoricalToolDetailWithLifecycle(
+                pub fn attachHistoricalToolDetailWithLifecycle(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3113,7 +3123,7 @@ pub fn Runtime(comptime App: type) type {
                     }
                 }
 
-                fn attachHistoricalToolDetailAfterCommandOutput(
+                pub fn attachHistoricalToolDetailAfterCommandOutput(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3130,7 +3140,7 @@ pub fn Runtime(comptime App: type) type {
                     }
                 }
 
-                fn attachHistoricalToolCallWithoutResult(
+                pub fn attachHistoricalToolCallWithoutResult(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3140,13 +3150,13 @@ pub fn Runtime(comptime App: type) type {
                     }
                 }
 
-                fn attachHistoricalCommandOutput(self: *Self, entry_id: u32) void {
+                pub fn attachHistoricalCommandOutput(self: *Self, entry_id: u32) void {
                     if (comptime @hasDecl(SinkApp, "attachHistoricalCommandOutput")) {
                         self.app.attachHistoricalCommandOutput(entry_id);
                     }
                 }
 
-                fn attachHistoricalCancelledCommandDetail(
+                pub fn attachHistoricalCancelledCommandDetail(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3178,21 +3188,21 @@ pub fn Runtime(comptime App: type) type {
                     try SinkApp.pacerEmit(self.app, text);
                 }
 
-                fn appendAssistantTable(
+                pub fn appendAssistantTable(
                     self: *Self,
                     table: assistant_presentation.TablePayload,
                 ) !void {
                     try self.app.appendAssistantTable(table);
                 }
 
-                fn appendAssistantCodeBlock(
+                pub fn appendAssistantCodeBlock(
                     self: *Self,
                     block: assistant_presentation.CodeBlockPayload,
                 ) !void {
                     try self.app.appendAssistantCodeBlock(block);
                 }
 
-                fn appendAssistantThematicRule(self: *Self) !void {
+                pub fn appendAssistantThematicRule(self: *Self) !void {
                     try self.app.appendAssistantThematicRule();
                 }
             };
@@ -3329,7 +3339,7 @@ pub fn Runtime(comptime App: type) type {
                     try self.projection.finishCommandOutput(null);
                 }
 
-                fn attachHistoricalToolDetail(
+                pub fn attachHistoricalToolDetail(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3344,7 +3354,7 @@ pub fn Runtime(comptime App: type) type {
                     try self.attachCommandDisplay(entry_id, call);
                 }
 
-                fn attachHistoricalToolDetailWithLifecycle(
+                pub fn attachHistoricalToolDetailWithLifecycle(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3361,7 +3371,7 @@ pub fn Runtime(comptime App: type) type {
                     try self.attachCommandDisplay(entry_id, call);
                 }
 
-                fn attachHistoricalToolDetailAfterCommandOutput(
+                pub fn attachHistoricalToolDetailAfterCommandOutput(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3376,7 +3386,7 @@ pub fn Runtime(comptime App: type) type {
                     try self.attachCommandDisplay(entry_id, call);
                 }
 
-                fn attachHistoricalToolCallWithoutResult(
+                pub fn attachHistoricalToolCallWithoutResult(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3384,11 +3394,11 @@ pub fn Runtime(comptime App: type) type {
                     try self.projection.attachHistoricalToolCallWithoutResult(entry_id, call);
                 }
 
-                fn attachHistoricalCommandOutput(self: *Self, entry_id: u32) void {
+                pub fn attachHistoricalCommandOutput(self: *Self, entry_id: u32) void {
                     self.projection.attachHistoricalCommandOutput(entry_id);
                 }
 
-                fn attachHistoricalCancelledCommandDetail(
+                pub fn attachHistoricalCancelledCommandDetail(
                     self: *Self,
                     entry_id: u32,
                     call: types.ToolCall,
@@ -3420,21 +3430,21 @@ pub fn Runtime(comptime App: type) type {
                     try self.projection.appendAssistantText(text);
                 }
 
-                fn appendAssistantTable(
+                pub fn appendAssistantTable(
                     self: *Self,
                     table: assistant_presentation.TablePayload,
                 ) !void {
                     try self.projection.appendAssistantTable(table);
                 }
 
-                fn appendAssistantCodeBlock(
+                pub fn appendAssistantCodeBlock(
                     self: *Self,
                     block: assistant_presentation.CodeBlockPayload,
                 ) !void {
                     try self.projection.appendAssistantCodeBlock(block);
                 }
 
-                fn appendAssistantThematicRule(self: *Self) !void {
+                pub fn appendAssistantThematicRule(self: *Self) !void {
                     try self.projection.appendAssistantThematicRule();
                 }
             };
@@ -3626,28 +3636,6 @@ pub fn Runtime(comptime App: type) type {
                     },
                 }
             }
-        }
-
-        /// Replay canonical session turns into a detached presentation using
-        /// the exact same tool, message, markdown, diff, and command-output
-        /// adapters as ordinary session resume.
-        pub fn appendHistoryToDetachedProjection(
-            app: *App,
-            projection: anytype,
-            history: []const types.HistoryTurn,
-            has_prior_turns: *bool,
-        ) !void {
-            var sink = DetachedHistorySink(@TypeOf(projection.*)){
-                .app = app,
-                .projection = projection,
-                .workspace_root = app.workspace_root,
-            };
-            return replayHistoryToSinkIncremental(
-                app,
-                &sink,
-                history,
-                has_prior_turns,
-            );
         }
 
         fn writeCancelledCommandPresentation(
@@ -5001,7 +4989,7 @@ test "session transition retires queued and running compaction only after worker
             .history = try app.alloc.alloc(types.HistoryTurn, 0),
         });
         const next = app.worker.compactionActivitySnapshot();
-        try std.testing.expect(@intFromEnum(next.operation.?.id) > @intFromEnum(old.operation.?.id));
+        try std.testing.expect(@backingInt(next.operation.?.id) > @backingInt(old.operation.?.id));
         try std.testing.expect(next.revision > retired.revision);
         app.worker.settleCompactionActivity(old.operation.?.id, .{ .outcome = .failed });
         try std.testing.expect(!app.worker.dismissCompactionActivity(old.operation.?.id, terminal.revision));
@@ -5194,7 +5182,7 @@ const TestApp = struct {
         return builtin_tools.advertisement_set;
     }
 
-    fn snapshotMcpToolNames(self: *TestApp, alloc: Allocator) ![][]u8 {
+    pub fn snapshotMcpToolNames(self: *TestApp, alloc: Allocator) ![][]u8 {
         const names = try alloc.alloc([]u8, self.mcp_tool_names.items.len);
         var initialized: usize = 0;
         errdefer {
@@ -5208,7 +5196,7 @@ const TestApp = struct {
         return names;
     }
 
-    fn terminalTitle(self: *TestApp) host_capability.TerminalTitle {
+    pub fn terminalTitle(self: *TestApp) host_capability.TerminalTitle {
         return .{
             .context = self,
             .set_fn = setTerminalTitleLabelForTest,
@@ -5275,7 +5263,7 @@ const TestApp = struct {
         self.* = undefined;
     }
 
-    fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
         if (self.fail_system_notice) {
             self.writable_seen_during_notice_failure =
                 self.session_persistence.writable != null;
@@ -5349,7 +5337,7 @@ const TestApp = struct {
         try self.replay_events.append(self.alloc, .completed_tool_status);
     }
 
-    fn writeCompletedToolStatusReturningEntryId(
+    pub fn writeCompletedToolStatusReturningEntryId(
         self: *TestApp,
         kind: types.ToolOutcomeKind,
         text: []const u8,
@@ -5359,7 +5347,7 @@ const TestApp = struct {
         return self.allocateTranscriptEntryId();
     }
 
-    fn writeHistoricalQuestionResolution(
+    pub fn writeHistoricalQuestionResolution(
         self: *TestApp,
         answers: []const types.QuestionAnswer,
     ) !u32 {
@@ -5369,7 +5357,7 @@ const TestApp = struct {
         return entry_id;
     }
 
-    fn attachHistoricalToolDetail(
+    pub fn attachHistoricalToolDetail(
         self: *TestApp,
         entry_id: u32,
         _: types.ToolCall,
@@ -5378,7 +5366,7 @@ const TestApp = struct {
         try self.historical_tool_detail_entry_ids.append(self.alloc, entry_id);
     }
 
-    fn attachHistoricalCancelledCommandDetail(
+    pub fn attachHistoricalCancelledCommandDetail(
         self: *TestApp,
         entry_id: u32,
         _: types.ToolCall,
@@ -5443,7 +5431,7 @@ const TestApp = struct {
         try self.assistant_presentation_events.append(self.alloc, .text);
     }
 
-    fn appendAssistantTable(
+    pub fn appendAssistantTable(
         self: *TestApp,
         table: assistant_presentation.TablePayload,
     ) !void {
@@ -5454,7 +5442,7 @@ const TestApp = struct {
         try self.assistant_tables.append(self.alloc, table);
     }
 
-    fn appendAssistantCodeBlock(
+    pub fn appendAssistantCodeBlock(
         self: *TestApp,
         block: assistant_presentation.CodeBlockPayload,
     ) !void {
@@ -5465,7 +5453,7 @@ const TestApp = struct {
         try self.assistant_code_blocks.append(self.alloc, block);
     }
 
-    fn appendAssistantThematicRule(self: *TestApp) !void {
+    pub fn appendAssistantThematicRule(self: *TestApp) !void {
         self.assistant_thematic_rule_count += 1;
         try self.assistant_presentation_events.append(self.alloc, .thematic_rule);
     }
@@ -6146,7 +6134,7 @@ test "resume handoff requires no derived cache write" {
     const session_dir = (try Runtime(TestApp).activeSessionDisplayPath(&app, alloc)) orelse
         return error.TestExpectedSessionDirectory;
     defer alloc.free(session_dir);
-    const session_dir_z = try alloc.dupeZ(u8, session_dir);
+    const session_dir_z = try alloc.dupeSentinel(u8, session_dir, 0);
     defer alloc.free(session_dir_z);
     if (std.c.chmod(session_dir_z.ptr, 0o500) != 0) return error.TestChmodFailed;
     defer _ = std.c.chmod(session_dir_z.ptr, 0o700);
@@ -6597,7 +6585,7 @@ test "resume falls back to saved command output when replay contains an empty fr
         "exit_code=0\n<stdout>\nFALLBACK_STDOUT_MARKER\n</stdout>\n" ++
         "<stderr>\n</stderr>\n";
     const replay_handle = "handwork-command-replay-empty-frame.bin";
-    var empty_replay = [_]u8{0} ** ("FXRPLY01".len + 9);
+    var empty_replay = @as([("FXRPLY01".len + 9)]u8, @splat(0));
     @memcpy(empty_replay[0.."FXRPLY01".len], "FXRPLY01");
 
     var calls = [_]types.ToolCall{.{
@@ -9760,7 +9748,7 @@ test "validateSessionTitle accepts printable text and rejects malformed input" {
     try std.testing.expectError(error.InvalidTitle, V("bad\ttitle"));
     try std.testing.expectError(error.InvalidTitle, V("bad\x07title"));
 
-    const long = "x" ** (session_display_metadata.max_title_bytes + 1);
+    const long = repeat("x", session_display_metadata.max_title_bytes + 1);
     try std.testing.expectError(error.TitleTooLong, V(long));
 }
 
@@ -9853,47 +9841,6 @@ test "renameActiveSession persists the title only in session metadata" {
     );
 }
 
-const ReconciliationOriginUsage = struct {
-    replaced_provider: ?model_provider.ProviderId = null,
-    replaced_source: ?types.CredentialSource = null,
-
-    fn replaceProviderReconciliationCredential(
-        self: *@This(),
-        _: Allocator,
-        provider: model_provider.ProviderId,
-        source: types.CredentialSource,
-        _: ?[]const u8,
-        _: []const u8,
-    ) void {
-        self.replaced_provider = provider;
-        self.replaced_source = source;
-    }
-};
-
-const ReconciliationOriginAuth = struct {
-    source: types.CredentialSource,
-
-    fn credentialSource(self: *const @This()) ?types.CredentialSource {
-        return self.source;
-    }
-
-    fn credentialLease(self: *const @This()) ?types.CredentialLease {
-        return .{ .direct = .{ .secret_bytes = "origin-bound-token", .source = self.source } };
-    }
-
-    fn accountId(_: *const @This()) ?[]const u8 {
-        return null;
-    }
-};
-
-const ReconciliationOriginApp = struct {
-    alloc: Allocator = std.testing.allocator,
-    auth: ReconciliationOriginAuth,
-    session: struct { usage: ReconciliationOriginUsage = .{} } = .{},
-    selected_provider: model_provider.ProviderId,
-    selected_model: std.ArrayList(u8) = .empty,
-};
-
 test "ensureCachedSessionTitle derives from the first prompt and then freezes" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
@@ -9955,7 +9902,7 @@ const TitleGenerationFakeApp = struct {
             return .{ .direct = .{ .secret_bytes = "test-key", .source = .chatgpt_subscription } };
         }
 
-        fn accountId(_: *const TitleTestAuth) ?[]const u8 {
+        pub fn accountId(_: *const TitleTestAuth) ?[]const u8 {
             return null;
         }
     };
@@ -9975,11 +9922,11 @@ const TitleGenerationFakeApp = struct {
         self.alloc.free(self.workspace_root);
     }
 
-    fn agentStreamProvider(self: *TitleGenerationFakeApp) @import("../agent/stream_provider.zig").Provider {
+    pub fn agentStreamProvider(self: *TitleGenerationFakeApp) @import("../agent/stream_provider.zig").Provider {
         return .{ .context = self, .stream_fn = titleStream };
     }
 
-    fn sessionTitleModel(_: *TitleGenerationFakeApp) ?[]const u8 {
+    pub fn sessionTitleModel(_: *TitleGenerationFakeApp) ?[]const u8 {
         return "test/title-model";
     }
 
@@ -10239,10 +10186,10 @@ test "terminal title shows the session title once cached and keeps model context
     var app = try TestApp.init(alloc, paths.workspace);
     defer app.deinit();
 
-    try app.selected_model.appendSlice(alloc, "provider/" ++ ("model" ** 20));
-    try Runtime(TestApp).setCachedSessionTitle(&app, "session-" ++ ("title" ** 20));
+    try app.selected_model.appendSlice(alloc, "provider/" ++ repeat("model", 20));
+    try Runtime(TestApp).setCachedSessionTitle(&app, "session-" ++ repeat("title", 20));
 
-    const expected = "session-" ++ ("title" ** 20);
+    const expected = "session-" ++ repeat("title", 20);
     try std.testing.expectEqualStrings(expected, app.terminalTitleLabelText());
     try std.testing.expect(std.mem.find(u8, app.terminalTitleLabelText(), "model") == null);
 }

@@ -433,14 +433,6 @@ pub const State = struct {
         }
     }
 
-    pub fn hasAnyInvalidation(self: *const State) bool {
-        return self.hasInvalidation() or
-            self.hasInvalidationFor(.resources) or
-            self.hasInvalidationFor(.prompts) or
-            self.resource_update_generation.load(.acquire) !=
-                self.handled_resource_update_generation.load(.acquire);
-    }
-
     pub fn subscribesToResource(self: *const State, uri: []const u8) bool {
         return containsResourceSubscription(self.resource_subscriptions, uri);
     }

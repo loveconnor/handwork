@@ -17,6 +17,7 @@ const session_store = @import("../session/session_store.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const tool_dispatch = @import("../tooling/tool_dispatch.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -633,7 +634,7 @@ test "subagent failure capture is bounded and keeps the first cause without allo
     const retained = turn.failureDiagnostic().?;
     turn.failure_diagnostic = null;
     try std.testing.expectEqualStrings("agent_turn_failed: SessionCommitFailed", retained.view());
-    const long = failureDiagnosticValue("stage", "界" ** 200);
+    const long = failureDiagnosticValue("stage", repeat("界", 200));
     try std.testing.expect(long.view().len <= types.ModelFailureDiagnostic.max_bytes);
     try std.testing.expect(std.unicode.utf8ValidateSlice(long.view()));
     const unsafe = failureDiagnosticValue("provider_http_error", "unsafe\x1b[31m");

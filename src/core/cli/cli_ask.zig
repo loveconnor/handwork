@@ -64,6 +64,7 @@ const subagent_execution = @import("../subagent/execution.zig");
 const subagent_resume_admission = @import("../subagent/resume_admission.zig");
 const subagent_tool_host = @import("../subagent/tool_host.zig");
 const text_utils = @import("../shared/text_utils.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const test_builtin_provider = if (std_builtin.is_test)
     @import("../../builtins/native.zig")
 else
@@ -130,7 +131,7 @@ const headless_interrupt = if (supports_headless_interrupt) struct {
     fn handle(signal: std.posix.SIG) callconv(.c) void {
         _ = requested_signal.cmpxchgStrong(
             0,
-            @intCast(@intFromEnum(signal)),
+            @intCast(@backingInt(signal)),
             .seq_cst,
             .seq_cst,
         );
@@ -138,7 +139,7 @@ const headless_interrupt = if (supports_headless_interrupt) struct {
     }
 
     fn exitCode() u8 {
-        return switch (@as(std.posix.SIG, @enumFromInt(requested_signal.load(.seq_cst)))) {
+        return switch (@as(std.posix.SIG, @fromBackingInt(@intCast(requested_signal.load(.seq_cst))))) {
             std.posix.SIG.TERM => headless_termination_exit_code,
             else => headless_interrupt_exit_code,
         };
@@ -184,7 +185,7 @@ const headless_interrupt = if (supports_headless_interrupt) struct {
                 if (test_after_restore) |hook| hook();
             }
             if (redeliver and cancel_requested.load(.seq_cst)) {
-                const signal: std.posix.SIG = @enumFromInt(requested_signal.load(.seq_cst));
+                const signal: std.posix.SIG = @fromBackingInt(@intCast(requested_signal.load(.seq_cst)));
                 _ = std.c.raise(signal);
             }
             coordinator_active = false;
@@ -635,7 +636,7 @@ const AskContext = struct {
         };
     }
 
-    fn configureNotifications(
+    pub fn configureNotifications(
         self: *AskContext,
         turn_end: bool,
         attention_required: bool,
@@ -661,7 +662,7 @@ const AskContext = struct {
         self.lifecycle_view = self.lifecycle_runtime.freeze();
     }
 
-    fn dispatchAttentionRequired(self: *AskContext, kind: hooks.AttentionKind) void {
+    pub fn dispatchAttentionRequired(self: *AskContext, kind: hooks.AttentionKind) void {
         agent_runtime.dispatchAttentionRequiredCheckpoint(self.lifecycleContext(), .{
             .turn_id = self.active_turn_id,
             .kind = kind,
@@ -811,17 +812,6 @@ const AskContext = struct {
             sessions_dir,
             session_id,
             &self.image_snapshot_temp_dir,
-        );
-    }
-
-    fn captureImageAttachment(self: *AskContext, attachment: *ImageAttachment) !void {
-        const snapshot_dir = try self.imageSnapshotStorageDir();
-        defer self.alloc.free(snapshot_dir);
-        try image_attachments.captureImageSnapshotWithBudget(
-            self.alloc,
-            attachment,
-            snapshot_dir,
-            .{ .cancel_flag = self.cancelFlag() },
         );
     }
 
@@ -1068,7 +1058,7 @@ const AskContext = struct {
         return self.context_snapshot.modelVisibleBytes();
     }
 
-    fn toolRegistry(self: *const AskContext) tool_dispatch.Registry {
+    pub fn toolRegistry(self: *const AskContext) tool_dispatch.Registry {
         return self.deps.tool_set.registry;
     }
 
@@ -1087,7 +1077,7 @@ const AskContext = struct {
         });
     }
 
-    fn agentStreamProvider(self: *const AskContext) agent_stream_provider.Provider {
+    pub fn agentStreamProvider(self: *const AskContext) agent_stream_provider.Provider {
         return self.cfg.provider_set.select(self.provider).agent_stream_or_unavailable();
     }
 
@@ -3032,9 +3022,13 @@ fn setRecoveryCheckpoint(
     checkpoint: session_codec.RecoveryCheckpoint,
 ) !void {
     const ctx: *AskContext = @ptrCast(@alignCast(raw_ctx));
-    errdefer |err| if (err == error.SessionPersistenceUncertain) {
-        ctx.prompt_snapshot_committed = true;
+    appendRecoveryCheckpoint(ctx, checkpoint) catch |err| {
+        if (err == error.SessionPersistenceUncertain) ctx.prompt_snapshot_committed = true;
+        return err;
     };
+}
+
+fn appendRecoveryCheckpoint(ctx: *AskContext, checkpoint: session_codec.RecoveryCheckpoint) !void {
     ctx.session_write_mutex.lockUncancelable(io_mod.getIo());
     defer ctx.session_write_mutex.unlock(io_mod.getIo());
     const writable = if (ctx.writable) |*value| value else return error.SessionPersistenceUnavailable;
@@ -3907,7 +3901,7 @@ fn readPromptFromReader(
 ) ![]u8 {
     const detection_limit = std.math.add(usize, resource_byte_limit, 1) catch
         return error.PromptResourceLimitExceeded;
-    const input = reader.allocRemaining(alloc, .limited(detection_limit)) catch |err| switch (err) {
+    const input = io_mod.allocRemainingBelowLimit(reader, alloc, .limited(detection_limit)) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.StreamTooLong => return error.PromptResourceLimitExceeded,
         else => return error.PromptInputReadFailed,
@@ -5486,9 +5480,9 @@ test "runWithDeps reports a missing image before startup after cleaning prior at
     }
     const valid_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "valid.png");
     defer alloc.free(valid_path);
-    const valid_path_z = try alloc.dupeZ(u8, valid_path);
+    const valid_path_z = try alloc.dupeSentinel(u8, valid_path, 0);
     defer alloc.free(valid_path_z);
-    const missing_path_z = try alloc.dupeZ(u8, "/tmp/handwork-ask-missing-image.png");
+    const missing_path_z = try alloc.dupeSentinel(u8, "/tmp/handwork-ask-missing-image.png", 0);
     defer alloc.free(missing_path_z);
 
     var stdout_capture: TestCapture = .{};
@@ -5526,7 +5520,7 @@ test "runWithDeps reports unsupported images in JSON before startup" {
     }
     const invalid_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "not-image.txt");
     defer alloc.free(invalid_path);
-    const invalid_path_z = try alloc.dupeZ(u8, invalid_path);
+    const invalid_path_z = try alloc.dupeSentinel(u8, invalid_path, 0);
     defer alloc.free(invalid_path_z);
 
     var stdout_capture: TestCapture = .{};
@@ -5565,7 +5559,7 @@ test "runWithDeps assigns image ids and owns the authorized catalog before proce
     }
     const image_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "valid.png");
     defer alloc.free(image_path);
-    const image_path_z = try alloc.dupeZ(u8, image_path);
+    const image_path_z = try alloc.dupeSentinel(u8, image_path, 0);
     defer alloc.free(image_path_z);
 
     var stdout_capture: TestCapture = .{};
@@ -7306,13 +7300,15 @@ fn exerciseSavedAskSessionStoreAllocation(
 
 test "saved ask allocation failures keep managed borrows owned" {
     const backing = std.testing.allocator;
-    var counting = std.testing.FailingAllocator.init(backing, .{});
+    // Zig 0.17's testing allocator can grow in place; fail resizes so every
+    // growth is a counted allocation and runs are comparable.
+    var counting = std.testing.FailingAllocator.init(backing, .{ .resize_fail_index = 0 });
     try exerciseSavedAskSessionStoreAllocation(counting.allocator(), false);
 
     for (0..counting.alloc_index) |fail_index| {
         var failing = std.testing.FailingAllocator.init(
             backing,
-            .{ .fail_index = fail_index },
+            .{ .fail_index = fail_index, .resize_fail_index = 0 },
         );
         exerciseSavedAskSessionStoreAllocation(
             failing.allocator(),
@@ -8800,7 +8796,7 @@ test "resumed ask preserves user and image identity after a retained mid-turn ch
             .path = @constCast("/missing/original.png"),
             .media_type = @constCast("image/png"),
             .snapshot_path = @constCast("images/image-7-aaaaaaaaaaaaaaaa.bin"),
-            .snapshot_sha256 = @constCast("a" ** 64),
+            .snapshot_sha256 = @constCast(repeat("a", 64)),
         }};
         const old_user = types.UserTurn{
             .text = @constCast("original request"),
@@ -9002,7 +8998,7 @@ test "default handwork ask passes canonical image paths as initial context targe
     }
     const image_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "target.png");
     defer alloc.free(image_path);
-    const image_path_z = try alloc.dupeZ(u8, image_path);
+    const image_path_z = try alloc.dupeSentinel(u8, image_path, 0);
     defer alloc.free(image_path_z);
 
     var stdout_capture: TestCapture = .{};

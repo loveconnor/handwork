@@ -76,11 +76,11 @@ test "Darwin process I/O replaces only processSpawn with stable storage" {
 
     try std.testing.expect(selected.userdata == original.userdata);
     try std.testing.expect(selected.vtable == selected_again.vtable);
-    inline for (@typeInfo(std.Io.VTable).@"struct".fields) |field| {
-        if (comptime std.mem.eql(u8, field.name, "processSpawn")) {
-            try std.testing.expect(@field(selected.vtable, field.name) != @field(original.vtable, field.name));
+    inline for (@typeInfo(std.Io.VTable).@"struct".field_names) |field_name| {
+        if (comptime std.mem.eql(u8, field_name, "processSpawn")) {
+            try std.testing.expect(@field(selected.vtable, field_name) != @field(original.vtable, field_name));
         } else {
-            try std.testing.expectEqual(@field(original.vtable, field.name), @field(selected.vtable, field.name));
+            try std.testing.expectEqual(@field(original.vtable, field_name), @field(selected.vtable, field_name));
         }
     }
 }
@@ -470,7 +470,22 @@ pub fn readFileToEnd(alloc: std.mem.Allocator, file: *std.Io.File, max_bytes: us
     const zio = getIo();
     var read_buf: [8192]u8 = undefined;
     var r = file.reader(zio, &read_buf);
-    return r.interface.allocRemaining(alloc, std.Io.Limit.limited(max_bytes));
+    return allocRemainingBelowLimit(&r.interface, alloc, std.Io.Limit.limited(max_bytes));
+}
+
+/// Reads the rest of `reader` into an owned slice, returning
+/// `error.StreamTooLong` once `limit` bytes are reached. Byte caps in this
+/// codebase are exclusive: Zig 0.17 changed `Reader.allocRemaining` to accept
+/// exactly `limit` bytes, so callers use this to keep the original bound.
+pub fn allocRemainingBelowLimit(
+    reader: *std.Io.Reader,
+    gpa: std.mem.Allocator,
+    limit: std.Io.Limit,
+) std.Io.Reader.LimitedAllocError![]u8 {
+    var list: std.ArrayList(u8) = .empty;
+    defer list.deinit(gpa);
+    try reader.appendRemaining(gpa, &list, limit);
+    return list.toOwnedSlice(gpa);
 }
 
 pub fn readFileToEndZ(alloc: std.mem.Allocator, file: *std.Io.File, max_bytes: usize) ![:0]u8 {
@@ -1014,7 +1029,7 @@ pub fn realpathAlloc(alloc: std.mem.Allocator, path: []const u8) ![]u8 {
         return windows_paths.dirPath(getIo(), alloc, std.Io.Dir.cwd(), path);
     }
     var buf: [std.fs.max_path_bytes]u8 = undefined;
-    const path_z = std.fmt.bufPrintZ(&buf, "{s}", .{path}) catch return error.NameTooLong;
+    const path_z = std.mem.printSentinel(&buf, "{s}", .{path}, 0) catch return error.NameTooLong;
     var result_buf: [std.fs.max_path_bytes]u8 = undefined;
     const ptr = std.c.realpath(path_z, &result_buf) orelse {
         return switch (std.posix.errno(-1)) {
@@ -1047,7 +1062,7 @@ fn handlePathAlloc(alloc: std.mem.Allocator, handle: std.Io.File.Handle) ![]u8 {
         return alloc.dupe(u8, std.mem.sliceTo(&path_buf, 0));
     } else if (comptime builtin.os.tag == .linux) {
         var fd_path_buf: [64:0]u8 = undefined;
-        _ = std.fmt.bufPrintZ(&fd_path_buf, "/proc/self/fd/{d}", .{handle}) catch return error.HandlePathUnavailable;
+        _ = std.mem.printSentinel(&fd_path_buf, "/proc/self/fd/{d}", .{handle}, 0) catch return error.HandlePathUnavailable;
         var link_buf: [std.fs.max_path_bytes]u8 = undefined;
         const rc = std.c.readlink(&fd_path_buf, &link_buf, link_buf.len);
         if (rc < 0) return error.HandlePathUnavailable;

@@ -23,10 +23,6 @@ pub const Protocol = enum {
         return self == .iterm2 or self == .sixel;
     }
 
-    pub fn usesPlaceholderCells(self: Protocol) bool {
-        return self == .kitty or self.drawsPixelsOutOfBand();
-    }
-
     /// SIXEL draws real pixels at the cursor, so a wrong cell size would
     /// spill over neighboring text. The other protocols scale to cells.
     pub fn requiresExactCellSize(self: Protocol) bool {
@@ -34,8 +30,8 @@ pub const Protocol = enum {
     }
 
     pub fn parse(value: []const u8) ?Protocol {
-        inline for (@typeInfo(Protocol).@"enum".fields) |field| {
-            if (std.ascii.eqlIgnoreCase(value, field.name)) return @enumFromInt(field.value);
+        inline for (@typeInfo(Protocol).@"enum".field_names, @typeInfo(Protocol).@"enum".field_values) |field_name, field_value| {
+            if (std.ascii.eqlIgnoreCase(value, field_name)) return @fromBackingInt(@intCast(field_value));
         }
         if (std.ascii.eqlIgnoreCase(value, "off") or std.ascii.eqlIgnoreCase(value, "0") or
             std.ascii.eqlIgnoreCase(value, "false")) return .none;
@@ -112,8 +108,6 @@ pub const ProbeFacts = struct {
     window: CellSize = .{ .width_px = 0, .height_px = 0 },
     device_attributes_seen: bool = false,
 };
-
-pub const kitty_query_id: u32 = 31;
 
 /// XTSMGRAPHICS detects image add-ons that report SIXEL
 /// geometry even when DA1 does not advertise attribute 4. An early DA1 can

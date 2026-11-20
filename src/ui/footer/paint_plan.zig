@@ -29,6 +29,7 @@ const question_ui = @import("question_ui.zig");
 const render_input = @import("render_input.zig");
 const row_text = @import("row_text.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const activity_overlay = render_engine.activity_overlay;
@@ -687,7 +688,11 @@ pub fn composeFooterFrame(
             var confirmation = try composeCopyConfirmationRow(alloc, shell.layout.cols);
             try pushFooterBandRow(alloc, &frame, plan, rows.top_divider, &confirmation);
         }
-        var top_divider_row = try composeComposerTopDividerRow(alloc, shell.layout.cols);
+        const compact_palette = compact_command_active and !approval_active and !question_active;
+        var top_divider_row = if (input.input_visible or compact_palette)
+            try row_text.composePanelPadRow(alloc, shell.layout.cols)
+        else
+            try composeComposerTopDividerRow(alloc, shell.layout.cols);
         try pushFooterBandRow(alloc, &frame, plan, rows.top_divider + @as(u16, @intFromBool(show_copy_confirmation)), &top_divider_row);
     }
 
@@ -727,10 +732,13 @@ pub fn composeFooterFrame(
 
     if (approval_active or question_active or compact_command_active or input.show_picker) {
         if (input.input_visible) {
-            var picker_divider = try row_text.composeDividerRow(alloc, shell.layout.cols);
+            var picker_divider = try row_text.composePanelPadRow(alloc, shell.layout.cols);
             try pushFooterBandRow(alloc, &frame, plan, rows.picker_divider, &picker_divider);
         }
 
+        // Menus opened under the input share the slash palette's surface:
+        // they lay out two columns narrower and are inset into the panel.
+        const menu_cols: u16 = shell.layout.cols -| 2;
         if (approval_active) {
             var approval_row_index: u16 = 0;
             while (approval_row_index < input.picker_rows) : (approval_row_index += 1) {
@@ -753,7 +761,7 @@ pub fn composeFooterFrame(
                     menu,
                     menu_row_index,
                     input.picker_rows,
-                    shell.layout.cols,
+                    menu_cols,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
             }
@@ -764,7 +772,7 @@ pub fn composeFooterFrame(
                     alloc,
                     ctx.settings_menu,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                     input.picker_rows,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
@@ -776,7 +784,7 @@ pub fn composeFooterFrame(
                     alloc,
                     ctx.mcp_menu,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                     input.picker_rows,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
@@ -788,7 +796,7 @@ pub fn composeFooterFrame(
                     alloc,
                     ctx.help_menu,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                     input.picker_rows,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
@@ -800,7 +808,7 @@ pub fn composeFooterFrame(
                     alloc,
                     ctx.session_menu,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                     input.picker_rows,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
@@ -812,7 +820,7 @@ pub fn composeFooterFrame(
                     alloc,
                     ctx.model_menu,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                     input.picker_rows,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + menu_row_index, &menu_row);
@@ -830,7 +838,7 @@ pub fn composeFooterFrame(
                     alloc,
                     prepared,
                     menu_row_index,
-                    shell.layout.cols,
+                    menu_cols,
                 );
                 try pushFooterBandRow(
                     alloc,
@@ -848,13 +856,13 @@ pub fn composeFooterFrame(
                     ctx.auth_picker,
                     auth_row_index,
                     input.picker_rows,
-                    shell.layout.cols,
+                    menu_cols,
                 );
                 try pushFooterBandRow(alloc, &frame, plan, rows.picker_start + auth_row_index, &auth_row);
             }
-            if (picker_presentation.authPickerQueryCursorColumn(ctx.auth_picker, shell.layout.cols)) |column| {
+            if (picker_presentation.authPickerQueryCursorColumn(ctx.auth_picker, menu_cols)) |column| {
                 cursor_row = rows.picker_start;
-                cursor_col = column;
+                cursor_col = column + 1;
             }
         } else if (input.picker_kind == .slash) {
             const slash_prefix = input_presentation.slashInputPrefix(ctx.slash_registry, ctx.input.edit_state.input.items);
@@ -916,6 +924,12 @@ pub fn composeFooterFrame(
                         try pushFooterBandRow(alloc, &frame, plan, row, &slash_row);
                         row += 1;
                     }
+                    // Keep the palette surface continuous when a filter
+                    // leaves fewer results than the reserved rows.
+                    while (row < rows.picker_start + input.picker_rows) : (row += 1) {
+                        var pad = try row_text.composePanelPadRow(alloc, shell.layout.cols);
+                        try pushFooterBandRow(alloc, &frame, plan, row, &pad);
+                    }
                 } else {
                     const selected = input.picker_selection_index % count;
                     const window_start = picker_presentation.updateEdgeScrollPickerWindowStart(input.picker_window_start, count, selected, input.picker_rows);
@@ -936,7 +950,7 @@ pub fn composeFooterFrame(
             const status_rows: u16 = @intFromBool(ctx.file_completion_status != null and input.picker_rows > 1);
             if (status_rows > 0) {
                 const status = ctx.file_completion_status.?;
-                var status_row = try picker_presentation.composePickerOptionRow(alloc, .file, input.picker_start_col, status, false, shell.layout.cols);
+                var status_row = try picker_presentation.composePickerOptionRow(alloc, .file, input.picker_start_col, status, false, menu_cols);
                 try pushFooterBandRow(alloc, &frame, plan, row, &status_row);
                 row += 1;
             }
@@ -944,7 +958,7 @@ pub fn composeFooterFrame(
             const window_start = picker_presentation.updateEdgeScrollPickerWindowStart(input.picker_window_start, input.file_picker_items.len, selected, visible_rows);
             const window = picker_presentation.edgeScrollPickerWindowFromStart(input.file_picker_items.len, window_start, visible_rows);
             for (input.file_picker_items[window.start..window.end], window.start..) |item, i| {
-                var picker_row = try picker_presentation.composeFilePickerOptionRow(alloc, input.picker_start_col, item, ctx.file_completion_has_selection and i == selected, shell.layout.cols);
+                var picker_row = try picker_presentation.composeFilePickerOptionRow(alloc, input.picker_start_col, item, ctx.file_completion_has_selection and i == selected, menu_cols);
                 try pushFooterBandRow(alloc, &frame, plan, row, &picker_row);
                 row += 1;
             }
@@ -955,22 +969,41 @@ pub fn composeFooterFrame(
             var row = rows.picker_start;
             for (input.picker_items[window.start..window.end], window.start..) |item, i| {
                 const annotation = if (i < input.picker_annotations.len) input.picker_annotations[i] else "";
-                var picker_row = try picker_presentation.composePickerOptionRowAnnotated(alloc, input.picker_kind, input.picker_start_col, item, annotation, i == selected, shell.layout.cols);
+                var picker_row = try picker_presentation.composePickerOptionRowAnnotated(alloc, input.picker_kind, input.picker_start_col, item, annotation, i == selected, menu_cols);
                 try pushFooterBandRow(alloc, &frame, plan, row, &picker_row);
                 row += 1;
             }
         } else {
             var status_row = if (input.picker_kind == .file and ctx.file_completion_status != null)
-                try picker_presentation.composePickerOptionRow(alloc, .file, input.picker_start_col, ctx.file_completion_status.?, false, shell.layout.cols)
+                try picker_presentation.composePickerOptionRow(alloc, .file, input.picker_start_col, ctx.file_completion_status.?, false, menu_cols)
             else
-                try picker_presentation.composePickerStatusRowWithProvider(alloc, input.picker_kind, ctx.model_picker_stage, ctx.provider_picker_stage, input.picker_loading, input.picker_failed, input.picker_start_col, shell.layout.cols);
+                try picker_presentation.composePickerStatusRowWithProvider(alloc, input.picker_kind, ctx.model_picker_stage, ctx.provider_picker_stage, input.picker_loading, input.picker_failed, input.picker_start_col, menu_cols);
             try pushFooterBandRow(alloc, &frame, plan, rows.picker_start, &status_row);
         }
     }
 
-    // The bottom divider closes the composer frame; it is always drawn so the
-    // input reads as a field with the status line hanging beneath it.
-    var bottom_row = try row_text.composeDividerRow(alloc, shell.layout.cols);
+    const palette_menu_open = input.input_visible and input.show_picker and !approval_active and !question_active;
+    if (palette_menu_open and !(input.picker_kind == .slash and input.slash_menu_layout != null)) {
+        try panelizeMenuRows(alloc, &frame, plan, rows.picker_start, input.picker_rows, shell.layout.cols);
+    } else if (compact_command_active and !approval_active and !question_active) {
+        try panelizeMenuRows(alloc, &frame, plan, rows.picker_start, input.picker_rows, shell.layout.cols);
+    }
+
+    // The row under the composer closes the panel: tinted padding when it sits
+    // directly below the input, a quiet blank row above hints when a menu or
+    // prompt is open beneath it, and a rule when the input is hidden.
+    const menu_open = approval_active or question_active or compact_command_active or input.show_picker;
+    const slash_palette_open = input.show_picker and input.picker_kind == .slash and input.slash_menu_layout != null;
+    var bottom_row = if (compact_command_active and !approval_active and !question_active)
+        try row_text.composePanelPadRow(alloc, shell.layout.cols)
+    else if (!input.input_visible)
+        try row_text.composeDividerRow(alloc, shell.layout.cols)
+    else if (slash_palette_open or (menu_open and !approval_active and !question_active))
+        try row_text.composePanelPadRow(alloc, shell.layout.cols)
+    else if (menu_open)
+        std.ArrayList(u8).empty
+    else
+        try row_text.composePanelPadRow(alloc, shell.layout.cols);
     try pushFooterBandRow(alloc, &frame, plan, rows.bottom_divider, &bottom_row);
 
     var danger_status_visible = false;
@@ -999,9 +1032,15 @@ pub fn composeFooterFrame(
         try input_presentation.composeResumeMenuHintRow(alloc, shell.layout.cols, ctx.ctrl_c_pending)
     else if (input.show_picker and input.picker_kind == .models)
         try input_presentation.composeModelsMenuHintRow(alloc, shell.layout.cols, ctx.ctrl_c_pending)
-    else if (input.show_picker and input.picker_kind == .slash and input.slash_menu_layout != null)
-        try input_presentation.composeSlashMenuHintRow(alloc, shell.layout.cols)
-    else blk: {
+    else if (input.show_picker and input.picker_kind == .slash and input.slash_menu_layout != null) slash_hint: {
+        const layout = input.slash_menu_layout.?;
+        var range_buf: [48]u8 = undefined;
+        const range = if (layout.result_count > layout.selectable_rows)
+            std.fmt.bufPrint(&range_buf, "{d}–{d} of {d}", .{ layout.window.start + 1, layout.window.end, layout.result_count }) catch ""
+        else
+            std.fmt.bufPrint(&range_buf, "{d} {s}", .{ layout.result_count, if (layout.result_count == 1) "result" else "results" }) catch "";
+        break :slash_hint try input_presentation.composeSlashMenuHintRowWithRange(alloc, shell.layout.cols, range);
+    } else blk: {
         danger_status_visible = input_presentation.dangerStatusText(
             approval_active,
             ctx,
@@ -1015,6 +1054,17 @@ pub fn composeFooterFrame(
         );
     };
     frame.danger_status_visible = danger_status_visible;
+    // Menu hints align with the inset palette rows above them.
+    const menu_hint = (input.show_picker or compact_command_active) and !approval_active and !question_active and
+        !(input.picker_kind == .slash and input.slash_menu_layout != null);
+    if (menu_hint and hint_row.items.len > 0) {
+        var inset: std.ArrayList(u8) = .empty;
+        errdefer inset.deinit(alloc);
+        try inset.append(alloc, ' ');
+        try row_text.appendClipped(alloc, &inset, hint_row.items, shell.layout.cols -| 1);
+        hint_row.deinit(alloc);
+        hint_row = inset;
+    }
     try pushFooterBandRow(alloc, &frame, plan, rows.hint, &hint_row);
 
     frame.cursor = .{ .row = cursor_row, .col = cursor_col };
@@ -1046,7 +1096,7 @@ fn composeApiKeyFooterFrame(alloc: Allocator, shell: *TranscriptRuntime, input: 
         try pushFooterBandRow(alloc, &frame, plan, row_number, &row);
     }
     if (border_row >= rows.top) {
-        var border = try composeComposerTopDividerRow(alloc, width);
+        var border = try row_text.composePanelPadRow(alloc, width);
         try pushFooterBandRow(alloc, &frame, plan, border_row, &border);
     }
     var mask: [64]u8 = @splat('*');
@@ -1055,7 +1105,7 @@ fn composeApiKeyFooterFrame(alloc: Allocator, shell: *TranscriptRuntime, input: 
     const summary = visual_layout.summarize(source, null);
     const window = visual_layout.visibleWindow(summary.cursor.row_index, summary.total_rows, 1);
     const cursor = try composeAndPushVisibleInputRows(alloc, &frame, plan, input_row, summary, window, source, if (count == 0) "Type or paste your API key" else "");
-    var bottom = try row_text.composeDividerRow(alloc, width);
+    var bottom = try row_text.composePanelPadRow(alloc, width);
     try pushFooterBandRow(alloc, &frame, plan, rows.bottom_divider, &bottom);
     var hint: std.ArrayList(u8) = .empty;
     errdefer hint.deinit(alloc);
@@ -1186,7 +1236,7 @@ test "clipboard confirmation preserves the full divider above the input" {
         var frame = try composeFooterFrame(alloc, &shell, planner_input, plan);
         defer frame.deinit(alloc);
         if (copied) try expectFrameRowTextTrimmed(&frame, plan.footer.top_divider, 24, "✓ Copied to clipboard");
-        try expectFrameRowTextTrimmed(&frame, plan.footer.input_base - 1, 24, "─" ** 24);
+        try expectFrameRowTextTrimmed(&frame, plan.footer.input_base - 1, 24, repeat("─", 24));
         try expectFrameRowTextTrimmed(&frame, plan.footer.input_base, 24, "┃ abc");
     }
 }
@@ -1245,33 +1295,38 @@ fn composeAndPushVisibleInputRows(
     var line_idx: u16 = 0;
     for (rows.rows.items) |*input_row| {
         const row = base_row - (visible_count_u16 - 1 - line_idx);
+        try row_text.applyPanelBackground(alloc, input_row, source.terminal_cols);
         try pushFooterBandRow(alloc, frame, plan, row, input_row);
         line_idx += 1;
     }
     return placement;
 }
 
-fn composeInputRowsSnapshot(
+/// Moves menu rows onto the composer panel surface: each row is inset one
+/// column, the `❯` gutter becomes a soft highlight bar, and rows the menu
+/// left empty are filled so the panel stays continuous.
+fn panelizeMenuRows(
     alloc: Allocator,
-    input: []const u8,
-    cursor: usize,
-    images: []const types.ImageAttachment,
+    frame: *footer_viewport.ComposedFooterFrame,
+    plan: PaintPlan,
+    first_row: u16,
+    row_count: u16,
     width: u16,
-    row_limit: usize,
-) ![]u8 {
-    const source = visual_layout.Source{ .input = input, .cursor = cursor, .terminal_cols = width, .images = images };
-    const summary = visual_layout.summarize(source, null);
-    const window = visual_layout.visibleWindow(summary.cursor.row_index, summary.total_rows, row_limit);
-    var rows = try input_presentation.composeVisibleInputRows(alloc, source, window);
-    defer rows.deinit(alloc);
-
-    var out: std.ArrayList(u8) = .empty;
-    errdefer out.deinit(alloc);
-    for (rows.rows.items, 0..) |row, i| {
-        if (i > 0) try out.append(alloc, '\n');
-        try out.appendSlice(alloc, row.items);
+) !void {
+    if (row_count == 0) return;
+    const end_row = first_row + row_count;
+    var seen: [256]bool = @splat(false);
+    for (frame.rows.items) |*composed| {
+        if (composed.row < first_row or composed.row >= end_row) continue;
+        seen[@min(composed.row - first_row, 255)] = true;
+        try row_text.panelizeMenuRow(alloc, &composed.text, width);
     }
-    return try out.toOwnedSlice(alloc);
+    var row = first_row;
+    while (row < end_row) : (row += 1) {
+        if (row - first_row < 256 and seen[row - first_row]) continue;
+        var pad = try row_text.composePanelPadRow(alloc, width);
+        try pushFooterBandRow(alloc, frame, plan, row, &pad);
+    }
 }
 
 fn pushFooterBandRow(
@@ -1989,14 +2044,14 @@ test "approval footer composition hides cursor while rendering command prompt" {
     for (frame.rows.items, 0..) |row, row_index| {
         saw_prompt = saw_prompt or std.mem.find(u8, row.text.items, "Would you like to run the following command?") != null;
         saw_default_reason = saw_default_reason or std.mem.find(u8, row.text.items, "handwork needs your approval before running this shell command") != null;
-        saw_selected_choice = saw_selected_choice or std.mem.find(u8, row.text.items, "1. Yes") != null;
+        saw_selected_choice = saw_selected_choice or (std.mem.find(u8, row.text.items, "❯ ") != null and std.mem.find(u8, row.text.items, "Yes") != null);
         if (std.mem.find(u8, row.text.items, "Would you like to run the following command?") != null) {
             prompt_row = row_index;
         }
         if (std.mem.find(u8, row.text.items, "$ echo permission test") != null) {
             command_row = row_index;
         }
-        if (std.mem.find(u8, row.text.items, "3. No") != null) {
+        if (std.mem.endsWith(u8, std.mem.trimEnd(u8, row.text.items, " \x1b[0m"), "No")) {
             choice_three_row = row.row;
         }
         if (std.mem.find(u8, row.text.items, "1–3 choose") != null) {

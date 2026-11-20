@@ -177,15 +177,6 @@ pub fn runBeforeInteractive(alloc: Allocator, args: []const [:0]const u8, cfg: C
     return beforeInteractiveResultFromRunResult(alloc, run_result, benchEnabled());
 }
 
-pub fn runNoConfigBeforeInteractive(
-    alloc: Allocator,
-    args: []const [:0]const u8,
-    version: []const u8,
-    command_catalog: command_specs.TopLevelRegistry,
-) !?RunOutcome {
-    return if (try cli_surface.runNoConfigIfRequested(alloc, args, version, command_catalog)) .returned else null;
-}
-
 fn runBeforeInteractiveWithDeps(alloc: Allocator, args: []const [:0]const u8, cfg: Config, deps: RunDeps) !BeforeInteractiveResult {
     const run_result = deps.run_if_requested(deps.cli_ctx, alloc, args, cliSurfaceConfig(cfg)) catch |err| switch (err) {
         error.UnknownCliCommand => return .{ .exit = 1 },
@@ -818,7 +809,7 @@ const TestApp = struct {
         return .{ .handoff = handoff, .failure = active_capture.?.shutdown_failure };
     }
 
-    fn takeUpgradeRelaunchRequest(_: *TestApp) ?auto_upgrade.RelaunchRequest {
+    pub fn takeUpgradeRelaunchRequest(_: *TestApp) ?auto_upgrade.RelaunchRequest {
         const path = active_capture.?.upgrade_relaunch_path orelse return null;
         var request = auto_upgrade.RelaunchRequest{
             .executable_path_len = path.len,
@@ -841,23 +832,23 @@ const TestApp = struct {
         appendTestEvent("resume-reconciliation");
     }
 
-    fn startAutoUpgrade(_: *TestApp) void {
+    pub fn startAutoUpgrade(_: *TestApp) void {
         appendTestEvent("auto-upgrade");
     }
 
-    fn startFileIndex(_: *TestApp) void {
+    pub fn startFileIndex(_: *TestApp) void {
         appendTestEvent("file-index");
     }
 
-    fn startMcpDiscovery(_: *TestApp) void {
+    pub fn startMcpDiscovery(_: *TestApp) void {
         appendTestEvent("mcp-discovery");
     }
 
-    fn rebindAfterInit(_: *TestApp) void {
+    pub fn rebindAfterInit(_: *TestApp) void {
         appendTestEvent("rebind-after-init");
     }
 
-    fn startModelCacheWarmup(_: *TestApp) void {
+    pub fn startModelCacheWarmup(_: *TestApp) void {
         appendTestEvent("model-cache");
     }
 

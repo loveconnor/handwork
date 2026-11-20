@@ -11,6 +11,7 @@ const approval_readiness = @import("approval_readiness.zig");
 const interaction_state = @import("interaction_state.zig");
 const picker_presentation = @import("picker_presentation.zig");
 const row_text = @import("row_text.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const TranscriptRuntime = transcript_runtime.TranscriptRuntime;
@@ -125,10 +126,6 @@ pub fn composeFileApprovalScreenRow(
             .complete = true,
         },
     };
-}
-
-pub fn approvalPanelRowsForLayout(shell: *const TranscriptRuntime) u16 {
-    return approvalPanelRowsForTerminalRows(shell.layout.rows);
 }
 
 pub fn inlineApprovalPanelRows(
@@ -485,7 +482,7 @@ pub fn projectFileApproval(
     if (target_count == 0) return result;
 
     var remaining = target_count;
-    var choice_selected = [_]bool{false} ** 3;
+    var choice_selected = @as([3]bool, @splat(false));
     const choice_rows = @min(@as(usize, 3), remaining);
     const choice_window = picker_presentation.pickerWindow(
         3,
@@ -503,7 +500,7 @@ pub fn projectFileApproval(
     if (question_selected) remaining -= 1;
 
     var preview_selected =
-        [_]bool{false} ** diff_mod.max_preview_lines;
+        @as([diff_mod.max_preview_lines]bool, @splat(false));
     var selected_preview_count: usize = 0;
     if (remaining > 0) {
         for (request.preview.lines[0..preview_count], 0..) |line, index| {
@@ -1730,8 +1727,8 @@ fn approvalAmendmentPlaceholder(choice: u8) []const u8 {
 
 fn approvalChoicePrefix(choice: u8) []const u8 {
     return switch (choice) {
-        0 => "1. Yes, ",
-        2 => "3. No, ",
+        0 => "1  Yes, ",
+        2 => "3  No, ",
         else => "",
     };
 }
@@ -1758,8 +1755,11 @@ pub fn composeInlineApprovalHintRow(
 ) !std.ArrayList(u8) {
     var row: std.ArrayList(u8) = .empty;
     errdefer row.deinit(alloc);
+    // Same two-column inset as the rest of the approval panel.
+    const inset: u16 = if (width > 2) 2 else 0;
+    try row.appendNTimes(alloc, ' ', inset);
     try row.appendSlice(alloc, ui_render.dim_style);
-    try row_text.appendClipped(alloc, &row, approvalHint(approval, width), width);
+    try row_text.appendClipped(alloc, &row, approvalHint(approval, width - inset), width - inset);
     try row.appendSlice(alloc, ui_render.reset_style);
     return row;
 }
@@ -1768,7 +1768,23 @@ fn approvalChoiceLine(buf: []u8, selected: bool, label: []const u8) []const u8 {
     const marker: []const u8 = if (selected) "❯ " else "  ";
     const label_style = if (selected) ui_render.tag_style else "";
     const suffix_style = if (selected) ui_render.reset_style else "";
-    return std.fmt.bufPrint(buf, "  {s}{s}{s}{s}", .{ marker, label_style, label, suffix_style }) catch label;
+    // "N. label" renders like file approvals: a quiet number column, then the
+    // label, so every approval kind shares one option layout.
+    const numbered = label.len >= 3 and std.ascii.isDigit(label[0]) and label[1] == '.' and label[2] == ' ';
+    if (!numbered) {
+        return std.fmt.bufPrint(buf, "  {s}{s}{s}{s}", .{ label_style, marker, label, suffix_style }) catch label;
+    }
+    const number_style = if (selected) ui_render.tag_style else ui_render.statusline_style;
+    return std.fmt.bufPrint(buf, "  {s}{s}{s}{s}{s}  {s}{s}{s}", .{
+        label_style,
+        marker,
+        number_style,
+        label[0..1],
+        ui_render.reset_style,
+        label_style,
+        label[3..],
+        suffix_style,
+    }) catch label;
 }
 
 fn composeApprovalHeaderRow(
@@ -1964,7 +1980,19 @@ pub fn commandTarget(label: []const u8) ?[]const u8 {
 }
 
 pub fn commandTargetForApproval(label: []const u8, command: ?[]const u8) ?[]const u8 {
-    return command orelse commandTarget(label);
+    const target = command orelse return commandTarget(label);
+    return withoutDefaultShellProfileHeader(target);
+}
+
+/// Approval commands carry a "# shell.run profile=… shell=…" identity line.
+/// The default user-profile line is implementation detail, so it is hidden;
+/// non-default profiles (clean, legacy) stay visible because they change how
+/// the command runs.
+fn withoutDefaultShellProfileHeader(command: []const u8) []const u8 {
+    const default_header = "# shell.run profile=user shell=";
+    if (!std.mem.startsWith(u8, command, default_header)) return command;
+    const newline = std.mem.findScalar(u8, command, '\n') orelse return command;
+    return command[newline + 1 ..];
 }
 
 fn approvalAlwaysChoice(approval: ApprovalProjection, label: []const u8) []const u8 {
@@ -2402,7 +2430,7 @@ test "inline command panel wraps the complete target before its controls" {
     var prompt = ApprovalPrompt{};
     defer prompt.deinit(alloc);
     try std.testing.expect(try prompt.syncRequest(alloc, .{
-        .label = "shell.run printf 'INLINE_COMMAND_START " ++ "x" ** 55 ++ " INLINE_COMMAND_END'",
+        .label = "shell.run printf 'INLINE_COMMAND_START " ++ repeat("x", 55) ++ " INLINE_COMMAND_END'",
     }));
 
     const request = prompt.request.?.view();
@@ -2428,14 +2456,14 @@ test "inline command panel wraps the complete target before its controls" {
 
     try std.testing.expect(std.mem.find(u8, panel.items, "INLINE_COMMAND_START") != null);
     try std.testing.expect(std.mem.find(u8, panel.items, "INLINE_COMMAND_END") != null);
-    try std.testing.expect(std.mem.find(u8, panel.items, interaction_state.approval_once_label) != null);
+    try std.testing.expect(std.mem.find(u8, panel.items, "Yes") != null);
     try std.testing.expect(std.mem.find(u8, panel.items, "enter confirm") == null);
     try std.testing.expect(std.mem.find(u8, panel.items, "esc cancel") == null);
 }
 
 test "inline command panel uses full command when label is bounded" {
     const alloc = std.testing.allocator;
-    const command = "printf 'INLINE_FULL_COMMAND_START_" ++ ("x" ** 80) ++ "_INLINE_FULL_COMMAND_END'";
+    const command = "printf 'INLINE_FULL_COMMAND_START_" ++ repeat("x", 80) ++ "_INLINE_FULL_COMMAND_END'";
     var prompt = ApprovalPrompt{};
     defer prompt.deinit(alloc);
     try std.testing.expect(try prompt.syncRequest(alloc, .{
@@ -2537,7 +2565,7 @@ test "inline command panel wraps commands at word boundaries" {
 test "inline command panel never truncates the complete command" {
     const alloc = std.testing.allocator;
     const command = "printf 'INLINE_UNBOUNDED_COMMAND_START_" ++
-        ("x" ** (diff_mod.max_request_projection_bytes + 64)) ++
+        repeat("x", diff_mod.max_request_projection_bytes + 64) ++
         "_INLINE_UNBOUNDED_COMMAND_END'";
     var prompt = ApprovalPrompt{};
     defer prompt.deinit(alloc);
@@ -2608,7 +2636,7 @@ test "approval panel renders typed amendment in the selected choice row" {
         interaction_state.approval_panel_rows_spacious,
     );
     defer row.deinit(std.testing.allocator);
-    try std.testing.expect(std.mem.find(u8, row.items, "1. Yes, summarize it") != null);
+    try std.testing.expect(std.mem.find(u8, row.items, "1  Yes, summarize it") != null);
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(row.items) <= 120);
 }
 
@@ -2800,7 +2828,7 @@ test "generic approval uses compact permission header and pointer marker" {
     );
     defer choice.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, choice.items, "❯ ") != null);
-    try std.testing.expect(std.mem.find(u8, choice.items, "1. Yes") != null);
+    try std.testing.expect(std.mem.find(u8, choice.items, "Yes") != null);
     try std.testing.expect(std.mem.find(u8, choice.items, "›") == null);
 }
 

@@ -26,6 +26,7 @@ pub fn build(b: *std.Build) void {
         .default_target = if (@import("builtin").os.tag == .windows) .{ .abi = .gnu } else .{},
     });
     const optimize = b.standardOptimizeOption(.{});
+    const windows_host = WindowsHost.init(b, target, optimize);
     const platform_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/platform_tests.zig"),
@@ -36,14 +37,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const platform_check = b.step("platform-check", "Compile platform adapter tests without running them");
-    if (target.result.os.tag == .windows) {
-        platform_tests.root_module.linkSystemLibrary("advapi32", .{});
-        platform_tests.root_module.linkSystemLibrary("ws2_32", .{});
-        platform_tests.root_module.linkSystemLibrary("shell32", .{});
-        platform_tests.root_module.linkSystemLibrary("ole32", .{});
-        platform_tests.root_module.linkSystemLibrary("user32", .{});
-        platform_tests.root_module.linkSystemLibrary("gdi32", .{});
-    }
+    windows_host.addTo(platform_tests.root_module);
     platform_check.dependOn(&platform_tests.step);
     const terminal_platform_check = b.addObject(.{
         .name = "terminal-platform-check",
@@ -54,6 +48,7 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
+    windows_host.addImports(terminal_platform_check.root_module);
     platform_check.dependOn(&terminal_platform_check.step);
     const platform_run = b.step("test-platform", "Run platform adapter tests on the target host");
     platform_run.dependOn(&b.addRunArtifact(platform_tests).step);
@@ -93,20 +88,14 @@ pub fn build(b: *std.Build) void {
             .stack_check = false,
             .stack_protector = false,
             .omit_frame_pointer = true,
-            .unwind_tables = .none,
+            // Zig 0.17's mingw CRT emits SEH directives that need unwind tables.
+            .unwind_tables = if (target.result.os.tag == .windows) null else .none,
             .error_tracing = false,
-            .strip = optimize != .Debug,
+            .strip = optimize != .debug,
         }),
     });
     exe.root_module.addImport("build_options", build_options.createModule());
-    if (target.result.os.tag == .windows) {
-        exe.root_module.linkSystemLibrary("advapi32", .{});
-        exe.root_module.linkSystemLibrary("ws2_32", .{});
-        exe.root_module.linkSystemLibrary("shell32", .{});
-        exe.root_module.linkSystemLibrary("ole32", .{});
-        exe.root_module.linkSystemLibrary("user32", .{});
-        exe.root_module.linkSystemLibrary("gdi32", .{});
-    }
+    windows_host.addTo(exe.root_module);
     if (target.result.os.tag == .macos) {
         exe.root_module.linkFramework("ApplicationServices", .{});
         exe.root_module.linkFramework("AppKit", .{});
@@ -120,9 +109,7 @@ pub fn build(b: *std.Build) void {
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    run_cmd.addPassthruArgs();
 
     const run_step = b.step("run", "Run handwork");
     run_step.dependOn(&run_cmd.step);
@@ -136,14 +123,15 @@ pub fn build(b: *std.Build) void {
         .error_tracing = true,
     });
     test_module.addImport("build_options", build_options.createModule());
-    if (target.result.os.tag == .windows) {
-        test_module.linkSystemLibrary("advapi32", .{});
-        test_module.linkSystemLibrary("ws2_32", .{});
-        test_module.linkSystemLibrary("shell32", .{});
-        test_module.linkSystemLibrary("ole32", .{});
-        test_module.linkSystemLibrary("user32", .{});
-        test_module.linkSystemLibrary("gdi32", .{});
-    }
+    // Tests that re-exec the product binary use the installed exe; the test
+    // run step depends on the install step.
+    const test_options = b.addOptions();
+    test_options.addOptionPathUntracked(
+        "product_exe",
+        b.graph.path(.install_bin, b.fmt("handwork{s}", .{target.result.exeFileExt()})),
+    );
+    test_module.addImport("test_options", test_options.createModule());
+    windows_host.addTo(test_module);
     const exe_tests = b.addTest(.{
         .root_module = test_module,
         .filters = if (test_filter) |filter| &.{filter} else &.{},
@@ -162,24 +150,16 @@ pub fn build(b: *std.Build) void {
         .error_tracing = true,
     });
     integration_module.addImport("build_options", build_options.createModule());
-    if (target.result.os.tag == .windows) {
-        integration_module.linkSystemLibrary("advapi32", .{});
-        integration_module.linkSystemLibrary("ws2_32", .{});
-        integration_module.linkSystemLibrary("shell32", .{});
-        integration_module.linkSystemLibrary("ole32", .{});
-        integration_module.linkSystemLibrary("user32", .{});
-        integration_module.linkSystemLibrary("gdi32", .{});
-    }
+    const integration_test_options = b.addOptions();
+    integration_test_options.addOption([]const u8, "product_exe", "");
+    integration_module.addImport("test_options", integration_test_options.createModule());
+    windows_host.addTo(integration_module);
     const integration_tests = b.addTest(.{ .root_module = integration_module, .filters = &.{"platform integration"} });
     platform_check.dependOn(&integration_tests.step);
     const integration_step = b.step("test-platform-integration", "Run storage and command platform journeys");
     integration_step.dependOn(&b.addRunArtifact(integration_tests).step);
     const run_exe_tests = b.addRunArtifact(exe_tests);
     run_exe_tests.step.dependOn(b.getInstallStep());
-    run_exe_tests.setEnvironmentVariable(
-        "HANDWORK_TEST_PRODUCT_EXE",
-        b.getInstallPath(.bin, "handwork"),
-    );
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_exe_tests.step);
@@ -213,6 +193,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
     mcp_test_exports.addImport("build_options", build_options.createModule());
+    windows_host.addImports(mcp_test_exports);
     const mcp_dispatcher_e2e = b.addExecutable(.{
         .name = "mcp-stdio-dispatcher-driver",
         .root_module = b.createModule(.{
@@ -229,7 +210,7 @@ pub fn build(b: *std.Build) void {
         mcp_test_exports,
     );
     const run_mcp_dispatcher_e2e = b.addRunArtifact(mcp_dispatcher_e2e);
-    if (b.args) |args| run_mcp_dispatcher_e2e.addArgs(args);
+    run_mcp_dispatcher_e2e.addPassthruArgs();
     const mcp_dispatcher_e2e_step = b.step(
         "run-mcp-stdio-dispatcher-e2e",
         "Run the MCP stdio dispatcher E2E driver",
@@ -243,6 +224,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .link_libc = true,
     });
+    windows_host.addImports(benchmark_exports_mod);
     const file_index_bench = b.addExecutable(.{
         .name = "file-index-bench",
         .root_module = b.createModule(.{
@@ -259,7 +241,7 @@ pub fn build(b: *std.Build) void {
 
     const run_bench = b.addRunArtifact(file_index_bench);
     run_bench.step.dependOn(&install_bench.step);
-    if (b.args) |args| run_bench.addArgs(args);
+    run_bench.addPassthruArgs();
     const run_bench_step = b.step("run-bench-file-index", "Build and run file_index search benchmark");
     run_bench_step.dependOn(&run_bench.step);
 
@@ -354,7 +336,7 @@ pub fn build(b: *std.Build) void {
 
     const run_approval_review_bench = b.addRunArtifact(approval_review_bench);
     run_approval_review_bench.step.dependOn(&install_approval_review_bench.step);
-    if (b.args) |args| run_approval_review_bench.addArgs(args);
+    run_approval_review_bench.addPassthruArgs();
     const run_approval_review_bench_step = b.step(
         "run-bench-approval-review",
         "Build and run the file-diff approval review benchmark",
@@ -413,6 +395,52 @@ pub fn build(b: *std.Build) void {
     }
 }
 
+/// Windows system libraries and translated Win32 headers for host adapters.
+/// Zig 0.17 removed `@cImport`, so each adapter's header set in `src/c/` is
+/// translated here and imported by name; non-Windows targets get nothing.
+const WindowsHost = struct {
+    const headers = [_][]const u8{
+        "windows_clipboard",
+        "windows_console",
+        "windows_private_storage",
+        "windows_processes",
+        "windows_shell",
+        "windows_sockets",
+    };
+    const system_libraries = [_][]const u8{ "advapi32", "ws2_32", "shell32", "ole32", "user32", "gdi32" };
+
+    c_modules: ?[headers.len]*std.Build.Module,
+
+    fn init(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.lang.Optimize) WindowsHost {
+        if (target.result.os.tag != .windows) return .{ .c_modules = null };
+        var modules: [headers.len]*std.Build.Module = undefined;
+        for (headers, &modules) |name, *module| {
+            const translate = b.addTranslateC(.{
+                .root_source_file = b.path(b.fmt("src/c/{s}.h", .{name})),
+                .target = target,
+                .optimize = optimize,
+            });
+            module.* = translate.createModule();
+        }
+        return .{ .c_modules = modules };
+    }
+
+    /// Adds the translated headers only.
+    fn addImports(self: WindowsHost, module: *std.Build.Module) void {
+        const modules = self.c_modules orelse return;
+        for (headers, modules) |name, c_module| {
+            module.addImport(module.owner.fmt("{s}_c", .{name}), c_module);
+        }
+    }
+
+    /// Adds the translated headers and links the Win32 system libraries.
+    fn addTo(self: WindowsHost, module: *std.Build.Module) void {
+        if (self.c_modules == null) return;
+        self.addImports(module);
+        for (system_libraries) |name| module.linkSystemLibrary(name, .{});
+    }
+};
+
 fn addWasmArtifact(
     b: *std.Build,
     surface: WasmSurface,
@@ -451,7 +479,7 @@ fn addWasmArtifact(
         .root_module = b.createModule(.{
             .root_source_file = b.path(wasm_root),
             .target = wasm_target,
-            .optimize = .ReleaseSmall,
+            .optimize = .small,
             .single_threaded = true,
             .link_libc = true,
             .stack_check = false,
@@ -495,7 +523,7 @@ fn addNapiArtifact(
         .root_module = b.createModule(.{
             .root_source_file = b.path(root),
             .target = target,
-            .optimize = .ReleaseSafe,
+            .optimize = .safe,
             .link_libc = true,
             .strip = true,
         }),
@@ -506,7 +534,13 @@ fn addNapiArtifact(
         "node-include-dir",
         "Directory containing node_api.h for the N-API addon",
     ) orelse discoverNodeIncludeDir(b);
-    lib.root_module.addSystemIncludePath(.{ .cwd_relative = node_include });
+    const node_api = b.addTranslateC(.{
+        .root_source_file = b.path("src/c/node_api.h"),
+        .target = target,
+        .optimize = .safe,
+    });
+    node_api.addSystemIncludePath(.{ .cwd_relative = node_include });
+    lib.root_module.addImport("node_api_c", node_api.createModule());
     lib.linker_allow_shlib_undefined = true;
 
     const install = b.addInstallArtifact(lib, .{ .dest_sub_path = "libhandwork.node" });

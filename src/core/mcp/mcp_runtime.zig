@@ -28,6 +28,7 @@ const tool_catalog = @import("tool_catalog.zig");
 const tool_snapshot = @import("tool_snapshot.zig");
 const feature_catalog = @import("feature_catalog.zig");
 const feature_snapshot = @import("feature_snapshot.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const FeatureIdentitySnapshot = feature_snapshot.Snapshot;
 const ToolCallSnapshot = tool_snapshot.Snapshot;
 const model_tool_schema = @import("../tooling/model_tool_schema.zig");
@@ -138,13 +139,6 @@ const LegacyUrlWireCompletionIdentity = legacy_url_completion.WireCompletionIden
 const LegacyUrlCompletionCandidate = legacy_url_completion.Candidate;
 const LegacyUrlCompletionReplayStep = legacy_url_completion.ReplayStep;
 
-fn applyLegacyUrlCompletion(
-    waiter: *LegacyUrlWaiter,
-    completion: elicitation.LegacyUrlCompletionIdentity,
-) bool {
-    return legacy_url_completion.apply(waiter, completion, operation_control.awakeMillis(io_mod.getIo()));
-}
-
 fn awaitFeatureServer(
     runtime: *McpRuntime,
     server: *const McpServer,
@@ -205,7 +199,6 @@ fn completeFeatureArgument(
 
 pub const ServerState = server_connection.ServerState;
 
-pub const ToolFreshness = catalog_freshness.Freshness;
 const DiscoveryState = server_connection.DiscoveryState;
 
 pub const McpServerConfig = mcp_contract.McpServerConfig;
@@ -949,19 +942,6 @@ pub const McpRuntime = struct {
         );
         self.workspace_diagnostics.appendSliceAssumeCapacity(diagnostics.items);
         diagnostics.clearRetainingCapacity();
-    }
-
-    pub fn waitForDiscovery(
-        self: *McpRuntime,
-        cancel_flag: ?*std.atomic.Value(bool),
-    ) !void {
-        while (self.isDiscovering()) {
-            if (cancel_flag) |flag| {
-                if (flag.load(.acquire)) return error.Cancelled;
-            }
-            if (self.retiring.load(.acquire)) return error.McpRuntimeUnavailable;
-            try io_mod.getIo().sleep(.fromMilliseconds(5), .awake);
-        }
     }
 
     pub fn waitForRequiredDiscovery(self: *McpRuntime, cancel_flag: ?*std.atomic.Value(bool)) !void {
@@ -1733,22 +1713,6 @@ pub const McpRuntime = struct {
         operation_access.refresh() catch return false;
         operation_access.authorize(.{ .tool = name }) catch return false;
         return true;
-    }
-
-    pub fn serverToolFreshness(self: *McpRuntime, name: []const u8) ?ToolFreshness {
-        self.catalog_mutex.lockSharedUncancelable(io_mod.getIo());
-        defer self.catalog_mutex.unlockShared(io_mod.getIo());
-        const server = self.findServer(name) orelse return null;
-        const metadata = server.tool_catalog.metadata orelse return null;
-        if (!tool_catalog.catalogAuthPartitionMatches(server, metadata)) return .stale;
-        return catalog_freshness.effectiveFreshness(
-            metadata,
-            operation_control.monotonicMillis(io_mod.getIo()),
-            if (server.tool_subscription) |subscription|
-                subscription.hasInvalidation()
-            else
-                false,
-        );
     }
 
     /// Returns owned names for every currently ready tool not revoked by policy.
@@ -5398,7 +5362,7 @@ fn expectResourceText(result: ResourceReadResult, expected: []const u8) !void {
 
 fn expectTestProcessExited(pid: std.posix.pid_t) !void {
     for (0..200) |_| {
-        std.posix.kill(pid, @enumFromInt(0)) catch |err| switch (err) {
+        std.posix.kill(pid, @fromBackingInt(@intCast(0))) catch |err| switch (err) {
             error.ProcessNotFound => return,
             else => {},
         };
@@ -6008,8 +5972,8 @@ fn checkResourceSnapshotWithTemplatesAllocationFailures(alloc: Allocator) !void 
 }
 
 test "resource template matching bounds catalog work and releases the catalog lock" {
-    const malicious_template = "memory://{value}" ++ ("a" ** 2047) ++ "b";
-    const requested_uri = "memory://" ++ ("a" ** 4096);
+    const malicious_template = "memory://{value}" ++ repeat("a", 2047) ++ "b";
+    const requested_uri = "memory://" ++ repeat("a", 4096);
     var templates = [_]resources_feature.Template{.{
         .uri_template = @constCast(malicious_template),
         .name = @constCast("bounded"),
@@ -6909,16 +6873,16 @@ test "tool name allocation sanitizes truncates and deconflicts" {
     defer alloc.free(space_collision);
     try std.testing.expectEqualStrings("mcp_a_b_c_2", space_collision);
 
-    const long_server = [_]u8{'s'} ** 70;
+    const long_server = @as([70]u8, @splat('s'));
     const long_first = try used.name(alloc, .{}, long_server[0..], "tool");
     defer alloc.free(long_first);
     try std.testing.expectEqual(@as(usize, 64), long_first.len);
-    try std.testing.expectEqualStrings("mcp_" ++ ("s" ** 60), long_first);
+    try std.testing.expectEqualStrings("mcp_" ++ repeat("s", 60), long_first);
 
     const long_second = try used.name(alloc, .{}, long_server[0..], "other");
     defer alloc.free(long_second);
     try std.testing.expectEqual(@as(usize, 64), long_second.len);
-    try std.testing.expectEqualStrings("mcp_" ++ ("s" ** 58) ++ "_2", long_second);
+    try std.testing.expectEqualStrings("mcp_" ++ repeat("s", 58) ++ "_2", long_second);
 }
 
 test "MCP tool name allocation reserves registered tool names" {
@@ -7163,10 +7127,10 @@ test "MCP search bounds untrusted description and schema fields" {
         &used,
     );
 
-    const description = "zearly123 " ++ ("x" ** mcp_tool_description_search_bytes) ++ " zlate987";
+    const description = "zearly123 " ++ repeat("x", mcp_tool_description_search_bytes) ++ " zlate987";
     const schema =
         "{\"type\":\"object\",\"properties\":{\"zearly456\":{\"type\":\"string\"},\"padding\":{\"description\":\"" ++
-        ("x" ** mcp_tool_schema_search_bytes) ++
+        repeat("x", mcp_tool_schema_search_bytes) ++
         "zlate654\"}}}";
     const tool = &runtime.servers.items[0].tool_catalog.tools.items[0];
     alloc.free(tool.description);
@@ -8032,7 +7996,7 @@ test "MCP exact selection returns one executable schema by prefixed name" {
 
     try runtime.addServer(.{ .name = try alloc.dupe(u8, "fs"), .command = try alloc.dupe(u8, "cmd") });
     runtime.servers.items[0].state.store(.ready, .release);
-    runtime.servers.items[0].instructions = try alloc.dupe(u8, ("i" ** 1500) ++ "instruction tail");
+    runtime.servers.items[0].instructions = try alloc.dupe(u8, repeat("i", 1500) ++ "instruction tail");
 
     var used = tool_names.Registry.init(alloc);
     defer used.deinit();

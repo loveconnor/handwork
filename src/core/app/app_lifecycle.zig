@@ -611,6 +611,11 @@ pub fn bootstrapInteractiveApp(cfg: BootstrapConfig) !StartupState {
         io_mod.getenv("COLORTERM"),
         io_mod.getenv("TERM_PROGRAM"),
     ));
+    // Ambient start-screen field; HANDWORK_SPLASH_FIELD=0 turns it off.
+    ui_render.splash_field_enabled = if (io_mod.getenv("HANDWORK_SPLASH_FIELD")) |value|
+        !std.mem.eql(u8, value, "0")
+    else
+        true;
     const theme = ui_render.detectTheme(cfg.alloc, cfg.terminal);
     ui_render.initTheme(theme.light, theme.rgb);
     state.theme_monitor_enabled = ui_render.explicitThemeOverride() == null;
@@ -1247,15 +1252,15 @@ fn initialModelId(default_model: []const u8, configured: ?[]const u8) []const u8
 
 test "startup provider chooses only its provider-scoped model" {
     var grok_settings = config_runtime.Settings{ .provider = .grok };
-    grok_settings.models.values[@intFromEnum(model_provider.ProviderId.grok)] = @constCast("grok-model");
-    grok_settings.models.values[@intFromEnum(model_provider.ProviderId.codex)] = @constCast("gpt-model");
+    grok_settings.models.values[@backingInt(model_provider.ProviderId.grok)] = @constCast("grok-model");
+    grok_settings.models.values[@backingInt(model_provider.ProviderId.codex)] = @constCast("gpt-model");
     const grok = try configuredProviderSelection("default/model", &grok_settings);
     try std.testing.expectEqual(model_provider.ProviderId.grok, grok.provider);
     try std.testing.expectEqualStrings("grok-model", grok.model);
 
     var codex_settings = config_runtime.Settings{ .provider = .codex };
-    codex_settings.models.values[@intFromEnum(model_provider.ProviderId.grok)] = @constCast("grok-model");
-    codex_settings.models.values[@intFromEnum(model_provider.ProviderId.codex)] = @constCast("gpt-model");
+    codex_settings.models.values[@backingInt(model_provider.ProviderId.grok)] = @constCast("grok-model");
+    codex_settings.models.values[@backingInt(model_provider.ProviderId.codex)] = @constCast("gpt-model");
     const codex = try configuredProviderSelection("default/model", &codex_settings);
     try std.testing.expectEqual(model_provider.ProviderId.codex, codex.provider);
     try std.testing.expectEqualStrings("gpt-model", codex.model);
@@ -2054,10 +2059,10 @@ test "shutdown cleanup erases from footer frame top after frame commit" {
 }
 
 test "startup credential modes select a refresh policy, never a narrower source set" {
-    const modes = std.meta.fields(CredentialLoadMode);
+    const modes = @typeInfo(CredentialLoadMode).@"enum".field_names;
     try std.testing.expectEqual(@as(usize, 2), modes.len);
-    try std.testing.expectEqualStrings("stored", modes[0].name);
-    try std.testing.expectEqualStrings("refresh_if_needed", modes[1].name);
+    try std.testing.expectEqualStrings("stored", modes[0]);
+    try std.testing.expectEqualStrings("refresh_if_needed", modes[1]);
 }
 
 test "host-managed startup skips every local credential source" {

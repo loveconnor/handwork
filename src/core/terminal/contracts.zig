@@ -3333,7 +3333,7 @@ fn test_principal() Principal {
 }
 
 fn test_proof() HolderProof {
-    return .{ .bytes = [_]u8{1} ** 32 };
+    return .{ .bytes = @as([32]u8, @splat(1)) };
 }
 
 test "authority wire encoding excludes host-authenticated process ownership" {

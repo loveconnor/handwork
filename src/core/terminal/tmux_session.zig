@@ -1126,7 +1126,7 @@ pub fn runLauncher(
         .signal => |signal| try writeLifecycle(
             parsed.value.lifecycle_path,
             .command_signal,
-            @intFromEnum(signal),
+            @backingInt(signal),
         ),
         .stopped, .unknown => try writeLifecycle(
             parsed.value.lifecycle_path,
@@ -1930,7 +1930,7 @@ fn validateLauncherConfig(config: LauncherConfig) !void {
 
 fn writeLifecycle(path: []const u8, kind: LifecycleKind, value: u32) !void {
     var bytes: [5]u8 = undefined;
-    bytes[0] = @intFromEnum(kind);
+    bytes[0] = @backingInt(kind);
     std.mem.writeInt(u32, bytes[1..5], value, .little);
     var file = try std.Io.Dir.createFileAbsolute(io_mod.getIo(), path, .{
         .truncate = false,
@@ -2363,15 +2363,15 @@ test "tmux launcher wait status classifies terminal results before stops" {
     );
     try std.testing.expectEqual(
         std.process.Child.Term{ .signal = .TERM },
-        launcherStatusToTerm(@intFromEnum(std.c.SIG.TERM)),
+        launcherStatusToTerm(@backingInt(std.c.SIG.TERM)),
     );
     try std.testing.expectEqual(
         std.process.Child.Term{ .signal = .SEGV },
-        launcherStatusToTerm(@intFromEnum(std.c.SIG.SEGV) | 0x80),
+        launcherStatusToTerm(@backingInt(std.c.SIG.SEGV) | 0x80),
     );
     try std.testing.expectEqual(
         std.process.Child.Term{ .stopped = .TTIN },
-        launcherStatusToTerm((@as(u32, @intFromEnum(std.c.SIG.TTIN)) << 8) | 0x7f),
+        launcherStatusToTerm((@as(u32, @backingInt(std.c.SIG.TTIN)) << 8) | 0x7f),
     );
     const unknown_status: u32 = switch (builtin.os.tag) {
         .linux => 0x101,
@@ -2729,7 +2729,7 @@ test "lifecycle parser rejects partial and reordered control history" {
     defer alloc.free(root);
     const path = try std.fs.path.join(alloc, &.{ root, "lifecycle.bin" });
     defer alloc.free(path);
-    try writePrivateFile(path, &.{ @intFromEnum(LifecycleKind.prepared), 0, 0, 0 }, true);
+    try writePrivateFile(path, &.{ @backingInt(LifecycleKind.prepared), 0, 0, 0 }, true);
     try std.testing.expectError(
         error.MalformedTmuxLifecycle,
         readLifecycle(alloc, path),

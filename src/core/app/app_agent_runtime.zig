@@ -43,6 +43,7 @@ const tool_mcp_runtime = @import("../tooling/tool_mcp_runtime.zig");
 const context_contract = @import("../workspace/context_contract.zig");
 const model_catalog = @import("../provider/model_catalog.zig");
 const provider_set = @import("../provider/provider_set.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const test_builtin_provider = if (@import("builtin").is_test)
     @import("../../builtins/native.zig")
 else
@@ -435,7 +436,7 @@ pub fn Runtime(comptime App: type) type {
             return app.hasMcpTool(name, access);
         }
 
-        fn validateMcpTool(raw_ctx: *anyopaque, arena: Allocator, name: []const u8, arguments_json: []const u8, access: tool_mcp_runtime.Access) anyerror!tool_mcp_runtime.ValidationResult {
+        pub fn validateMcpTool(raw_ctx: *anyopaque, arena: Allocator, name: []const u8, arguments_json: []const u8, access: tool_mcp_runtime.Access) anyerror!tool_mcp_runtime.ValidationResult {
             const app: *App = @ptrCast(@alignCast(raw_ctx));
             if (comptime @hasDecl(App, "validateMcpTool")) {
                 return app.validateMcpTool(arena, name, arguments_json, access);
@@ -448,7 +449,7 @@ pub fn Runtime(comptime App: type) type {
             return app.callMcpTool(arena, name, arguments_json, max_tool_result_bytes, options);
         }
 
-        fn searchMcpTools(raw_ctx: *anyopaque, arena: Allocator, request: tool_mcp_runtime.SearchRequest, permission_rules: types.PermissionRuleSet, _: @import("../config/context_limits.zig").Values, access: tool_mcp_runtime.Access, cancel_flag: ?*std.atomic.Value(bool)) anyerror!tool_mcp_runtime.SearchResult {
+        pub fn searchMcpTools(raw_ctx: *anyopaque, arena: Allocator, request: tool_mcp_runtime.SearchRequest, permission_rules: types.PermissionRuleSet, _: @import("../config/context_limits.zig").Values, access: tool_mcp_runtime.Access, cancel_flag: ?*std.atomic.Value(bool)) anyerror!tool_mcp_runtime.SearchResult {
             const app: *App = @ptrCast(@alignCast(raw_ctx));
             if (comptime @hasDecl(App, "searchMcpTools")) {
                 return app.searchMcpTools(arena, request, permission_rules, access, cancel_flag);
@@ -466,7 +467,7 @@ pub fn Runtime(comptime App: type) type {
             return .unavailable;
         }
 
-        fn mcpToolSchemaJson(raw_ctx: *anyopaque, arena: Allocator, name: []const u8, permission_rules: types.PermissionRuleSet, _: @import("../config/context_limits.zig").Values, access: tool_mcp_runtime.Access, cancel_flag: ?*std.atomic.Value(bool)) anyerror!?tool_mcp_runtime.ToolSchemaResult {
+        pub fn mcpToolSchemaJson(raw_ctx: *anyopaque, arena: Allocator, name: []const u8, permission_rules: types.PermissionRuleSet, _: @import("../config/context_limits.zig").Values, access: tool_mcp_runtime.Access, cancel_flag: ?*std.atomic.Value(bool)) anyerror!?tool_mcp_runtime.ToolSchemaResult {
             const app: *App = @ptrCast(@alignCast(raw_ctx));
             if (comptime @hasDecl(App, "mcpToolSchemaJson")) {
                 return app.mcpToolSchemaJson(arena, name, permission_rules, access, cancel_flag);
@@ -1068,10 +1069,19 @@ pub fn Runtime(comptime App: type) type {
             defer if (app.worker.isCancelRequested()) {
                 app.worker.settleCompactionActivity(operation_id, .{ .outcome = .cancelled });
             };
-            errdefer |err| {
+            processContextCompactionPrepared(app, job, provider_retry_count, operation_id) catch |err| {
                 app.worker.settleCompactionActivity(operation_id, compaction_activity.failure(err, .preparation, app.worker.isCancelRequested()));
                 if (failure_provenance) |out| out.* = .{ .operation_id = operation_id, .turn_id = job.turn_id, .err = err };
-            }
+                return err;
+            };
+        }
+
+        fn processContextCompactionPrepared(
+            app: *App,
+            job: worker_runtime.ContextCompactionTask,
+            provider_retry_count: usize,
+            operation_id: compaction_activity.OperationId,
+        ) anyerror!void {
             var arena_state = std.heap.ArenaAllocator.init(std.heap.c_allocator);
             defer arena_state.deinit();
             const arena = arena_state.allocator();
@@ -1590,7 +1600,7 @@ const RefreshContextApp = struct {
     context_notice_visibility: ?types.NoticeVisibility = null,
     session: session_runtime.SessionRuntime = .{ .max_history_turns = 8 },
 
-    fn contextRegistry(self: *const RefreshContextApp) context_contract.Registry {
+    pub fn contextRegistry(self: *const RefreshContextApp) context_contract.Registry {
         return self.context_registry;
     }
 
@@ -1600,7 +1610,7 @@ const RefreshContextApp = struct {
         self.session.deinit(self.alloc);
     }
 
-    fn writeDomainNotice(self: *RefreshContextApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *RefreshContextApp, notice: types.SemanticNotice, _: bool) !void {
         self.context_notice_tone = notice.tone;
         self.context_notice_visibility = notice.visibility;
         try self.context_notices.appendSlice(self.alloc, notice.body);
@@ -1700,15 +1710,15 @@ const FakeApp = struct {
         return app;
     }
 
-    fn toolRegistry(self: *const FakeApp) tool_dispatch.Registry {
+    pub fn toolRegistry(self: *const FakeApp) tool_dispatch.Registry {
         return self.tool_registry;
     }
 
-    fn contextRegistry(self: *const FakeApp) context_contract.Registry {
+    pub fn contextRegistry(self: *const FakeApp) context_contract.Registry {
         return self.context_registry;
     }
 
-    fn snapshotMcpModelCatalog(
+    pub fn snapshotMcpModelCatalog(
         _: *FakeApp,
         alloc: Allocator,
         _: types.PermissionRuleSet,
@@ -1749,7 +1759,7 @@ const FakeApp = struct {
         return .{ .model_output = try arena.dupe(u8, self.mcp_result) };
     }
 
-    fn subagentToolContextForAdmission(
+    pub fn subagentToolContextForAdmission(
         self: *FakeApp,
         admission: subagent_domain.AdmissionSnapshot,
     ) tool_runtime.Context {
@@ -2361,7 +2371,7 @@ test "app agent runtime bounds a large multiline run command activity" {
     var app = try FakeApp.init(alloc);
     defer app.deinit();
 
-    const arguments_json = "{\"action\":\"run\",\"command\":\"" ++ ("x\\n" ** 20_000) ++ "\"}";
+    const arguments_json = "{\"action\":\"run\",\"command\":\"" ++ repeat("x\\n", 20_000) ++ "\"}";
     const label = try app.describeToolAction(arena, .{
         .id = "large_command",
         .name = "shell",

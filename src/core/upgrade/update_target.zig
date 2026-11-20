@@ -1,4 +1,5 @@
 const std = @import("std");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -236,7 +237,7 @@ test "dev manifest rejects malformed and oversized external data" {
     );
     try std.testing.expectError(
         error.ManifestTooLarge,
-        Target.parseDevManifest(alloc, " " ** (max_manifest_bytes + 1)),
+        Target.parseDevManifest(alloc, repeat(" ", max_manifest_bytes + 1)),
     );
 }
 

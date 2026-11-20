@@ -184,7 +184,7 @@ pub fn streamPrepared(alloc: Allocator, entry: *const config.Entry, request: str
     if (response.head.status != .ok) {
         var transfer: [16 * 1024]u8 = undefined;
         const reader = response.reader(&transfer);
-        const bounded_body = reader.allocRemaining(alloc, .limited(max_error_body_bytes + 1)) catch |err| switch (err) {
+        const bounded_body = io_mod.allocRemainingBelowLimit(reader, alloc, .limited(max_error_body_bytes + 1)) catch |err| switch (err) {
             error.StreamTooLong => try alloc.dupe(u8, "Provider error response exceeded the local limit"),
             else => return err,
         };
@@ -273,7 +273,7 @@ fn fetchModels(alloc: Allocator, entry: *const config.Entry, input: catalog.Fetc
     var response = try request.receiveHead(&.{});
     if (response.head.status != .ok) return .{ .failure = catalog.failureForHttpStatus(response.head.status) };
     var transfer: [8192]u8 = undefined;
-    const body = try response.reader(&transfer).allocRemaining(alloc, .limited(4 * 1024 * 1024));
+    const body = try io_mod.allocRemainingBelowLimit(response.reader(&transfer), alloc, .limited(4 * 1024 * 1024));
     defer alloc.free(body);
     const parsed = try std.json.parseFromSlice(std.json.Value, alloc, body, .{});
     defer parsed.deinit();

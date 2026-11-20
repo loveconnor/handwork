@@ -70,7 +70,7 @@ pub fn Runtime(comptime App: type) type {
             return if (comptime @hasField(App, "submission")) app.submission.compaction_pending else false;
         }
 
-        fn ensurePromptCredential(app: *App) !bool {
+        pub fn ensurePromptCredential(app: *App) !bool {
             if (try rejectPendingPreparation(app)) return false;
             if (comptime provider_runtime.supported(App) and
                 @hasDecl(@TypeOf(app.auth), "selectForProvider"))
@@ -577,36 +577,6 @@ pub fn Runtime(comptime App: type) type {
             }
         }
 
-        /// Clearing the remembered choice must also re-resolve, otherwise the
-        /// session would keep running on a source precedence no longer selects.
-        fn applyAutomaticCredential(app: *App) !void {
-            forgetCredentialSource(app);
-            app.auth.closePicker(app.alloc);
-            applyCredentialChange(app, try app.auth.reselectByPrecedence(app.alloc));
-            try app.writeDomainNotice(.{
-                .topic = "auth",
-                .tone = .neutral,
-                .body = "Using automatic credential precedence again.",
-            }, true);
-            try resumePromptAfterAuth(app);
-        }
-
-        fn forgetCredentialSource(app: *App) void {
-            var attempt = config_runtime.attemptUserPreferences(
-                app.alloc,
-                .{ .clear_credential_source = true },
-            );
-            defer attempt.deinit(app.alloc);
-            switch (attempt) {
-                .outcome => debug_trace.logf("auth", "credential choice cleared", .{}),
-                .failure => |failure| debug_trace.logf(
-                    "auth",
-                    "credential choice not cleared err={s}",
-                    .{@errorName(failure.err)},
-                ),
-            }
-        }
-
         /// Reports whether the credential actually switched, so callers that
         /// chain further work (the inline picker's provider switch) can stop
         /// when it did not. Failure is already explained to the user here.
@@ -1083,14 +1053,6 @@ pub fn Runtime(comptime App: type) type {
             return true;
         }
 
-        fn beginSignIn(app: *App, _: bool) !void {
-            switch (provider_runtime.provider(app)) {
-                .codex => try beginChatGptSignIn(app),
-                .grok => try beginGrokSignIn(app),
-                else => try openApiKeyPrompt(app, provider_runtime.provider(app)),
-            }
-        }
-
         fn openApiKeyPrompt(app: *App, target: model_provider.ProviderId) !void {
             const entry = @import("../config/api_providers.zig").find(target) orelse return;
             if (entry.anonymous) {
@@ -1268,19 +1230,19 @@ pub fn Runtime(comptime App: type) type {
             }
         }
 
-        fn requestPromptRetryAfterAuth(app: *App) void {
+        pub fn requestPromptRetryAfterAuth(app: *App) void {
             if (comptime @hasDecl(App, "requestPromptRetryAfterAuth")) {
                 app.requestPromptRetryAfterAuth();
             }
         }
 
-        fn cancelPromptRetryAfterAuth(app: *App) void {
+        pub fn cancelPromptRetryAfterAuth(app: *App) void {
             if (comptime @hasDecl(App, "cancelPromptRetryAfterAuth")) {
                 app.cancelPromptRetryAfterAuth();
             }
         }
 
-        fn resumePromptAfterAuth(app: *App) !void {
+        pub fn resumePromptAfterAuth(app: *App) !void {
             if (comptime @hasDecl(App, "resumePromptAfterAuth")) {
                 try app.resumePromptAfterAuth();
             }
@@ -1589,7 +1551,7 @@ const BusySignInApp = struct {
     worker: struct {
         queued_prompts: usize = 0,
 
-        fn queuedPromptCount(self: @This()) usize {
+        pub fn queuedPromptCount(self: @This()) usize {
             return self.queued_prompts;
         }
     } = .{},
@@ -1601,7 +1563,7 @@ const BusySignInApp = struct {
         self.selected_model.deinit(self.alloc);
     }
 
-    fn writeDomainNotice(self: *BusySignInApp, _: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *BusySignInApp, _: types.SemanticNotice, _: bool) !void {
         self.notice_count += 1;
     }
 
@@ -1609,7 +1571,7 @@ const BusySignInApp = struct {
         self.flush_count += 1;
     }
 
-    fn urlOpener(_: *BusySignInApp) host.UrlOpener {
+    pub fn urlOpener(_: *BusySignInApp) host.UrlOpener {
         return host.unavailable_url_opener;
     }
 };
@@ -1646,14 +1608,12 @@ test "interactive subscription sign-in rejects active and queued work before OAu
 const TestAuth = struct {
     select_result: ?bool = false,
     sign_in_transition: auth_runtime.SignInTransition = .none,
-    logout_changed: bool = false,
     refresh_change: auth_transition.CredentialChange = .none,
     refresh_error: ?anyerror = null,
     selected_source: ?credentials.Source = null,
     active_source: ?credentials.Source = .chatgpt_subscription,
     onboarding_skipped: bool = false,
     refresh_count: usize = 0,
-    logout_reconcile_count: usize = 0,
     source_inventory_refresh_count: usize = 0,
     credential_failure: ?auth_runtime.CredentialFailure = null,
     credential_notice_claimed: bool = false,
@@ -1677,24 +1637,11 @@ const TestAuth = struct {
     prompt_refresh_start: auth_runtime.PromptCredentialRefreshStart = .not_needed,
     prompt_refresh_start_count: usize = 0,
 
-    fn credentialSource(self: *const TestAuth) ?credentials.Source {
+    pub fn credentialSource(self: *const TestAuth) ?credentials.Source {
         return self.active_source;
     }
 
-    fn view(self: *const TestAuth) auth_runtime.View {
-        return .{
-            .active_source = self.active_source,
-            .available_inactive_sources = .empty,
-            .refreshable = if (self.active_source) |source|
-                credentials.sourceRefreshable(source)
-            else
-                false,
-            .chatgpt_subscription_status = .not_attempted,
-            .onboarding_skipped = self.onboarding_skipped,
-        };
-    }
-
-    fn beginPromptCredentialRefresh(self: *TestAuth) auth_runtime.PromptCredentialRefreshStart {
+    pub fn beginPromptCredentialRefresh(self: *TestAuth) auth_runtime.PromptCredentialRefreshStart {
         self.prompt_refresh_start_count += 1;
         return self.prompt_refresh_start;
     }
@@ -1703,7 +1650,7 @@ const TestAuth = struct {
         return .idle;
     }
 
-    fn cancelPromptCredentialRefresh(_: *TestAuth) void {}
+    pub fn cancelPromptCredentialRefresh(_: *TestAuth) void {}
 
     fn selectSource(self: *TestAuth, _: std.mem.Allocator, source: credentials.Source) !?bool {
         self.selected_source = source;
@@ -1724,7 +1671,7 @@ const TestAuth = struct {
         return true;
     }
 
-    fn signInEntryActive(self: *const TestAuth) bool {
+    pub fn signInEntryActive(self: *const TestAuth) bool {
         return self.sign_in_entry_active;
     }
 
@@ -1743,7 +1690,7 @@ const TestAuth = struct {
         return self.openSignInPicker(alloc);
     }
 
-    fn signInCodeEntryActive(self: *const TestAuth) bool {
+    pub fn signInCodeEntryActive(self: *const TestAuth) bool {
         return self.sign_in_code_entry_active;
     }
 
@@ -1767,7 +1714,7 @@ const TestAuth = struct {
         return true;
     }
 
-    fn pickerView(_: *const TestAuth) auth_runtime.PickerView {
+    pub fn pickerView(_: *const TestAuth) auth_runtime.PickerView {
         return .{
             .active = false,
             .available_sources = .empty,
@@ -1807,12 +1754,8 @@ const TestAuth = struct {
             .{ .public_only = .no_credential };
     }
 
-    fn refreshSourceInventory(self: *TestAuth, _: std.mem.Allocator) !void {
+    pub fn refreshSourceInventory(self: *TestAuth, _: std.mem.Allocator) !void {
         self.source_inventory_refresh_count += 1;
-    }
-
-    fn openOnboardingPicker(self: *TestAuth, _: std.mem.Allocator) void {
-        self.picker_opened = true;
     }
 
     fn beginSourceInventoryRefresh(
@@ -1837,7 +1780,7 @@ const TestAuth = struct {
             .{ .ready = action };
     }
 
-    fn recordCredentialFailure(
+    pub fn recordCredentialFailure(
         self: *TestAuth,
         failure: auth_runtime.CredentialFailure,
         options: struct { notify: bool = true },
@@ -1855,7 +1798,7 @@ const TestAuth = struct {
         return true;
     }
 
-    fn credentialFailure(self: *const TestAuth) ?auth_runtime.CredentialFailure {
+    pub fn credentialFailure(self: *const TestAuth) ?auth_runtime.CredentialFailure {
         return self.credential_failure;
     }
 
@@ -1883,7 +1826,7 @@ const TestUsage = struct {
     clear_count: usize = 0,
     last_key: ?[]const u8 = null,
 
-    fn replaceProviderReconciliationCredential(
+    pub fn replaceProviderReconciliationCredential(
         self: *TestUsage,
         _: std.mem.Allocator,
         _: model_provider.ProviderId,
@@ -1952,7 +1895,7 @@ const TestApp = struct {
     worker: struct {
         queued_prompts: usize = 0,
 
-        fn queuedPromptCount(self: @This()) usize {
+        pub fn queuedPromptCount(self: @This()) usize {
             return self.queued_prompts;
         }
     } = .{},
@@ -1977,15 +1920,11 @@ const TestApp = struct {
         self.transcript.deinit(self.alloc);
     }
 
-    fn startModelCacheWarmup(self: *TestApp) void {
+    pub fn startModelCacheWarmup(self: *TestApp) void {
         self.model_cache_warmup_count += 1;
     }
 
-    fn writeTranscriptClassified(self: *TestApp, text: []const u8, _: bool, _: anytype) !void {
-        try self.transcript.appendSlice(self.alloc, text);
-    }
-
-    fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
         self.notice_write_count += 1;
         try self.transcript.appendSlice(self.alloc, notice.body);
         try self.transcript.append(self.alloc, '\n');
@@ -1993,16 +1932,16 @@ const TestApp = struct {
 
     fn flushBeforeBlockingExternalWork(_: *TestApp) !void {}
 
-    fn urlOpener(self: *TestApp) host.UrlOpener {
+    pub fn urlOpener(self: *TestApp) host.UrlOpener {
         return self.test_url_opener.opener();
     }
 
-    fn persistCredentialSourcePreference(self: *TestApp, source: credentials.Source) void {
+    pub fn persistCredentialSourcePreference(self: *TestApp, source: credentials.Source) void {
         self.preference_write_count += 1;
         if (self.preference_write_succeeds) self.last_preference_source = source;
     }
 
-    fn providerCatalog(self: *TestApp, _: model_provider.ProviderId) ?model_catalog.Provider {
+    pub fn providerCatalog(self: *TestApp, _: model_provider.ProviderId) ?model_catalog.Provider {
         return .{ .context = self, .fetch_fn = fetchTestCatalog };
     }
 

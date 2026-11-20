@@ -4,13 +4,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const raster = @import("../images/raster.zig");
 const png = @import("../images/codec/png.zig");
-const c = if (builtin.os.tag == .windows) @cImport({
-    @cDefine("_FORTIFY_SOURCE", "0");
-    @cDefine("WIN32_LEAN_AND_MEAN", "1");
-    // Handles are opaque tokens, not aligned pointers to the header's dummy structs.
-    @cDefine("NO_STRICT", "1");
-    @cInclude("windows.h");
-}) else struct {};
+const c = if (builtin.os.tag == .windows) @import("windows_clipboard_c") else struct {};
 
 const ClipboardOwner = if (builtin.os.tag == .windows) c.HWND else ?*anyopaque;
 

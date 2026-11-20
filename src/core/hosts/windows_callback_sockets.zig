@@ -60,7 +60,7 @@ pub fn listen(io: std.Io, address: std.Io.net.IpAddress) !std.Io.net.Server {
     };
     // AFD_EXCLUSIVEADDRUSE = 3. std.Io.net.listen uses Passive = 1,
     // which allows live listeners to share the callback address.
-    var storage: Storage = .{ .info = .{ .Mode = @enumFromInt(3) }, .address = undefined };
+    var storage: Storage = .{ .info = .{ .Mode = @fromBackingInt(@intCast(3)) }, .address = undefined };
     const address_len = std.Io.Threaded.addressToPosix(&address, &storage.address);
     switch (try control(io, handle, windows.IOCTL.AFD.BIND, std.mem.asBytes(&storage)[0 .. @offsetOf(Storage, "address") + address_len], std.mem.asBytes(&storage.address)[0..address_len])) {
         .SUCCESS => {},
@@ -101,7 +101,7 @@ pub fn readable(io: std.Io, handle: windows.HANDLE, timeout_ms: i32) !bool {
     const status = try control(io, handle, windows.IOCTL.AFD.POLL, std.mem.asBytes(&info), std.mem.asBytes(&info));
     if (pollTimedOut(status)) return false;
     if (status != .SUCCESS) {
-        std.log.err("OAuth callback AFD poll failed status={s} (0x{x})", .{ @tagName(status), @intFromEnum(status) });
+        std.log.err("OAuth callback AFD poll failed status={s} (0x{x})", .{ @tagName(status), @backingInt(status) });
         return windows.unexpectedStatus(status);
     }
     if (info.count == 0) return false;
@@ -109,7 +109,7 @@ pub fn readable(io: std.Io, handle: windows.HANDLE, timeout_ms: i32) !bool {
     // speculative connection without terminating the login attempt.
     if (info.entries[0].status != .SUCCESS and info.entries[0].events & 0x0010 == 0) {
         std.log.err("OAuth callback AFD poll entry failed status={s} (0x{x}) events=0x{x}", .{
-            @tagName(info.entries[0].status), @intFromEnum(info.entries[0].status), info.entries[0].events,
+            @tagName(info.entries[0].status), @backingInt(info.entries[0].status), info.entries[0].events,
         });
         return windows.unexpectedStatus(info.entries[0].status);
     }

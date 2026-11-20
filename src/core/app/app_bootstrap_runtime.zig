@@ -513,14 +513,6 @@ const TestCapture = struct {
         return self.title[0..self.title_len];
     }
 
-    fn configuredModel(self: *const TestCapture) []const u8 {
-        return self.configured_model[0..self.configured_model_len];
-    }
-
-    fn runtimeModel(self: *const TestCapture) []const u8 {
-        return self.runtime_model[0..self.runtime_model_len];
-    }
-
     fn recordEvent(self: *TestCapture, event: []const u8) void {
         self.events[self.event_count] = event;
         self.event_count += 1;
@@ -611,7 +603,7 @@ const TestApp = struct {
         try self.writeTranscript(text, record);
     }
 
-    fn writeDomainNotice(self: *TestApp, semantic_notice: types.SemanticNotice, record: bool) !void {
+    pub fn writeDomainNotice(self: *TestApp, semantic_notice: types.SemanticNotice, record: bool) !void {
         const styles = self.shell.retainedTranscriptStyles();
         active_capture.?.early_notice_palette_initialized =
             styles.notice_information_style.len > 0 and
@@ -841,21 +833,6 @@ fn runBootstrapForTest(app: *TestApp, capture: *TestCapture) !void {
         resizeHandlerForTest,
         testDeps(),
     );
-}
-
-fn tracePathForTest(alloc: Allocator, tmp: std.testing.TmpDir, name: []const u8) ![]u8 {
-    const io_mod = @import("../shared/io.zig");
-    const root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
-    defer alloc.free(root);
-    return std.fs.path.join(alloc, &.{ root, name });
-}
-
-fn readTraceForTest(alloc: Allocator, path: []const u8) ![]u8 {
-    const io_mod = @import("../shared/io.zig");
-    debug_trace.shutdown();
-    var file = try std.Io.Dir.openFileAbsolute(io_mod.getIo(), path, .{});
-    defer file.close(io_mod.getIo());
-    return io_mod.readFileToEnd(alloc, &file, 8192);
 }
 
 fn resizeHandlerForTest(_: std.posix.SIG) callconv(.c) void {}

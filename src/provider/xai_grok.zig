@@ -358,7 +358,7 @@ fn streamTransport(
     if (response.head.status != .ok) {
         var transfer: [16 * 1024]u8 = undefined;
         const reader = response.reader(&transfer);
-        const bounded_body = reader.allocRemaining(alloc, .limited(max_error_body_bytes + 1)) catch |err| switch (err) {
+        const bounded_body = io_mod.allocRemainingBelowLimit(reader, alloc, .limited(max_error_body_bytes + 1)) catch |err| switch (err) {
             error.StreamTooLong => try alloc.dupe(u8, "xAI Grok error response exceeded the local limit"),
             else => return err,
         };

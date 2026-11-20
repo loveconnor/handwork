@@ -3,6 +3,7 @@ const types = @import("../../shared/types.zig");
 const trace = @import("../../shared/debug_trace.zig");
 const provider = @import("../stream_provider.zig");
 const io = @import("../../shared/io.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 const Allocator = std.mem.Allocator;
 
 fn eligible(m: types.ChatMessage) bool {
@@ -118,7 +119,7 @@ pub fn recordResult(request: provider.ModelRequest, result: provider.Result, sta
 test "request efficiency preserves exact evidence and only replaces successful duplicates" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
-    const body = "abcd" ** 300;
+    const body = repeat("abcd", 300);
     const first: types.ChatMessage = .{ .role = .tool, .tool_name = "read_file", .tool_call_id = "first", .tool_result_status = .success, .content = body };
     var second = first;
     second.tool_call_id = "second";
@@ -127,7 +128,7 @@ test "request efficiency preserves exact evidence and only replaces successful d
     var truncated = second;
     truncated.tool_result_memory = .{ .truncated = true };
     var changed = second;
-    changed.content = "different" ** 200;
+    changed.content = repeat("different", 200);
     const source = [_]types.ChatMessage{ first, second, second, failed, truncated, changed };
     const result = try project(arena.allocator(), &source, .{});
     try std.testing.expectEqualStrings(body, result[0].content.?);

@@ -27,13 +27,6 @@ pub const WebSearchPolicy = struct {
     backend_policies: []const BackendPolicy = &.{},
 };
 
-pub fn hasAdmittedBackendPolicy(backends: []const BackendPolicy) bool {
-    for (backends) |backend| {
-        if (backendPolicyIsAdmitted(backend)) return true;
-    }
-    return false;
-}
-
 pub fn selectBackend(policy: WebSearchPolicy, input: InputFeatures) ?BackendPolicy {
     // Relaxed filter behavior needs a separate explicit opt-in contract.
     if (!policy.strict_filters and (input.has_allowed_domains or input.has_blocked_domains)) return null;

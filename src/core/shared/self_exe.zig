@@ -68,11 +68,31 @@ fn sameFile(left: []const u8, right: []const u8) !bool {
     return left_stat.inode == right_stat.inode;
 }
 
-fn testProductExe() ?[]const u8 {
+var test_product_exe_mutex: std.Io.Mutex = .init;
+var test_product_exe_buf: [std.fs.max_path_bytes]u8 = undefined;
+var test_product_exe_path: ?[]const u8 = null;
+
+/// The installed product binary for tests that re-exec it, or null when the
+/// test build did not provide one. The build passes an install path that may
+/// be relative to the test runner's working directory (the build root), so it
+/// is made absolute once, before any test changes directories for a child.
+pub fn testProductExe() ?[]const u8 {
     if (comptime !builtin.is_test) return null;
-    const path_z = std.c.getenv("HANDWORK_TEST_PRODUCT_EXE") orelse return null;
-    const path = std.mem.sliceTo(path_z, 0);
-    return if (path.len == 0) null else path;
+    const configured: []const u8 = @import("test_options").product_exe;
+    if (configured.len == 0) return null;
+    if (std.fs.path.isAbsolute(configured)) return configured;
+    const io = io_mod.getIo();
+    test_product_exe_mutex.lockUncancelable(io);
+    defer test_product_exe_mutex.unlock(io);
+    if (test_product_exe_path) |path| return path;
+    const cwd_len = std.process.currentPath(io, &test_product_exe_buf) catch return configured;
+    const sep_len = std.fs.path.sep_str.len;
+    if (cwd_len + sep_len + configured.len > test_product_exe_buf.len) return configured;
+    @memcpy(test_product_exe_buf[cwd_len..][0..sep_len], std.fs.path.sep_str);
+    @memcpy(test_product_exe_buf[cwd_len + sep_len ..][0..configured.len], configured);
+    const path = test_product_exe_buf[0 .. cwd_len + sep_len + configured.len];
+    test_product_exe_path = path;
+    return path;
 }
 
 test "linux re-exec paths name the live inode, not the replaced on-disk file" {

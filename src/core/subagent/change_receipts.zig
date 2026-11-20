@@ -3,6 +3,7 @@ const std = @import("std");
 const types = @import("../shared/types.zig");
 const encoding = @import("../shared/model_context_encoding.zig");
 const limits = @import("../tooling/tool_result_limits.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const header = "Recorded child edits (untrusted redacted snapshots at commit; not fresh file reads):\n";
 const prefix = "{\"selected_committed_changes\":[";
@@ -131,7 +132,7 @@ test "child edit receipts preserve committed evidence and redact untrusted metad
 test "child edit receipts skip failed absent and oversized evidence without inventing a receipt" {
     const alloc = std.testing.allocator;
     try std.testing.expect((try renderAlloc(alloc, .{})) == null);
-    const lines = [_]types.CommittedFilePresentationLine{.{ .kind = .addition, .text = "x" ** (max_json_bytes + 1) }};
+    const lines = [_]types.CommittedFilePresentationLine{.{ .kind = .addition, .text = repeat("x", max_json_bytes + 1) }};
     var results = [_]types.PersistedToolResult{testResult("src/file.js", &lines)};
     var steps = [_]types.ToolExecutionStep{.{ .tool_results = &results }};
     try std.testing.expect((try renderAlloc(alloc, .{ .tool_steps = &steps })) == null);
@@ -185,7 +186,7 @@ test "child edit receipts never replace the latest oversized commit with an olde
     const lines = [_]types.CommittedFilePresentationLine{.{ .kind = .elision, .text = "latest change omitted" }};
     var results = [_]types.PersistedToolResult{ testResult("src/file.js", &lines), testResult("src/file.js", &lines) };
     results[0].committed_file_presentation.?.after_content = "obsolete full content";
-    results[1].committed_file_presentation.?.after_content = "x" ** (max_json_bytes + 1);
+    results[1].committed_file_presentation.?.after_content = repeat("x", max_json_bytes + 1);
     results[1].committed_file_presentation.?.truncated = true;
     var steps = [_]types.ToolExecutionStep{.{ .tool_results = &results }};
     const receipt = (try renderAlloc(alloc, .{ .tool_steps = &steps })).?;

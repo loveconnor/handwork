@@ -16,6 +16,7 @@ const unicode_simple_fold = @import("unicode_simple_fold.zig");
 const pathing = @import("pathing.zig");
 const workspace_access = @import("workspace_access.zig");
 const workspace_files = @import("workspace_files.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -111,7 +112,7 @@ const Generation = struct {
     /// A release store publishes the terminal outcome after all generation
     /// writes. The main thread performs an acquire load before deciding
     /// whether joining and adoption are permitted.
-    state: std.atomic.Value(u8) = std.atomic.Value(u8).init(@intFromEnum(GenerationState.loading)),
+    state: std.atomic.Value(u8) = std.atomic.Value(u8).init(@backingInt(GenerationState.loading)),
 
     fn create(alloc: Allocator, id: usize) !*Generation {
         const generation = try alloc.create(Generation);
@@ -125,11 +126,11 @@ const Generation = struct {
     }
 
     fn currentState(self: *const Generation) GenerationState {
-        return @enumFromInt(self.state.load(.acquire));
+        return @fromBackingInt(@intCast(self.state.load(.acquire)));
     }
 
     fn finish(self: *Generation, state: GenerationState) void {
-        self.state.store(@intFromEnum(state), .release);
+        self.state.store(@backingInt(state), .release);
     }
 
     fn count(self: *const Generation) usize {
@@ -1652,7 +1653,7 @@ test "buildFromRaw precomputes a-z char masks" {
 }
 
 test "countAndSize applies the same filters as the fill pass" {
-    const long_path = "a" ** (max_path_len + 1);
+    const long_path = repeat("a", max_path_len + 1);
     const raw = "ok.zig\n" ++ long_path ++ "\n\nother.md\n";
     const totals = countAndSize(.{ .file_raw = raw });
     // "ok.zig" + "" (empty) + long_path (too long) + "other.md" -> 2 kept.
@@ -1693,7 +1694,7 @@ test "buildFromCandidates handles empty and rejected typed candidates" {
     try empty.buildFromCandidates(alloc, &.{});
     try std.testing.expectEqual(@as(usize, 0), empty.count());
 
-    const long_path = "a" ** (max_path_len + 1);
+    const long_path = repeat("a", max_path_len + 1);
     const candidates = [_]Candidate{
         .{ .path = "src/", .kind = .directory },
         .{ .path = "escape-\x1b[2J", .kind = .directory },
@@ -1730,7 +1731,7 @@ test "typed candidate publication exposes matching immutable kinds" {
     const generation = index.active_generation.?;
     index.active_generation = null;
     index.loading_generation = generation;
-    generation.state.store(@intFromEnum(GenerationState.loading), .release);
+    generation.state.store(@backingInt(GenerationState.loading), .release);
     generation.ready_count.store(2, .release);
     try std.testing.expectEqual(@as(usize, 2), index.count());
     try std.testing.expectEqual(CandidateKind.directory, index.kindAt(0));
@@ -2329,7 +2330,7 @@ test "search returns partial results while ready_count is below total" {
     const generation = index.active_generation.?;
     index.active_generation = null;
     index.loading_generation = generation;
-    generation.state.store(@intFromEnum(GenerationState.loading), .release);
+    generation.state.store(@backingInt(GenerationState.loading), .release);
     generation.ready_count.store(2, .release);
     try std.testing.expectEqual(@as(usize, 2), index.count());
 
@@ -2392,8 +2393,8 @@ test "search rejects queries longer than max_path_len" {
     var index = FileIndex{};
     defer index.deinit(alloc);
 
-    const path = "a" ** max_path_len;
-    const query = ("a" ** max_path_len) ++ "b";
+    const path = repeat("a", max_path_len);
+    const query = repeat("a", max_path_len) ++ "b";
     try index.buildFromRaw(alloc, path);
 
     var search: TestSearchBuffer(1) = .{};
@@ -2910,7 +2911,7 @@ test "refresh traces snapshot allocation failures and retains roots" {
     defer trace_file.close(std.testing.io);
     var read_buf: [1024]u8 = undefined;
     var reader = trace_file.reader(std.testing.io, &read_buf);
-    const trace = try reader.interface.allocRemaining(alloc, std.Io.Limit.limited(4096));
+    const trace = try io_mod.allocRemainingBelowLimit(&reader.interface, alloc, std.Io.Limit.limited(4096));
     defer alloc.free(trace);
     try std.testing.expect(std.mem.find(u8, trace, "file index scope snapshot failed") != null);
     try std.testing.expect(std.mem.find(u8, trace, "file index refresh snapshot failed") != null);

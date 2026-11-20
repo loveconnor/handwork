@@ -2,6 +2,7 @@
 //! `vt_emulator.Grid` without a TTY or signals.
 
 const std = @import("std");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const question_prompt = @import("../core/agent/question_prompt.zig");
 const debug_trace = @import("../core/shared/debug_trace.zig");
@@ -1436,7 +1437,7 @@ test "active hard-newline footer survives every valid tiny height" {
 }
 
 test "active soft-wrapped footer survives every valid tiny height" {
-    const input = "HANDWORK_SOFT_START " ++ ("filler " ** 16) ++ "HANDWORK_SOFT_END";
+    const input = "HANDWORK_SOFT_START " ++ repeat("filler ", 16) ++ "HANDWORK_SOFT_END";
     for ([_]u16{ 5, 6, 7, 8 }) |target_height| {
         try expectActiveInputSurvivesResize(input, target_height, 1);
     }
@@ -2323,7 +2324,7 @@ test "streamed nested and mixed emphasis pairs resolve on the grid" {
 test "streamed inline code color survives shrink and grow" {
     const cases = [_]struct { light: bool, fg: u8 }{
         .{ .light = false, .fg = 245 },
-        .{ .light = true, .fg = 247 },
+        .{ .light = true, .fg = 243 },
     };
     defer assistant_presentation.setInlineCodeTheme(false);
 
@@ -2399,11 +2400,11 @@ test "semantic code block colors source and keeps current footer rail styled thr
     var code_row = try findRowContaining(&h, "const hook");
     var code_cell = h.vt.cellAt(code_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'c'), code_cell.codepoint);
-    try std.testing.expect(code_cell.style.fg.eql(.{ .indexed = 252 }));
+    try std.testing.expect(code_cell.style.fg.eql(.{ .indexed = 255 }));
     var python_row = try findRowContaining(&h, "def ready");
     var python_cell = h.vt.cellAt(python_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'd'), python_cell.codepoint);
-    try std.testing.expect(python_cell.style.fg.eql(.{ .indexed = 252 }));
+    try std.testing.expect(python_cell.style.fg.eql(.{ .indexed = 255 }));
     // The composer rail sits directly under the footer's top divider.
     const initial_footer = (try findFirstDividerRowAfter(&h, code_row)) + 1;
     const initial_footer_cell = h.vt.cellAt(initial_footer, 1) orelse return error.TestMissingFooterCell;
@@ -2418,11 +2419,11 @@ test "semantic code block colors source and keeps current footer rail styled thr
     code_row = try findRowContaining(&h, "const hook");
     code_cell = h.vt.cellAt(code_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'c'), code_cell.codepoint);
-    try std.testing.expect(code_cell.style.fg.eql(.{ .indexed = 252 }));
+    try std.testing.expect(code_cell.style.fg.eql(.{ .indexed = 255 }));
     python_row = try findRowContaining(&h, "def ready");
     python_cell = h.vt.cellAt(python_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'd'), python_cell.codepoint);
-    try std.testing.expect(python_cell.style.fg.eql(.{ .indexed = 252 }));
+    try std.testing.expect(python_cell.style.fg.eql(.{ .indexed = 255 }));
     const resized_footer = (try findFirstDividerRowAfter(&h, code_row)) + 1;
     const resized_footer_cell = h.vt.cellAt(resized_footer, 1) orelse return error.TestMissingFooterCell;
     try std.testing.expectEqual(@as(u21, '┃'), resized_footer_cell.codepoint);
@@ -2449,13 +2450,13 @@ test "semantic code block keeps readable light theme colors through resize" {
     var code_row = try findRowContaining(&h, "const value");
     var keyword_cell = h.vt.cellAt(code_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'c'), keyword_cell.codepoint);
-    try std.testing.expect(keyword_cell.style.fg.eql(.{ .indexed = 238 }));
+    try std.testing.expect(keyword_cell.style.fg.eql(.{ .indexed = 235 }));
 
     try h.driveResize(20, 40, 4, true);
     code_row = try findRowContaining(&h, "const value");
     keyword_cell = h.vt.cellAt(code_row, 3) orelse return error.TestMissingCodeCell;
     try std.testing.expectEqual(@as(u21, 'c'), keyword_cell.codepoint);
-    try std.testing.expect(keyword_cell.style.fg.eql(.{ .indexed = 238 }));
+    try std.testing.expect(keyword_cell.style.fg.eql(.{ .indexed = 235 }));
 }
 
 test "semantic code block keeps solid rules while source reflows" {
@@ -4399,9 +4400,9 @@ test "approval banner frames prompt after completed tool status" {
     try std.testing.expectEqual(top_divider_row + 1, header_row);
     try std.testing.expectEqual(top_divider_row + 2, question_row);
     try std.testing.expectEqual(question_row + 1, reason_row);
-    try expectGridContains(&h, "1. Yes");
-    try expectGridContains(&h, "2. Yes, and don't ask again");
-    try expectGridContains(&h, "3. No");
+    try expectGridContains(&h, "1  Yes");
+    try expectGridContains(&h, "2  Yes, and don't ask again");
+    try expectGridContains(&h, "3  No");
 }
 
 test "welcome block stays pinned while middle transcript rows overflow" {
@@ -4433,7 +4434,7 @@ test "welcome block stays pinned while middle transcript rows overflow" {
 
     try expectGridContains(&h, "Choose a provider below");
     try expectGridContains(&h, "/help for commands");
-    try expectGridContains(&h, "handwork");
+    try expectGridContains(&h, "made by");
     try expectGridNotContains(&h, "content line 0");
     try expectGridContains(&h, "content line 44");
 }
@@ -4462,7 +4463,7 @@ test "welcome block stays pinned during footer-reserved overflow" {
 
     try std.testing.expect(h.shell.last_visible_transcript_split_active);
     try std.testing.expect(h.shell.last_visible_transcript_split_suffix_start_line > h.shell.last_visible_transcript_split_prefix_lines);
-    try expectGridContains(&h, "handwork");
+    try expectGridContains(&h, "made by");
     try expectGridContains(&h, "Choose a provider below");
     try expectGridContains(&h, "/help for commands");
     try expectGridNotContains(&h, "content line 0");
@@ -4749,7 +4750,7 @@ fn checkNextPromptAdmissionPreservesCommittedHistory(resize_before_cancel: bool)
         "SCROLLBACK_LINE_19\nSCROLLBACK_LINE_20\nSCROLLBACK_LINE_21\n" ++
         "SCROLLBACK_LINE_22\nSCROLLBACK_LINE_23\n" ++
         "\x1b[1mSCROLLBACK_LINE_24";
-    const draft = "unsent composer draft " ** 8;
+    const draft = repeat("unsent composer draft ", 8);
 
     try h.shell.initViewport(&h.metrics, 1);
     _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, response);
@@ -4844,7 +4845,7 @@ test "long context notice survives full transcript growth and later compact resi
     defer approval.deinit(alloc);
 
     try h.shell.initViewport(&h.metrics, 1);
-    const notice_body = ("x" ** 377) ++ "\n";
+    const notice_body = repeat("x", 377) ++ "\n";
     h.shell.setCommandOutputRenderPolicy(commandOutputAnsiStyles());
     _ = try h.shell.appendSemanticNotice(alloc, .{
         .topic = "context",
@@ -5116,7 +5117,7 @@ test "entry-bound shimmer resolves inside pinned welcome tail selection" {
     try h.flush();
 
     const status_row = try findRowContaining(&h, "tail status line");
-    try expectGridContains(&h, "handwork");
+    try expectGridContains(&h, "made by");
 
     var ctx = defaultFooterContext(&input);
     setToolActivity(&ctx, status_id, "Reading pinned tail");
@@ -6274,7 +6275,7 @@ test "slash main page renders header categories selection range and contextual c
     try expectGridContains(&h, "1–6");
     try expectGridContains(&h, "/help");
     try expectGridContains(&h, "General");
-    try expectGridContains(&h, "↑↓ navigate     enter use     esc close");
+    try expectGridContains(&h, "↑↓ navigate    enter use    esc close");
 
     input.picker.slash_completion_index = 6;
     h.frame_redraw = true;
@@ -6523,9 +6524,9 @@ test "approval footer growth preserves raw status row over stale footer frame" {
 
     try expectGridContains(&h, "Would you like to run this skill?");
     try expectGridContains(&h, "Reason:");
-    try expectGridContains(&h, "1. Yes");
-    try expectGridContains(&h, "2. Yes, and don't ask again");
-    try expectGridContains(&h, "3. No");
+    try expectGridContains(&h, "1  Yes");
+    try expectGridContains(&h, "2  Yes, and don't ask again");
+    try expectGridContains(&h, "3  No");
     try expectGridContains(&h, status_line);
 }
 
@@ -6556,7 +6557,7 @@ test "compact command completion keeps restored history footer stable" {
     defer approval.deinit(alloc);
 
     try h.shell.initViewport(&h.metrics, 1);
-    _ = try h.shell.appendRawTranscriptEntry(alloc, "history\n" ** 30);
+    _ = try h.shell.appendRawTranscriptEntry(alloc, repeat("history\n", 30));
     const id = types.ToolLifecycleId{ .turn_id = 1, .call_id = "command" };
     _ = try h.shell.applyToolLifecycle(alloc, .{ .authoritative_started = .{
         .id = id,
@@ -7469,10 +7470,10 @@ test "large tabbed user turn keeps frame scroll plan aligned" {
 
     const raw_prompt =
         "\tTAB_START_0001\tquoted=\"value 1\"\tansi_like=\\x1b[32mgreen\\x1b[0m\n" ++
-        "LONGTOKEN_" ++ ("X" ** 220) ++ "_0003\n" ++
+        "LONGTOKEN_" ++ repeat("X", 220) ++ "_0003\n" ++
         "    indented code block tok0 tok1 tok2 tok3 tok4 tok5 tok6 tok7 tok8 tok9 tok10 tok11\n" ++
         "Pathish ~/tmp/example/nested/nested/nested/nested/nested/nested/nested/nested/file_12.txt\n" ++
-        "MARKER_0013 " ++ ("word " ** 24) ++ "word\n" ++
+        "MARKER_0013 " ++ repeat("word ", 24) ++ "word\n" ++
         "\tTAB_START_0015\tquoted=\"value 15\"\tansi_like=\\x1b[32mgreen\\x1b[0m\n" ++
         "\tTAB_START_0029\tquoted=\"value 29\"\tansi_like=\\x1b[32mgreen\\x1b[0m\n" ++
         "\tTAB_START_0043\tquoted=\"value 43\"\tansi_like=\\x1b[32mgreen\\x1b[0m\n" ++
@@ -7550,7 +7551,7 @@ test "paint regenerates assistant text with wraps at current cols" {
 
     const assistant_id = try h.shell.appendAssistantTurnEntry(alloc);
     const segs = h.shell.lookupAssistantSegments(assistant_id) orelse unreachable;
-    const body = "abcdefghijklmnopqrstuvwxyz0123456789" ** 4;
+    const body = repeat("abcdefghijklmnopqrstuvwxyz0123456789", 4);
     try segs.text.appendSlice(alloc, body[0..120]);
 
     try h.renderTranscriptFrame();
@@ -7595,19 +7596,6 @@ fn readEmittedSince(h: *Harness, since_offset: u64) ![]u8 {
     const buf = try h.alloc.alloc(u8, want);
     _ = try h.file.readPositionalAll(io_mod.getIo(), buf, since_offset);
     return buf;
-}
-
-fn gridContains(grid: Grid, needle: []const u8) !void {
-    var row: u16 = 1;
-    var buf: std.ArrayList(u8) = .empty;
-    defer buf.deinit(grid.alloc);
-
-    while (row <= grid.rows) : (row += 1) {
-        buf.clearRetainingCapacity();
-        try grid.rowTextTrimmed(row, &buf);
-        if (std.mem.find(u8, buf.items, needle) != null) return;
-    }
-    return error.TestMissingMarker;
 }
 
 test "mid-drag resize does not emit scrollback wipe" {
@@ -7702,7 +7690,7 @@ test "theme reset retints handwork entries and replays the retained transcript o
         h.shell.entries.items[2].raw_bytes.bytes,
     );
     try std.testing.expectEqualStrings(
-        "\x1b[38;5;247mHANDWORK THEME INLINE CODE\x1b[39m\n",
+        "\x1b[38;5;243mHANDWORK THEME INLINE CODE\x1b[39m\n",
         h.shell.lookupAssistantSegments(assistant_id).?.text.items,
     );
     try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, h.shell.transcript.items, "HANDWORK THEME HEADER"));
@@ -7846,7 +7834,7 @@ test "partial-tail emission fills top rows when an entry overflows the band" {
 
     const assistant_id = try h.shell.appendAssistantTurnEntry(alloc);
     const segs = h.shell.lookupAssistantSegments(assistant_id) orelse unreachable;
-    const body = "abcdefghijklmnopqrstuvwxyz0123456789" ** 6;
+    const body = repeat("abcdefghijklmnopqrstuvwxyz0123456789", 6);
     try segs.text.appendSlice(alloc, body[0..200]);
 
     try h.renderTranscriptFrame();
@@ -7870,7 +7858,7 @@ test "partial-tail emission drops SGR state from the oldest-visible line" {
 
     try h.shell.initViewport(&h.metrics, 1);
 
-    const line = "\x1b[1m" ++ ("X" ** 200) ++ "\x1b[0m\n";
+    const line = "\x1b[1m" ++ repeat("X", 200) ++ "\x1b[0m\n";
     try h.shell.writeTranscript(alloc, &h.metrics, line, true);
     try h.flush();
 
@@ -7925,9 +7913,9 @@ test "narrow-drag resize pins overflowing content to content_bottom" {
     defer h.deinit();
     try h.shell.initViewport(&h.metrics, 1);
 
-    try h.shell.writeTranscript(alloc, &h.metrics, ("A" ** 3000) ++ "\n", true);
-    try h.shell.writeTranscript(alloc, &h.metrics, ("B" ** 3000) ++ "\n", true);
-    try h.shell.writeTranscript(alloc, &h.metrics, ("C" ** 3000) ++ "\n", true);
+    try h.shell.writeTranscript(alloc, &h.metrics, repeat("A", 3000) ++ "\n", true);
+    try h.shell.writeTranscript(alloc, &h.metrics, repeat("B", 3000) ++ "\n", true);
+    try h.shell.writeTranscript(alloc, &h.metrics, repeat("C", 3000) ++ "\n", true);
     try h.flush();
 
     try h.driveResize(30, 40, 4, true);
@@ -8043,7 +8031,7 @@ fn assertCapacityInvariantUnderWrites(path: CapacityWritePath) !void {
     try std.testing.expect(h.shell.transcript.capacity >= cap);
     const initial_capacity = h.shell.transcript.capacity;
 
-    const chunk = "x" ** 512 ++ "\n";
+    const chunk = repeat("x", 512) ++ "\n";
     var i: usize = 0;
     while (i < cap * 10 / chunk.len) : (i += 1) {
         switch (path) {
@@ -8293,7 +8281,7 @@ test "append pending wrap repeated recorded continuations retain every old margi
     try h.shell.writeTranscriptBytes(h.alloc, &h.metrics, "A\nB\nC\n12345678", true);
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
-    const expected = "A\nB\nC\n12345678\n" ++ ("X\nY\nZ\n12345678\n" ** 3);
+    const expected = "A\nB\nC\n12345678\n" ++ repeat("X\nY\nZ\n12345678\n", 3);
     for (0..4) |i| {
         try h.shell.writeTranscriptBytes(h.alloc, &h.metrics, "X\nY\nZ\n12345678", true);
         try h.renderTranscriptFrame();
@@ -8505,7 +8493,7 @@ fn expectUnpaintedRetentionIdentity(reflow: bool) !void {
     var probe = try PhysicalHistoryProbe.init(cols, 12);
     defer probe.deinit();
     try h.shell.initViewport(&h.metrics, 1);
-    _ = try h.shell.appendRawTranscriptEntry(alloc, "old\n" ** 20);
+    _ = try h.shell.appendRawTranscriptEntry(alloc, repeat("old\n", 20));
     _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, if (reflow) "alpha beta gamma delta" else "alpha beta gamma");
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
@@ -8553,7 +8541,7 @@ test "assistant retention deleted soft wrapped entry preserves the next physical
     var probe = try PhysicalHistoryProbe.init(12, 12);
     defer probe.deinit();
     try h.shell.initViewport(&h.metrics, 1);
-    _ = try h.shell.appendRawTranscriptEntry(alloc, "abcdefghijkl" ** 10);
+    _ = try h.shell.appendRawTranscriptEntry(alloc, repeat("abcdefghijkl", 10));
     _ = try h.shell.appendRawTranscriptEntry(alloc, "KEEP00000001KEEP00000002KEEP00000003");
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
@@ -8565,7 +8553,7 @@ test "assistant retention deleted soft wrapped entry preserves the next physical
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
     h.shell.max_retained_transcript_bytes = std.math.maxInt(usize);
-    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, "next\n" ** 12);
+    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, repeat("next\n", 12));
     for (0..3) |_| {
         try h.renderTranscriptFrame();
         try capturePhysicalFrame(&h, &probe);
@@ -8615,7 +8603,7 @@ test "assistant retention partial compact group preserves surviving physical chi
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
     h.shell.max_retained_transcript_bytes = std.math.maxInt(usize);
-    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, "later\n" ** 16);
+    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, repeat("later\n", 16));
     for (0..3) |_| {
         try h.renderTranscriptFrame();
         try capturePhysicalFrame(&h, &probe);
@@ -8643,7 +8631,7 @@ fn expectAssistantRetentionPreservesToolProjection(collapsed: bool) !void {
     defer probe.deinit();
     try h.shell.initViewport(&h.metrics, 1);
     h.shell.collapse_tool_calls = collapsed;
-    const prefix_id = try h.shell.appendRawTranscriptEntry(alloc, "PRUNE\n" ** 20);
+    const prefix_id = try h.shell.appendRawTranscriptEntry(alloc, repeat("PRUNE\n", 20));
     try h.renderTranscriptFrame();
     try capturePhysicalFrame(&h, &probe);
     for ([_][]const u8{ "● CHILD_ONE\n", "● CHILD_TWO\n", "● CHILD_THREE\n" }) |text| {
@@ -8701,7 +8689,7 @@ fn checkAssistantRetentionAllocationFailure(operation_alloc: Allocator) !void {
     var h = try Harness.init(alloc, 60, 12, 4);
     defer h.deinit();
     try h.shell.initViewport(&h.metrics, 1);
-    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, "before\n" ** 24);
+    _ = try h.shell.streamAssistantChunk(alloc, &h.metrics, repeat("before\n", 24));
     try h.renderTranscriptFrame();
     try h.flush();
     var before = try h.shell.prepareTranscriptSource(alloc, null);

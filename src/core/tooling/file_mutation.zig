@@ -1405,7 +1405,8 @@ fn verifyAndReadPreimage(
 
     var read_buf: [8192]u8 = undefined;
     var reader = file.reader(zio, &read_buf);
-    const content = reader.interface.allocRemaining(
+    const content = io_mod.allocRemainingBelowLimit(
+        &reader.interface,
         alloc,
         .limited(max_content_bytes + 1),
     ) catch |err| switch (err) {
@@ -3482,7 +3483,7 @@ test "batch edit postimage needs only one bounded output allocation" {
     for (&edits, 0..) |*edit, i| edit.* = .{ .old_string = @constCast(before[i..][0..1]), .new_string = @constCast("X") };
     var storage: [before.len]u8 = undefined;
     var fixed = std.heap.FixedBufferAllocator.init(&storage);
-    const result = try deriveBatchPostimage(fixed.allocator(), &edits, .{ .present = .{ .content = before, .content_hash = [_]u8{0} ** 32 } });
+    const result = try deriveBatchPostimage(fixed.allocator(), &edits, .{ .present = .{ .content = before, .content_hash = @as([32]u8, @splat(0)) } });
     try std.testing.expectEqualStrings("XXXXXXXXXXXXXXXX", result.content);
     try std.testing.expectEqual(before.len, fixed.end_index);
 }

@@ -11,6 +11,7 @@ const file_mutation = @import("../../tooling/file_mutation.zig");
 const tool_result_errors = @import("../../tooling/tool_result_errors.zig");
 const tool_result_limits = @import("../../tooling/tool_result_limits.zig");
 const text_utils = @import("../../shared/text_utils.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const runtime_config = @import("config.zig");
 const runtime_tool_contracts = @import("tool_contracts.zig");
@@ -1284,7 +1285,7 @@ test "recoverable native previews leave unstored output skills and retrieval unc
         var arena_state = std.heap.ArenaAllocator.init(alloc);
         defer arena_state.deinit();
         const arena = arena_state.allocator();
-        const raw = "x" ** 12288;
+        const raw = repeat("x", 12288);
         const prepared = try prepareToolModelOutput(arena, .{
             .system_prompt = "",
             .provider_retry_count = 0,
@@ -1309,7 +1310,7 @@ test "saved preparation stores complete redacted output on sub-threshold cap los
     defer arena_state.deinit();
     const arena = arena_state.allocator();
     var cancel = std.atomic.Value(bool).init(false);
-    const raw = "CUSTOM_API_KEY=abc123\n" ** 46;
+    const raw = repeat("CUSTOM_API_KEY=abc123\n", 46);
     try std.testing.expectEqual(@as(usize, 1012), raw.len);
 
     const prepared = try prepareToolModelOutput(
@@ -1348,7 +1349,7 @@ test "no-save preparation preserves capped success without a result handle" {
     defer arena_state.deinit();
     const arena = arena_state.allocator();
     var cancel = std.atomic.Value(bool).init(false);
-    const raw = "CUSTOM_API_KEY=abc123\n" ** 46;
+    const raw = repeat("CUSTOM_API_KEY=abc123\n", 46);
 
     const prepared = try prepareToolModelOutput(
         arena,
@@ -1486,7 +1487,7 @@ test "retrieved output storage failure does not publish an unbacked result" {
         .cancel_flag = &cancel,
         .max_tool_result_bytes = 1024,
         .session_child_capability = &readonly,
-    }, toolCall("retrieval-store-error", "read_tool_result", "{}"), "x" ** 1025));
+    }, toolCall("retrieval-store-error", "read_tool_result", "{}"), repeat("x", 1025)));
 }
 
 test "saved tool output preparation keeps builtins and dynamic tools compactable" {
@@ -1503,7 +1504,7 @@ test "saved tool output preparation keeps builtins and dynamic tools compactable
         var arena_state = std.heap.ArenaAllocator.init(alloc);
         defer arena_state.deinit();
         const arena = arena_state.allocator();
-        const raw = "COMPLETE_TOOL_BODY\n" ++ "x" ** 8192;
+        const raw = "COMPLETE_TOOL_BODY\n" ++ repeat("x", 8192);
         const prepared = try prepareToolModelOutput(arena, .{
             .system_prompt = "",
             .provider_retry_count = 0,

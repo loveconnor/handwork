@@ -270,8 +270,8 @@ fn composeHeaderRow(alloc: Allocator, projection: SessionMenuProjection, width: 
     var wide: std.ArrayList(u8) = .empty;
     defer wide.deinit(alloc);
     try appendHeaderTitle(alloc, &wide, projection.filteredItemCount());
-    inline for (std.meta.fields(session_catalog.Scope)) |field| {
-        const scope: session_catalog.Scope = @enumFromInt(field.value);
+    inline for (@typeInfo(session_catalog.Scope).@"enum".field_values) |field_value| {
+        const scope: session_catalog.Scope = @fromBackingInt(@intCast(field_value));
         try wide.appendSlice(alloc, "  ");
         try appendScopeTab(alloc, &wide, scope, scope == projection.scope);
     }
@@ -297,12 +297,16 @@ fn appendHeaderTitle(alloc: Allocator, row: *std.ArrayList(u8), count: usize) !v
 
 fn appendScopeTab(alloc: Allocator, row: *std.ArrayList(u8), scope: session_catalog.Scope, active: bool) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, switch (scope) {
         .current_workspace => "Current workspace",
         .all_workspaces => "All workspaces",
     });
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 
@@ -357,7 +361,7 @@ fn composeTitleRow(
     errdefer row.deinit(alloc);
 
     const indent_width: usize = if (width <= 4) 0 else 2;
-    if (indent_width > 0) try row.appendSlice(alloc, "  ");
+    if (indent_width > 0) try ui_render.appendSelectionGutter(alloc, &row, selected);
 
     // Right cluster: "<workspace> · <age> · N turns", all dim, laid out in
     // fixed columns. @max with the row's own widths keeps it self-sizing when
@@ -423,7 +427,7 @@ fn composeLoadMoreRow(
     var row: std.ArrayList(u8) = .empty;
     errdefer row.deinit(alloc);
     const indent_width: usize = if (width <= 4) 0 else 2;
-    if (indent_width > 0) try row.appendSlice(alloc, "  ");
+    if (indent_width > 0) try ui_render.appendSelectionGutter(alloc, &row, selected);
     try row.appendSlice(alloc, if (selected) ui_render.selected_completion_style else ui_render.dim_style);
     try row_text.appendSingleLineEllipsized(
         alloc,

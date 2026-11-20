@@ -78,7 +78,7 @@ pub const SgrState = struct {
             self.dim = false;
         } else if (std.mem.eql(u8, body, "23")) self.italic = false else if (std.mem.eql(u8, body, "24")) self.underline = false else if (std.mem.eql(u8, body, "29")) self.strike = false else if (std.mem.eql(u8, body, "39")) {
             self.code_fg = .none;
-        } else if (std.mem.eql(u8, body, "38;5;245")) self.code_fg = .dark else if (std.mem.eql(u8, body, "38;5;247")) self.code_fg = .light;
+        } else if (std.mem.eql(u8, body, "38;5;245")) self.code_fg = .dark else if (std.mem.eql(u8, body, "38;5;243")) self.code_fg = .light;
     }
 
     /// Serialize open codes for the currently-active attributes into `buf`.
@@ -102,7 +102,7 @@ pub const SgrState = struct {
         switch (self.code_fg) {
             .none => {},
             .dark => append(buf, &n, "\x1b[38;5;245m"),
-            .light => append(buf, &n, "\x1b[38;5;247m"),
+            .light => append(buf, &n, "\x1b[38;5;243m"),
         }
         return n;
     }
@@ -152,8 +152,8 @@ pub const AssistantPacer = struct {
     pub fn pause(_: *AssistantPacer, _: i128) void {}
 
     pub fn rethemeInlineCode(self: *AssistantPacer, light: bool) void {
-        const from = if (light) "\x1b[38;5;245m" else "\x1b[38;5;247m";
-        const to = if (light) "\x1b[38;5;247m" else "\x1b[38;5;245m";
+        const from = if (light) "\x1b[38;5;245m" else "\x1b[38;5;243m";
+        const to = if (light) "\x1b[38;5;243m" else "\x1b[38;5;245m";
 
         var index: usize = 0;
         while (index + from.len <= self.pending.items.len) {
@@ -927,7 +927,7 @@ test "light code style is restored across rendered blocks" {
     var cap = TestCapture{};
     defer cap.deinit();
 
-    try pacer.enqueue(alloc, "\x1b[38;5;247mcode");
+    try pacer.enqueue(alloc, "\x1b[38;5;243mcode");
     try pacer.tick(alloc, 0, cap.callbacks());
     try pacer.enqueue(alloc, "\x1b[39m done");
     try pacer.tick(alloc, 1, cap.callbacks());
@@ -935,7 +935,7 @@ test "light code style is restored across rendered blocks" {
     try std.testing.expect(std.mem.indexOf(
         u8,
         cap.emitted.items,
-        "code\x1b[0m\x1b[38;5;247m\x1b[39m done",
+        "code\x1b[0m\x1b[38;5;243m\x1b[39m done",
     ) != null);
     try std.testing.expect(std.mem.indexOf(u8, cap.emitted.items, "\x1b[39m") != null);
 }
@@ -956,7 +956,7 @@ test "theme change retints active code before the next block" {
     try pacer.tick(alloc, 1, cap.callbacks());
 
     const after_theme_change = cap.emitted.items[emitted_before_theme_change..];
-    try std.testing.expect(std.mem.indexOf(u8, after_theme_change, "\x1b[0m\x1b[38;5;247m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, after_theme_change, "\x1b[0m\x1b[38;5;243m") != null);
     try std.testing.expect(std.mem.indexOf(u8, after_theme_change, "\x1b[38;5;245m") == null);
 }
 
@@ -967,12 +967,12 @@ test "theme change retints a queued inline code opener before it is emitted" {
     var cap = TestCapture{};
     defer cap.deinit();
 
-    try pacer.enqueue(alloc, "x\x1b[38;5;247mcode\x1b[39m");
+    try pacer.enqueue(alloc, "x\x1b[38;5;243mcode\x1b[39m");
     pacer.rethemeInlineCode(false);
     try pacer.tick(alloc, 0, cap.callbacks());
 
     try std.testing.expect(std.mem.indexOf(u8, cap.emitted.items, "\x1b[38;5;245m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, cap.emitted.items, "\x1b[38;5;247m") == null);
+    try std.testing.expect(std.mem.indexOf(u8, cap.emitted.items, "\x1b[38;5;243m") == null);
 }
 
 test "underline style is restored across rendered blocks" {

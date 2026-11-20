@@ -10,6 +10,7 @@ const host_capabilities = @import("../hosts/host.zig");
 const io_mod = @import("../shared/io.zig");
 const profile_paths = @import("../shared/profile_paths.zig");
 const debug_trace = @import("../shared/debug_trace.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const process_provider_mod = @import(
     "../execution/process_provider.zig",
 );
@@ -1484,7 +1485,8 @@ pub fn identityEvidence(
     defer file.close(io_mod.getIo());
     var read_buffer: [identity_max_bytes]u8 = undefined;
     var reader = file.reader(io_mod.getIo(), &read_buffer);
-    const bytes = reader.interface.allocRemaining(
+    const bytes = io_mod.allocRemainingBelowLimit(
+        &reader.interface,
         alloc,
         .limited(identity_max_bytes),
     ) catch return .unverifiable;
@@ -1723,8 +1725,8 @@ test "endpoint selection preserves short homes and deterministically separates l
     try std.testing.expectEqualStrings(expected_short, short.authority_root);
     try std.testing.expectEqualStrings(short.authority_root, short.transport_root);
 
-    const first_home = "/profiles/" ++ "a" ** 160;
-    const second_home = "/profiles/" ++ "b" ** 160;
+    const first_home = "/profiles/" ++ repeat("a", 160);
+    const second_home = "/profiles/" ++ repeat("b", 160);
     var first = try resolveEndpointSelection(
         alloc,
         builtin.os.tag,
@@ -1771,7 +1773,7 @@ test "endpoint selection allocation and unsupported targets fail closed" {
         resolveEndpointSelection(alloc, .windows, "C:\\profile", 501),
     );
 
-    const long_home = "/profiles/" ++ "x" ** 160;
+    const long_home = "/profiles/" ++ repeat("x", 160);
     var probe = std.testing.FailingAllocator.init(alloc, .{});
     var selected = try resolveEndpointSelection(
         probe.allocator(),

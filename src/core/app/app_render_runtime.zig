@@ -5,7 +5,6 @@ const app_commands = @import("app_commands.zig");
 const app_lifecycle = @import("app_lifecycle.zig");
 const app_permission_runtime = @import("app_permission_runtime.zig");
 const app_session_runtime = @import("app_session_runtime.zig");
-const terminal_ui_projection = @import("../terminal/ui_projection.zig");
 const worker_runtime = @import("../agent/worker_runtime.zig");
 const auth_runtime = @import("../auth/auth_runtime.zig");
 const provider_picker_runtime = @import("provider_picker_runtime.zig");
@@ -36,7 +35,6 @@ const input_presentation = @import("../../ui/footer/input_presentation.zig");
 const footer_viewport = @import("../../ui/footer/viewport.zig");
 const render_request = @import("../../ui/render_request.zig");
 const ui_input = @import("../../ui/input/runtime.zig");
-const input_visual_layout = @import("../../ui/input/visual_layout.zig");
 const registered_entities = @import("../input/registered_entities.zig");
 const approval_screen = @import("../../ui/approval_screen.zig");
 const full_transcript_screen = @import("../../ui/full_transcript_screen.zig");
@@ -45,7 +43,6 @@ const render_engine = @import("../../ui/render_engine.zig");
 const build_checkpoint = @import("../../ui/render_engine/build_checkpoint.zig");
 const shell_runtime = @import("../../ui/shell_runtime.zig");
 const shimmer_runtime = @import("../../ui/transcript/shimmer_runtime.zig");
-const ui_terminal = @import("../../ui/terminal/terminal.zig");
 const vt_emulator = @import("../terminal/engine.zig");
 const transcript_painter = @import("../../ui/transcript/painter.zig");
 const command_output_runtime = @import("../../ui/transcript/command_output_runtime.zig");
@@ -54,6 +51,7 @@ const transcript_runtime = @import("../../ui/transcript/runtime.zig");
 const ui_render = @import("../../ui/render.zig");
 const assistant_pacer = @import("../../ui/assistant/pacer.zig");
 const user_message_card = @import("../../ui/assistant/user_message_card.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 fn set_transcript_assistant_tail_writable(
     runtime: *transcript_runtime.TranscriptRuntime,
@@ -910,7 +908,7 @@ pub fn Runtime(comptime App: type) type {
                     render_requests.animation_next_deadline_ms,
                 },
             );
-            errdefer |err| {
+            commitRequestedFrameAttempt(app, &attempt, render_requests, reason_names) catch |err| {
                 if (comptime @hasField(App, "terminal")) {
                     _ = app_lifecycle.closeFullTranscriptIfActive(
                         app.alloc,
@@ -932,7 +930,19 @@ pub fn Runtime(comptime App: type) type {
                         render_requests.animation_next_deadline_ms,
                     },
                 );
-            }
+                return err;
+            };
+        }
+
+        fn commitRequestedFrameAttempt(
+            app: *App,
+            attempt: *render_request.FrameAttempt,
+            render_requests: *render_request.RenderRequestState,
+            reason_names: []const u8,
+        ) !void {
+            const has_resize_lifecycle =
+                @hasField(@TypeOf(app.shell), "pending_resize_observation");
+            const snapshot = attempt.snapshot;
             defer attempt.deinit();
 
             const resize_commit = if (comptime has_resize_lifecycle)
@@ -1970,10 +1980,6 @@ pub fn Runtime(comptime App: type) type {
             return false;
         }
 
-        fn catalogMenuActive(app: *const App) bool {
-            return modelMenuActive(app) and !settingsMenuActive(app);
-        }
-
         fn activityProjection(app: *const App) activity_runtime.ActivityProjection {
             return shell_runtime.activityProjection(&app.shell);
         }
@@ -2885,11 +2891,11 @@ const CoordinatorFaultTestApp = struct {
     file_picker_receipt: ?input_completion_runtime.FilePickerReceipt = null,
     last_snapshot: ?render_request.AttemptSnapshot = null,
 
-    fn flushNotifications(self: *CoordinatorFaultTestApp) void {
+    pub fn flushNotifications(self: *CoordinatorFaultTestApp) void {
         self.notification_flushes += 1;
     }
 
-    fn renderFrameAttemptForTest(
+    pub fn renderFrameAttemptForTest(
         self: *CoordinatorFaultTestApp,
         snapshot: render_request.AttemptSnapshot,
     ) !FrameAttemptResult {
@@ -3339,7 +3345,7 @@ const CoordinatorTestPacer = struct {
         return self.completed_token_progress != null;
     }
 
-    fn hasPending(self: *const CoordinatorTestPacer) bool {
+    pub fn hasPending(self: *const CoordinatorTestPacer) bool {
         return self.pending;
     }
 
@@ -3360,34 +3366,8 @@ const coordinator_test_slash_registry = command_specs.SlashRegistry{
 };
 
 const CoordinatorTestTerminalClient = struct {
-    snapshot_alloc: std.mem.Allocator = std.testing.allocator,
     snapshot_count: usize = 0,
     source_running: bool = false,
-
-    fn terminalProjection(
-        self: *CoordinatorTestTerminalClient,
-        _: std.mem.Allocator,
-    ) std.mem.Allocator.Error!terminal_ui_projection.Snapshot {
-        self.snapshot_count += 1;
-        const rows = try self.snapshot_alloc.alloc(
-            terminal_ui_projection.Row,
-            @intFromBool(self.source_running),
-        );
-        errdefer self.snapshot_alloc.free(rows);
-        if (self.source_running) {
-            const session_id = try self.snapshot_alloc.dupe(u8, "terminal-test");
-            errdefer self.snapshot_alloc.free(session_id);
-            rows[0] = .{
-                .session_id = session_id,
-                .label = try self.snapshot_alloc.dupe(u8, "test command"),
-                .lifecycle = .running,
-                .attention = .{},
-                .backend = .native,
-            };
-        }
-        self.source_running = false;
-        return .{ .alloc = self.snapshot_alloc, .rows = rows };
-    }
 };
 
 const CoordinatorTestApp = struct {
@@ -3497,11 +3477,11 @@ const CoordinatorTestApp = struct {
         return fallback;
     }
 
-    fn isFileIndexLoading(_: *CoordinatorTestApp) bool {
+    pub fn isFileIndexLoading(_: *CoordinatorTestApp) bool {
         return false;
     }
 
-    fn isFileIndexFailed(_: *CoordinatorTestApp) bool {
+    pub fn isFileIndexFailed(_: *CoordinatorTestApp) bool {
         return false;
     }
 };
@@ -5169,7 +5149,7 @@ test "core.app_render_runtime lifecycle rewrite recovers normal buffer after fil
     try app.shell.writeTranscript(
         alloc,
         &app.metrics,
-        "retained assistant history\n" ** 64,
+        repeat("retained assistant history\n", 64),
         true,
     );
     app.shell.render_requests.request(.first_frame);
@@ -5273,7 +5253,7 @@ test "core.app_render_runtime full transcript defers repaint until its page is r
     try app.shell.writeTranscript(
         alloc,
         &app.metrics,
-        ("historical transcript row\n" ** 512) ++ "FULL_ASYNC_SENTINEL\n",
+        repeat("historical transcript row\n", 512) ++ "FULL_ASYNC_SENTINEL\n",
         true,
     );
     app.shell.render_requests.request(.first_frame);
@@ -5337,7 +5317,7 @@ test "core.app_render_runtime full transcript resize defers history reset until 
     try app.shell.writeTranscript(
         alloc,
         &app.metrics,
-        "old primary history\n" ** 256,
+        repeat("old primary history\n", 256),
         true,
     );
     app.shell.render_requests.request(.first_frame);
@@ -5687,7 +5667,7 @@ test "core.app_render_runtime anchored placement keeps the composer on the termi
     // rows (4..20) below it, and the composer is pinned to the last rows.
     try std.testing.expect(try coordinatorGridContains(terminal, "SHELL01"));
     try std.testing.expectEqual(@as(u16, 4), app.shell.owned_top_row);
-    try std.testing.expectEqual(@as(u16, 13), try coordinatorRowContaining(terminal, "handwork ·"));
+    try std.testing.expectEqual(@as(u16, 13), try coordinatorRowContaining(terminal, "made by"));
     try std.testing.expectEqual(@as(u16, 16), try coordinatorRowContaining(terminal, "/help for commands"));
     try std.testing.expectEqual(layout.rows, app.shell.committed_frame_layout.footer_area.bottom);
     try std.testing.expectEqual(layout.rows, try coordinatorRowContaining(terminal, "run /login"));
@@ -5704,7 +5684,7 @@ test "core.app_render_runtime anchored placement keeps the composer on the termi
     // The splash gives up its lead rows: the logo moves to the launch row and
     // the prompt follows it.
     try std.testing.expect(try coordinatorGridContains(terminal, "SHELL01"));
-    try std.testing.expectEqual(@as(u16, 10), try coordinatorRowContaining(terminal, "handwork ·"));
+    try std.testing.expectEqual(@as(u16, 10), try coordinatorRowContaining(terminal, "made by"));
     try std.testing.expectEqual(@as(u16, 13), try coordinatorRowContaining(terminal, "/help for commands"));
     try std.testing.expect((try coordinatorRowContaining(terminal, "FIRST_PROMPT")) > 10);
     try std.testing.expectEqual(layout.rows, app.shell.committed_frame_layout.footer_area.bottom);

@@ -1,14 +1,7 @@
 //! Nonblocking Winsock transport for the pinned-address HTTP fetcher.
 const std = @import("std");
 const builtin = @import("builtin");
-const c = if (builtin.os.tag == .windows) @cImport({
-    // Import API declarations only: Zig 0.16 cannot translate MinGW's
-    // fortified wide-string inline wrappers in ReleaseSafe mode.
-    @cDefine("_FORTIFY_SOURCE", "0");
-    @cDefine("WIN32_LEAN_AND_MEAN", "1");
-    @cInclude("winsock2.h");
-    @cInclude("ws2tcpip.h");
-}) else struct {};
+const c = if (builtin.os.tag == .windows) @import("windows_sockets_c") else struct {};
 
 pub const Handle = usize;
 pub const PollFd = extern struct { fd: Handle, events: i16, revents: i16 };

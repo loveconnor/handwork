@@ -773,7 +773,7 @@ pub const Runtime = struct {
                 .body = try model_contract.encodeResultAlloc(arena, model_contract.feedbackResult(update.delivery)),
                 .max_result_bytes = tool_result_limits.min_configured_tool_result_bytes,
                 .delivered = false,
-                .receipt_sequence = @as(u64, @intFromEnum(update.delivery)) + 1,
+                .receipt_sequence = @as(u64, @backingInt(update.delivery)) + 1,
             });
         }
         return results.toOwnedSlice(arena);
@@ -1965,14 +1965,6 @@ fn makeManagedWork(
         .permission_mode = options.parent_permission_mode,
         .created_at_ms = options.timestamp_ms,
     };
-}
-
-fn assistantTextForWork(
-    history: []const types.HistoryTurn,
-    work_id: []const u8,
-) ?[]const u8 {
-    const result = resultForWork(history, work_id) orelse return null;
-    return result.text;
 }
 
 fn resultForWork(history: []const types.HistoryTurn, work_id: []const u8) ?struct { text: []const u8, execution: types.ExecutionMemory } {

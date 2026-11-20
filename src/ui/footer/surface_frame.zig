@@ -30,6 +30,7 @@ const visual_layout = @import("../input/visual_layout.zig");
 const render_engine = @import("../render_engine.zig");
 const render_request = @import("../render_request.zig");
 const transcript_runtime = @import("../transcript/runtime.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const activity_overlay = render_engine.activity_overlay;
@@ -1491,7 +1492,7 @@ test "surface footer frame snapshots manual compaction blink with an inactive st
     var force_redraw = false;
     var ctx = surfaceTestContext(&input);
     ctx.compaction = .{ .revision = 1, .operation = .{
-        .id = @enumFromInt(1),
+        .id = @fromBackingInt(@intCast(1)),
         .turn_id = 1,
         .origin = .manual,
         .phase = .{ .running = .summary },
@@ -2513,7 +2514,7 @@ test "command approval fit includes the steering banner" {
 
 test "command approval footer sizing paths use the complete command" {
     const alloc = std.testing.allocator;
-    const command = "printf 'SURFACE_COMMAND_START_" ++ ("x" ** 88) ++ "_SURFACE_COMMAND_END'";
+    const command = "printf 'SURFACE_COMMAND_START_" ++ repeat("x", 88) ++ "_SURFACE_COMMAND_END'";
     var input = InputRuntime{};
     defer input.deinit(alloc);
     var prompt = ApprovalPrompt{};

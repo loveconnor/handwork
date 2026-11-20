@@ -103,6 +103,7 @@ pub const ProvisionalToolStatuses = struct {
             tool_name;
         const spec = registry.lookup(lookup_name) orelse return null;
         if (spec.executor_kind == .terminal) return .ineligible;
+        if (isTranscriptSilentTool(tool_name)) return .ineligible;
         return switch (spec.activity_kind) {
             .ask, .write, .edit => .ineligible,
             else => .{ .eligible = .{
@@ -751,6 +752,12 @@ pub fn fileMutationDisplayPath(
     };
 }
 
+/// Runtime plumbing the user never asked for (on-demand tool schema loading)
+/// stays out of the transcript; it executes nothing and changes no state.
+pub fn isTranscriptSilentTool(tool_name: []const u8) bool {
+    return std.mem.eql(u8, tool_name, "load_tools");
+}
+
 pub noinline fn startToolVisibleLifecycle(
     hooks: *const AgentRuntimeDeps,
     arena: Allocator,
@@ -762,6 +769,7 @@ pub noinline fn startToolVisibleLifecycle(
 ) !bool {
     const activity_kind = activityKindForCall(arena, hooks.tool_registry, call);
     if (activity_kind == .ask) return false;
+    if (isTranscriptSilentTool(call.name)) return false;
     const redacted_arguments = try text_utils.maskSecrets(arena, call.arguments_json);
     const activity_line = if (call.argument_integrity == .valid) try hooks.describe_tool_action(
         hooks.ctx,
@@ -1320,17 +1328,6 @@ fn commandArtifactHandle(
         std.mem.endsWith(u8, handle, ".stderr.log")) return null;
     const owned: []const u8 = try arena.dupe(u8, handle);
     return owned;
-}
-
-pub fn malformedToolArgumentsResult(arena: Allocator, call: ToolCall) !ToolExecutionResult {
-    return .{
-        .status = .failure,
-        .model_output = if (call.argument_integrity == .non_object_json)
-            try tool_result_errors.nonObjectToolArgumentsJson(arena, call.name)
-        else
-            try tool_result_errors.malformedToolArgumentsJson(arena, call.name),
-        .status_detail = if (call.argument_integrity == .non_object_json) "non-object arguments" else "invalid JSON arguments",
-    };
 }
 
 pub fn finishCommittedFileStatus(

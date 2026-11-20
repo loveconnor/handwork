@@ -787,7 +787,7 @@ fn formatDirectResult(
 fn commandStatusFromTerm(term: std.process.Child.Term) command_contract.CommandStatus {
     return switch (term) {
         .exited => |code| .{ .exit_code = @intCast(code) },
-        .signal => |sig| .{ .signal = @intFromEnum(sig) },
+        .signal => |sig| .{ .signal = @backingInt(sig) },
         else => .finished,
     };
 }
@@ -1329,7 +1329,7 @@ test "direct executor reaps partial spawn and output-limit process groups" {
             }
             try std.testing.expectError(
                 error.ProcessNotFound,
-                std.posix.kill(pid, @enumFromInt(0)),
+                std.posix.kill(pid, @fromBackingInt(@intCast(0))),
             );
         }
     };
@@ -1441,7 +1441,7 @@ test "direct executor cleans up cancellation after the first pipeline spawn" {
     }
     try std.testing.expectError(
         error.ProcessNotFound,
-        std.posix.kill(pid, @enumFromInt(0)),
+        std.posix.kill(pid, @fromBackingInt(@intCast(0))),
     );
 }
 

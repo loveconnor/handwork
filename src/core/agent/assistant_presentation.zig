@@ -197,16 +197,6 @@ pub const MarkdownProcessor = struct {
         try self.pushWithCompletions(alloc, input, out, .{});
     }
 
-    pub fn pushWithTableCompletion(
-        self: *MarkdownProcessor,
-        alloc: Allocator,
-        input: []const u8,
-        out: *std.ArrayList(u8),
-        completion: ?*const payload.TableCompletion,
-    ) !void {
-        try self.pushWithCompletions(alloc, input, out, .{ .table = completion });
-    }
-
     pub fn pushWithCompletions(
         self: *MarkdownProcessor,
         alloc: Allocator,
@@ -229,15 +219,6 @@ pub const MarkdownProcessor = struct {
 
     pub fn flush(self: *MarkdownProcessor, alloc: Allocator, out: *std.ArrayList(u8)) !void {
         try self.flushWithCompletions(alloc, out, .{});
-    }
-
-    pub fn flushWithTableCompletion(
-        self: *MarkdownProcessor,
-        alloc: Allocator,
-        out: *std.ArrayList(u8),
-        completion: ?*const payload.TableCompletion,
-    ) !void {
-        try self.flushWithCompletions(alloc, out, .{ .table = completion });
     }
 
     pub fn flushWithCompletions(
@@ -1713,7 +1694,7 @@ test "inline code uses the selected light background" {
     defer out.deinit(alloc);
 
     try processor.push(alloc, "run `zig build` now\n", &out);
-    try std.testing.expectEqualStrings("run \x1b[38;5;247mzig build\x1b[39m now\n", out.items);
+    try std.testing.expectEqualStrings("run \x1b[38;5;243mzig build\x1b[39m now\n", out.items);
 }
 
 test "stray asterisk between spaces stays literal" {

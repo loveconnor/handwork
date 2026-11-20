@@ -43,6 +43,13 @@ fn process_spawn_inheriting_fd(
     inherited_fd: ?std.posix.fd_t,
 ) std.process.SpawnError!std.process.Child {
     if (comptime builtin.os.tag != .macos) return error.OperationUnsupported;
+    switch (options.exe) {
+        .detect, .search => {},
+        // Explicit executables keep std's resolution semantics.
+        .path, .file, .explicit => if (inherited_fd == null) {
+            return wrapped_original_vtable.?.processSpawn(userdata, options);
+        } else return error.OperationUnsupported,
+    }
     if (options.uid != null or options.gid != null) return error.OperationUnsupported;
     if (options.argv.len == 0) return error.InvalidName;
     if (options.expand_arg0 == .expand) return error.OperationUnsupported;
@@ -62,7 +69,7 @@ fn process_spawn_inheriting_fd(
 
     const argv = try arena.allocSentinel(?[*:0]const u8, options.argv.len, null);
     for (options.argv, 0..) |arg, index| {
-        argv[index] = (try arena.dupeZ(u8, arg)).ptr;
+        argv[index] = (try arena.dupeSentinel(u8, arg, 0)).ptr;
     }
 
     const progress_fileno: std.posix.fd_t = 3;
@@ -89,6 +96,10 @@ fn process_spawn_inheriting_fd(
     if (inherited_fd) |fd| {
         try add_inherit_or_dup(&actions, fd, inherited_fd_target(fd));
     }
+    // CLOEXEC_DEFAULT closes everything else; keep requested handles at
+    // their parent descriptor numbers, matching std's spawn.
+    for (options.inherit_dirs) |dir| try add_inherit_or_dup(&actions, dir.handle, dir.handle);
+    for (options.inherit_files) |file| try add_inherit_or_dup(&actions, file.handle, file.handle);
 
     var attributes: std.c.posix_spawnattr_t = undefined;
     try check_spawn_call(std.c.posix_spawnattr_init(&attributes));
@@ -97,7 +108,6 @@ fn process_spawn_inheriting_fd(
     var flags: std.c.POSIX_SPAWN = .{
         .CLOEXEC_DEFAULT = true,
         .START_SUSPENDED = options.start_suspended,
-        .DISABLE_ASLR = options.disable_aslr,
     };
     if (options.pgid) |process_group| {
         flags.SETPGROUP = true;
@@ -201,7 +211,7 @@ fn add_cwd_action(
             std.c.posix_spawn_file_actions_addfchdir_np(actions, dir.handle),
         ),
         .path => |path| {
-            const path_z = try arena.dupeZ(u8, path);
+            const path_z = try arena.dupeSentinel(u8, path, 0);
             try check_spawn_call(
                 std.c.posix_spawn_file_actions_addchdir_np(actions, path_z.ptr),
             );
@@ -277,21 +287,21 @@ fn set_process_group(
 ) std.process.SpawnError!void {
     const result = posix_spawnattr_setpgroup(attributes, process_group);
     if (result == 0) return;
-    const err: std.posix.E = @enumFromInt(@as(u16, @intCast(result)));
+    const err: std.posix.E = @fromBackingInt(@intCast(@as(u16, @intCast(result))));
     if (err == .INVAL) return error.InvalidProcessGroupId;
     return map_errno(err);
 }
 
 fn check_spawn_call(result: c_int) std.process.SpawnError!void {
     if (result == 0) return;
-    return map_errno(@enumFromInt(@as(u16, @intCast(result))));
+    return map_errno(@fromBackingInt(@intCast(@as(u16, @intCast(result)))));
 }
 
 fn map_spawn_error(
     result: c_int,
     options: std.process.SpawnOptions,
 ) std.process.SpawnError {
-    const err: std.posix.E = @enumFromInt(@as(u16, @intCast(result)));
+    const err: std.posix.E = @fromBackingInt(@intCast(@as(u16, @intCast(result))));
     if (err == .INVAL and options.pgid != null) return error.InvalidProcessGroupId;
     return map_errno(err);
 }
@@ -360,7 +370,7 @@ const ChildPidSnapshot = struct {
     len: usize,
 
     fn contains(self: ChildPidSnapshot, pid: std.posix.pid_t) bool {
-        return std.mem.containsAtLeastScalar(std.posix.pid_t, self.pids[0..self.len], 1, pid);
+        return std.mem.containsAtLeastScalar(std.posix.pid_t, self.pids[0..self.len], pid, 1);
     }
 };
 
@@ -430,7 +440,7 @@ fn reap_child(io: std.Io, pid: std.posix.pid_t) void {
 const max_tracked_fd = if (builtin.os.tag == .macos) std.c.OPEN_MAX else 256;
 
 fn open_fd_snapshot() [max_tracked_fd]bool {
-    var result = [_]bool{false} ** max_tracked_fd;
+    var result = @as([max_tracked_fd]bool, @splat(false));
     for (&result, 0..) |*open, fd| {
         const rc = std.posix.system.fcntl(@intCast(fd), std.posix.F.GETFD, @as(usize, 0));
         open.* = std.posix.errno(rc) == .SUCCESS;

@@ -13,6 +13,7 @@ const compaction_state = @import("context_compaction_state.zig");
 const completion_verification = @import("completion_verification.zig");
 const runtime_config = @import("config.zig");
 const execution_budget = @import("../execution_budget.zig");
+const comptimeRepeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 test {
     _ = compaction_state;
@@ -198,14 +199,37 @@ pub fn compact(
             .{ source_messages.len, compactable.len, fixed_handoff_tokens },
         );
     }
-    errdefer |err| debug_trace.eventf(
-        "context_compaction",
-        "failed",
-        request.trace_ctx,
-        "model={s} err={s}",
-        .{ request.model, @errorName(err) },
-    );
+    return summarizeRanges(
+        alloc,
+        scratch,
+        request,
+        bounded_messages,
+        ranges,
+        task_evidence,
+        per_chunk_generation,
+        per_chunk_budget,
+    ) catch |err| {
+        debug_trace.eventf(
+            "context_compaction",
+            "failed",
+            request.trace_ctx,
+            "model={s} err={s}",
+            .{ request.model, @errorName(err) },
+        );
+        return err;
+    };
+}
 
+fn summarizeRanges(
+    alloc: Allocator,
+    scratch: Allocator,
+    request: Request,
+    bounded_messages: []const types.ChatMessage,
+    ranges: []const SummaryRange,
+    task_evidence: ?[]const u8,
+    per_chunk_generation: usize,
+    per_chunk_budget: usize,
+) !Result {
     const summaries = try scratch.alloc([]const u8, ranges.len);
     var total_usage: types.ToolUsage = .{};
     for (ranges, 0..) |range, index| {
@@ -338,7 +362,7 @@ fn renderedMessageTokens(alloc: Allocator, message: types.ChatMessage) !usize {
 test "compaction splits an oversized message without losing UTF-8 source bytes" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
-    const content = "保留 exact source 🦊\n" ** 100;
+    const content = comptimeRepeat("保留 exact source 🦊\n", 100);
     const parts = try splitOversizedSemanticMessages(std.testing.allocator, arena.allocator(), &.{.{ .role = .user, .content = content }}, 100);
     try std.testing.expect(parts.len > 1);
     var offset: usize = 0;
@@ -803,7 +827,7 @@ test "semantic compaction includes tool outcomes in one bounded summary" {
 
 test "capacity-required summaries use identical prompts without a merge call" {
     const alloc = std.testing.allocator;
-    const text = "semantic context " ** 30;
+    const text = comptimeRepeat("semantic context ", 30);
     const messages = [_]types.ChatMessage{
         .{ .role = .user, .content = text },
         .{ .role = .assistant, .content = text },

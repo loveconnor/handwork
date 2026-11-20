@@ -79,7 +79,7 @@ pub const Runtime = struct {
     /// a static release-binary template.
     pub fn initInto(storage: *Self, alloc: Allocator) void {
         comptime {
-            if (std.meta.fields(Self).len != 8) {
+            if (@typeInfo(Self).@"struct".field_names.len != 8) {
                 @compileError("update Runtime.initInto for the changed field set");
             }
         }

@@ -152,7 +152,7 @@ pub const FailureSnapshot = struct {
             },
         });
         if (self.http_status) |status| {
-            try out.writer.print(" · HTTP {d}", .{@intFromEnum(status)});
+            try out.writer.print(" · HTTP {d}", .{@backingInt(status)});
         }
         return try out.toOwnedSlice();
     }
@@ -172,7 +172,7 @@ pub const FailureSnapshot = struct {
         try writer.writeAll(",\"reason\":");
         try std.json.Stringify.value(@tagName(self.reason), .{}, writer);
         if (self.http_status) |status| {
-            try writer.print(",\"http_status\":{d}", .{@intFromEnum(status)});
+            try writer.print(",\"http_status\":{d}", .{@backingInt(status)});
         }
         try writer.writeByte('}');
     }
@@ -1382,15 +1382,6 @@ pub const Runtime = struct {
         }
     }
 
-    pub fn refreshGrokSourceInventory(self: *Self, alloc: Allocator) !void {
-        if (self.auth_mode == .host_managed) return;
-        if (try credentials.sourceExists(alloc, self.secret_store, .grok_subscription)) {
-            self.source_inventory.insert(.grok_subscription);
-        } else if (self.credentialSource() != .grok_subscription) {
-            self.source_inventory.remove(.grok_subscription);
-        }
-    }
-
     fn refreshSourceInventoryWithProbe(
         self: *Self,
         alloc: Allocator,
@@ -1521,10 +1512,6 @@ pub const Runtime = struct {
         return self.openSignInPickerWithParent(alloc, false, .chatgpt_subscription);
     }
 
-    pub fn openSignInPichandworkromRoot(self: *Self, alloc: Allocator) !bool {
-        return self.openSignInPickerWithParent(alloc, true, .chatgpt_subscription);
-    }
-
     pub fn openChatGptSignInPichandworkromRoot(self: *Self, alloc: Allocator) !bool {
         if (comptime host_target.is_wasm) return error.ChatGptOAuthUnavailable;
         return self.openSignInPickerWithParent(alloc, true, .chatgpt_subscription);
@@ -1604,10 +1591,6 @@ pub const Runtime = struct {
         }
         self.sign_in_code_visible = !self.sign_in_code_visible;
         return true;
-    }
-
-    pub fn signInReturnsToRoot(self: *const Self) bool {
-        return self.sign_in_returns_to_root;
     }
 
     pub fn signInBrowserUrlAlloc(self: *Self, alloc: Allocator) !?[]u8 {
@@ -1875,36 +1858,6 @@ pub const Runtime = struct {
         return self.adoptPreparedCredential(alloc, &credential);
     }
 
-    /// Drops the current selection and re-runs precedence after the user clears
-    /// a remembered credential source.
-    pub fn reselectByPrecedence(self: *Self, alloc: Allocator) !bool {
-        return self.reselectByPrecedenceWithDeps(alloc, self, probeCredentialSource, loadRuntimeCredentialSource);
-    }
-
-    fn reselectByPrecedenceWithDeps(
-        self: *Self,
-        alloc: Allocator,
-        ctx: ?*anyopaque,
-        probe: SourceProbeFn,
-        loader: CredentialLoaderFn,
-    ) !bool {
-        const previous = self.credentialSource();
-        if (self.selected_credential) |*credential| credential.deinit(alloc);
-        self.selected_credential = null;
-        self.credential_failure = null;
-
-        try self.refreshSourceInventoryWithProbe(alloc, ctx, probe);
-        for (credential_source_order) |source| {
-            if (!self.source_inventory.contains(source)) continue;
-            if (try self.selectSourceWithLoader(alloc, source, ctx, loader) != null) {
-                return self.credentialSource() != previous;
-            }
-            self.source_inventory.remove(source);
-        }
-        self.onboarding_skipped = false;
-        return previous != null;
-    }
-
     pub fn reconcileAfterApiKeyLogout(self: *Self, alloc: Allocator, source: credentials.Source) !bool {
         const active = self.credentialSource() == source;
         if (active) {
@@ -1949,15 +1902,6 @@ fn probeCredentialSource(raw_context: ?*anyopaque, _: Allocator, source: credent
         .missing => false,
         .unavailable => error.CredentialStorageUnavailable,
     };
-}
-
-fn loadCredentialSource(_: ?*anyopaque, alloc: Allocator, source: credentials.Source) !?credentials.Credential {
-    return credentials.loadSource(
-        alloc,
-        oauth_transport.unavailable_provider,
-        host.unavailable_secret_store,
-        source,
-    );
 }
 
 fn loadRuntimeCredentialSource(raw: ?*anyopaque, alloc: Allocator, source: credentials.Source) !?credentials.Credential {

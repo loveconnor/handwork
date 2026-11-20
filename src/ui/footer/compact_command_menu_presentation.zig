@@ -326,9 +326,13 @@ fn appendUsageScopeTab(
     active: bool,
 ) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, scope.label());
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 
@@ -1295,7 +1299,7 @@ fn composeChoiceRow(
     var row: std.ArrayList(u8) = .empty;
     errdefer row.deinit(alloc);
     const indent: usize = if (width <= 2) 0 else 2;
-    if (indent > 0) try row.appendSlice(alloc, "  ");
+    if (indent > 0) try ui_render.appendSelectionGutter(alloc, &row, choice.selected);
     try row.appendSlice(alloc, if (choice.selected) ui_render.selected_completion_style else ui_render.dim_style);
     const description_col = value_col;
     try row_text.appendSingleLineEllipsized(alloc, &row, choice.label, description_col -| indent -| 2);

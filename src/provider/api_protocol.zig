@@ -207,7 +207,7 @@ pub fn consume(alloc: Allocator, anthropic: bool, reader: *std.Io.Reader, events
     defer framing.deinit(alloc);
     var content: std.ArrayList(u8) = .empty;
     defer content.deinit(alloc);
-    var pending: [128]Pending = .{Pending{}} ** 128;
+    var pending: [128]Pending = @splat(Pending{});
     defer for (&pending) |*call| call.deinit(alloc);
     var usage: types.Usage = .{};
     var terminal = false;

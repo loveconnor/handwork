@@ -7,6 +7,7 @@ const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
 const tool_result_limits = @import("../tooling/tool_result_limits.zig");
 const context_limits = @import("../config/context_limits.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const test_debug_trace = if (@import("builtin").is_test)
     @import("../shared/debug_trace.zig")
 else
@@ -66,7 +67,7 @@ pub fn displayNameFromOutput(output: []const u8, buffer: *[skill_contract.max_na
 }
 
 test "skill display names round trip the generated result header within its preview" {
-    const names = [_][]const u8{ "workflow", "quotes\" & <name> ' café", "literal &quot; &amp;", "line\u{0085}\u{2028}\u{2029}break", "\"" ** skill_contract.max_name_bytes };
+    const names = [_][]const u8{ "workflow", "quotes\" & <name> ' café", "literal &quot; &amp;", "line\u{0085}\u{2028}\u{2029}break", repeat("\"", skill_contract.max_name_bytes) };
     for (names) |name| {
         for ([_]bool{ false, true }) |with_notice| {
             var out: std.Io.Writer.Allocating = .init(std.testing.allocator);
@@ -74,7 +75,7 @@ test "skill display names round trip the generated result header within its prev
             if (with_notice) try out.writer.writeAll(discovery_model_notice);
             try out.writer.writeAll(content_name_prefix);
             try model_context_encoding.writeScalar(&out.writer, name);
-            try out.writer.writeAll("\" location=\"/skills/" ++ ("long-path" ** 600));
+            try out.writer.writeAll("\" location=\"/skills/" ++ repeat("long-path", 600));
             var buffer: [skill_contract.max_name_bytes]u8 = undefined;
             const preview = out.written()[0..@min(out.written().len, @import("../session/result_store.zig").preview_bytes)];
             try std.testing.expectEqualStrings(name, displayNameFromOutput(preview, &buffer).?);
@@ -94,7 +95,7 @@ test "skill display names reject unrelated malformed and invalid metadata" {
         "<skill_content name=\"bad&#x0a;value\" location=\"/skills/workflow\">",
         "<skill_content name=\"../escape\" location=\"/skills/workflow\">",
         "<skill_content name=\"\xff\" location=\"/skills/workflow\">",
-        "<skill_content name=\"" ++ ("a" ** (skill_contract.max_name_bytes + 1)) ++ "\" location=\"/skills/workflow\">",
+        "<skill_content name=\"" ++ repeat("a", skill_contract.max_name_bytes + 1) ++ "\" location=\"/skills/workflow\">",
     };
     for (invalid) |output| {
         var buffer: [skill_contract.max_name_bytes]u8 = undefined;
@@ -333,7 +334,7 @@ test "explicit skills include complete instructions beyond the default chunk" {
     try tmp.dir.createDirPath(io_mod.getIo(), "workflow");
     var file = try tmp.dir.createFile(io_mod.getIo(), "workflow/SKILL.md", .{});
     defer file.close(io_mod.getIo());
-    try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\ndescription: helper\n---\nBEGIN INSTRUCTIONS\n" ++ ("required step\n" ** 2000) ++ "COMPLETE TAIL\n");
+    try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\ndescription: helper\n---\nBEGIN INSTRUCTIONS\n" ++ repeat("required step\n", 2000) ++ "COMPLETE TAIL\n");
     const path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "workflow");
     defer alloc.free(path);
     const skills = [_]skill_runtime.Skill{.{ .name = "workflow", .description = "helper", .path = path, .source = .global_handwork }};
@@ -416,7 +417,7 @@ test "whole skill reads respect explicit bounds cancellation and recovery" {
     try tmp.dir.createDirPath(io_mod.getIo(), "workflow");
     var file = try tmp.dir.createFile(io_mod.getIo(), "workflow/SKILL.md", .{});
     defer file.close(io_mod.getIo());
-    try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\n---\n" ++ ("required step\n" ** 2000) ++ "COMPLETE TAIL\n");
+    try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\n---\n" ++ repeat("required step\n", 2000) ++ "COMPLETE TAIL\n");
     const path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "workflow");
     defer alloc.free(path);
     const skills = [_]skill_runtime.Skill{.{ .name = "workflow", .description = "", .path = path, .source = .global_handwork }};
@@ -2185,7 +2186,7 @@ test "explicit prompt section cleans up every allocation failure with both notic
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(
             io_mod.getIo(),
-            "---\nname: workflow\ndescription: helper\n---\n\n" ++ ("workflow instructions\n" ** 16),
+            "---\nname: workflow\ndescription: helper\n---\n\n" ++ repeat("workflow instructions\n", 16),
         );
     }
     {
@@ -2266,7 +2267,7 @@ test "skill resources continue on line-safe UTF-8 boundaries and reject unsafe i
     {
         var file = try tmp.dir.createFile(io_mod.getIo(), "home/.handwork/skills/workflow/assets/cross-chunk.txt", .{});
         defer file.close(io_mod.getIo());
-        const prefix = "a" ** (16 * 1024 - 1);
+        const prefix = repeat("a", 16 * 1024 - 1);
         try file.writeStreamingAll(io_mod.getIo(), prefix ++ "€\n");
     }
 
@@ -2481,7 +2482,7 @@ test "skill invocation preserves strict discovery diagnostics without a profile 
 
 test "discovery diagnostics cannot hide a loaded skill at the minimum tool-result budget" {
     const alloc = std.testing.allocator;
-    const detailed_notice = "skill discovery warning: " ++ (("candidate \"/very/long/" ++ ("x" ** 2048) ++ "\" was skipped; ") ** 4);
+    const detailed_notice = "skill discovery warning: " ++ repeat("candidate \"/very/long/" ++ repeat("x", 2048) ++ "\" was skipped; ", 4);
     const notice = try alloc.dupe(u8, detailed_notice);
     const model_output = try alloc.dupe(u8, "<skill_content name=\"requested\">\nREQUESTED SKILL BODY\n</skill_content>");
     const result = try attachExecuteNotice(
@@ -2506,7 +2507,7 @@ test "discovery diagnostics cannot hide a loaded skill at the minimum tool-resul
 
 test "discovery diagnostics cannot hide a skill failure at the minimum tool-result budget" {
     const alloc = std.testing.allocator;
-    const detailed_notice = "skill discovery warning: " ++ (("candidate \"/very/long/" ++ ("y" ** 2048) ++ "\" was skipped; ") ** 4);
+    const detailed_notice = "skill discovery warning: " ++ repeat("candidate \"/very/long/" ++ repeat("y", 2048) ++ "\" was skipped; ", 4);
     const notice = try alloc.dupe(u8, detailed_notice);
     const model_output = try alloc.dupe(u8, "Skill \"requested\" not found. Refresh available skills and retry with an advertised name.");
     const result = try attachExecuteNotice(

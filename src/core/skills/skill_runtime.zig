@@ -9,6 +9,7 @@ const skill_contract = @import("skill_contract.zig");
 const context_limits = @import("../config/context_limits.zig");
 const sort_utils = @import("../shared/sort_utils.zig");
 const tool_result_limits = @import("../tooling/tool_result_limits.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const catalog_notice_name_count: usize = 8;
@@ -452,7 +453,7 @@ fn collectRootFingerprints(
         const candidate_digest = if (stat.kind == .directory)
             try candidateDirectoryDigest(alloc, root)
         else
-            [_]u8{0} ** std.crypto.hash.sha2.Sha256.digest_length;
+            @as([std.crypto.hash.sha2.Sha256.digest_length]u8, @splat(0));
         fingerprints[filled] = .{
             .path = path,
             .exists = true,
@@ -1393,11 +1394,6 @@ pub const SkillMenu = struct {
         self.setQuery(query_text);
     }
 
-    pub fn openFocused(self: *SkillMenu, items: []const Skill, filter: SkillMenuSourceFilter, index: usize) void {
-        self.beginOpenFocused(filter, index);
-        self.clamp(items);
-    }
-
     fn beginOpenFocused(self: *SkillMenu, filter: SkillMenuSourceFilter, index: usize) void {
         self.active = true;
         self.source_filter = filter;
@@ -1449,12 +1445,6 @@ pub const SkillMenu = struct {
         return true;
     }
 
-    pub fn moveSourceFilter(self: *SkillMenu, items: []const Skill, delta: i32) bool {
-        if (!self.advanceSourceFilter(delta)) return false;
-        self.clamp(items);
-        return true;
-    }
-
     fn advanceSourceFilter(self: *SkillMenu, delta: i32) bool {
         if (!self.active) return false;
         const count = skill_menu_source_filters.len;
@@ -1498,7 +1488,7 @@ const RootFingerprint = struct {
     inode: std.Io.File.INode = 0,
     mtime: std.Io.Timestamp = .zero,
     candidate_digest: [std.crypto.hash.sha2.Sha256.digest_length]u8 =
-        [_]u8{0} ** std.crypto.hash.sha2.Sha256.digest_length,
+        @as([std.crypto.hash.sha2.Sha256.digest_length]u8, @splat(0)),
 
     fn deinit(self: *RootFingerprint, alloc: Allocator) void {
         alloc.free(self.path);
@@ -3553,12 +3543,12 @@ test "skill runtime replacement preserves the active catalog when index allocati
     const active = [_]Skill{
         .{ .name = "active", .description = "active", .path = "/skills/active", .source = .global_handwork },
     };
-    const replacement = [_]Skill{.{
+    const replacement = @as([64]Skill, @splat(.{
         .name = "replacement",
         .description = "replacement",
         .path = "/skills/replacement",
         .source = .global_handwork,
-    }} ** 64;
+    }));
     var runtime = Runtime{ .items = @constCast(&active) };
     defer {
         runtime.items = &.{};
@@ -3928,7 +3918,7 @@ fn createTempFifoOrSkip(alloc: Allocator, tmp: *std.testing.TmpDir, sub_path: []
     const path = try std.fs.path.join(alloc, &.{ root, sub_path });
     defer alloc.free(path);
     var path_buf: [std.fs.max_path_bytes]u8 = undefined;
-    const path_z = try std.fmt.bufPrintZ(&path_buf, "{s}", .{path});
+    const path_z = try std.mem.printSentinel(&path_buf, "{s}", .{path}, 0);
     if (mkfifo(path_z, 0o600) != 0) return error.SkipZigTest;
 }
 
@@ -4385,7 +4375,7 @@ test "skill catalog uses model capacity and preserves explicit byte overrides" {
     var skills: [16]Skill = undefined;
     for (&skills, 0..) |*skill, index| {
         const name = try std.fmt.bufPrint(&storage[index], "entry-{d}", .{index});
-        skill.* = .{ .name = name, .description = "useful instructions " ** 80, .path = name, .source = .global_handwork };
+        skill.* = .{ .name = name, .description = repeat("useful instructions ", 80), .path = name, .source = .global_handwork };
     }
     var unknown = try buildSkillPrompt(alloc, &skills, &.{}, .{}, null);
     defer unknown.deinit(alloc);
@@ -4455,9 +4445,9 @@ test "skill catalog releases partial projection allocations" {
 test "skill catalog shortens descriptions before omitting identities" {
     const alloc = std.testing.allocator;
     var skills = [_]Skill{
-        .{ .name = "alpha", .description = "First useful description. " ** 30, .path = "/tmp/skills/alpha", .source = .global_handwork },
-        .{ .name = "beta", .description = "Second useful description. " ** 30, .path = "/tmp/skills/beta", .source = .global_handwork },
-        .{ .name = "gamma", .description = "Third useful description. " ** 30, .path = "/tmp/skills/gamma", .source = .global_handwork },
+        .{ .name = "alpha", .description = repeat("First useful description. ", 30), .path = "/tmp/skills/alpha", .source = .global_handwork },
+        .{ .name = "beta", .description = repeat("Second useful description. ", 30), .path = "/tmp/skills/beta", .source = .global_handwork },
+        .{ .name = "gamma", .description = repeat("Third useful description. ", 30), .path = "/tmp/skills/gamma", .source = .global_handwork },
     };
     var limits = context_limits.Values{};
     limits.skill_catalog_bytes = .{ .value = .{ .bytes = 768 }, .source = .command_line };
@@ -4551,7 +4541,7 @@ test "skill catalog one-byte overflow reports every omitted name in stable order
 
 test "skill catalog omission notices bound hostile names and list length" {
     const alloc = std.testing.allocator;
-    const huge_name = "n" ** 4096;
+    const huge_name = repeat("n", 4096);
     var skills: [20]Skill = undefined;
     for (&skills) |*skill| skill.* = staticSkill(huge_name, "", .workspace_shared);
     var limits = context_limits.Values{};
@@ -4562,7 +4552,7 @@ test "skill catalog omission notices bound hostile names and list length" {
 
     const notice = result.notice orelse return error.TestExpectedEqual;
     try std.testing.expect(notice.len < 16 * 1024);
-    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, notice, "n" ** skill_contract.max_name_bytes));
+    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, notice, repeat("n", skill_contract.max_name_bytes)));
     try std.testing.expect(std.mem.find(u8, notice, "+12 more") != null);
 }
 
@@ -5084,7 +5074,7 @@ test "linked metadata FIFO is rejected before descriptor open" {
     const fifo_path = try std.fs.path.join(alloc, &.{ workspace_root, "metadata.fifo" });
     defer alloc.free(fifo_path);
     var fifo_path_buf: [std.fs.max_path_bytes]u8 = undefined;
-    const fifo_path_z = try std.fmt.bufPrintZ(&fifo_path_buf, "{s}", .{fifo_path});
+    const fifo_path_z = try std.mem.printSentinel(&fifo_path_buf, "{s}", .{fifo_path}, 0);
     const candidate_path = try std.fs.path.join(alloc, &.{ workspace_root, ".codex/skills/fifo" });
     defer alloc.free(candidate_path);
     var candidate_dir = try io_mod.openDirAbsoluteNoFollow(candidate_path, .{});

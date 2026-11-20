@@ -18,17 +18,17 @@ const Palette = struct {
 };
 
 const dark_palette: Palette = .{
-    .keyword_style = "\x1b[38;5;252m",
-    .string_style = "\x1b[38;5;250m",
-    .number_style = "\x1b[38;5;250m",
-    .comment_style = "\x1b[38;5;245m",
+    .keyword_style = "\x1b[38;5;255m",
+    .string_style = "\x1b[38;5;248m",
+    .number_style = "\x1b[38;5;248m",
+    .comment_style = "\x1b[38;5;242m",
 };
 
 const light_palette: Palette = .{
-    .keyword_style = "\x1b[38;5;238m",
-    .string_style = "\x1b[38;5;241m",
-    .number_style = "\x1b[38;5;241m",
-    .comment_style = "\x1b[38;5;243m",
+    .keyword_style = "\x1b[38;5;235m",
+    .string_style = "\x1b[38;5;242m",
+    .number_style = "\x1b[38;5;242m",
+    .comment_style = "\x1b[38;5;246m",
 };
 
 fn paletteForTheme(theme: Theme) Palette {
@@ -223,10 +223,10 @@ test "supported source gains balanced colors without changing code bytes" {
     try std.testing.expectEqualStrings(source, plain);
     try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;") != null);
     try std.testing.expectEqual(count(styled, "\x1b[38;5;"), count(styled, "\x1b[39m"));
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;252mconst") != null);
-    try std.testing.expectEqual(@as(usize, 1), count(styled, "\x1b[38;5;252mconst"));
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;250m\"const\"\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;252mreturn") == null);
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;255mconst") != null);
+    try std.testing.expectEqual(@as(usize, 1), count(styled, "\x1b[38;5;255mconst"));
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;248m\"const\"\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;255mreturn") == null);
 }
 
 test "light theme uses a readable syntax palette without changing code bytes" {
@@ -238,9 +238,9 @@ test "light theme uses a readable syntax palette without changing code bytes" {
     const plain = try stripAnsi(alloc, styled);
     defer alloc.free(plain);
     try std.testing.expectEqualStrings(source, plain);
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;238mconst\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;241m\"ready\"\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;243m// comment\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;235mconst\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;242m\"ready\"\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, styled, "\x1b[38;5;246m// comment\x1b[39m") != null);
     try std.testing.expectEqual(count(styled, "\x1b[38;5;"), count(styled, "\x1b[39m"));
 }
 
@@ -297,7 +297,7 @@ test "profiles use configured block comments and case-insensitive keywords" {
     const html = try highlight(alloc, source[35..], languages.resolve("html").?, .dark);
     defer alloc.free(html);
 
-    try std.testing.expect(std.mem.indexOf(u8, css, "\x1b[38;5;245m/* comment */\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, sql, "\x1b[38;5;252mSELECT\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, html, "\x1b[38;5;245m<!-- note -->\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, css, "\x1b[38;5;242m/* comment */\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, sql, "\x1b[38;5;255mSELECT\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, html, "\x1b[38;5;242m<!-- note -->\x1b[39m") != null);
 }

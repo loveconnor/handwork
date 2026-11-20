@@ -16,7 +16,7 @@ pub fn listen(address: std.Io.net.IpAddress) !std.Io.net.Server {
     var native: SocketAddress = undefined;
     const family: posix.sa_family_t = switch (address) {
         .ip4 => |ip| blk: {
-            native.ip4 = .{ .port = std.mem.nativeToBig(u16, ip.port), .addr = @bitCast(ip.bytes) };
+            native.ip4 = .{ .port = std.mem.nativeToBig(u16, ip.port), .addr = std.mem.readInt(u32, &ip.bytes, .native) };
             break :blk posix.AF.INET;
         },
         .ip6 => |ip| blk: {

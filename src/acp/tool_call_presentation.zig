@@ -10,6 +10,7 @@ const debug_trace = @import("../core/shared/debug_trace.zig");
 const builtin_tools = @import("../builtins/tools.zig");
 const host_target = @import("../core/hosts/target.zig");
 const types = @import("../core/shared/types.zig");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const ToolCall = types.ToolCall;
@@ -88,7 +89,7 @@ pub fn toolUpdateContentText(is_failure: bool, output: []const u8) []const u8 {
 }
 
 test "toolUpdateContentText clips long output and guards unsafe bytes" {
-    const long = "x" ** 500;
+    const long = repeat("x", 500);
     const clipped = toolUpdateContentText(false, long);
     try std.testing.expectEqual(@as(usize, 200), clipped.len);
 

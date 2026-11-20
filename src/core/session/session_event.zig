@@ -76,10 +76,10 @@ pub const ConversationToolResult = struct {
 
     pub fn jsonStringify(self: ConversationToolResult, writer: *std.json.Stringify) !void {
         try writer.beginObject();
-        inline for (std.meta.fields(ConversationToolResult)) |field| {
-            if (!std.mem.eql(u8, field.name, "review_feedback") or self.review_feedback) {
-                try writer.objectField(field.name);
-                try writer.write(@field(self, field.name));
+        inline for (@typeInfo(ConversationToolResult).@"struct".field_names) |field_name| {
+            if (!std.mem.eql(u8, field_name, "review_feedback") or self.review_feedback) {
+                try writer.objectField(field_name);
+                try writer.write(@field(self, field_name));
             }
         }
         try writer.endObject();
@@ -2053,7 +2053,7 @@ fn sha256(bytes: []const u8) Digest {
 }
 
 test "session event kind contract contains exactly ten stable variants" {
-    try std.testing.expectEqual(@as(usize, 10), @typeInfo(Kind).@"enum".fields.len);
+    try std.testing.expectEqual(@as(usize, 10), @typeInfo(Kind).@"enum".field_names.len);
     try std.testing.expectEqualStrings("session_started", @tagName(Kind.session_started));
     try std.testing.expectEqualStrings("preferences_changed", @tagName(Kind.preferences_changed));
     try std.testing.expectEqualStrings("workspace_rebound", @tagName(Kind.workspace_rebound));
@@ -2944,7 +2944,7 @@ test "legacy usage replacement retains framing and checksum validation" {
     const state_json = "{" ++ common ++ ",\"history\":[],\"total_input_tokens\":7,\"total_output_tokens\":3,\"usage\":" ++ usage_json ++ "}";
     const started = "{\"schema_version\":1,\"log_generation\":\"01010101010101010101010101010101\",\"seq\":1,\"event_id\":\"01010101010101010101010101010101\",\"timestamp_ms\":1,\"kind\":\"session_started\",\"payload\":{" ++
         "\"id\":\"legacy-replacement\",\"created_at_ms\":1,\"origin_workspace_root\":\"/workspace\",\"workspace_root\":\"/workspace\",\"conversation_language\":\"en\",\"preferences\":{\"provider\":\"codex\",\"model\":\"test/model\",\"effort\":\"auto\",\"fast_mode\":false},\"usage\":" ++ usage_json ++ "}}\n";
-    const replacement_id = [_]u8{9} ** 16;
+    const replacement_id = @as([16]u8, @splat(9));
     const digest = sha256(state_json);
     for ([_]bool{ false, true }) |corrupt| {
         var declared_digest = digest;
@@ -2959,9 +2959,9 @@ test "legacy usage replacement retains framing and checksum validation" {
         try log.writer.writeAll(started);
         for (transaction, 2..) |event, seq| {
             const frame = try encodeLegacyFixtureFrame(alloc, .{
-                .log_generation = [_]u8{1} ** 16,
+                .log_generation = @as([16]u8, @splat(1)),
                 .seq = seq,
-                .event_id = [_]u8{@intCast(seq)} ** 16,
+                .event_id = @as([16]u8, @splat(@intCast(seq))),
                 .timestamp_ms = 2,
                 .event = event,
             });
@@ -2987,9 +2987,9 @@ test "legacy usage replacement retains framing and checksum validation" {
             var snapshot = try known.snapshot(alloc);
             defer snapshot.deinit(alloc);
             const later_frame = try encodeLegacyFixtureFrame(alloc, .{
-                .log_generation = [_]u8{1} ** 16,
+                .log_generation = @as([16]u8, @splat(1)),
                 .seq = 5,
-                .event_id = [_]u8{5} ** 16,
+                .event_id = @as([16]u8, @splat(5)),
                 .timestamp_ms = 3,
                 .event = .{ .usage_checkpointed = .{ .usage = snapshot } },
             });

@@ -16,6 +16,7 @@ const result_store = @import("result_store.zig");
 const session_usage = @import("session_usage.zig");
 const session_usage_sidecar = @import("session_usage_sidecar.zig");
 const session_permission_state = @import("../permissions/session_permission_state.zig");
+const comptimeRepeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Identifier = session_event.Identifier;
@@ -2474,12 +2475,6 @@ pub const WritableSessionDir = struct {
         self.writer_lock = null;
     }
 
-    pub fn eventLogLengthForTest(self: *WritableSessionDir) !u64 {
-        var file = try openManagedFile(&self.dir, events_file, .read_only);
-        defer file.close(io_mod.getIo());
-        return file.length(io_mod.getIo());
-    }
-
     fn entryExistsForTest(self: *WritableSessionDir, name: []const u8) !bool {
         return entryExists(&self.dir, name);
     }
@@ -3508,8 +3503,8 @@ fn publishSessionDirectory(parent: std.Io.Dir, staging: []const u8, target: []co
     };
     var staging_buffer: [256]u8 = undefined;
     var target_buffer: [256]u8 = undefined;
-    const staging_z = try std.fmt.bufPrintZ(&staging_buffer, "{s}", .{staging});
-    const target_z = try std.fmt.bufPrintZ(&target_buffer, "{s}", .{target});
+    const staging_z = try std.mem.printSentinel(&staging_buffer, "{s}", .{staging}, 0);
+    const target_z = try std.mem.printSentinel(&target_buffer, "{s}", .{target}, 0);
     while (true) {
         try io_mod.getIo().checkCancel();
         const err = std.posix.errno(Darwin.renameatx_np(parent.handle, staging_z, parent.handle, target_z, 0x4));
@@ -3676,14 +3671,6 @@ fn entryExists(dir: *io_mod.VerifiedDir, name: []const u8) !bool {
     if (stat.kind != .file and stat.kind != .directory) return error.SessionPathUnsafe;
     if (stat.kind == .file and stat.nlink != 1) return error.SessionPathUnsafe;
     return true;
-}
-
-fn acquireLock(
-    dir: *io_mod.VerifiedDir,
-    name: []const u8,
-    create: bool,
-) !io_mod.TimedAdvisoryLock {
-    return acquireLockWithDeadline(dir, name, create, lock_deadline_ms);
 }
 
 fn acquireLockWithDeadline(
@@ -5952,7 +5939,7 @@ fn checkCompleteSkillReplayArtifact(artifact: enum { intact, missing, mismatched
     const runtime_memory = @import("../agent/runtime/execution_memory.zig");
     const execution_memory = @import("../agent/execution_memory.zig");
     const full_output = "<skill_content name=\"workflow\" location=\"/skills/workflow\" resource=\"SKILL.md\" complete=\"true\">\n" ++
-        ("required instruction\n" ** 1200) ++ "COMPLETE_SKILL_TAIL\n</skill_content>";
+        (comptimeRepeat("required instruction\n", 1200)) ++ "COMPLETE_SKILL_TAIL\n</skill_content>";
     var temp = try TempRoot.init(alloc);
     defer temp.deinit(alloc);
     var initial = try testState(alloc, "complete-skill-replay", 10);

@@ -150,18 +150,8 @@ pub const ManagedFile = struct {
         return total;
     }
 
-    pub fn relativeName(self: ManagedFile) []const u8 {
-        return self.impl.relative_name;
-    }
-
     pub fn displayPath(self: ManagedFile) ?[]const u8 {
         return self.impl.display_path;
-    }
-
-    /// Returns the verified open descriptor for immediate child stdio
-    /// inheritance. The ManagedFile remains the owner and must outlive spawn.
-    pub fn childStdioFile(self: ManagedFile) std.Io.File {
-        return self.impl.file;
     }
 };
 
@@ -187,8 +177,8 @@ const CapabilityImpl = struct {
     terminal_parent: ?io_mod.VerifiedDir = null,
     terminal_state: ?io_mod.VerifiedDir = null,
     terminal_proofs: ?io_mod.VerifiedDir = null,
-    indeterminate_names: [@typeInfo(ManagedChildKind).@"enum".fields.len]?[]u8 =
-        [_]?[]u8{null} ** @typeInfo(ManagedChildKind).@"enum".fields.len,
+    indeterminate_names: [@typeInfo(ManagedChildKind).@"enum".field_names.len]?[]u8 =
+        @splat(null),
 
     fn deinit(self: *CapabilityImpl) void {
         closeOptionalDir(&self.background_logs);
@@ -470,19 +460,19 @@ const CapabilityImpl = struct {
         kind: ManagedChildKind,
         replacement: []u8,
     ) void {
-        const index = @intFromEnum(kind);
+        const index = @backingInt(kind);
         if (self.indeterminate_names[index]) |old| self.alloc.free(old);
         self.indeterminate_names[index] = replacement;
     }
 
     fn clearIndeterminate(self: *CapabilityImpl, kind: ManagedChildKind) void {
-        const index = @intFromEnum(kind);
+        const index = @backingInt(kind);
         if (self.indeterminate_names[index]) |name| self.alloc.free(name);
         self.indeterminate_names[index] = null;
     }
 
     fn resolveIndeterminate(self: *CapabilityImpl, kind: ManagedChildKind) !void {
-        const name = self.indeterminate_names[@intFromEnum(kind)] orelse return;
+        const name = self.indeterminate_names[@backingInt(kind)] orelse return;
         const route_dir = try self.route(kind, false) orelse
             return error.FileNotFound;
         var file = try openPrivateFile(route_dir, name, .read_only, self.mode);
@@ -1159,7 +1149,7 @@ pub const SessionChildCapability = struct {
         kind: ManagedChildKind,
         name: []const u8,
     ) bool {
-        const pending = self.impl.indeterminate_names[@intFromEnum(kind)] orelse
+        const pending = self.impl.indeterminate_names[@backingInt(kind)] orelse
             return false;
         return std.mem.eql(u8, pending, name);
     }
@@ -1180,7 +1170,7 @@ pub const SessionChildCapability = struct {
         self: SessionChildCapability,
         kind: ManagedChildKind,
     ) ?[]const u8 {
-        return self.impl.indeterminate_names[@intFromEnum(kind)];
+        return self.impl.indeterminate_names[@backingInt(kind)];
     }
 
     /// Returns non-authoritative metadata for compatibility rendering only.
@@ -1190,10 +1180,6 @@ pub const SessionChildCapability = struct {
         kind: ManagedChildKind,
     ) ![]u8 {
         return self.impl.displayRoutePath(alloc, kind);
-    }
-
-    pub fn validateManagedName(name: []const u8) !void {
-        try validateName(name);
     }
 };
 
@@ -1427,9 +1413,9 @@ test "managed child capability rejects invalid names and unsafe routes" {
     var linked = try capability.createExclusiveFile(alloc, .tool_results, "linked.txt");
     linked.deinit();
     var source_buf: [128]u8 = undefined;
-    const source = try std.fmt.bufPrintZ(&source_buf, "tool-results/linked.txt", .{});
+    const source = try std.mem.printSentinel(&source_buf, "tool-results/linked.txt", .{}, 0);
     var target_buf: [128]u8 = undefined;
-    const target = try std.fmt.bufPrintZ(&target_buf, "tool-results/linked-again.txt", .{});
+    const target = try std.mem.printSentinel(&target_buf, "tool-results/linked-again.txt", .{}, 0);
     try std.testing.expectEqual(
         @as(c_int, 0),
         std.c.linkat(session.dir.handle, source, session.dir.handle, target, 0),

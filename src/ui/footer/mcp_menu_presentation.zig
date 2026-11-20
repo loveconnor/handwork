@@ -163,8 +163,8 @@ fn composeHeader(alloc: Allocator, projection: McpMenuProjection, width: u16) !s
     const title = std.fmt.bufPrint(&title_buf, "MCP {d}", .{projection.servers.len}) catch "MCP";
     try wide.appendSlice(alloc, title);
     try wide.appendSlice(alloc, ui_render.reset_style);
-    inline for (std.meta.fields(mcp_menu_state.Section)) |field| {
-        const section: mcp_menu_state.Section = @enumFromInt(field.value);
+    inline for (@typeInfo(mcp_menu_state.Section).@"enum".field_values) |field_value| {
+        const section: mcp_menu_state.Section = @fromBackingInt(@intCast(field_value));
         try wide.appendSlice(alloc, "  ");
         try appendSectionTab(alloc, &wide, section, section == projection.state.section);
     }
@@ -187,14 +187,18 @@ fn appendSectionTab(
     active: bool,
 ) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, switch (section) {
         .servers => "Servers",
         .tools => "Tools",
         .resources => "Resources",
         .prompts => "Prompts",
     });
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 

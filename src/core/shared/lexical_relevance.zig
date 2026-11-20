@@ -1,4 +1,5 @@
 const std = @import("std");
+const repeat = @import("comptime_repeat.zig").repeat;
 
 pub const max_query_bytes: usize = 4 * 1024;
 // Distinct tokens require at least one byte each and a separator between them.
@@ -171,7 +172,7 @@ fn isIdentityByte(byte: u8) bool {
 }
 
 test "prepared queries accept long requests within the byte bound" {
-    const query = "workflow " ** 100;
+    const query = repeat("workflow ", 100);
     const prepared = try prepare(query);
     try std.testing.expectEqualStrings(query, prepared.raw);
     try std.testing.expectEqual(@as(usize, 1), prepared.token_count);
@@ -183,10 +184,10 @@ test "prepared queries enforce bounds and deduplicate case-insensitively" {
     try std.testing.expectEqualStrings("GitHub", prepared.tokenSlice()[0]);
     try std.testing.expectEqualStrings("issue", prepared.tokenSlice()[1]);
 
-    _ = try prepare("a" ** max_query_bytes);
-    try std.testing.expectError(error.QueryTooLong, prepare("a" ** (max_query_bytes + 1)));
+    _ = try prepare(repeat("a", max_query_bytes));
+    try std.testing.expectError(error.QueryTooLong, prepare(repeat("a", max_query_bytes + 1)));
 
-    const max_tokens = "a " ** max_query_tokens;
+    const max_tokens = repeat("a ", max_query_tokens);
     _ = try prepare(max_tokens);
     try std.testing.expectError(error.QueryTooLong, prepare(max_tokens ++ "a"));
 }

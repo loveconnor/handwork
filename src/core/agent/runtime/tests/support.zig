@@ -884,7 +884,7 @@ pub const FakeAgentRuntimeDeps = struct {
         return try alloc.dupe(u8, token);
     }
 
-    fn takeSteeringBoundary(
+    pub fn takeSteeringBoundary(
         raw: *anyopaque,
         arena: Allocator,
         _: u64,
@@ -935,7 +935,7 @@ pub const FakeAgentRuntimeDeps = struct {
         if (self.finalization_error) |err| return err;
     }
 
-    fn releaseAgentTerminalLease(raw: *anyopaque, session_id: []const u8) !void {
+    pub fn releaseAgentTerminalLease(raw: *anyopaque, session_id: []const u8) !void {
         const self: *FakeAgentRuntimeDeps = @ptrCast(@alignCast(raw));
         try self.terminal_lease_cleanup_ids.append(
             self.alloc,
@@ -1349,7 +1349,7 @@ pub const FakeAgentRuntimeDeps = struct {
         return authorization;
     }
 
-    fn resolveToolActionDisplayTarget(raw: *anyopaque, arena: Allocator, _: ToolCall) !?[]const u8 {
+    pub fn resolveToolActionDisplayTarget(raw: *anyopaque, arena: Allocator, _: ToolCall) !?[]const u8 {
         const self: *FakeAgentRuntimeDeps = @ptrCast(@alignCast(raw));
         self.tool_display_target_resolve_count += 1;
         const value = self.tool_display_target orelse return null;
@@ -1619,7 +1619,7 @@ pub const FakeAgentRuntimeDeps = struct {
         }
     }
 
-    fn propagateGrant(raw: *anyopaque, tool_name: []const u8, target_path: []const u8) !void {
+    pub fn propagateGrant(raw: *anyopaque, tool_name: []const u8, target_path: []const u8) !void {
         const self: *FakeAgentRuntimeDeps = @ptrCast(@alignCast(raw));
         try appendGrant(self.alloc, &self.propagated_grants, .{
             .tool_name = @constCast(tool_name),
@@ -1628,7 +1628,7 @@ pub const FakeAgentRuntimeDeps = struct {
         try self.record("propagate_grant:{s}:{s}", .{ tool_name, target_path });
     }
 
-    fn pushEvent(raw: *anyopaque, event: WorkerEvent) !void {
+    pub fn pushEvent(raw: *anyopaque, event: WorkerEvent) !void {
         const self: *FakeAgentRuntimeDeps = @ptrCast(@alignCast(raw));
         defer worker_runtime.freeWorkerEvent(std.heap.c_allocator, event);
         switch (event) {
@@ -1681,7 +1681,7 @@ pub const FakeAgentRuntimeDeps = struct {
         }
     }
 
-    fn pushText(raw: *anyopaque, emission: runtime_deps.TextEmission) !void {
+    pub fn pushText(raw: *anyopaque, emission: runtime_deps.TextEmission) !void {
         const self: *FakeAgentRuntimeDeps = @ptrCast(@alignCast(raw));
         const text = switch (emission) {
             .assistant_started => return,

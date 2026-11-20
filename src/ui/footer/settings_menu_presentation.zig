@@ -10,7 +10,7 @@ const vt_emulator = @import("../../core/terminal/engine.zig");
 const Allocator = std.mem.Allocator;
 const SettingsMenuProjection = render_input.SettingsMenuProjection;
 const roomy_header_rows: u16 = 2;
-pub const max_inline_rows: u16 = roomy_header_rows + std.meta.fields(settings_catalog.SettingId).len;
+pub const max_inline_rows: u16 = roomy_header_rows + @typeInfo(settings_catalog.SettingId).@"enum".field_names.len;
 
 fn inlineModelRowCount(projection: SettingsMenuProjection) u16 {
     if (!projection.models.active) return 0;
@@ -186,8 +186,8 @@ fn composeBrowseHeader(alloc: Allocator, projection: SettingsMenuProjection, wid
     var wide: std.ArrayList(u8) = .empty;
     defer wide.deinit(alloc);
     try appendHeaderTitle(alloc, &wide, projection.filteredItemCount());
-    inline for (std.meta.fields(settings_catalog.Category)) |field| {
-        const category: settings_catalog.Category = @enumFromInt(field.value);
+    inline for (@typeInfo(settings_catalog.Category).@"enum".field_values) |field_value| {
+        const category: settings_catalog.Category = @fromBackingInt(@intCast(field_value));
         try wide.appendSlice(alloc, "  ");
         try appendCategoryTab(alloc, &wide, category, category == projection.category);
     }
@@ -224,9 +224,13 @@ fn appendCategoryTab(
     active: bool,
 ) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, category.label());
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 
@@ -241,7 +245,7 @@ fn composeItemRow(
     var row: std.ArrayList(u8) = .empty;
     errdefer row.deinit(alloc);
     const indent: usize = if (width <= 2) 0 else 2;
-    if (indent > 0) try row.appendSlice(alloc, "  ");
+    if (indent > 0) try ui_render.appendSelectionGutter(alloc, &row, selected);
     try row.appendSlice(alloc, if (selected) ui_render.selected_completion_style else ui_render.dim_style);
     try row_text.appendSingleLineEllipsized(
         alloc,

@@ -23,6 +23,7 @@ const visual_layout = @import("visual_layout.zig");
 const escape_parser = @import("escape_parser.zig");
 const shortcuts = @import("shortcuts.zig");
 const terminal_action_decoder = @import("terminal_action_decoder.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const ImageBlocks = kill_ring.ImageBlocks;
 const InputRuntime = core_input_runtime.Runtime;
@@ -55,8 +56,6 @@ const InputEscapeAction = input_action.Action;
 const MouseInput = escape_parser.MouseInput;
 
 pub const shortcutFromControlByte = shortcuts.fromControlByte;
-pub const shortcutFromFocusedEditorControlByte = shortcuts.fromFocusedEditorControlByte;
-pub const shortcutFromEscapeAction = shortcuts.fromEscapeAction;
 
 pub fn approvalActionFromByte(byte: u8) ?approval_decision.Action {
     return switch (byte) {
@@ -1189,7 +1188,7 @@ test "prompt history recalls previous inputs with up and down" {
 test "prompt history recall restores compact paste backing" {
     const alloc = std.testing.allocator;
     const placeholder = "[Pasted text #1, 1 line]";
-    const backing = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const backing = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     var runtime = InputRuntime{};
     defer runtime.deinit(alloc);
 
@@ -1731,7 +1730,7 @@ test "prompt history limit rejection preserves active and saved drafts" {
 test "prompt history limit counts registered paste backing text" {
     const alloc = std.testing.allocator;
     const placeholder = "[Pasted text #1, 1 line]";
-    const backing = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const backing = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     const blocks = [_]paste_blocks.PastedBlock{.{
         .id = 1,
         .text = @constCast(backing),
@@ -2196,7 +2195,7 @@ test "vertical movement never targets inside a registered paste" {
     try runtime.edit_state.input.appendSlice(alloc, input);
     try runtime.entities.pasted_blocks.append(alloc, .{
         .id = 7,
-        .text = try alloc.dupe(u8, "P" ** 1001),
+        .text = try alloc.dupe(u8, repeat("P", 1001)),
         .line_count = 1,
         .span = .{
             .raw_start = "x\n".len,

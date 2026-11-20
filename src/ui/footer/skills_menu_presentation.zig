@@ -358,9 +358,13 @@ fn appendSourceTab(
     active: bool,
 ) !void {
     try row.appendSlice(alloc, if (active) ui_render.selected_completion_style else ui_render.dim_style);
-    if (active) try row.append(alloc, '[');
+    if (active) {
+        // The active tab is a soft pill in the selection-bar tone.
+        try row.appendSlice(alloc, ui_render.composerSelectionStyle());
+        try row.append(alloc, ' ');
+    }
     try row.appendSlice(alloc, skill_runtime.skillMenuFilterLabel(filter));
-    if (active) try row.append(alloc, ']');
+    if (active) try row.append(alloc, ' ');
     try row.appendSlice(alloc, ui_render.reset_style);
 }
 
@@ -376,7 +380,7 @@ fn composeSkillTitleRow(
     errdefer row.deinit(alloc);
 
     const indent_width: usize = if (width <= 4) 0 else 2;
-    if (indent_width > 0) try row.appendSlice(alloc, "  ");
+    if (indent_width > 0) try ui_render.appendSelectionGutter(alloc, &row, selected);
 
     const scope = skillSourceScopeLabel(skill.source);
     const scope_width = @max(scope_col, display_width.visibleWidth(scope));

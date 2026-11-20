@@ -16,6 +16,7 @@ pub const session_usage = @import("session_usage.zig");
 pub const profile_usage_runtime = @import("profile_usage_runtime.zig");
 const command_contract = @import("../execution/command_contract.zig");
 const sort_utils = @import("../shared/sort_utils.zig");
+const comptimeRepeat = @import("../shared/comptime_repeat.zig").repeat;
 const Allocator = std.mem.Allocator;
 
 test {
@@ -1819,22 +1820,6 @@ pub const SessionRuntime = struct {
         return false;
     }
 
-    pub fn compactedTurnCount(self: *const SessionRuntime) usize {
-        if (self.agent.history.items.len == 0) return 0;
-        return switch (self.agent.history.items[0]) {
-            .compacted_summary => |entry| entry.removed_turn_count,
-            else => 0,
-        };
-    }
-
-    pub fn compactionCount(self: *const SessionRuntime) usize {
-        if (self.agent.history.items.len == 0) return 0;
-        return switch (self.agent.history.items[0]) {
-            .compacted_summary => |entry| entry.compaction_count,
-            else => 0,
-        };
-    }
-
     pub fn snapshotHistory(self: *const SessionRuntime, alloc: Allocator) ![]HistoryTurn {
         return self.agent.snapshotHistory(alloc);
     }
@@ -3615,8 +3600,8 @@ test "history projection keeps system role only for leading summaries" {
             .compaction_count = 1,
         } },
         .{ .assistant = .{
-            .user = .{ .text = @constCast("old request " ++ ("u" ** 800)) },
-            .assistant = @constCast("old answer " ++ ("a" ** 800)),
+            .user = .{ .text = @constCast("old request " ++ (comptimeRepeat("u", 800))) },
+            .assistant = @constCast("old answer " ++ (comptimeRepeat("a", 800))),
         } },
         .{ .compacted_summary = .{
             .summary = @constCast("nonleading summary marker"),
@@ -4104,7 +4089,7 @@ test "budgeted resume projection preserves compacted summary when older handle e
     }};
     const history = [_]HistoryTurn{
         .{ .compacted_summary = .{
-            .summary = @constCast("Conversation summary:\n- Prior compacted decision needle " ++ ("x" ** 240)),
+            .summary = @constCast("Conversation summary:\n- Prior compacted decision needle " ++ (comptimeRepeat("x", 240))),
             .removed_turn_count = 6,
             .compaction_count = 2,
         } },
@@ -4209,13 +4194,13 @@ test "budgeted Message and Chat projections retain latest turn and identical tri
     }};
     const history = [_]HistoryTurn{
         .{ .compacted_summary = .{
-            .summary = @constCast("prior compacted decision needle " ++ ("x" ** 320)),
+            .summary = @constCast("prior compacted decision needle " ++ (comptimeRepeat("x", 320))),
             .removed_turn_count = 5,
             .compaction_count = 2,
         } },
         .{ .assistant = .{
-            .user = .{ .text = @constCast("old request " ++ ("y" ** 240)) },
-            .assistant = @constCast("old answer " ++ ("z" ** 240)),
+            .user = .{ .text = @constCast("old request " ++ (comptimeRepeat("y", 240))) },
+            .assistant = @constCast("old answer " ++ (comptimeRepeat("z", 240))),
             .execution = .{
                 .tool_steps = trimmed_steps[0..],
                 .files = trimmed_files[0..],
@@ -4492,7 +4477,7 @@ test "interrupted history projects marker and aborted tool result" {
 test "interrupted tool diagnostics remain complete for compaction" {
     const compaction = @import("../agent/runtime/context_compaction.zig");
     const replay_handle = "cancelled-output.bin";
-    const oversized_handle = "h" ** 129;
+    const oversized_handle = comptimeRepeat("h", 129);
     const presentations = [_]?CancelledCommandPresentation{
         null,
         .{},
@@ -4868,7 +4853,7 @@ test "compacted Unicode history remains conversational context" {
     const alloc = std.testing.allocator;
     const context = [_]HistoryTurn{
         .{ .compacted_summary = .{
-            .summary = @constCast(("a" ** 155) ++ "★"),
+            .summary = @constCast((comptimeRepeat("a", 155)) ++ "★"),
             .removed_turn_count = 2,
             .compaction_count = 1,
         } },
@@ -5869,7 +5854,7 @@ test "image catalog merges a retained recovery image and rejects changed identit
         .path = @constCast("/missing/original.png"),
         .media_type = @constCast("image/png"),
         .snapshot_path = @constCast("/session/images/saved.bin"),
-        .snapshot_sha256 = @constCast("a" ** 64),
+        .snapshot_sha256 = @constCast(comptimeRepeat("a", 64)),
     }};
     const turn: HistoryTurn = .{ .interrupted = .{ .user = .{ .text = @constCast("recover"), .images = &images } } };
     const catalog = try collect_image_catalog(alloc, &.{turn}, &.{});
@@ -5878,6 +5863,6 @@ test "image catalog merges a retained recovery image and rejects changed identit
     defer core_types.freeImageAttachmentSlice(alloc, merged);
     try std.testing.expectEqual(@as(usize, 1), merged.len);
     try std.testing.expectEqual(@as(usize, 7), merged[0].id);
-    images[0].snapshot_sha256 = @constCast("b" ** 64);
+    images[0].snapshot_sha256 = @constCast(comptimeRepeat("b", 64));
     try std.testing.expectError(error.StaleImageCatalog, merge_image_catalog_history_turn(alloc, catalog, turn));
 }

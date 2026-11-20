@@ -824,23 +824,6 @@ pub const Usage = struct {
         return true;
     }
 
-    pub fn finishDeferredInvocation(
-        self: *Usage,
-        alloc: Allocator,
-        sequence: u64,
-        duration_ms: u64,
-        outcome: DeliveryOutcome,
-        reference: stream_provider.DeferredUsageReference,
-    ) !void {
-        _ = try self.finishDeferredInvocationAccepted(
-            alloc,
-            sequence,
-            duration_ms,
-            outcome,
-            reference,
-        );
-    }
-
     fn finishDeferredInvocationAccepted(
         self: *Usage,
         alloc: Allocator,

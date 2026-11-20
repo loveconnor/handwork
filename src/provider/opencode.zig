@@ -154,7 +154,7 @@ fn requestJson(
     var transfer_buffer: [transfer_buffer_bytes]u8 = undefined;
     const reader = response.reader(&transfer_buffer);
     const limit: usize = if (response.head.status == .ok) max_response_bytes else max_error_body_bytes;
-    const response_body = reader.allocRemaining(alloc, .limited(limit + 1)) catch |err| switch (err) {
+    const response_body = io_mod.allocRemainingBelowLimit(reader, alloc, .limited(limit + 1)) catch |err| switch (err) {
         error.StreamTooLong => return error.ProviderResponseTooLarge,
         else => return err,
     };

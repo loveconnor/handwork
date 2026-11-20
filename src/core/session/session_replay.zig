@@ -651,9 +651,9 @@ test "recovery replay preserves reader failure identity" {
 
 test "session replay parser honors exact copied boundary" {
     const alloc = std.testing.allocator;
-    const generation: Identifier = .{0x10} ** 16;
-    const first_id: Identifier = .{0x20} ** 16;
-    const second_id: Identifier = .{0x30} ** 16;
+    const generation: Identifier = @splat(0x10);
+    const first_id: Identifier = @splat(0x20);
+    const second_id: Identifier = @splat(0x30);
     const first = try session_event.encodeLegacyFixtureFrame(alloc, .{
         .log_generation = generation,
         .seq = 1,
@@ -756,7 +756,7 @@ test "session replay parser honors exact copied boundary" {
     try std.testing.expect(!exact.preferences.fast_mode);
 
     var mismatched = complete;
-    mismatched.through_event_id = .{0xff} ** 16;
+    mismatched.through_event_id = @splat(0xff);
     const rejected_state = try replayBoundary(alloc, file, copied);
     try std.testing.expectError(
         error.InvalidSessionFormat,
@@ -802,8 +802,8 @@ test "session replay parser honors exact copied boundary" {
 
 test "session replay parser rejects malformed or truncated bounded input" {
     const alloc = std.testing.allocator;
-    const generation: Identifier = .{0x40} ** 16;
-    const event_id: Identifier = .{0x50} ** 16;
+    const generation: Identifier = @splat(0x40);
+    const event_id: Identifier = @splat(0x50);
     const malformed = "{not-json}\n";
 
     var tmp = std.testing.tmpDir(.{});
@@ -830,8 +830,8 @@ test "session replay parser rejects malformed or truncated bounded input" {
 
 test "session replay parser rejects oversized bounded frame" {
     const alloc = std.testing.allocator;
-    const generation: Identifier = .{0x60} ** 16;
-    const event_id: Identifier = .{0x70} ** 16;
+    const generation: Identifier = @splat(0x60);
+    const event_id: Identifier = @splat(0x70);
     const oversized = try alloc.alloc(u8, session_event.event_frame_max_bytes + 1);
     defer alloc.free(oversized);
     @memset(oversized, 'x');
@@ -862,8 +862,8 @@ test "session replay parser rejects oversized bounded frame" {
 
 test "session replay parser frees line allocation on every caller path" {
     const alloc = std.testing.allocator;
-    const generation: Identifier = .{0x80} ** 16;
-    const event_id: Identifier = .{0x90} ** 16;
+    const generation: Identifier = @splat(0x80);
+    const event_id: Identifier = @splat(0x90);
     const frame = try session_event.encodeLegacyFixtureFrame(alloc, .{
         .log_generation = generation,
         .seq = 1,

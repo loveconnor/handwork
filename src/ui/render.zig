@@ -13,13 +13,21 @@ const theme_detection = @import("terminal/theme_detection.zig");
 const theme_protocol = @import("terminal/theme_protocol.zig");
 const visual_layout = @import("input/visual_layout.zig");
 const update_target = @import("../core/upgrade/update_target.zig");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
-pub const input_prefix = "❯ ";
+pub const selection_marker = "❯ ";
+
+/// Two-column row gutter shared by every menu: a marker on the selected row,
+/// blank otherwise, so selection never relies on weight alone.
+pub fn appendSelectionGutter(alloc: std.mem.Allocator, row: *std.ArrayList(u8), selected: bool) !void {
+    if (!selected) return row.appendSlice(alloc, "  ");
+    try row.appendSlice(alloc, selected_completion_style);
+    try row.appendSlice(alloc, selection_marker);
+    try row.appendSlice(alloc, reset_style);
+}
 pub const TerminalRgb = user_message_card.Rgb;
 pub const reset_style = "\x1b[0m";
 pub const bold_style = "\x1b[1m";
-pub const app_name = "handwork";
-pub const right_tag = "/handwork";
 pub const ask_activity_label = "⏺ Asking";
 
 const user_message_card = @import("assistant/user_message_card.zig");
@@ -60,6 +68,39 @@ pub var permission_auto_style: []const u8 = "\x1b[38;5;252m";
 var active_terminal_background: ?TerminalRgb = null;
 
 var truecolor_enabled: bool = true;
+
+var composer_panel_buf: [24]u8 = undefined;
+var composer_selection_buf: [24]u8 = undefined;
+
+/// Background for the composer panel: a few shades off the terminal's own
+/// background so the input reads as a soft field rather than a ruled box.
+/// Truecolor terminals get a tint derived from the probed background; others
+/// fall back to the nearest gray-ramp entry.
+pub fn composerPanelStyle() []const u8 {
+    return shiftedBackgroundStyle(&composer_panel_buf, 9, 12) orelse
+        if (is_light) "\x1b[48;5;255m" else "\x1b[48;5;235m";
+}
+
+/// Highlight bar for the selected row inside the composer panel: one step
+/// further from the terminal background than the panel itself.
+pub fn composerSelectionStyle() []const u8 {
+    return shiftedBackgroundStyle(&composer_selection_buf, 22, 28) orelse
+        if (is_light) "\x1b[48;5;253m" else "\x1b[48;5;237m";
+}
+
+/// Truecolor background offset from the probed terminal background: darkened
+/// by `darken` on light themes, lightened by `lighten` on dark ones. Null when
+/// truecolor is off or the background was never probed.
+fn shiftedBackgroundStyle(buf: *[24]u8, darken: u8, lighten: u8) ?[]const u8 {
+    if (!truecolor_enabled) return null;
+    const bg = active_terminal_background orelse return null;
+    const channels = [_]u8{ bg.r, bg.g, bg.b };
+    var shifted: [3]u8 = undefined;
+    for (channels, &shifted) |value, *out| {
+        out.* = if (is_light) value -| darken else value +| lighten;
+    }
+    return std.fmt.bufPrint(buf, "\x1b[48;2;{d};{d};{d}m", .{ shifted[0], shifted[1], shifted[2] }) catch null;
+}
 
 pub fn setTruecolorSupport(enabled: bool) void {
     truecolor_enabled = enabled;
@@ -130,8 +171,6 @@ pub fn themeNeedsUpdate(light: bool, terminal_bg: ?TerminalRgb) bool {
     return current.r != background.r or current.g != background.g or current.b != background.b;
 }
 
-// Explicit theme overrides skip OSC 11, leaving `rgb` null for fallback shading.
-pub const ThemeDetection = theme_detection.Detection;
 pub const TerminalBackground = theme_protocol.Background;
 pub const explicitThemeOverride = theme_detection.explicitThemeOverride;
 pub const detectTheme = theme_detection.detectTheme;
@@ -304,13 +343,8 @@ pub fn welcomeMessageForLayoutWithCue(
             try out.append(alloc, '\n');
         }
         try out.append(alloc, '\n');
-        const labeled_meta = try std.fmt.allocPrint(
-            alloc,
-            "{s}handwork · {s} · made by " ++ author_link ++ reset_style,
-            .{ dim_style, build_label },
-        );
-        defer alloc.free(labeled_meta);
-        try appendCenteredWelcomeLine(&out, alloc, labeled_meta, cols);
+        // The logo already names the product; the byline carries only meta.
+        try appendCenteredWelcomeLine(&out, alloc, meta, cols);
         try out.appendSlice(alloc, "\n\n");
         try out.appendSlice(alloc, permission_auto_style);
         try appendCenteredWelcomeLine(&out, alloc, cue.text(false), cols);
@@ -353,6 +387,134 @@ pub fn welcomeMessageForLayoutWithCue(
         try out.appendSlice(alloc, reset_style);
     }
     try out.appendSlice(alloc, "\n\n");
+    return out.toOwnedSlice(alloc);
+}
+
+/// Off by default so headless and test renders keep the plain banner; the
+/// interactive app turns it on at startup.
+pub var splash_field_enabled: bool = false;
+/// Frame interval for the splash field. Slow drift reads as ambient, not busy.
+pub const splash_field_interval_ms: i64 = 90;
+var splash_field_epoch_ms: i64 = 0;
+
+/// Milliseconds since the splash field started, used as the shader clock.
+pub fn splashFieldPhaseMs() i64 {
+    const now = io_mod.milliTimestamp();
+    if (splash_field_epoch_ms == 0) splash_field_epoch_ms = now;
+    return now - splash_field_epoch_ms;
+}
+
+const splash_field_levels = 5;
+const splash_field_dark = [splash_field_levels][]const u8{ "", "\x1b[38;5;236m", "\x1b[38;5;237m", "\x1b[38;5;239m", "\x1b[38;5;241m" };
+const splash_field_light = [splash_field_levels][]const u8{ "", "\x1b[38;5;254m", "\x1b[38;5;253m", "\x1b[38;5;251m", "\x1b[38;5;249m" };
+const splash_field_glyphs = [splash_field_levels][]const u8{ " ", "·", "·", "•", "•" };
+
+const SplashFieldShape = struct {
+    center_x: f32,
+    center_y: f32,
+    radius_x: f32,
+    radius_y: f32,
+    t: f32,
+};
+
+/// The "shader": three slow interfering waves on a halftone grid, faded out
+/// in an ellipse around the welcome block so the logo sits in clear space.
+fn splashFieldLevel(shape: SplashFieldShape, x: u16, y: u16) usize {
+    // Halftone grid: every other column, offset on alternate rows.
+    if ((x +% (y & 1)) & 1 != 0) return 0;
+    const fx = @as(f32, @floatFromInt(x)) * 0.5;
+    const fy: f32 = @floatFromInt(y);
+    const t = shape.t;
+    const wave = @sin(fx * 0.11 + t * 0.35) +
+        @sin(fy * 0.23 - t * 0.27 + 1.7 * @sin(fx * 0.045 + t * 0.15)) +
+        0.6 * @sin((fx - fy) * 0.09 + t * 0.5);
+    const n = std.math.clamp((wave + 2.6) / 5.2, 0.0, 1.0);
+    const dx = (@as(f32, @floatFromInt(x)) - shape.center_x) / shape.radius_x;
+    const dy = (fy - shape.center_y) / shape.radius_y;
+    const d = @sqrt(dx * dx + dy * dy);
+    const fade = std.math.clamp((d - 0.95) / 0.6, 0.0, 1.0);
+    const mask = fade * fade * (3.0 - 2.0 * fade);
+    const intensity = n * n * mask;
+    const level: usize = @intFromFloat(@floor(intensity * @as(f32, splash_field_levels)));
+    return @min(level, splash_field_levels - 1);
+}
+
+fn appendSplashFieldSpan(out: *std.ArrayList(u8), alloc: std.mem.Allocator, shape: SplashFieldShape, y: u16, from: u16, to: u16) !void {
+    const palette = if (is_light) &splash_field_light else &splash_field_dark;
+    var active: usize = 0;
+    var x = from;
+    while (x < to) : (x += 1) {
+        const level = splashFieldLevel(shape, x, y);
+        if (level != active) {
+            try out.appendSlice(alloc, if (level == 0) reset_style else palette[level]);
+            active = level;
+        }
+        try out.appendSlice(alloc, splash_field_glyphs[level]);
+    }
+    if (active != 0) try out.appendSlice(alloc, reset_style);
+}
+
+/// The full-height start screen: the welcome block centered in `total_rows`
+/// with an ambient halftone field around it. `phase_ms` drives the motion.
+/// Narrow terminals fall back to the plain banner.
+pub fn welcomeSplashFieldMessage(
+    alloc: std.mem.Allocator,
+    cols: u16,
+    lead_rows: u16,
+    total_rows: u16,
+    cue: WelcomeCue,
+    phase_ms: i64,
+) ![]u8 {
+    if (cols < welcome_full_min_cols or total_rows < lead_rows + welcomeVisualRows(cols) + 1) {
+        return welcomeMessageForLayoutWithCue(alloc, cols, lead_rows, cue);
+    }
+    var label_buf: [welcome_build_label_bytes]u8 = undefined;
+    const build_label = try writeBuildLabel(&label_buf, build_channel, main.version, build_options.git_commit);
+    const meta = try std.fmt.allocPrint(alloc, "{s}{s} · made by " ++ author_link ++ reset_style, .{ dim_style, build_label });
+    defer alloc.free(meta);
+    const cue_line = try std.fmt.allocPrint(alloc, "{s}{s}{s}", .{ permission_auto_style, cue.text(false), reset_style });
+    defer alloc.free(cue_line);
+    const help_line = try std.fmt.allocPrint(alloc, "{s}/help for commands{s}", .{ dim_style, reset_style });
+    defer alloc.free(help_line);
+
+    // Keep the last column empty so no row can trigger autowrap.
+    const field_cols: u16 = cols - 1;
+    const shape: SplashFieldShape = .{
+        .center_x = @as(f32, @floatFromInt(cols)) / 2.0,
+        .center_y = @as(f32, @floatFromInt(lead_rows)) + 4.5,
+        .radius_x = @as(f32, @floatFromInt(welcome_logo_width)) / 2.0 + 10.0,
+        .radius_y = 9.0,
+        .t = @as(f32, @floatFromInt(@mod(phase_ms, 3_600_000))) / 1000.0,
+    };
+    const logo_indent: u16 = (cols - welcome_logo_width) / 2;
+
+    var out: std.ArrayList(u8) = .empty;
+    errdefer out.deinit(alloc);
+    var y: u16 = 0;
+    while (y < total_rows) : (y += 1) {
+        const rel: i32 = @as(i32, y) - @as(i32, lead_rows);
+        const text: ?[]const u8 = switch (rel) {
+            6 => meta,
+            8 => cue_line,
+            9 => help_line,
+            else => null,
+        };
+        if (rel >= 0 and rel < welcome_logo_rows.len) {
+            try appendSplashFieldSpan(&out, alloc, shape, y, 0, logo_indent);
+            try appendWelcomeLogoRow(&out, alloc, welcome_logo_rows[@intCast(rel)]);
+            try appendSplashFieldSpan(&out, alloc, shape, y, logo_indent + welcome_logo_width, field_cols);
+        } else if (text) |line| {
+            const width: u16 = @intCast(@min(display_width.visibleWidthIgnoringAnsi(line), field_cols));
+            const start: u16 = (cols - width) / 2;
+            try appendSplashFieldSpan(&out, alloc, shape, y, 0, start);
+            try out.appendSlice(alloc, display_width.prefixByWidthIgnoringAnsi(line, width));
+            try out.appendSlice(alloc, reset_style);
+            try appendSplashFieldSpan(&out, alloc, shape, y, start + width, field_cols);
+        } else {
+            try appendSplashFieldSpan(&out, alloc, shape, y, 0, field_cols);
+        }
+        try out.append(alloc, '\n');
+    }
     return out.toOwnedSlice(alloc);
 }
 
@@ -707,10 +869,6 @@ fn appendSpacesToBuffer(out: []u8, len: *usize, count: usize) void {
     }
 }
 
-pub fn isPrintableAscii(byte: u8) bool {
-    return byte >= 32 and byte <= 126;
-}
-
 test "input line wraps to the cursor row" {
     var buf: [64]u8 = undefined;
     const view = buildInputLine("abcdefghijklmnopqrstuvwxyz", 26, 16, &buf);
@@ -771,7 +929,7 @@ test "render geometry wrappers match visual layout projections" {
 
 test "render row window stays cursor-containing for direct and restored input" {
     var buf: [128]u8 = undefined;
-    inline for (.{ "x" ** 4096, "y" ** 5000 }) |input| {
+    inline for (.{ repeat("x", 4096), repeat("y", 5000) }) |input| {
         const summary = visual_layout.summarize(.{ .input = input, .cursor = input.len, .terminal_cols = 80 }, null);
         const window = visual_layout.visibleWindow(summary.cursor.row_index, summary.total_rows, 4);
         try std.testing.expect(window.first_row <= summary.cursor.row_index);
@@ -939,7 +1097,7 @@ test "terminal title sanitizes and bounds untrusted labels" {
     var sink = try tmp.dir.createFile(std.testing.io, "terminal-title-hostile.log", .{});
     defer sink.close(io_mod.getIo());
 
-    terminalTitleFor(&sink).set("safe\x07\x1b]2;owned\xc2\x9b" ++ ("é" ** 80));
+    terminalTitleFor(&sink).set("safe\x07\x1b]2;owned\xc2\x9b" ++ repeat("é", 80));
 
     var written_file = try tmp.dir.openFile(io_mod.getIo(), "terminal-title-hostile.log", .{});
     defer written_file.close(io_mod.getIo());
@@ -1050,7 +1208,7 @@ test "initTheme selects the light inline code foreground" {
     defer out.deinit(alloc);
 
     try processor.push(alloc, "run `zig build` now\n", &out);
-    try std.testing.expectEqualStrings("run \x1b[38;5;247mzig build\x1b[39m now\n", out.items);
+    try std.testing.expectEqualStrings("run \x1b[38;5;243mzig build\x1b[39m now\n", out.items);
 }
 
 test "welcomeMessage shows version and help hint" {

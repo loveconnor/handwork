@@ -1550,7 +1550,7 @@ fn isSplitter(c: u8) bool {
 const FakeSession = struct {
     history_len: usize = 0,
 
-    fn historyLen(self: *FakeSession) usize {
+    pub fn historyLen(self: *FakeSession) usize {
         return self.history_len;
     }
 };
@@ -1629,7 +1629,7 @@ const FakeHistoryCommandApp = struct {
         self.* = undefined;
     }
 
-    fn writeDomainNotice(self: *FakeHistoryCommandApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *FakeHistoryCommandApp, notice: types.SemanticNotice, _: bool) !void {
         self.last_tone = notice.tone;
         try self.transcript.appendSlice(self.alloc, notice.body);
         try self.transcript.append(self.alloc, '\n');
@@ -1699,7 +1699,7 @@ const FakeApp = struct {
         self.* = undefined;
     }
 
-    fn writeDomainNotice(self: *FakeApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *FakeApp, notice: types.SemanticNotice, _: bool) !void {
         self.semantic_write_count += 1;
         self.last_tone = notice.tone;
         const rendered = if (notice.topic.len > 0)
@@ -1722,7 +1722,7 @@ const FakeApp = struct {
         self.transcript.clearRetainingCapacity();
     }
 
-    fn toolRegistry(self: *const FakeApp) tool_dispatch.Registry {
+    pub fn toolRegistry(self: *const FakeApp) tool_dispatch.Registry {
         return self.tool_registry;
     }
 
@@ -1791,7 +1791,7 @@ const FakeApp = struct {
         return makeStringList(self.alloc, self.fetch_ids);
     }
 
-    fn loadDetailedSettingsForNotice(self: *FakeApp) !config_runtime.DetailedSettings {
+    pub fn loadDetailedSettingsForNotice(self: *FakeApp) !config_runtime.DetailedSettings {
         self.post_commit_resolution_count += 1;
         if (self.post_commit_resolution_error) |err| return err;
         if (self.post_commit_resolution_diagnostic) |cause| {
@@ -1805,7 +1805,7 @@ const FakeApp = struct {
         return config_runtime.loadMergedSettingsDetailed(self.alloc, self.workspace_root);
     }
 
-    fn persistRuntimePreferences(
+    pub fn persistRuntimePreferences(
         self: *FakeApp,
         patch: app_session_runtime.SessionPreferencePatch,
     ) app_session_runtime.PreferenceCommitResult {
@@ -1930,17 +1930,17 @@ test "session_commands showStatus writes session status snapshot" {
 
     try Commands(FakeApp).showStatus(&app);
 
-    try expectTranscriptContains(&app, "● Status: model=anthropic/test-model\n");
-    try expectTranscriptContains(&app, "auth=missing\n");
-    try expectTranscriptContains(&app, "auth_refreshable=false\n");
-    try expectTranscriptContains(&app, "permission_mode=auto\n");
-    try expectTranscriptContains(&app, "history_turns=7\n");
-    try expectTranscriptContains(&app, "agent_step_limit=24\n");
+    try expectTranscriptContains(&app, "● Status:");
+    try expectTranscriptContains(&app, "Model        anthropic/test-model  (");
+    try expectTranscriptContains(&app, "Auth         missing\n");
+    try expectTranscriptContains(&app, "Permissions  auto\n");
+    try expectTranscriptContains(&app, "Session      7 turns · ");
+    try expectTranscriptContains(&app, "step limit 24\n");
 
     app.clearTranscript();
     app.permission_engine.mode = .yolo;
     try Commands(FakeApp).showStatus(&app);
-    try expectTranscriptContains(&app, "permission_mode=full access\n");
+    try expectTranscriptContains(&app, "Permissions  full access\n");
 }
 
 test "session_commands history setting toggles durable input history" {

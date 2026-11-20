@@ -134,15 +134,15 @@ pub const ConfigSources = struct {
 };
 
 pub const ProviderModelSources = struct {
-    values: [std.meta.fields(model_provider.ProviderId).len]ConfigSource =
-        [_]ConfigSource{.compiled_default} ** std.meta.fields(model_provider.ProviderId).len,
+    values: [@typeInfo(model_provider.ProviderId).@"enum".field_names.len]ConfigSource =
+        @as([@typeInfo(model_provider.ProviderId).@"enum".field_names.len]ConfigSource, @splat(.compiled_default)),
 
     pub fn get(self: ProviderModelSources, provider: model_provider.ProviderId) ConfigSource {
-        return self.values[@intFromEnum(provider)];
+        return self.values[@backingInt(provider)];
     }
 
     pub fn set(self: *ProviderModelSources, provider: model_provider.ProviderId, source: ConfigSource) void {
-        self.values[@intFromEnum(provider)] = source;
+        self.values[@backingInt(provider)] = source;
     }
 };
 

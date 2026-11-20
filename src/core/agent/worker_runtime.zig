@@ -19,6 +19,7 @@ const types = @import("../shared/types.zig");
 const model_provider = @import("../config/model_provider.zig");
 const assistant_presentation = @import("assistant_presentation.zig");
 const compaction_activity = @import("../output/compaction_activity.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 pub const AgentTurnSettings = struct {
     max_tool_result_bytes: usize = tool_result_limits.default_max_tool_result_bytes,
@@ -2019,11 +2020,23 @@ pub const WorkerRuntime = struct {
         max_history_turns: usize,
         publication: ?HistoryPublication,
     ) !void {
-        errdefer |err| if (err == error.SessionPersistenceUncertain) {
-            if (self.active_prompt_snapshot_ownership) |ownership| {
-                _ = ownership.preserve();
+        propagateHistoryTurnLockedInner(self, alloc, turn, max_history_turns, publication) catch |err| {
+            if (err == error.SessionPersistenceUncertain) {
+                if (self.active_prompt_snapshot_ownership) |ownership| {
+                    _ = ownership.preserve();
+                }
             }
+            return err;
         };
+    }
+
+    fn propagateHistoryTurnLockedInner(
+        self: *WorkerRuntime,
+        alloc: std.mem.Allocator,
+        turn: types.HistoryTurn,
+        max_history_turns: usize,
+        publication: ?HistoryPublication,
+    ) !void {
         if (self.queued_prompts.items.len == 0) {
             if (publication) |value| try value.commit();
             return;
@@ -2746,27 +2759,6 @@ fn appendGrantToQueuedPrompt(alloc: std.mem.Allocator, prompt: *QueuedPrompt, to
     next[current.len] = .{ .tool_name = tool_name_dup, .target_path = target_path_dup };
     alloc.free(current);
     prompt.grants = next;
-}
-
-fn dupeStringSlice(alloc: std.mem.Allocator, values: []const []const u8) ![][]u8 {
-    if (values.len == 0) return &.{};
-    const copy = try alloc.alloc([]u8, values.len);
-    errdefer alloc.free(copy);
-
-    var filled: usize = 0;
-    errdefer {
-        var i: usize = 0;
-        while (i < filled) : (i += 1) alloc.free(copy[i]);
-    }
-    while (filled < values.len) : (filled += 1) {
-        copy[filled] = try alloc.dupe(u8, values[filled]);
-    }
-    return copy;
-}
-
-fn freeStringSlice(alloc: std.mem.Allocator, values: [][]u8) void {
-    for (values) |value| alloc.free(value);
-    if (values.len > 0) alloc.free(values);
 }
 
 fn appendHistoryTurnProjection(
@@ -7138,7 +7130,7 @@ test "discarding queued recovery releases metadata without deleting saved images
         .path = @constCast("/missing/source.png"),
         .media_type = @constCast("image/png"),
         .snapshot_path = path,
-        .snapshot_sha256 = @constCast("a" ** 64),
+        .snapshot_sha256 = @constCast(repeat("a", 64)),
     }};
     var runtime = WorkerRuntime{};
     defer runtime.deinit(alloc);

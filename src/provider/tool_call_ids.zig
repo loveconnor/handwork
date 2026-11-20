@@ -1,5 +1,6 @@
 const std = @import("std");
 const types = @import("../core/shared/types.zig");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const max_id_bytes = 64;
 
@@ -109,7 +110,7 @@ test "portable tool call ids use an allocation-free identity projection" {
     var failing = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
     const calls = [_]types.ToolCall{
         .{ .id = "call_ABC-123", .name = "read", .arguments_json = "{}" },
-        .{ .id = "x" ** 64, .name = "read", .arguments_json = "{}" },
+        .{ .id = repeat("x", 64), .name = "read", .arguments_json = "{}" },
     };
     var projection = try Projection.init(failing.allocator(), &.{.{ .role = .assistant, .tool_calls = &calls }});
     defer projection.deinit(failing.allocator());
@@ -132,7 +133,7 @@ test "tool call id projection ignores fields not serialized for a role" {
 
 test "tool call id projection is deterministic and preserves source IDs" {
     const alloc = std.testing.allocator;
-    const sources = [_][]const u8{ "functions.read:0", "functions/read:0", " ", "\t\n", "é", "x" ** 65, "x" ** 256 };
+    const sources = [_][]const u8{ "functions.read:0", "functions/read:0", " ", "\t\n", "é", repeat("x", 65), repeat("x", 256) };
     var calls: [sources.len]types.ToolCall = undefined;
     for (sources, 0..) |source, i| calls[i] = .{ .id = source, .name = "read", .arguments_json = "{}" };
     const messages = [_]types.ChatMessage{.{ .role = .assistant, .tool_calls = &calls }};
@@ -213,7 +214,7 @@ test "tool call id projection rejects unpaired nonportable result ids" {
 fn allocation_failure_case(alloc: std.mem.Allocator) !void {
     const calls = [_]types.ToolCall{
         .{ .id = "functions.read:0", .name = "read", .arguments_json = "{}" },
-        .{ .id = "x" ** 65, .name = "read", .arguments_json = "{}" },
+        .{ .id = repeat("x", 65), .name = "read", .arguments_json = "{}" },
     };
     var projection = try Projection.init(alloc, &.{.{ .role = .assistant, .tool_calls = &calls }});
     defer projection.deinit(alloc);

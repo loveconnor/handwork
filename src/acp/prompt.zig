@@ -426,7 +426,7 @@ const AcpContext = struct {
         return self.state.context_snapshot.modelVisibleBytes();
     }
 
-    fn toolRegistry(self: *const AcpContext) tool_dispatch.Registry {
+    pub fn toolRegistry(self: *const AcpContext) tool_dispatch.Registry {
         return activeToolSet(self.state).registry;
     }
 };
@@ -2234,9 +2234,15 @@ fn setRecoveryCheckpoint(
     checkpoint: session_codec.RecoveryCheckpoint,
 ) !void {
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
-    errdefer |err| if (err == error.SessionPersistenceUncertain) {
-        if (ctx.current_prompt_input) |input| input.retainImageSnapshots();
+    appendRecoveryCheckpoint(ctx, checkpoint) catch |err| {
+        if (err == error.SessionPersistenceUncertain) {
+            if (ctx.current_prompt_input) |input| input.retainImageSnapshots();
+        }
+        return err;
     };
+}
+
+fn appendRecoveryCheckpoint(ctx: *AcpContext, checkpoint: session_codec.RecoveryCheckpoint) !void {
     const session = if (ctx.state.active_session) |*value| value else return error.SessionPersistenceUnavailable;
     session.session_write_mutex.lockUncancelable(io_mod.getIo());
     defer session.session_write_mutex.unlock(io_mod.getIo());
@@ -2358,9 +2364,9 @@ fn pushHttpError(raw_ctx: *anyopaque, status: std.http.Status, detail: []const u
         null;
     defer if (owned_message) |message| ctx.alloc.free(message);
     const msg = owned_message orelse if (detail.len > 0)
-        std.fmt.bufPrint(&buf, "HTTP {d}: {s}", .{ @intFromEnum(status), detail }) catch "HTTP error"
+        std.fmt.bufPrint(&buf, "HTTP {d}: {s}", .{ @backingInt(status), detail }) catch "HTTP error"
     else
-        std.fmt.bufPrint(&buf, "HTTP {d}", .{@intFromEnum(status)}) catch "HTTP error";
+        std.fmt.bufPrint(&buf, "HTTP {d}", .{@backingInt(status)}) catch "HTTP error";
     ctx.sendAgentText(ctx.operationalMessageId(), msg) catch {};
 }
 
@@ -3359,8 +3365,8 @@ test "parsePromptInput bounds remote resource omissions with a stable summary" {
     try std.testing.expect(std.mem.find(u8, parsed.omissions[parsed.omissions.len - 1].source, "/31") != null);
     const summary = parsed.omission_summary orelse return error.TestExpectedEqual;
     try std.testing.expectEqual(@as(usize, 96), summary.omitted_count);
-    try std.testing.expectEqual(@as(usize, 96), summary.reason_counts[@intFromEnum(context_contract.OmissionReason.unsafe_target)]);
-    const zero_digest = [_]u8{0} ** std.crypto.hash.sha2.Sha256.digest_length;
+    try std.testing.expectEqual(@as(usize, 96), summary.reason_counts[@backingInt(context_contract.OmissionReason.unsafe_target)]);
+    const zero_digest = @as([std.crypto.hash.sha2.Sha256.digest_length]u8, @splat(0));
     try std.testing.expect(!std.mem.eql(u8, &summary.digest, &zero_digest));
 }
 
@@ -4282,17 +4288,6 @@ fn testPermissionRuleSet(alloc: Allocator, permission: []const u8, pattern: []co
         .action = action,
     };
     return rules;
-}
-
-fn writeArgsJson(alloc: Allocator, path: []const u8, content: []const u8) ![]u8 {
-    var out: std.Io.Writer.Allocating = .init(alloc);
-    defer out.deinit();
-    try out.writer.writeAll("{\"path\":");
-    try std.json.Stringify.value(path, .{}, &out.writer);
-    try out.writer.writeAll(",\"content\":");
-    try std.json.Stringify.value(content, .{}, &out.writer);
-    try out.writer.writeByte('}');
-    return try out.toOwnedSlice();
 }
 
 fn createSymlinkOrSkip(dir: std.Io.Dir, target_path: []const u8, link_path: []const u8) !void {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const Error = error{ OutOfMemory, ReadFailed, Cancelled, EventTooLarge, StreamTooLarge };
 
@@ -354,7 +355,7 @@ test "provider framing cancellation during a buffered event refill prevents publ
 
 test "provider framing reuses split-line storage for large events" {
     const alloc = std.testing.allocator;
-    const text = "x" ** (64 * 1024);
+    const text = repeat("x", 64 * 1024);
     var fixed = std.Io.Reader.fixed("data: " ++ text ++ "\n\n");
     var buffer: [128]u8 = undefined;
     var source = fixed.limited(.unlimited, &buffer);

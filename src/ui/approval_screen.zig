@@ -15,6 +15,7 @@ const transcript_blocks = @import("render_engine/transcript_blocks.zig");
 const vt_emulator = @import("../core/terminal/engine.zig");
 const transcript_painter = @import("transcript/painter.zig");
 const ui_render = @import("render.zig");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Layout = types.Layout;
@@ -1652,7 +1653,7 @@ test "command approval screen preserves raw command newlines as rows" {
 test "command approval screen includes compact permission header" {
     const alloc = std.testing.allocator;
     var screen_state = interaction_state.ApprovalScreenState{};
-    const label = "shell.run printf '%s' '" ++ ("x" ** 256) ++ "'";
+    const label = "shell.run printf '%s' '" ++ repeat("x", 256) ++ "'";
 
     var approval = approval_prompt.ApprovalPrompt{};
     defer approval.deinit(alloc);
@@ -1676,7 +1677,7 @@ test "command approval screen includes compact permission header" {
     while (row <= 16) : (row += 1) {
         row_text.clearRetainingCapacity();
         try grid.rowTextTrimmed(row, &row_text);
-        if (std.mem.find(u8, row_text.items, "3. No") != null) choice_three_row = row;
+        if (std.mem.find(u8, row_text.items, "3  No") != null) choice_three_row = row;
         if (std.mem.find(u8, row_text.items, "1–3 choose") != null) hint_row = row;
     }
 
@@ -1716,7 +1717,7 @@ test "command approval screen wraps commands at word boundaries" {
 }
 
 test "bounded command approval previews route by complete command fit" {
-    const command = "printf '" ++ ("x" ** 160) ++ "'";
+    const command = "printf '" ++ repeat("x", 160) ++ "'";
     const request: permission_request.PermissionRequest = .{
         .label = "shell.run printf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...",
         .command = command,
@@ -2178,7 +2179,7 @@ test "file approval top-aligns a fitting welcome document and clears below" {
     const logo_gap = grid.cellAt(1, 1 + (80 - ui_render.welcome_full_min_cols) / 2 + 3) orelse return error.TestMissingWelcomeLogoGap;
     try std.testing.expect(logo_gap.style.bg == .default);
     try grid.rowTextTrimmed(6, &row);
-    try std.testing.expect(std.mem.indexOf(u8, row.items, "handwork") != null);
+    try std.testing.expect(std.mem.indexOf(u8, row.items, "made by") != null);
     row.clearRetainingCapacity();
     try grid.rowTextTrimmed(8, &row);
     try std.testing.expect(std.mem.indexOf(u8, row.items, "Choose a provider below") != null);

@@ -762,20 +762,6 @@ fn encodeBase64UrlNoPad(output: []u8, input: []const u8) []const u8 {
     return output[0..encoded_len];
 }
 
-pub fn generatePkce(
-    verifier_buf: *[64]u8,
-    challenge_buf: *[43]u8,
-    random: std.Random,
-) struct { verifier: []const u8, challenge: []const u8 } {
-    var entropy: [48]u8 = undefined;
-    random.bytes(&entropy);
-    const verifier = encodeBase64UrlNoPad(verifier_buf, &entropy);
-    var digest: [std.crypto.hash.sha2.Sha256.digest_length]u8 = undefined;
-    std.crypto.hash.sha2.Sha256.hash(verifier, &digest, .{});
-    const challenge = encodeBase64UrlNoPad(challenge_buf, &digest);
-    return .{ .verifier = verifier, .challenge = challenge };
-}
-
 test "PKCE base64url encoding covers complete and partial groups" {
     const cases = .{
         .{ "", "" },
@@ -1065,7 +1051,7 @@ fn listenPinnedCallback(address: std.Io.net.IpAddress) std.Io.net.IpAddress.List
         .ip4 => |value| values: {
             socket_address.ip4 = .{
                 .port = std.mem.nativeToBig(u16, value.port),
-                .addr = @bitCast(value.bytes),
+                .addr = std.mem.readInt(u32, &value.bytes, .native),
             };
             break :values .{ .family = posix.AF.INET, .len = @sizeOf(posix.sockaddr.in) };
         },
@@ -2048,7 +2034,8 @@ fn request(
     errdefer if (response_content_type) |value| alloc.free(value);
     var transfer_buffer: [16 * 1024]u8 = undefined;
     const reader = response.reader(&transfer_buffer);
-    const body = reader.allocRemaining(
+    const body = io_mod.allocRemainingBelowLimit(
+        reader,
         alloc,
         .limited(max_document_bytes),
     ) catch |err| switch (err) {

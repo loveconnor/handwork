@@ -27,9 +27,9 @@ pub fn sameServerConfig(left: McpServerConfig, right: McpServerConfig) bool {
 
 fn sameConfigValue(comptime T: type, left: T, right: T) bool {
     return switch (@typeInfo(T)) {
-        .@"struct" => result: {
-            inline for (std.meta.fields(T)) |field| {
-                if (!sameConfigValue(field.type, @field(left, field.name), @field(right, field.name))) break :result false;
+        .@"struct" => |info| result: {
+            inline for (info.field_names, info.field_types) |field_name, field_type| {
+                if (!sameConfigValue(field_type, @field(left, field_name), @field(right, field_name))) break :result false;
             }
             break :result true;
         },

@@ -2,6 +2,7 @@ const std = @import("std");
 const debug_trace = @import("../shared/debug_trace.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const Allocator = std.mem.Allocator;
 
 pub const default_max_tool_result_bytes: usize = 64 * 1024;
@@ -241,7 +242,7 @@ test "prepareInlineResult does not classify redaction shrink as cap loss" {
 
 test "prepareInlineResult classifies cap loss after redaction expansion" {
     const alloc = std.testing.allocator;
-    const raw = "CUSTOM_API_KEY=abc123\n" ** 46;
+    const raw = repeat("CUSTOM_API_KEY=abc123\n", 46);
     try std.testing.expectEqual(@as(usize, 1012), raw.len);
 
     const prepared = try prepareInlineResult(
@@ -260,7 +261,7 @@ test "prepareInlineResult classifies cap loss after redaction expansion" {
 
 test "prepareModelOutput caps chatty output with explicit marker" {
     const alloc = std.testing.allocator;
-    var bytes = [_]u8{'x'} ** 256;
+    var bytes = @as([256]u8, @splat('x'));
     const output = try prepareModelOutput(alloc, "grep_files", bytes[0..], 128);
     defer alloc.free(@constCast(output));
 
@@ -270,7 +271,7 @@ test "prepareModelOutput caps chatty output with explicit marker" {
 
 test "prepareModelOutput keeps complete codepoints at the cap" {
     const alloc = std.testing.allocator;
-    const text = "x" ++ ("\xc3\xa9" ** 300);
+    const text = "x" ++ repeat("\xc3\xa9", 300);
     for ([_]usize{ 128, 129 }) |cap| {
         const output = try prepareModelOutput(alloc, "grep_files", text, cap);
         defer alloc.free(@constCast(output));

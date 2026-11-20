@@ -115,18 +115,16 @@ pub const Runtime = struct {
 
     pub fn pushText(self: *Runtime, text: []const u8) !void {
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.streamAssistantChunk(self.alloc, &self.metrics, text);
-        try self.render();
+        _ = try self.remember(self.shell.streamAssistantChunk(self.alloc, &self.metrics, text));
+        try self.remember(self.render());
     }
 
     pub fn pushToolLifecycle(self: *Runtime, event: types.ToolLifecycleEvent) !void {
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.applyToolLifecycle(self.alloc, event);
-        try self.render();
+        _ = try self.remember(self.shell.applyToolLifecycle(self.alloc, event));
+        try self.remember(self.render());
         switch (event) {
-            .turn_finished => try self.shell.finishLifecycleBatch(self.alloc),
+            .turn_finished => try self.remember(self.shell.finishLifecycleBatch(self.alloc)),
             else => {},
         }
     }
@@ -134,20 +132,18 @@ pub const Runtime = struct {
     pub fn pushDiffBlock(self: *Runtime, payload: diff_mod.DiffEntryPayload) !void {
         defer diff_mod.freeDiffEntryPayload(std.heap.c_allocator, payload);
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.appendRawTranscriptEntryClassified(
+        _ = try self.remember(self.shell.appendRawTranscriptEntryClassified(
             self.alloc,
             payload.preview,
             .diff_block,
-        );
-        try self.render();
+        ));
+        try self.remember(self.render());
     }
 
     pub fn pushNotice(self: *Runtime, notice: types.SemanticNotice) !void {
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.appendSemanticNotice(self.alloc, notice);
-        try self.render();
+        _ = try self.remember(self.shell.appendSemanticNotice(self.alloc, notice));
+        try self.remember(self.render());
     }
 
     pub fn finish(self: *Runtime) !void {
@@ -161,8 +157,7 @@ pub const Runtime = struct {
     fn pushTable(raw: *anyopaque, table: assistant_presentation.TablePayload) !void {
         const self: *Runtime = @ptrCast(@alignCast(raw));
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.appendAssistantTableOwned(self.alloc, table);
+        _ = try self.remember(self.shell.appendAssistantTableOwned(self.alloc, table));
         self.render() catch |err| {
             self.rememberFailure(err);
         };
@@ -171,8 +166,7 @@ pub const Runtime = struct {
     fn pushCodeBlock(raw: *anyopaque, block: assistant_presentation.CodeBlockPayload) !void {
         const self: *Runtime = @ptrCast(@alignCast(raw));
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.appendAssistantCodeBlockOwned(self.alloc, block);
+        _ = try self.remember(self.shell.appendAssistantCodeBlockOwned(self.alloc, block));
         self.render() catch |err| {
             self.rememberFailure(err);
         };
@@ -181,9 +175,8 @@ pub const Runtime = struct {
     fn pushThematicRule(raw: *anyopaque) !void {
         const self: *Runtime = @ptrCast(@alignCast(raw));
         try self.checkPendingError();
-        errdefer |err| self.rememberFailure(err);
-        _ = try self.shell.appendAssistantThematicRule(self.alloc);
-        try self.render();
+        _ = try self.remember(self.shell.appendAssistantThematicRule(self.alloc));
+        try self.remember(self.render());
     }
 
     fn checkPendingError(self: *Runtime) !void {
@@ -192,6 +185,14 @@ pub const Runtime = struct {
 
     fn rememberFailure(self: *Runtime, err: anyerror) void {
         if (self.pending_error == null) self.pending_error = err;
+    }
+
+    /// Records a failed result as the pending error and passes it through unchanged.
+    fn remember(self: *Runtime, result: anytype) @TypeOf(result) {
+        return result catch |err| {
+            self.rememberFailure(err);
+            return err;
+        };
     }
 
     fn refreshGeometry(self: *Runtime) !void {

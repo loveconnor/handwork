@@ -125,7 +125,6 @@ const web_fetch_runtime = @import("core/tooling/web_fetch_runtime.zig");
 const web_search_runtime = @import("core/tooling/web_search_runtime.zig");
 const worker_runtime = @import("core/agent/worker_runtime.zig");
 const question_prompt = @import("core/agent/question_prompt.zig");
-const provider_client = @import("provider/client.zig");
 const js_host_stream_provider = @import("provider/js_host_stream_provider.zig");
 const js_host_model_catalog = @import("provider/js_host_model_catalog.zig");
 const url_opener = @import("core/hosts/url_opener.zig");
@@ -139,7 +138,6 @@ const paste_framing = @import("core/input/paste_framing.zig");
 const registered_entities = @import("core/input/registered_entities.zig");
 const ui_render = @import("ui/render.zig");
 const shell_runtime = @import("ui/shell_runtime.zig");
-const ui_terminal = @import("ui/terminal/terminal.zig");
 const cursor_probe = @import("ui/terminal/cursor_probe.zig");
 const transcript_runtime = @import("ui/transcript/runtime.zig");
 const resume_projection = @import("ui/transcript/resume_projection.zig");
@@ -396,7 +394,6 @@ const App = struct {
     const HostConfigAppRuntime = app_host_config_runtime.Runtime(Self);
     const BootstrapAppRuntime = app_bootstrap_runtime.Runtime(Self);
     const InputAppRuntime = app_input_runtime.Runtime(Self);
-    const InputFullTranscriptRuntime = input_full_transcript_runtime.Runtime(Self);
     const InputSubmitRuntime = input_submit_runtime.SubmitRuntime(Self);
     const NotificationAppRuntime = app_notification_runtime.Runtime(
         Self,
@@ -545,6 +542,7 @@ const App = struct {
     input_runtime: InputRuntime = .{},
     terminal_input_runtime: TerminalInputRuntime = .{},
     macos_paste_shortcut: macos_paste_shortcut.Monitor = .{},
+    splash_field_next_tick_ms: i64 = 0,
     macos_cmd_v_scope_warned: bool = false,
     vscode_terminal_focused: bool = true,
     submission: input_submit_runtime.State = .{},
@@ -909,39 +907,6 @@ const App = struct {
         );
     }
 
-    pub fn runExternalInteractive(self: *App, argv: []const []const u8) !void {
-        try self.flushBeforeBlockingExternalWork();
-
-        self.terminal.disableRawMode();
-        var raw_restored = false;
-        defer if (!raw_restored) {
-            self.terminal.enableRawMode() catch {};
-        };
-
-        const io = io_mod.getIo();
-        try std.Io.File.stdout().writeStreamingAll(io, "\n");
-        var child = std.process.spawn(io, .{
-            .argv = argv,
-            .stdin = .inherit,
-            .stdout = .inherit,
-            .stderr = .inherit,
-        }) catch return error.ExternalInteractiveFailed;
-        const term = child.wait(io) catch return error.ExternalInteractiveFailed;
-        try std.Io.File.stdout().writeStreamingAll(io, "\n");
-
-        try self.terminal.captureOriginalTermios();
-        try self.terminal.enableRawMode();
-        raw_restored = true;
-        self.shell.layout = self.terminal.queryLayout(footer_rows) catch self.shell.layout;
-        try self.shell.requestTerminalReset(&self.metrics);
-        self.shell.render_requests.request(.first_frame);
-
-        switch (term) {
-            .exited => |code| if (code != 0) return error.ExternalInteractiveFailed,
-            else => return error.ExternalInteractiveFailed,
-        }
-    }
-
     pub fn flushBeforeBlockingExternalWork(self: *App) !void {
         try self.flushRequestedFrame();
     }
@@ -1027,6 +992,11 @@ const App = struct {
 
     pub fn loopPollTimeoutMs(ctx: *anyopaque, default_timeout_ms: i32) i32 {
         const self: *App = @ptrCast(@alignCast(ctx));
+        if (self.shell.splash_field_animating) {
+            const until_tick = self.splash_field_next_tick_ms - io_mod.milliTimestamp();
+            const wait: i32 = @intCast(std.math.clamp(until_tick, 1, ui_render.splash_field_interval_ms));
+            if (default_timeout_ms < 0 or wait < default_timeout_ms) return wait;
+        }
         if (comptime !host_target.is_wasm) {
             return nativeLoopPollTimeoutMs(
                 default_timeout_ms,
@@ -1052,7 +1022,7 @@ const App = struct {
         try SessionAppRuntime.settlePendingLiveSessionTransition(self);
     }
 
-    fn flushRequestedFrame(self: *App) !void {
+    pub fn flushRequestedFrame(self: *App) !void {
         try RenderAppRuntime.flushRequestedFrame(self);
     }
 
@@ -1285,10 +1255,6 @@ const App = struct {
 
     pub fn commitStartupResumeReplayAnchor(self: *App) !void {
         try self.flushRequestedFrame();
-    }
-
-    pub fn flushDirectTerminalShutdownOutcome(self: *App) !void {
-        try RenderAppRuntime.flushRequestedFrame(@as(*Self, self));
     }
 
     fn snapshotAndAdmitInteractivePromptWithSkillBindings(
@@ -2855,17 +2821,11 @@ const App = struct {
         const self: *App = @ptrCast(@alignCast(ctx));
         if (!try WorkerAppRuntime.authorizeInteractiveAdmission(self)) return;
 
+        // Missing Input Monitoring access only disables the Command-V shortcut;
+        // Control-V and /paste keep working, so startup stays quiet about it.
         switch (self.macos_paste_shortcut.start()) {
-            .permission_needed => try self.writeDomainNotice(.{
-                .topic = "images",
-                .tone = .neutral,
-                .body = "Command-V image paste needs macOS Input Monitoring permission. Grant access and restart Handwork; Control-V or /paste works without it.",
-            }, true),
-            .unavailable => try self.writeDomainNotice(.{
-                .topic = "images",
-                .tone = .neutral,
-                .body = "Command-V monitor could not start. Check macOS Input Monitoring access and restart Handwork; use Control-V or /paste meanwhile.",
-            }, true),
+            .permission_needed => debug_trace.logf("images", "cmd_v_monitor permission_needed", .{}),
+            .unavailable => debug_trace.logf("images", "cmd_v_monitor unavailable", .{}),
             .disabled, .ready => {},
         }
         if (self.terminal.session_alternate_screen and
@@ -3033,6 +2993,13 @@ const App = struct {
         if (self.terminal_input_runtime.native_clear_probe.active()) return;
         _ = self.admitPendingResizeSignal("post_input");
         InputAppRuntime.prepareFilePicker(self);
+        if (self.shell.splash_field_animating) {
+            const now = io_mod.milliTimestamp();
+            if (now >= self.splash_field_next_tick_ms) {
+                self.splash_field_next_tick_ms = now + ui_render.splash_field_interval_ms;
+                self.shell.render_requests.request(.transcript);
+            }
+        }
         try self.flushRequestedFrame();
     }
 

@@ -62,14 +62,6 @@ pub const PermissionEngine = struct {
         self.rules = next_rules;
     }
 
-    pub fn configuredRuleDecision(self: PermissionEngine, alloc: std.mem.Allocator, workspace_root: []const u8, tool_name: []const u8, target_path: []const u8, target_kind: PermissionTargetKind) !RuleDecision {
-        return ruleDecisionFor(alloc, self.rules, workspace_root, tool_name, target_path, target_kind);
-    }
-
-    pub fn formatPermissionsText(self: PermissionEngine, alloc: std.mem.Allocator, workspace_root: []const u8) ![]u8 {
-        return formatPermissionsStatus(alloc, workspace_root, self.mode, self.grants.items, self.rules);
-    }
-
     pub fn formatPermissionsNoticeBody(self: PermissionEngine, alloc: std.mem.Allocator, workspace_root: []const u8) ![]u8 {
         return (output_contracts.PermissionsSnapshot{
             .workspace_root = workspace_root,
@@ -1442,10 +1434,6 @@ pub fn permissionNameForTool(tool_name: []const u8) []const u8 {
     if (isWebFetchToolName(tool_name)) return web_fetch_permission;
     if (std.mem.eql(u8, tool_name, "skill") or std.mem.eql(u8, tool_name, "install_skill")) return "skill";
     return tool_name;
-}
-
-pub fn permissionRuleCategoryForGrant(permission_name: []const u8) ?[]const u8 {
-    return permissionNameForTool(permission_name);
 }
 
 /// Returns the persistent rule pattern for a session grant. Caller owns the returned slice.

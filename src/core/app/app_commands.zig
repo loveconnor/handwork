@@ -3234,7 +3234,7 @@ test "workspace list refresh waits for an idle turn" {
         active: bool = true,
         index_refresh_count: usize = 0,
 
-        fn refreshWorkspaceAccess(self: *@This()) !bool {
+        pub fn refreshWorkspaceAccess(self: *@This()) !bool {
             self.available = false;
             self.active = false;
             self.index_refresh_count += 1;
@@ -3292,11 +3292,11 @@ test "workspace list reports refresh rejection without replacing access" {
             self.transcript.deinit(self.alloc);
         }
 
-        fn refreshWorkspaceAccess(_: *@This()) !bool {
+        pub fn refreshWorkspaceAccess(_: *@This()) !bool {
             return error.TooManyDirectories;
         }
 
-        fn workspaceAccess(self: *@This()) *const Access {
+        pub fn workspaceAccess(self: *@This()) *const Access {
             return &self.access;
         }
 
@@ -3486,8 +3486,8 @@ const StatuslineFeedback = enum { announce, silent };
 
 fn parseStatuslineItem(raw: []const u8) ?config_runtime.StatuslineItem {
     const trimmed = std.mem.trim(u8, raw, " \t");
-    inline for (std.meta.fields(config_runtime.StatuslineItem)) |field| {
-        if (std.mem.eql(u8, trimmed, field.name)) return @enumFromInt(field.value);
+    inline for (@typeInfo(config_runtime.StatuslineItem).@"enum".field_names, @typeInfo(config_runtime.StatuslineItem).@"enum".field_values) |field_name, field_value| {
+        if (std.mem.eql(u8, trimmed, field_name)) return @fromBackingInt(@intCast(field_value));
     }
     return null;
 }
@@ -3918,7 +3918,7 @@ const McpCommandFakeApp = struct {
         self.reload_pending = true;
     }
 
-    fn takeMcpReloadCompletion(self: *McpCommandFakeApp) !?app_mcp_runtime.ReloadCompletion {
+    pub fn takeMcpReloadCompletion(self: *McpCommandFakeApp) !?app_mcp_runtime.ReloadCompletion {
         if (!self.reload_pending) return null;
         self.reload_pending = false;
         return switch (self.reload_behavior) {
@@ -3958,11 +3958,11 @@ const McpCommandFakeApp = struct {
         };
     }
 
-    fn mcpReloadCompletionOrigin(self: *const McpCommandFakeApp) app_mcp_runtime.PresentationOrigin {
+    pub fn mcpReloadCompletionOrigin(self: *const McpCommandFakeApp) app_mcp_runtime.PresentationOrigin {
         return self.completion_origin;
     }
 
-    fn applyMcpMenuReloadCompletion(
+    pub fn applyMcpMenuReloadCompletion(
         self: *McpCommandFakeApp,
         generation: u64,
         _: *const app_mcp_runtime.ReloadCompletion,
@@ -3971,7 +3971,7 @@ const McpCommandFakeApp = struct {
         self.menu_reload_completions += 1;
     }
 
-    fn takeMcpAuthenticationCompletion(
+    pub fn takeMcpAuthenticationCompletion(
         self: *McpCommandFakeApp,
     ) !?app_mcp_runtime.AuthenticationCompletion {
         if (!self.authentication_pending) return null;
@@ -3983,11 +3983,11 @@ const McpCommandFakeApp = struct {
         };
     }
 
-    fn mcpAuthenticationCompletionOrigin(self: *const McpCommandFakeApp) app_mcp_runtime.PresentationOrigin {
+    pub fn mcpAuthenticationCompletionOrigin(self: *const McpCommandFakeApp) app_mcp_runtime.PresentationOrigin {
         return self.completion_origin;
     }
 
-    fn applyMcpMenuAuthenticationCompletion(
+    pub fn applyMcpMenuAuthenticationCompletion(
         self: *McpCommandFakeApp,
         generation: u64,
         _: *const app_mcp_runtime.AuthenticationCompletion,
@@ -4140,7 +4140,7 @@ const SkillsInstallReplayApp = struct {
         self.shell.deinit(self.alloc);
     }
 
-    fn requestSkillsRefresh(self: *SkillsInstallReplayApp) !u64 {
+    pub fn requestSkillsRefresh(self: *SkillsInstallReplayApp) !u64 {
         self.reload_count += 1;
         self.skills.fresh_through_generation = self.reload_count;
         return self.reload_count;
@@ -4530,13 +4530,13 @@ test "app_commands exposes active handler API surface" {
     const HandlerSurface = Handlers(SurfaceOnlyApp);
 
     const route_info = @typeInfo(@TypeOf(HandlerSurface.route)).@"fn";
-    try std.testing.expectEqual(@as(usize, 2), route_info.params.len);
-    try std.testing.expect(route_info.params[0].type.? == *SurfaceOnlyApp);
-    try std.testing.expect(route_info.params[1].type.? == []const u8);
+    try std.testing.expectEqual(@as(usize, 2), route_info.param_types.len);
+    try std.testing.expect(route_info.param_types[0].? == *SurfaceOnlyApp);
+    try std.testing.expect(route_info.param_types[1].? == []const u8);
 
     const handlers_info = @typeInfo(@TypeOf(HandlerSurface.commandHandlers)).@"fn";
-    try std.testing.expectEqual(@as(usize, 1), handlers_info.params.len);
-    try std.testing.expect(handlers_info.params[0].type.? == *SurfaceOnlyApp);
+    try std.testing.expectEqual(@as(usize, 1), handlers_info.param_types.len);
+    try std.testing.expect(handlers_info.param_types[0].? == *SurfaceOnlyApp);
     try std.testing.expect(handlers_info.return_type.? == command_router.CommandHandlers);
 }
 

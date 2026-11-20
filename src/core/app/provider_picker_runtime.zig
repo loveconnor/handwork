@@ -102,8 +102,6 @@ pub fn Runtime(comptime App: type) type {
             app.input_runtime.picker.clearProviderPichandworklow();
         }
 
-        pub fn closeKeyColumn(_: *App) void {}
-
         fn selectedLabel(app: *App, query: picker_state.ProviderPickerQuery, column: *const ColumnBuffer) ?[]const u8 {
             if (column.count == 0) return null;
             if (exactLabel(query.query, column)) |label| return label;

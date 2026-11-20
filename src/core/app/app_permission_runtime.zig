@@ -175,7 +175,7 @@ pub fn Runtime(comptime App: type) type {
             }
         }
 
-        fn persistYoloAcknowledgment(app: *App) void {
+        pub fn persistYoloAcknowledgment(app: *App) void {
             if (comptime @hasDecl(App, "persistYoloAcknowledgment")) {
                 if (app.persistYoloAcknowledgment()) {
                     app.permission_state.yolo_acknowledged = true;

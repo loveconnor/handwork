@@ -4,6 +4,7 @@ const io_mod = @import("../shared/io.zig");
 const message = @import("../shared/message.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const ToolCall = types.ToolCall;
@@ -1149,7 +1150,7 @@ test "file evidence does not parse unknown tool arguments" {
         .{
             .id = "large_command",
             .name = "run_command",
-            .arguments_json = "{\"command\":\"" ++ ("x\\n" ** 20_000) ++ "\"}",
+            .arguments_json = "{\"command\":\"" ++ repeat("x\\n", 20_000) ++ "\"}",
         },
         .success,
         null,

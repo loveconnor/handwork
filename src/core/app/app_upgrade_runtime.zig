@@ -181,11 +181,7 @@ const TestUpgrader = struct {
         return self.state;
     }
 
-    fn stop(self: *TestUpgrader) void {
-        self.stop_count += 1;
-    }
-
-    fn takeRenderDirty(self: *TestUpgrader) bool {
+    pub fn takeRenderDirty(self: *TestUpgrader) bool {
         const dirty = self.render_dirty;
         self.render_dirty = false;
         return dirty;
@@ -194,14 +190,9 @@ const TestUpgrader = struct {
 
 const TestWorker = struct {
     queued_count: usize = 0,
-    shutdown_count: usize = 0,
 
-    fn queuedPromptCount(self: *const TestWorker) usize {
+    pub fn queuedPromptCount(self: *const TestWorker) usize {
         return self.queued_count;
-    }
-
-    fn requestShutdown(self: *TestWorker) void {
-        self.shutdown_count += 1;
     }
 };
 
@@ -271,7 +262,7 @@ const TestApp = struct {
         self.request_handoff_count += 1;
     }
 
-    fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *TestApp, notice: types.SemanticNotice, _: bool) !void {
         try self.notices.appendSlice(self.alloc, notice.body);
     }
 };

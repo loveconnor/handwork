@@ -1216,7 +1216,17 @@ fn sumWidths(widths: []const usize) usize {
     return total;
 }
 
+// Table chrome is faint, matching code fences and blockquote rules, so the
+// cell text carries the visual weight.
+const table_chrome_open = "\x1b[2m";
+const table_chrome_close = "\x1b[22m";
+
+fn appendTableEdge(alloc: Allocator, out: *std.ArrayList(u8)) !void {
+    try out.appendSlice(alloc, table_chrome_open ++ "│" ++ table_chrome_close);
+}
+
 fn appendTableBorder(alloc: Allocator, out: *std.ArrayList(u8), left: []const u8, middle: []const u8, right: []const u8, widths: []const usize) !void {
+    try out.appendSlice(alloc, table_chrome_open);
     try out.appendSlice(alloc, left);
     for (widths, 0..) |width, index| {
         if (index > 0) try out.appendSlice(alloc, middle);
@@ -1224,13 +1234,14 @@ fn appendTableBorder(alloc: Allocator, out: *std.ArrayList(u8), left: []const u8
         while (count < width + 2) : (count += 1) try out.appendSlice(alloc, "─");
     }
     try out.appendSlice(alloc, right);
+    try out.appendSlice(alloc, table_chrome_close);
     try out.append(alloc, '\n');
 }
 
 fn renderBoxedGrid(alloc: Allocator, table: assistant_presentation.TablePayload, widths: []const usize, out: *std.ArrayList(u8)) !void {
     try appendTableBorder(alloc, out, "┌", "┬", "┐", widths);
     for (table.rows, 0..) |row, row_index| {
-        try out.appendSlice(alloc, "│");
+        try appendTableEdge(alloc, out);
         for (widths, 0..) |width, col| {
             const cell: []const u8 = if (col < row.cells.len) row.cells[col] else "";
             const visible = display_width.visibleWidthIgnoringAnsi(cell);
@@ -1250,11 +1261,10 @@ fn renderBoxedGrid(alloc: Allocator, table: assistant_presentation.TablePayload,
             }
             try out.appendNTimes(alloc, ' ', pad - left_pad);
             try out.append(alloc, ' ');
-            try out.appendSlice(alloc, "│");
+            try appendTableEdge(alloc, out);
         }
         try out.append(alloc, '\n');
         if (row_index == 0 and table.rows.len > 1) try appendTableBorder(alloc, out, "├", "┼", "┤", widths);
-        if (row_index > 0 and row_index + 1 < table.rows.len) try appendTableBorder(alloc, out, "├", "┼", "┤", widths);
     }
     try appendTableBorder(alloc, out, "└", "┴", "┘", widths);
 }
@@ -1262,9 +1272,10 @@ fn renderBoxedGrid(alloc: Allocator, table: assistant_presentation.TablePayload,
 fn appendVerticalLine(alloc: Allocator, out: *std.ArrayList(u8), content: []const u8, inner_width: usize) !void {
     var remaining = content;
     if (remaining.len == 0) {
-        try out.appendSlice(alloc, "│");
+        try appendTableEdge(alloc, out);
         try out.appendNTimes(alloc, ' ', inner_width);
-        try out.appendSlice(alloc, "│\n");
+        try appendTableEdge(alloc, out);
+        try out.append(alloc, '\n');
         return;
     }
     while (remaining.len > 0) {
@@ -1276,20 +1287,21 @@ fn appendVerticalLine(alloc: Allocator, out: *std.ArrayList(u8), content: []cons
             consumed = unit.byte_len;
         }
         const visible = display_width.visibleWidthIgnoringAnsi(prefix);
-        try out.appendSlice(alloc, "│");
+        try appendTableEdge(alloc, out);
         try out.appendSlice(alloc, prefix);
         try out.appendNTimes(alloc, ' ', inner_width -| visible);
-        try out.appendSlice(alloc, "│\n");
+        try appendTableEdge(alloc, out);
+        try out.append(alloc, '\n');
         remaining = remaining[consumed..];
     }
 }
 
 fn renderBoxedVertical(alloc: Allocator, table: assistant_presentation.TablePayload, cols: u16, out: *std.ArrayList(u8)) !void {
     const inner_width: usize = cols - 2;
-    try out.appendSlice(alloc, "┌");
+    try out.appendSlice(alloc, table_chrome_open ++ "┌");
     var edge: usize = 0;
     while (edge < inner_width) : (edge += 1) try out.appendSlice(alloc, "─");
-    try out.appendSlice(alloc, "┐\n");
+    try out.appendSlice(alloc, "┐" ++ table_chrome_close ++ "\n");
     for (table.rows[1..], 0..) |row, row_index| {
         for (table.alignments, 0..) |_, col| {
             var field: std.ArrayList(u8) = .empty;
@@ -1302,16 +1314,16 @@ fn renderBoxedVertical(alloc: Allocator, table: assistant_presentation.TablePayl
             try appendVerticalLine(alloc, out, field.items, inner_width);
         }
         if (row_index + 1 < table.rows.len - 1) {
-            try out.appendSlice(alloc, "├");
+            try out.appendSlice(alloc, table_chrome_open ++ "├");
             edge = 0;
             while (edge < inner_width) : (edge += 1) try out.appendSlice(alloc, "─");
-            try out.appendSlice(alloc, "┤\n");
+            try out.appendSlice(alloc, "┤" ++ table_chrome_close ++ "\n");
         }
     }
-    try out.appendSlice(alloc, "└");
+    try out.appendSlice(alloc, table_chrome_open ++ "└");
     edge = 0;
     while (edge < inner_width) : (edge += 1) try out.appendSlice(alloc, "─");
-    try out.appendSlice(alloc, "┘\n");
+    try out.appendSlice(alloc, "┘" ++ table_chrome_close ++ "\n");
 }
 
 fn renderUnboxedTable(alloc: Allocator, table: assistant_presentation.TablePayload, cols: u16, out: *std.ArrayList(u8)) !void {
@@ -2748,14 +2760,6 @@ pub const RenderedBlock = struct {
     }
 };
 
-pub fn transcriptLineCount(text: []const u8) usize {
-    var total: usize = 1;
-    for (text) |byte| {
-        if (byte == '\n') total += 1;
-    }
-    return total;
-}
-
 fn deinitTestEntries(entries: *std.ArrayList(TranscriptEntry), alloc: Allocator) void {
     for (entries.items) |*entry| entry.deinit(alloc);
     entries.deinit(alloc);
@@ -3189,7 +3193,7 @@ test "renderCodeBlockForTranscript highlights registered profiles without stylin
         .code = zig_code,
     }, 80);
     defer alloc.free(highlighted);
-    try std.testing.expect(std.mem.indexOf(u8, highlighted, "\x1b[38;5;252mconst\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, highlighted, "\x1b[38;5;255mconst\x1b[39m") != null);
 
     const python_language = try alloc.dupe(u8, "python");
     defer alloc.free(python_language);
@@ -3201,7 +3205,7 @@ test "renderCodeBlockForTranscript highlights registered profiles without stylin
     }, 80);
     defer alloc.free(python);
     try std.testing.expect(std.mem.indexOf(u8, python, "\x1b[2m─ python ─") != null);
-    try std.testing.expect(std.mem.indexOf(u8, python, "\x1b[38;5;252mdef\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, python, "\x1b[38;5;255mdef\x1b[39m") != null);
 
     const unknown_language = try alloc.dupe(u8, "brainfuck");
     defer alloc.free(unknown_language);
@@ -3235,9 +3239,9 @@ test "semantic code blocks use the light syntax palette when requested" {
     });
     defer rendered.deinit(alloc);
 
-    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;238mconst\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;241m\"ready\"\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;243m// comment\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;235mconst\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;242m\"ready\"\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, rendered.bytes, "\x1b[38;5;246m// comment\x1b[39m") != null);
 }
 
 test "renderCodeBlockForTranscript infers registered high-confidence code blocks" {
@@ -3253,8 +3257,8 @@ test "renderCodeBlockForTranscript infers registered high-confidence code blocks
     }, 100);
     defer alloc.free(unlabeled);
     try std.testing.expect(std.mem.indexOf(u8, unlabeled, "\x1b[2m─ ts ─") != null);
-    try std.testing.expect(std.mem.indexOf(u8, unlabeled, "\x1b[38;5;252mconst\x1b[39m") != null);
-    try std.testing.expect(std.mem.indexOf(u8, unlabeled, "\x1b[38;5;252mawait\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, unlabeled, "\x1b[38;5;255mconst\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, unlabeled, "\x1b[38;5;255mawait\x1b[39m") != null);
 
     const json_language = try alloc.dupe(u8, "");
     defer alloc.free(json_language);
@@ -3266,7 +3270,7 @@ test "renderCodeBlockForTranscript infers registered high-confidence code blocks
     }, 100);
     defer alloc.free(json);
     try std.testing.expect(std.mem.indexOf(u8, json, "\x1b[2m─ json ─") != null);
-    try std.testing.expect(std.mem.indexOf(u8, json, "\x1b[38;5;250m\"ready\"\x1b[39m") != null);
+    try std.testing.expect(std.mem.indexOf(u8, json, "\x1b[38;5;248m\"ready\"\x1b[39m") != null);
 
     const ambiguous_language = try alloc.dupe(u8, "");
     defer alloc.free(ambiguous_language);
@@ -3325,7 +3329,7 @@ test "renderCodeBlockForTranscript contains CJK fallback color in ruled and unbo
         }
     }
     try std.testing.expect(ruled_wide_rune != null);
-    try std.testing.expect(ruled_wide_rune.?.style.fg.eql(.{ .indexed = 245 }));
+    try std.testing.expect(ruled_wide_rune.?.style.fg.eql(.{ .indexed = 242 }));
 
     const unboxed = try renderCodeBlockForTranscript(alloc, block, 1);
     defer alloc.free(unboxed);
@@ -3342,7 +3346,7 @@ test "renderCodeBlockForTranscript contains CJK fallback color in ruled and unbo
         if (cell.codepoint == 'z') try std.testing.expect(cell.style.fg.eql(.default));
     }
     try std.testing.expect(unboxed_fallback != null);
-    try std.testing.expect(unboxed_fallback.?.style.fg.eql(.{ .indexed = 245 }));
+    try std.testing.expect(unboxed_fallback.?.style.fg.eql(.{ .indexed = 242 }));
 }
 
 fn appendUserTestEntry(entries: *std.ArrayList(TranscriptEntry), alloc: Allocator, id: u32, text: []const u8) !void {
@@ -4248,8 +4252,8 @@ test "renderEntriesToBytes indents semantic table and code rows" {
 
     const out = try renderEntriesToBytes(alloc, entries.items, 80, .{});
     defer alloc.free(out);
-    try std.testing.expect(std.mem.startsWith(u8, out, "  ┌"));
-    try std.testing.expect(std.mem.find(u8, out, "\n  │") != null);
+    try std.testing.expect(std.mem.startsWith(u8, out, "  \x1b[2m┌"));
+    try std.testing.expect(std.mem.find(u8, out, "\n  \x1b[2m│") != null);
     try std.testing.expect(std.mem.find(u8, out, "\n\n  \x1b[2m─ zig") != null);
 
     for (1..6) |width| {

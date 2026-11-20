@@ -66,7 +66,7 @@ A request to avoid edits is an instruction to the model, not a replacement for p
 
 ### Build from source
 
-Use Zig 0.16.0. From the repository root:
+Use Zig 0.17.1. From the repository root:
 
 ```sh
 zig build
@@ -225,7 +225,7 @@ These are project-maintained pilots with three or five attempts per agent on sma
 
 ### Native performance checks
 
-The source also includes deterministic component benchmarks. They require Zig 0.16.0, use synthetic workloads, and do not call a model or spend API credits.
+The source also includes deterministic component benchmarks. They require Zig 0.17.1, use synthetic workloads, and do not call a model or spend API credits.
 
 ```sh
 zig build run-bench-file-index -Doptimize=ReleaseFast -- 100000 500

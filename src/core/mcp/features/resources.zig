@@ -4,6 +4,7 @@ const catalog_freshness = @import("../catalog_freshness.zig");
 const json_number = @import("../json_number.zig");
 const mrtr = @import("../mrtr.zig");
 const sort_utils = @import("../../shared/sort_utils.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -1222,12 +1223,12 @@ test "resource template matching shares one work budget across catalog candidate
 }
 
 test "resource template matching rejects adjacent expressions as unsupported" {
-    const uri = "memory://" ++ ("a" ** 2048) ++ "/42";
+    const uri = "memory://" ++ repeat("a", 2048) ++ "/42";
     try std.testing.expect(!templateMayResolve("memory://{prefix}{/id}", uri));
 }
 
 test "resource template matching rejects malformed long expansions and unsupported syntax" {
-    const malformed = "memory://" ++ ("a" ** 2048) ++ "%GG";
+    const malformed = "memory://" ++ repeat("a", 2048) ++ "%GG";
     try std.testing.expect(!templateMayResolve("memory://{value}", malformed));
     try std.testing.expect(!templateMayResolve("memory://{first,second}", "memory://one,two"));
     try std.testing.expect(!templateMayResolve("memory://{value*}", "memory://one"));

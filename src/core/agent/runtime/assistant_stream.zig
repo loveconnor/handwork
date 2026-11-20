@@ -732,9 +732,9 @@ const NoticeCapture = struct {
     }
 
     fn propagateHistory(_: *anyopaque, _: HistoryTurn) !void {}
-    fn propagateGrant(_: *anyopaque, _: []const u8, _: []const u8) !void {}
-    fn pushEvent(_: *anyopaque, _: WorkerEvent) !void {}
-    fn pushText(_: *anyopaque, _: runtime_deps.TextEmission) !void {}
+    pub fn propagateGrant(_: *anyopaque, _: []const u8, _: []const u8) !void {}
+    pub fn pushEvent(_: *anyopaque, _: WorkerEvent) !void {}
+    pub fn pushText(_: *anyopaque, _: runtime_deps.TextEmission) !void {}
     fn pushDiff(_: *anyopaque, _: DiffEntryPayload) !void {}
 
     fn systemNotice(raw: *anyopaque, text: []const u8) !void {
@@ -1419,8 +1419,19 @@ test "streamed presentation preserves ANSI OSC 8 code fence and table spans" {
 
     const cwd = try std.process.currentPathAlloc(std.testing.io, alloc);
     defer alloc.free(cwd);
+    // Test builds import `test_options` (normally provided by build.zig).
+    var options_dir = std.testing.tmpDir(.{});
+    defer options_dir.cleanup();
+    try options_dir.dir.writeFile(std.testing.io, .{
+        .sub_path = "test_options.zig",
+        .data = "pub const product_exe: []const u8 = \"\";\n",
+    });
+    const options_dir_path = try options_dir.dir.realPathFileAlloc(std.testing.io, ".", alloc);
+    defer alloc.free(options_dir_path);
+    const options_module = try std.fmt.allocPrint(alloc, "-Mtest_options={s}/test_options.zig", .{options_dir_path});
+    defer alloc.free(options_module);
     const result = try std.process.run(alloc, std.testing.io, .{
-        .argv = &.{ "zig", "test", "-lc", "-Mroot=src/main.zig", "--test-filter", ansi_span_test_name },
+        .argv = &.{ "zig", "test", "-lc", "--dep", "test_options", "-Mroot=src/main.zig", options_module, "--test-filter", ansi_span_test_name },
         .cwd = .{ .path = cwd },
         .environ_map = &environ,
         .stdout_limit = .limited(64 * 1024),

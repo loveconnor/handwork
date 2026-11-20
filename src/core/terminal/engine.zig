@@ -8,6 +8,7 @@ const std = @import("std");
 const display_width = @import("../shared/display_width.zig");
 const image_placeholder = @import("../shared/image_placeholder.zig");
 const contracts = @import("contracts.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -288,11 +289,11 @@ pub const Grid = struct {
 
     state: State = .normal,
     /// CSI parameters accumulated from the digit/';' bytes after `\x1b[`.
-    csi_params: [max_csi_params]u16 = [_]u16{0} ** max_csi_params,
+    csi_params: [max_csi_params]u16 = @as([max_csi_params]u16, @splat(0)),
     csi_param_count: u8 = 0,
     csi_has_digit: bool = false,
     csi_private: u8 = 0,
-    csi_intermediates: [max_csi_intermediates]u8 = [_]u8{0} ** max_csi_intermediates,
+    csi_intermediates: [max_csi_intermediates]u8 = @as([max_csi_intermediates]u8, @splat(0)),
     csi_intermediate_count: u8 = 0,
     osc_saw_esc: bool = false,
     /// Captured OSC payload bytes (between `\x1b]` and the terminator).
@@ -302,7 +303,7 @@ pub const Grid = struct {
     dcs_saw_esc: bool = false,
     dcs_buffer: std.ArrayList(u8) = .empty,
     ignored_string_saw_esc: bool = false,
-    utf8_buffer: [4]u8 = [_]u8{0} ** 4,
+    utf8_buffer: [4]u8 = @as([4]u8, @splat(0)),
     utf8_len: u8 = 0,
     utf8_expected: u8 = 0,
     /// Allocator-owned URL strings indexed by `Style.hyperlink_id`.
@@ -788,11 +789,11 @@ pub const Grid = struct {
     }
 
     fn resetCsi(self: *Grid) void {
-        self.csi_params = [_]u16{0} ** max_csi_params;
+        self.csi_params = @as([max_csi_params]u16, @splat(0));
         self.csi_param_count = 0;
         self.csi_has_digit = false;
         self.csi_private = 0;
-        self.csi_intermediates = [_]u8{0} ** max_csi_intermediates;
+        self.csi_intermediates = @as([max_csi_intermediates]u8, @splat(0));
         self.csi_intermediate_count = 0;
     }
 
@@ -2517,7 +2518,7 @@ fn encodeGridState(encoder: *CheckpointEncoder, grid: Grid) !void {
     try encoder.boolean(grid.autowrap);
     try encoder.boolean(grid.pending_wrap);
     try encoder.boolean(grid.cursor_visible);
-    try encoder.int(u8, @intFromEnum(grid.cursor_shape));
+    try encoder.int(u8, @backingInt(grid.cursor_shape));
     try encoder.boolean(grid.cursor_blinking);
     try encoder.int(u16, grid.scroll_top);
     try encoder.int(u16, grid.scroll_bottom);
@@ -2534,7 +2535,7 @@ fn encodeGridState(encoder: *CheckpointEncoder, grid: Grid) !void {
     try encoder.boolean(grid.defer_sync_updates);
     try encoder.sizedBytes(grid.sync_buffer.items);
     try encodeStyle(encoder, grid.current_style);
-    try encoder.int(u8, @intFromEnum(grid.state));
+    try encoder.int(u8, @backingInt(grid.state));
     for (grid.csi_params) |param| try encoder.int(u16, param);
     try encoder.int(u8, grid.csi_param_count);
     try encoder.boolean(grid.csi_has_digit);
@@ -2612,7 +2613,7 @@ fn encodeSavedScreen(
     try encoder.boolean(saved.autowrap);
     try encoder.boolean(saved.pending_wrap);
     try encoder.boolean(saved.cursor_visible);
-    try encoder.int(u8, @intFromEnum(saved.cursor_shape));
+    try encoder.int(u8, @backingInt(saved.cursor_shape));
     try encoder.boolean(saved.cursor_blinking);
     try encodeStyle(encoder, saved.current_style);
     try encoder.sizedBytes(saved.active_hyperlink_params);
@@ -4459,7 +4460,7 @@ test "parser and reply collections enforce fixed bounds" {
     defer replies.deinit();
     try testing.expectError(
         error.ReplyEffectCapacityExceeded,
-        replies.feedMode("\x1b[5n" ** 17, .native_live),
+        replies.feedMode(repeat("\x1b[5n", 17), .native_live),
     );
 
     var osc = try Grid.init(testing.allocator, 10, 2);

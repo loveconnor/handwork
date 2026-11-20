@@ -141,12 +141,6 @@ pub fn protocol() Protocol {
     return service.caps.protocol;
 }
 
-/// Whether frame bytes must have placeholder cells replaced by blanks
-/// before they reach the terminal.
-pub fn wireBlanksPlaceholders() bool {
-    return protocol().drawsPixelsOutOfBand();
-}
-
 /// Lays out and writes `source` as text rows separated by `\n` (no
 /// trailing newline), each prefixed by `line_prefix`. Returns null without
 /// writing anything when images are unavailable or the source cannot be
@@ -671,7 +665,7 @@ fn readImageFile(alloc: Allocator, path: []const u8) ![]u8 {
     defer opened.close();
     var buffer: [16 * 1024]u8 = undefined;
     var reader = opened.file.reader(io_mod.getIo(), &buffer);
-    return reader.interface.allocRemaining(alloc, .limited(max_file_bytes));
+    return io_mod.allocRemainingBelowLimit(&reader.interface, alloc, .limited(max_file_bytes));
 }
 
 fn decodeEncoded(alloc: Allocator, bytes: []const u8) !Decoded {

@@ -8,6 +8,7 @@ const permissions = @import("permissions.zig");
 const session_usage = @import("../session/session_usage.zig");
 const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 pub const tool_name = "permission_decision";
 const max_rationale_bytes: usize = 240;
@@ -968,7 +969,7 @@ test "shell input review requires receiver evidence and bounds untrusted screen 
         .session_id = "shell-owned",
         .launch_command = "python3 key-collector.py",
         .cwd = "/tmp/fixture",
-        .screen = "UNTRUSTED_PROMPT_BEGIN\x1b[31m" ++ ("x" ** 4096) ++ "UNTRUSTED_PROMPT_END",
+        .screen = "UNTRUSTED_PROMPT_BEGIN\x1b[31m" ++ repeat("x", 4096) ++ "UNTRUSTED_PROMPT_END",
     };
     var present = try serializeEvidence(alloc, request, deadline, &cancel);
     defer present.deinit(alloc);
@@ -1548,10 +1549,10 @@ test "automatic review normalizes non-authoritative metadata" {
             .expected_rationale = "No rationale provided.",
         },
         .{
-            .arguments_json = "{\"decision\":\"clear\",\"rationale\":\"" ++ ("x" ** 239) ++ "éignored\"}",
+            .arguments_json = "{\"decision\":\"clear\",\"rationale\":\"" ++ repeat("x", 239) ++ "éignored\"}",
             .expected_decision = .clear,
             .expected_risk = .low,
-            .expected_rationale = "x" ** 239,
+            .expected_rationale = repeat("x", 239),
         },
     };
     for (cases) |case| {
@@ -1669,8 +1670,8 @@ test "prior evidence excludes only host marked review feedback" {
 
 test "prior tool result evidence is byte bounded unmasked and terminal safe" {
     const entries = [_]PriorToolResultEntry{
-        .{ .tool_call_id = "first", .tool_name = "read_file", .content = "FIRST_RESULT " ++ ("a" ** 2000) },
-        .{ .tool_call_id = "last", .tool_name = "read_file", .content = "LAST_RESULT API_KEY=super-secret\x1b[31m" ++ ("z" ** 2000) },
+        .{ .tool_call_id = "first", .tool_name = "read_file", .content = "FIRST_RESULT " ++ repeat("a", 2000) },
+        .{ .tool_call_id = "last", .tool_name = "read_file", .content = "LAST_RESULT API_KEY=super-secret\x1b[31m" ++ repeat("z", 2000) },
     };
     var cancel_flag = std.atomic.Value(bool).init(false);
     const deadline = std.Io.Clock.Timestamp.fromNow(io_mod.getIo(), .{
@@ -1923,7 +1924,7 @@ test "automatic review sends symbolic secret references as complete evidence" {
 
 test "automatic review preserves prepared file lines within its evidence byte budget" {
     const alloc = std.testing.allocator;
-    const long_line = "x" ** 2048;
+    const long_line = repeat("x", 2048);
     var content: std.Io.Writer.Allocating = .init(alloc);
     defer content.deinit();
     try content.writer.writeAll(long_line);
@@ -2273,7 +2274,7 @@ test "automatic review rejects oversized contextual root evidence without sendin
         .send_fn = FakeTransport.send,
         .build_fn = buildTestReviewPayload,
     }, null, 1000);
-    const oversized_root = "current_request: " ++ ("x" ** max_context_bytes) ++ "\n";
+    const oversized_root = "current_request: " ++ repeat("x", max_context_bytes) ++ "\n";
     const outcome = try reviewer.review(std.testing.allocator, .{
         .review_turn = .{
             .model = "openai/gpt-5",
@@ -2344,7 +2345,7 @@ test "automatic review sends complete action evidence above sixteen kib" {
         .action = .{ .tool = .{
             .tool_name = "terminal",
             .arguments_json = "{\"action\":\"start\",\"command\":\"npm install\"}",
-            .schema_json = "{\"description\":\"" ++ ("s" ** (20 * 1024)) ++ "\"}",
+            .schema_json = "{\"description\":\"" ++ repeat("s", 20 * 1024) ++ "\"}",
         } },
     });
     defer outcome.deinit(std.testing.allocator);
@@ -2392,7 +2393,7 @@ test "automatic review excludes assistant preamble and images" {
     };
 
     const long_preamble = "OPTIONAL_PREAMBLE_PREFIX" ++
-        ("p" ** max_review_packet_bytes) ++
+        repeat("p", max_review_packet_bytes) ++
         "OPTIONAL_PREAMBLE_TAIL";
     var fake = FakeTransport{};
     const reviewer = Reviewer.withTransport(.{

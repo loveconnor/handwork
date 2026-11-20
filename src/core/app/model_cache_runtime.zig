@@ -94,7 +94,7 @@ pub const ModelProviderFilter = enum {
     others,
 };
 
-pub const model_provider_filter_count = std.meta.fields(ModelProviderFilter).len;
+pub const model_provider_filter_count = @typeInfo(ModelProviderFilter).@"enum".field_names.len;
 
 pub const ModelMenuItem = struct {
     id: []u8,
@@ -137,7 +137,7 @@ pub const ModelMenu = struct {
     }
 
     pub fn providerFilter(self: *const ModelMenu) ModelProviderFilter {
-        return @enumFromInt(@min(self.provider_index, model_provider_filter_count - 1));
+        return @fromBackingInt(@intCast(@min(self.provider_index, model_provider_filter_count - 1)));
     }
 
     pub fn filteredItemCount(self: *const ModelMenu) usize {
@@ -178,7 +178,7 @@ pub const ModelMenu = struct {
             next += direction;
             if (next < 0) next = @as(i32, @intCast(filter_count)) - 1;
             if (next >= @as(i32, @intCast(filter_count))) next = 0;
-            const filter: ModelProviderFilter = @enumFromInt(@as(usize, @intCast(next)));
+            const filter: ModelProviderFilter = @fromBackingInt(@intCast(@as(usize, @intCast(next))));
             if (!modelProviderFilterAvailable(self.items.items, filter)) continue;
             if (next == current) return false;
             self.provider_index = @intCast(next);
@@ -262,12 +262,12 @@ fn providerFilter(provider: []const u8) ModelProviderFilter {
 
 pub fn modelProviderFilterAvailable(items: []const ModelMenuItem, filter: ModelProviderFilter) bool {
     if (filter == .all) return true;
-    var seen = [_]bool{false} ** model_provider_filter_count;
-    for (items) |item| seen[@intFromEnum(providerFilter(item.provider))] = true;
+    var seen = @as([model_provider_filter_count]bool, @splat(false));
+    for (items) |item| seen[@backingInt(providerFilter(item.provider))] = true;
 
     var specific_count: usize = 0;
     for (seen[1..]) |available| specific_count += @intFromBool(available);
-    return specific_count > 1 and seen[@intFromEnum(filter)];
+    return specific_count > 1 and seen[@backingInt(filter)];
 }
 
 fn providerMatchesFilter(provider: []const u8, filter: ModelProviderFilter) bool {
@@ -814,13 +814,6 @@ fn waitForWarmup(runtime: *Runtime) !void {
     try std.testing.expect(!runtime.isFailed());
 }
 
-fn modelIdListContains(ids: []const []u8, needle: []const u8) bool {
-    for (ids) |id| {
-        if (std.mem.eql(u8, id, needle)) return true;
-    }
-    return false;
-}
-
 fn authenticatedCatalogAccess(credential: []const u8) credentials.CatalogAccess {
     return credentials.catalogAccessForCredential(.chatgpt_subscription, credential);
 }
@@ -1073,11 +1066,11 @@ test "model menu owns resolved catalog state and filters without changing catalo
     try std.testing.expect(runtime.menu.moveProvider(-1));
     try std.testing.expectEqual(ModelProviderFilter.all, runtime.menu.providerFilter());
 
-    runtime.menu.provider_index = @intFromEnum(ModelProviderFilter.others);
+    runtime.menu.provider_index = @backingInt(ModelProviderFilter.others);
     try std.testing.expectEqual(@as(usize, 2), runtime.menu.filteredItemCount());
     try std.testing.expectEqualStrings("private/blue-hornbill", runtime.menu.itemAt(0).?.id);
     try std.testing.expectEqualStrings("standalone", runtime.menu.itemAt(1).?.id);
-    runtime.menu.provider_index = @intFromEnum(ModelProviderFilter.all);
+    runtime.menu.provider_index = @backingInt(ModelProviderFilter.all);
 
     try std.testing.expect(runtime.menu.moveVisibleItems(-1, 2));
     try std.testing.expectEqual(@as(usize, 3), runtime.menu.selected_index);
@@ -1098,7 +1091,7 @@ test "model menu exposes OpenCode Zen models as a provider filter" {
     defer menu.deinit(alloc);
     try hydrateMenuSnapshot(alloc, &menu, &entries);
     menu.active = true;
-    menu.provider_index = @intFromEnum(ModelProviderFilter.opencode);
+    menu.provider_index = @backingInt(ModelProviderFilter.opencode);
 
     try std.testing.expect(modelProviderFilterAvailable(menu.items.items, .opencode));
     try std.testing.expectEqual(@as(usize, 2), menu.filteredItemCount());

@@ -1,5 +1,6 @@
 const std = @import("std");
 const language_script = @import("../../shared/language_script.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const minimum_letters: usize = 5;
 const minimum_unexpected_prose_letters: usize = 8;
@@ -167,7 +168,7 @@ test "response language evidence distinguishes clear scripts" {
     );
     try std.testing.expectEqual(
         Script.latin,
-        evidence("English transcript payload with sparse 界 markers. " ** 16).script.?,
+        evidence(repeat("English transcript payload with sparse 界 markers. ", 16)).script.?,
     );
 }
 

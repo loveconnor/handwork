@@ -6,6 +6,7 @@ const types = @import("../core/shared/types.zig");
 const image_attachments = @import("../core/images/image_attachments.zig");
 const tool_call_ids = @import("tool_call_ids.zig");
 const json_comparison = @import("../core/shared/json_comparison.zig");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 pub fn selectReplayParts(alloc: std.mem.Allocator, replay: ?types.ProviderReplay, _: []const types.ToolCall, text: bool, reasoning: bool) !?types.ProviderReplay {
     const source = replay orelse return null;
@@ -208,7 +209,7 @@ fn write_assistant_text(writer: *std.Io.Writer, first: *bool, content: []const u
 }
 
 test "Responses request projects long call ids with matching outputs" {
-    const source_id = "c" ** 65;
+    const source_id = repeat("c", 65);
     const calls = [_]types.ToolCall{.{ .id = source_id, .name = "read_file", .arguments_json = "{}" }};
     const images = [_]types.ToolImage{.{ .data = @constCast("cG5n"), .mime_type = @constCast("image/png") }};
     for ([_]bool{ false, true }) |with_images| {
@@ -1535,7 +1536,7 @@ test "Responses fallback parsing releases allocations on failure" {
         fn run(alloc: std.mem.Allocator) !void {
             var stream = ToolRecordTest.init(alloc);
             defer stream.deinit();
-            const event = "{\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"" ++ "\\u0061" ** 8192 ++ "\"}";
+            const event = "{\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"" ++ repeat("\\u0061", 8192) ++ "\"}";
             _ = try stream.reducer.applyJson(alloc, event, .{ .context = &stream.context, .on_content = ToolRecordTest.ignore }, &stream.cancelled, null, .{
                 .aggregate_bytes = 128 * 1024,
                 .events = 100,
@@ -1553,7 +1554,7 @@ test "Responses compact deeply allocated events fall back without retaining scra
     var tracked = std.testing.FailingAllocator.init(std.testing.allocator, .{});
     var stream = ToolRecordTest.init(tracked.allocator());
     defer stream.deinit();
-    const event = "{\"type\":\"unknown\",\"data\":[" ++ "{}," ** 128 ++ "{}]}";
+    const event = "{\"type\":\"unknown\",\"data\":[" ++ repeat("{},", 128) ++ "{}]}";
     try stream.apply(event);
     try std.testing.expect(tracked.allocated_bytes > 0);
     try std.testing.expectEqual(tracked.allocated_bytes, tracked.freed_bytes);
@@ -2079,7 +2080,7 @@ test "Responses terminal failure classification is conservative and diagnostics 
         defer stream.deinit();
         const event = try std.json.Stringify.valueAlloc(std.testing.allocator, .{
             .type = "response.failed",
-            .response = .{ .id = "resp_failure", .@"error" = .{ .code = case[0], .message = "é" ** 512 }, .usage = .{ .input_tokens = 7, .output_tokens = 3 } },
+            .response = .{ .id = "resp_failure", .@"error" = .{ .code = case[0], .message = repeat("é", 512) }, .usage = .{ .input_tokens = 7, .output_tokens = 3 } },
         }, .{});
         defer std.testing.allocator.free(event);
         try stream.apply(event);

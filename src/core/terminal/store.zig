@@ -2385,15 +2385,25 @@ pub const DurableSession = struct {
             true,
         );
         defer proofs.deinit();
-        errdefer |err| if (err != error.InjectedCrash) {
-            cleanup_partial_start(
-                profile.alloc,
-                &state,
-                &proofs,
-                input.session_id,
-            );
+        return create_with_capabilities(profile, input, &state, &proofs) catch |err| {
+            if (err != error.InjectedCrash) {
+                cleanup_partial_start(
+                    profile.alloc,
+                    &state,
+                    &proofs,
+                    input.session_id,
+                );
+            }
+            return err;
         };
+    }
 
+    fn create_with_capabilities(
+        profile: *ProfileStore,
+        input: CreateInput,
+        state: *session_child_store.SessionChildCapability,
+        proofs: *session_child_store.SessionChildCapability,
+    ) !DurableSession {
         const reserve = try checkpoint_reserve_bytes(input.dimensions);
         if (reserve > profile.options.per_session_limit) {
             return error.CapacityExceeded;
@@ -2490,14 +2500,14 @@ pub const DurableSession = struct {
             return error.InjectedCrash;
         }
 
-        try write_proof(alloc, &proofs, input.session_id, input.persistence.proof);
+        try write_proof(alloc, proofs, input.session_id, input.persistence.proof);
         if (profile.options.fail_at == .after_proof_write) {
             return error.InjectedCrash;
         }
         if (profile.options.fail_at == .grant) return error.InjectedFailure;
         try write_authority(
             alloc,
-            &state,
+            state,
             input.session_id,
             input.persistence.grant,
             input.persistence.proof,
@@ -2507,10 +2517,10 @@ pub const DurableSession = struct {
             return error.InjectedCrash;
         }
         if (profile.options.fail_at == .start) return error.InjectedFailure;
-        try save_record(alloc, &state, record);
+        try save_record(alloc, state, record);
         return .{
             .profile = profile,
-            .state = state,
+            .state = state.*,
             .record = record,
             .journal = journal,
         };
@@ -2908,7 +2918,7 @@ pub const DurableSession = struct {
         var replacement: ?session_child_store.ManagedFile = null;
         var replacement_name: ?[]u8 = null;
         defer if (replacement_name) |name| alloc.free(name);
-        errdefer |err| {
+        return self.append_journal_chunk_prepared(bytes, now_ms, &working, &working_owned, &replacement, &replacement_name) catch |err| {
             if (replacement) |*file| file.deinit();
             if (err != error.InjectedCrash) {
                 if (replacement_name) |name| {
@@ -2931,37 +2941,51 @@ pub const DurableSession = struct {
                     }
                 }
             }
-        }
+            return err;
+        };
+    }
+
+    fn append_journal_chunk_prepared(
+        self: *DurableSession,
+        bytes: []const u8,
+        now_ms: i64,
+        working: *[]JournalFile,
+        working_owned: *bool,
+        replacement: *?session_child_store.ManagedFile,
+        replacement_name: *?[]u8,
+    ) !void {
+        const alloc = self.profile.alloc;
+        const previous_files = self.record.journal_files;
 
         const resumes_reopened_journal = self.journal == null;
         if (resumes_reopened_journal or
-            working[working.len - 1].payload_bytes ==
+            working.*[working.*.len - 1].payload_bytes ==
                 self.profile.options.segment_bytes)
         {
             const next_id = std.math.add(
                 u64,
-                working[working.len - 1].file_id,
+                working.*[working.*.len - 1].file_id,
                 1,
             ) catch return error.CapacityExceeded;
-            const expanded = try alloc.alloc(JournalFile, working.len + 1);
-            @memcpy(expanded[0..working.len], working);
-            alloc.free(working);
-            working = expanded;
+            const expanded = try alloc.alloc(JournalFile, working.*.len + 1);
+            @memcpy(expanded[0..working.*.len], working.*);
+            alloc.free(working.*);
+            working.* = expanded;
             const cursor = self.record.output_cursor;
-            working[working.len - 1] = .{
+            working.*[working.*.len - 1] = .{
                 .file_id = next_id,
                 .range = .{ .start = cursor, .end = cursor },
                 .payload_bytes = 0,
                 .checksum = contracts.checkpoint_checksum(""),
             };
             const name = try journal_name(alloc, self.record.session_id, next_id);
-            replacement_name = name;
-            replacement = try (try self.state_capability()).createExclusiveFile(
+            replacement_name.* = name;
+            replacement.* = try (try self.state_capability()).createExclusiveFile(
                 alloc,
                 .terminal_state,
                 name,
             );
-            try replacement.?.sync();
+            try replacement.*.?.sync();
             if (resumes_reopened_journal) {
                 debug_trace.logf(
                     "terminal_store",
@@ -2976,7 +3000,7 @@ pub const DurableSession = struct {
             }
         }
 
-        const file = if (replacement) |*value|
+        const file = if (replacement.*) |*value|
             value
         else if (self.journal) |*value|
             value
@@ -2988,7 +3012,7 @@ pub const DurableSession = struct {
             return error.InjectedCrash;
         }
 
-        const extent = &working[working.len - 1];
+        const extent = &working.*[working.*.len - 1];
         const next_offset = std.math.add(
             u64,
             self.record.output_cursor.offset,
@@ -3009,7 +3033,7 @@ pub const DurableSession = struct {
         const previous_output_cursor = self.record.output_cursor;
         const previous_journal_bytes = self.record.journal_payload_bytes;
         const previous_updated_at_ms = self.record.updated_at_ms;
-        self.record.journal_files = working;
+        self.record.journal_files = working.*;
         self.record.output_cursor.offset = next_offset;
         self.record.journal_payload_bytes = std.math.add(
             u64,
@@ -3029,11 +3053,11 @@ pub const DurableSession = struct {
             return error.TerminalStoreFailed;
         };
         alloc.free(previous_files);
-        working_owned = false;
-        if (replacement) |new_file| {
+        working_owned.* = false;
+        if (replacement.*) |new_file| {
             if (self.journal) |*old_file| old_file.deinit();
             self.journal = new_file;
-            replacement = null;
+            replacement.* = null;
         }
     }
 

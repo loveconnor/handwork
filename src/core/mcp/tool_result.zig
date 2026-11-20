@@ -7,6 +7,7 @@ const mcp_json = @import("mcp_json.zig");
 const mrtr = @import("mrtr.zig");
 const protocol_negotiation = @import("protocol_negotiation.zig");
 const tools_feature = @import("features/tools.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const tool_content = @import("../tooling/tool_content.zig");
 const image_data = @import("../images/image_data.zig");
@@ -654,7 +655,7 @@ test "invalid tool responses retain bounded protocol failures" {
 
 test "large tool results stay valid, bounded, and secret-masked" {
     const alloc = std.testing.allocator;
-    const large_text = "TOKEN=secret-value " ++ ("x" ** 1800);
+    const large_text = "TOKEN=secret-value " ++ repeat("x", 1800);
     const response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"" ++ large_text ++ "\"}]}}";
     var result = try extract(alloc, .{
         .server_name = "filesystem",

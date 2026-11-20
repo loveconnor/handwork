@@ -404,20 +404,20 @@ test "supported code fence labels resolve case insensitively" {
 
 test "expanded code fence labels resolve through the language registry" {
     const cases = [_]struct { label: []const u8, profile: []const u8 }{
-        .{ .label = "python", .profile = "python" },         .{ .label = "py", .profile = "python" },
-        .{ .label = "yaml", .profile = "yaml" },             .{ .label = "yml", .profile = "yaml" },
-        .{ .label = "toml", .profile = "toml" },             .{ .label = "sql", .profile = "sql" },
+        .{ .label = "python", .profile = "python" },                 .{ .label = "py", .profile = "python" },
+        .{ .label = "yaml", .profile = "yaml" },                     .{ .label = "yml", .profile = "yaml" },
+        .{ .label = "toml", .profile = "toml" },                     .{ .label = "sql", .profile = "sql" },
         .{ .label = "dochandworkile", .profile = "dochandworkile" }, .{ .label = "rust", .profile = "rust" },
-        .{ .label = "rs", .profile = "rust" },               .{ .label = "go", .profile = "go" },
-        .{ .label = "c", .profile = "c" },                   .{ .label = "cpp", .profile = "cpp" },
-        .{ .label = "c++", .profile = "cpp" },               .{ .label = "csharp", .profile = "csharp" },
-        .{ .label = "cs", .profile = "csharp" },             .{ .label = "java", .profile = "java" },
-        .{ .label = "kotlin", .profile = "kotlin" },         .{ .label = "php", .profile = "php" },
-        .{ .label = "ruby", .profile = "ruby" },             .{ .label = "swift", .profile = "swift" },
-        .{ .label = "powershell", .profile = "powershell" }, .{ .label = "ps1", .profile = "powershell" },
-        .{ .label = "lua", .profile = "lua" },               .{ .label = "html", .profile = "html" },
-        .{ .label = "xml", .profile = "xml" },               .{ .label = "css", .profile = "css" },
-        .{ .label = "hcl", .profile = "hcl" },               .{ .label = "terraform", .profile = "hcl" },
+        .{ .label = "rs", .profile = "rust" },                       .{ .label = "go", .profile = "go" },
+        .{ .label = "c", .profile = "c" },                           .{ .label = "cpp", .profile = "cpp" },
+        .{ .label = "c++", .profile = "cpp" },                       .{ .label = "csharp", .profile = "csharp" },
+        .{ .label = "cs", .profile = "csharp" },                     .{ .label = "java", .profile = "java" },
+        .{ .label = "kotlin", .profile = "kotlin" },                 .{ .label = "php", .profile = "php" },
+        .{ .label = "ruby", .profile = "ruby" },                     .{ .label = "swift", .profile = "swift" },
+        .{ .label = "powershell", .profile = "powershell" },         .{ .label = "ps1", .profile = "powershell" },
+        .{ .label = "lua", .profile = "lua" },                       .{ .label = "html", .profile = "html" },
+        .{ .label = "xml", .profile = "xml" },                       .{ .label = "css", .profile = "css" },
+        .{ .label = "hcl", .profile = "hcl" },                       .{ .label = "terraform", .profile = "hcl" },
         .{ .label = "tf", .profile = "hcl" },
     };
     for (cases) |case| try std.testing.expectEqualStrings(case.profile, resolve(case.label).?.label);

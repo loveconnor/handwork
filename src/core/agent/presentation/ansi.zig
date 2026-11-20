@@ -16,7 +16,7 @@ pub const task_completed_close = "\x1b[39m";
 pub const strike_open = "\x1b[9m";
 pub const strike_close = "\x1b[29m";
 const inline_code_dark_open = "\x1b[38;5;245m";
-const inline_code_light_open = "\x1b[38;5;247m";
+const inline_code_light_open = "\x1b[38;5;243m";
 pub var inline_code_open: []const u8 = inline_code_dark_open;
 pub const inline_code_close = "\x1b[39m";
 

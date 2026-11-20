@@ -36,6 +36,7 @@ const tool_result_errors = @import("../../core/tooling/tool_result_errors.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
 const result_store = @import("../../core/session/result_store.zig");
 const session_child_store = @import("../../core/session/session_child_store.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Layout = types.Layout;
@@ -4044,7 +4045,7 @@ test "retintEntriesForTheme rewrites owned presentation without touching externa
         runtime.entries.items[2].raw_bytes.bytes,
     );
     try std.testing.expectEqualStrings(
-        "\x1b[38;5;247mcode\x1b[39m \x1b[38;5;238m✓\x1b[39m\n",
+        "\x1b[38;5;243mcode\x1b[39m \x1b[38;5;238m✓\x1b[39m\n",
         runtime.entries.items[3].assistant_turn.segments.text.items,
     );
 }
@@ -4192,7 +4193,7 @@ const CachedCompactTranscriptSource = struct {
 const CompactTranscriptSourceCache = struct {
     const capacity = 4;
 
-    entries: [capacity]?CachedCompactTranscriptSource = .{null} ** capacity,
+    entries: [capacity]?CachedCompactTranscriptSource = @splat(null),
     next_replacement: usize = 0,
 
     fn deinit(self: *CompactTranscriptSourceCache, alloc: Allocator) void {
@@ -4277,6 +4278,8 @@ test "render diagnostic commit skips unchanged same-row paints" {
 
 pub const TranscriptRuntime = struct {
     welcome_cue: ui_render.WelcomeCue = .choose_provider,
+    /// True while the start screen is showing the animated splash field.
+    splash_field_animating: bool = false,
     stdout_file: ?std.Io.File = null,
     sync_updates_enabled: bool = true,
     history_reset_uses_ris: bool = false,
@@ -4537,15 +4540,6 @@ pub const TranscriptRuntime = struct {
         if (exit_len != entry_len) {
             debug_trace.logf("paint", "transcript mutated during paint: entry_len={d} exit_len={d}", .{ entry_len, exit_len });
         }
-    }
-
-    pub fn beginPaintSilent(self: *TranscriptRuntime) void {
-        std.debug.assert(!self.painting);
-        self.painting = true;
-    }
-
-    pub fn endPaintSilent(self: *TranscriptRuntime) void {
-        self.painting = false;
     }
 
     pub fn assertCanMutateTranscript(self: *TranscriptRuntime) !void {
@@ -6324,16 +6318,35 @@ pub const TranscriptRuntime = struct {
         if (self.layout.cols == 0 or self.layout.rows == 0) return false;
         var welcome_index: ?usize = null;
         var splash = true;
+        var companion_rows: u16 = 0;
         for (self.entries.items, 0..) |entry, index| {
             if (entry == .raw_bytes and entry.raw_bytes.class == .welcome) {
                 if (welcome_index == null) welcome_index = index;
                 continue;
             }
-            if (transcript_blocks.isEntryVisibleInCompactPresentation(entry)) splash = false;
+            if (!transcript_blocks.isEntryVisibleInCompactPresentation(entry)) continue;
+            // Neutral startup notices (environment hints such as image paste
+            // access) sit under the splash instead of pinning it to the top.
+            if (entry == .semantic_notice and entry.semantic_notice.tone == .neutral) {
+                companion_rows +|= splashNoticeRows(entry.semantic_notice, self.layout.cols);
+                continue;
+            }
+            splash = false;
         }
-        const index = welcome_index orelse return false;
-        const lead_rows: u16 = if (splash) self.welcomeSplashLeadRows() else 0;
-        const fresh = try ui_render.welcomeMessageForLayoutWithCue(alloc, self.layout.cols, lead_rows, self.welcome_cue);
+        const index = welcome_index orelse {
+            self.splash_field_animating = false;
+            return false;
+        };
+        const lead_rows: u16 = if (splash) self.welcomeSplashLeadRowsWithCompanions(companion_rows) else 0;
+        const field_rows: u16 = if (splash and ui_render.splash_field_enabled and lead_rows > 0)
+            self.welcomeSplashBodyRows() -| companion_rows
+        else
+            0;
+        self.splash_field_animating = field_rows > 0 and self.layout.cols >= ui_render.welcome_full_min_cols;
+        const fresh = if (self.splash_field_animating)
+            try ui_render.welcomeSplashFieldMessage(alloc, self.layout.cols, lead_rows, field_rows, self.welcome_cue, ui_render.splashFieldPhaseMs())
+        else
+            try ui_render.welcomeMessageForLayoutWithCue(alloc, self.layout.cols, lead_rows, self.welcome_cue);
         defer alloc.free(fresh);
         const current = self.entries.items[index].raw_bytes;
         if (std.mem.eql(u8, fresh, current.bytes)) return false;
@@ -6343,10 +6356,30 @@ pub const TranscriptRuntime = struct {
     /// Blank rows that center the welcome block between the owned top row
     /// and the composer.
     pub fn welcomeSplashLeadRows(self: *const TranscriptRuntime) u16 {
+        return self.welcomeSplashLeadRowsWithCompanions(0);
+    }
+
+    /// Rows a neutral notice occupies under the splash: its wrapped
+    /// "● Topic: body" text plus the blank separator row before it.
+    fn splashNoticeRows(notice: transcript_blocks.TranscriptEntry.SemanticNoticeEntry, cols: u16) u16 {
+        const content_cols: usize = if (cols > 2) cols - 2 else 1;
+        const text_width = display_width.visibleWidth(notice.topic) + 2 + display_width.visibleWidth(notice.body);
+        const lines = @max(@as(usize, 1), (text_width + content_cols - 1) / content_cols);
+        return @intCast(@min(lines + 1, std.math.maxInt(u16)));
+    }
+
+    /// Rows between the owned top row and the composer.
+    fn welcomeSplashBodyRows(self: *const TranscriptRuntime) u16 {
+        const body_bottom = if (self.layout.content_bottom > 0) self.layout.content_bottom else self.layout.rows;
+        if (body_bottom < self.owned_top_row) return 0;
+        return body_bottom - self.owned_top_row + 1;
+    }
+
+    fn welcomeSplashLeadRowsWithCompanions(self: *const TranscriptRuntime, companion_rows: u16) u16 {
         const body_bottom = if (self.layout.content_bottom > 0) self.layout.content_bottom else self.layout.rows;
         if (body_bottom < self.owned_top_row) return 0;
         const body_rows = body_bottom - self.owned_top_row + 1;
-        const visual_rows = ui_render.welcomeVisualRows(self.layout.cols);
+        const visual_rows = ui_render.welcomeVisualRows(self.layout.cols) +| companion_rows;
         // The block always ends with one blank row; keep it inside the body.
         if (body_rows <= visual_rows + 1) return 0;
         return @min((body_rows - visual_rows) / 2, body_rows - visual_rows - 1);
@@ -6618,31 +6651,6 @@ pub const TranscriptRuntime = struct {
         self.full_transcript = .from_snapshot(snapshot.presentation);
         self.full_transcript_page_anchor = snapshot.page_anchor;
         self.markTranscriptDirty();
-    }
-
-    pub fn requestTailViewport(
-        self: *TranscriptRuntime,
-        request: viewport_selection.TailViewportPolicy,
-    ) void {
-        const changed = if (self.tail_viewport_request) |current|
-            !std.meta.eql(current, request)
-        else
-            true;
-        self.tail_viewport_request = request;
-        self.tail_viewport_resolution = null;
-        const has_committed_anchor = switch (self.transcript_commit_state) {
-            .invalid => false,
-            .stable, .recovering => true,
-        };
-        if (changed and has_committed_anchor) {
-            self.invalidateTranscriptAnchor("tail viewport changed");
-        }
-    }
-
-    pub fn resolvedTailViewport(
-        self: *const TranscriptRuntime,
-    ) ?viewport_selection.TailOffsetResolution {
-        return self.tail_viewport_resolution;
     }
 
     pub fn closeFullTranscriptState(self: *TranscriptRuntime) void {
@@ -10899,7 +10907,7 @@ pub const TranscriptRuntime = struct {
             start_index,
             self.layout.cols,
             .{
-                .marker_style = user_message_card.promptMarkerStyle(),
+                .marker_style = ui_render.statusline_style,
                 .text_style = ui_render.statusline_style,
                 .reset_style = "\x1b[0m",
             },
@@ -11401,10 +11409,6 @@ test "transcript runtime initializer preserves an empty compact source cache" {
         @as(usize, 0),
         runtime.compact_transcript_source_cache.next_replacement,
     );
-}
-
-fn frameBandsEqual(a: render_engine.paint_plan.FrameBand, b: render_engine.paint_plan.FrameBand) bool {
-    return a.top == b.top and a.bottom == b.bottom and a.owner == b.owner;
 }
 
 fn totalVisualRows(line_rows: []const u16) u32 {
@@ -13222,7 +13226,7 @@ test "source rewrite replays unchanged history prefix after footer projection re
 }
 
 test "append pending wrap history replay starts a fresh row at a soft wrap" {
-    try expectHistoryReplayBoundary("12345678" ** 60, true);
+    try expectHistoryReplayBoundary(repeat("12345678", 60), true);
 }
 
 fn expectHistoryReplayBoundary(target_flow: []const u8, source_pending_wrap: bool) !void {

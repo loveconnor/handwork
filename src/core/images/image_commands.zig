@@ -246,11 +246,11 @@ const FakeApp = struct {
         return self.transcript.items;
     }
 
-    fn nextImageId(self: *FakeApp) usize {
+    pub fn nextImageId(self: *FakeApp) usize {
         return image_attachments.allocateImageId(&self.next_image_id_counter);
     }
 
-    fn peekNextImageId(self: *const FakeApp) usize {
+    pub fn peekNextImageId(self: *const FakeApp) usize {
         return self.next_image_id_counter;
     }
 
@@ -267,7 +267,7 @@ const FakeInput = struct {
     vertical_navigation: FakeVerticalNavigation = .{},
     history_boundary_count: usize = 0,
 
-    fn historyBoundary(self: *FakeInput, _: std.mem.Allocator) void {
+    pub fn historyBoundary(self: *FakeInput, _: std.mem.Allocator) void {
         self.history_boundary_count += 1;
     }
 

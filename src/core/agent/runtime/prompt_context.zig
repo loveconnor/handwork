@@ -5,6 +5,7 @@ const types = @import("../../shared/types.zig");
 const session_runtime = @import("../../session/session.zig");
 const stream_provider = @import("../stream_provider.zig");
 const model_provider = @import("../../config/model_provider.zig");
+const repeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const ChatMessage = types.ChatMessage;
@@ -640,7 +641,7 @@ test "provider request image accounting excludes encoded payload length" {
     };
     inline for (cases) |case| {
         const small = try measureProviderRequest(std.testing.allocator, case.prefix ++ "AAAA" ++ case.suffix, measurement_test_request(true));
-        const large = try measureProviderRequest(std.testing.allocator, case.prefix ++ ("AAAA" ** 1000) ++ case.suffix, measurement_test_request(true));
+        const large = try measureProviderRequest(std.testing.allocator, case.prefix ++ repeat("AAAA", 1000) ++ case.suffix, measurement_test_request(true));
         try std.testing.expect(large.serialized_bytes > small.serialized_bytes);
         try std.testing.expectEqual(small.text_tokens, large.text_tokens);
         try std.testing.expectEqual(small.estimated_input_tokens, large.estimated_input_tokens);
@@ -672,7 +673,7 @@ test "provider usage corrects a serialized estimate downward" {
 }
 
 test "retained context budgets provider replay on completed exchanges" {
-    const replay = types.ProviderReplay{ .source = .{ .provider = .codex, .model = "fixture/model" }, .parts_json = "[{\"type\":\"reasoning\",\"text\":\"\",\"providerOptions\":{\"openai\":{\"reasoningEncryptedContent\":\"" ++ ("r" ** 80_000) ++ "\"}}}]" };
+    const replay = types.ProviderReplay{ .source = .{ .provider = .codex, .model = "fixture/model" }, .parts_json = "[{\"type\":\"reasoning\",\"text\":\"\",\"providerOptions\":{\"openai\":{\"reasoningEncryptedContent\":\"" ++ repeat("r", 80_000) ++ "\"}}}]" };
     var steps = [_]types.ToolExecutionStep{
         .{ .assistant = @constCast("one"), .provider_replay = replay },
         .{ .assistant = @constCast("two"), .provider_replay = replay },
@@ -695,7 +696,7 @@ test "retained context budgets replay on standalone assistant replies" {
     const turn = types.AssistantHistoryTurn{
         .user = .{ .text = @constCast("continue") },
         .assistant = @constCast("small reply"),
-        .provider_replay = .{ .source = .{ .provider = .codex, .model = "fixture/model" }, .parts_json = "[{\"type\":\"reasoning\",\"text\":\"\",\"providerOptions\":{\"openai\":{\"reasoningEncryptedContent\":\"" ++ ("r" ** 80_000) ++ "\"}}}]" },
+        .provider_replay = .{ .source = .{ .provider = .codex, .model = "fixture/model" }, .parts_json = "[{\"type\":\"reasoning\",\"text\":\"\",\"providerOptions\":{\"openai\":{\"reasoningEncryptedContent\":\"" ++ repeat("r", 80_000) ++ "\"}}}]" },
     };
     const history = [_]HistoryTurn{ .{ .assistant = turn }, .{ .assistant = turn }, .{ .assistant = turn } };
     const selected = selectRecentContext(&history, 5_990, 119_808, .{});
@@ -732,7 +733,7 @@ test "provider request image accounting preserves text and tool payloads" {
 }
 
 test "provider request image calibration uses exact usage plus text growth without compounding" {
-    const first = RequestCost{ .serialized_bytes = 4_000_000, .text_tokens = 100, .image_identity = [_]u8{1} ** 32, .estimated_input_tokens = 100 };
+    const first = RequestCost{ .serialized_bytes = 4_000_000, .text_tokens = 100, .image_identity = @as([32]u8, @splat(1)), .estimated_input_tokens = 100 };
     var next = first;
     next.text_tokens = 150;
     next.estimated_input_tokens = 150;
@@ -747,7 +748,7 @@ test "provider request image calibration uses exact usage plus text growth witho
     try std.testing.expectEqual(@as(usize, 1100), repeated.estimated_input_tokens);
     try std.testing.expectEqual(@as(usize, 1000), calibrateProviderRequest(first, .{ .request = calibrated, .exact_input_tokens = 1050 }).estimated_input_tokens);
 
-    next.image_identity = [_]u8{2} ** 32;
+    next.image_identity = @as([32]u8, @splat(2));
     try std.testing.expectEqual(next, calibrateProviderRequest(next, .{ .request = first, .exact_input_tokens = 1000 }));
     next.image_identity = null;
     try std.testing.expectEqual(next, calibrateProviderRequest(next, .{ .request = first, .exact_input_tokens = 1000 }));
@@ -923,7 +924,7 @@ test "retained context budgets preserve an oversized newest exchange" {
 }
 
 test "retained context selects whole parallel tool exchanges without shortening results" {
-    const body = "large output " ** 2000;
+    const body = repeat("large output ", 2000);
     const calls = [_]types.ToolCall{
         .{ .id = "one", .name = "read_file", .arguments_json = "{}" },
         .{ .id = "two", .name = "read_file", .arguments_json = "{}" },

@@ -6,6 +6,7 @@ const capability_retrieval = @import("../../core/tooling/capability_retrieval.zi
 const skill_runtime = @import("../../core/skills/skill_runtime.zig");
 const tool_dispatch = @import("../../core/tooling/tool_dispatch.zig");
 const tool_result_limits = @import("../../core/tooling/tool_result_limits.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -283,7 +284,7 @@ test "skill search omits projected identities and permits redacted descriptions"
 test "skill search caps ranked entries and atomically omits byte overflow" {
     const alloc = std.testing.allocator;
     const skills = [_]skill_runtime.Skill{
-        .{ .name = "one", .description = "x" ** 700, .path = "/skills/one/SKILL.md", .source = .workspace_handwork },
+        .{ .name = "one", .description = repeat("x", 700), .path = "/skills/one/SKILL.md", .source = .workspace_handwork },
         .{ .name = "two", .description = "two", .path = "/skills/two/SKILL.md", .source = .workspace_handwork },
         .{ .name = "three", .description = "three", .path = "/skills/three/SKILL.md", .source = .workspace_handwork },
         .{ .name = "four", .description = "four", .path = "/skills/four/SKILL.md", .source = .workspace_handwork },
@@ -317,7 +318,7 @@ test "skill search projection releases every allocation failure" {
         fn run(alloc: Allocator) !void {
             const skills = [_]skill_runtime.Skill{
                 .{ .name = "unsafe", .description = "unsafe", .path = "/skills/TOKEN=runtime-location-secret/SKILL.md", .source = .workspace_handwork },
-                .{ .name = "oversized", .description = "x" ** 700, .path = "/skills/oversized/SKILL.md", .source = .workspace_handwork },
+                .{ .name = "oversized", .description = repeat("x", 700), .path = "/skills/oversized/SKILL.md", .source = .workspace_handwork },
                 .{ .name = "three", .description = "three", .path = "/skills/three/SKILL.md", .source = .workspace_handwork },
                 .{ .name = "four", .description = "four", .path = "/skills/four/SKILL.md", .source = .workspace_handwork },
                 .{ .name = "five", .description = "five", .path = "/skills/five/SKILL.md", .source = .workspace_handwork },

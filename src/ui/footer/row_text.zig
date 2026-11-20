@@ -19,6 +19,107 @@ pub fn composeDividerRow(alloc: Allocator, width: u16) !std.ArrayList(u8) {
     return row;
 }
 
+/// A full-width row of composer panel background (padding above/below input).
+pub fn composePanelPadRow(alloc: Allocator, width: u16) !std.ArrayList(u8) {
+    var row: std.ArrayList(u8) = .empty;
+    errdefer row.deinit(alloc);
+    try row.appendSlice(alloc, ui_render.composerPanelStyle());
+    try row.appendNTimes(alloc, ' ', width);
+    try row.appendSlice(alloc, ui_render.reset_style);
+    return row;
+}
+
+/// Paints `row` onto the composer panel: the panel background is applied up
+/// front, restored after every full reset inside the row, and padded to the
+/// full width so the field reads as one continuous surface.
+pub fn applyPanelBackground(alloc: Allocator, row: *std.ArrayList(u8), width: u16) !void {
+    return applyBackground(alloc, row, width, ui_render.composerPanelStyle());
+}
+
+/// A row inside the composer panel whose content sits on an inset bar: one
+/// column of panel on each side, `bar` (or the panel) across the middle.
+pub fn composePanelInsetRow(alloc: Allocator, content: []const u8, width: u16, highlighted: bool) !std.ArrayList(u8) {
+    var row: std.ArrayList(u8) = .empty;
+    errdefer row.deinit(alloc);
+    if (width < 3) return row;
+    const panel = ui_render.composerPanelStyle();
+    var inner: std.ArrayList(u8) = .empty;
+    defer inner.deinit(alloc);
+    try inner.appendSlice(alloc, content);
+    const bar = if (highlighted) ui_render.composerSelectionStyle() else panel;
+    try applyBackground(alloc, &inner, width - 2, bar);
+    try row.appendSlice(alloc, panel);
+    try row.append(alloc, ' ');
+    try row.appendSlice(alloc, inner.items);
+    try row.appendSlice(alloc, panel);
+    try row.append(alloc, ' ');
+    try row.appendSlice(alloc, ui_render.reset_style);
+    return row;
+}
+
+/// Converts one menu row composed for `width - 2` columns into an inset
+/// palette row: the selection gutter becomes a highlight bar and absolute
+/// column jumps become spaces so the panel background stays unbroken.
+pub fn panelizeMenuRow(alloc: Allocator, row: *std.ArrayList(u8), width: u16) !void {
+    if (width < 3) return;
+    const marker_style = ui_render.selected_completion_style;
+    const marker = ui_render.selection_marker;
+    var selected = false;
+    var flat: std.ArrayList(u8) = .empty;
+    defer flat.deinit(alloc);
+    var i: usize = 0;
+    const src = row.items;
+    while (i < src.len) {
+        if (std.mem.startsWith(u8, src[i..], marker_style) and
+            std.mem.startsWith(u8, src[i + marker_style.len ..], marker))
+        {
+            selected = true;
+            try flat.appendSlice(alloc, "  ");
+            i += marker_style.len + marker.len;
+            if (std.mem.startsWith(u8, src[i..], ui_render.reset_style)) i += ui_render.reset_style.len;
+            continue;
+        }
+        if (src[i] == 0x1b and i + 2 < src.len and src[i + 1] == '[') {
+            var j = i + 2;
+            while (j < src.len and src[j] >= '0' and src[j] <= '9') j += 1;
+            if (j < src.len and src[j] == 'G' and j > i + 2) {
+                const column = std.fmt.parseInt(usize, src[i + 2 .. j], 10) catch 1;
+                const used = display_width.visibleWidthIgnoringAnsi(flat.items);
+                if (column > used + 1) try flat.appendNTimes(alloc, ' ', column - 1 - used);
+                i = j + 1;
+                continue;
+            }
+        }
+        try flat.append(alloc, src[i]);
+        i += 1;
+    }
+    var clipped: std.ArrayList(u8) = .empty;
+    defer clipped.deinit(alloc);
+    try appendClipped(alloc, &clipped, flat.items, width - 2);
+    try clipped.appendSlice(alloc, ui_render.reset_style);
+    const next = try composePanelInsetRow(alloc, clipped.items, width, selected);
+    row.deinit(alloc);
+    row.* = next;
+}
+
+fn applyBackground(alloc: Allocator, row: *std.ArrayList(u8), width: u16, background: []const u8) !void {
+    var out: std.ArrayList(u8) = .empty;
+    errdefer out.deinit(alloc);
+    try out.appendSlice(alloc, background);
+    var rest = row.items;
+    while (std.mem.find(u8, rest, ui_render.reset_style)) |at| {
+        try out.appendSlice(alloc, rest[0 .. at + ui_render.reset_style.len]);
+        try out.appendSlice(alloc, background);
+        rest = rest[at + ui_render.reset_style.len ..];
+    }
+    try out.appendSlice(alloc, rest);
+    const used = display_width.visibleWidthIgnoringAnsi(row.items);
+    if (used < width) try out.appendNTimes(alloc, ' ', width - used);
+    try out.appendSlice(alloc, ui_render.reset_style);
+    row.deinit(alloc);
+    row.* = out;
+}
+
 pub fn appendClipped(alloc: Allocator, out: *std.ArrayList(u8), bytes: []const u8, width: u16) !void {
     const width_usize: usize = width;
     if (width_usize == 0) return;

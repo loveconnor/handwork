@@ -525,13 +525,13 @@ test "child feedback deduplicates operations and bounds queued receipts" {
         owner.deinit();
     }
     try std.testing.expect(worker.beginDirectProcessing(7));
-    const fingerprint = [_]u8{1} ** 32;
+    const fingerprint = @as([32]u8, @splat(1));
     try std.testing.expect((try owner.steer("child", "previous-work", "first", fingerprint, "same text")) == .waiting);
     try std.testing.expectEqual(@as(usize, 0), worker.queuedPromptCount());
     try std.testing.expect(owner.feedbackReplay("first", fingerprint) == null);
     try std.testing.expectEqual(types.SteeringDelivery.queued, (try owner.steer("child", "work", "first", fingerprint, "same text")).receipt);
     try std.testing.expectEqual(types.SteeringDelivery.queued, (try owner.steer("child", "work", "first", fingerprint, "same text")).receipt);
-    try std.testing.expect((try owner.steer("child", "work", "first", [_]u8{2} ** 32, "different")) == .conflict);
+    try std.testing.expect((try owner.steer("child", "work", "first", @as([32]u8, @splat(2)), "different")) == .conflict);
     try std.testing.expectEqual(@as(usize, 1), worker.queuedPromptCount());
     for (1..64) |index| {
         const id = try std.fmt.allocPrint(alloc, "feedback-{d}", .{index});
@@ -567,7 +567,7 @@ fn checkFeedbackAllocation(alloc: Allocator) !void {
         try owner.slots.append(alloc, slot);
     }
     try std.testing.expect(worker.beginDirectProcessing(1));
-    const result = try owner.steer("child", "work", "message", [_]u8{1} ** 32, "feedback");
+    const result = try owner.steer("child", "work", "message", @as([32]u8, @splat(1)), "feedback");
     try std.testing.expectEqual(types.SteeringDelivery.queued, result.receipt);
 }
 

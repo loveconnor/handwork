@@ -1,4 +1,5 @@
 const std = @import("std");
+const repeat = @import("../core/shared/comptime_repeat.zig").repeat;
 
 const debug_trace = @import("../core/shared/debug_trace.zig");
 const io_mod = @import("../core/shared/io.zig");
@@ -886,7 +887,7 @@ test "install transaction payloads are not immediate skill candidates" {
     defer alloc.free(source_dir);
     const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "dest");
     defer alloc.free(skills_dir);
-    var transaction = try InstallTransactionPaths.init(alloc, skills_dir, [_]u8{1} ** 16);
+    var transaction = try InstallTransactionPaths.init(alloc, skills_dir, @as([16]u8, @splat(1)));
     defer transaction.deinit(alloc);
     defer std.Io.Dir.cwd().deleteTree(io_mod.getIo(), transaction.root) catch {};
 
@@ -904,8 +905,8 @@ test "install transaction creation retries collisions without reusing roots" {
 
     const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "dest");
     defer alloc.free(skills_dir);
-    const collision_token = [_]u8{1} ** 16;
-    const fresh_token = [_]u8{2} ** 16;
+    const collision_token = @as([16]u8, @splat(1));
+    const fresh_token = @as([16]u8, @splat(2));
     var collision = try InstallTransactionPaths.init(alloc, skills_dir, collision_token);
     defer collision.deinit(alloc);
     try std.Io.Dir.createDirAbsolute(io_mod.getIo(), collision.root, .default_dir);
@@ -937,7 +938,7 @@ test "install transaction collision exhaustion leaves the destination unchanged"
     defer alloc.free(skills_dir);
     const installed_path = try std.fs.path.join(alloc, &.{ skills_dir, "review", "SKILL.md" });
     defer alloc.free(installed_path);
-    const collision_token = [_]u8{3} ** 16;
+    const collision_token = @as([16]u8, @splat(3));
     var collision = try InstallTransactionPaths.init(alloc, skills_dir, collision_token);
     defer collision.deinit(alloc);
     try std.Io.Dir.createDirAbsolute(io_mod.getIo(), collision.root, .default_dir);
@@ -945,7 +946,7 @@ test "install transaction collision exhaustion leaves the destination unchanged"
 
     var token_state = TestTransactionTokenState{
         .collision_token = collision_token,
-        .fresh_token = [_]u8{4} ** 16,
+        .fresh_token = @as([16]u8, @splat(4)),
         .collision_count = install_transaction_attempts,
     };
     try std.testing.expectError(
@@ -1003,7 +1004,7 @@ test "skill install lock leaves do not expand valid destination names" {
 
     const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "dest");
     defer alloc.free(skills_dir);
-    const long_name = "n" ** 240;
+    const long_name = repeat("n", 240);
     try skill_contract.validateManagedSkillName(long_name);
     var long_lock = try acquireSkillInstallLock(skills_dir, long_name, 0, .{});
     long_lock.release();
@@ -1230,7 +1231,7 @@ fn writeLargeTempSkill(tmp: *std.testing.TmpDir, sub_path: []const u8, name: []c
     try file.writeStreamingAll(io_mod.getIo(), "---\nname: ");
     try file.writeStreamingAll(io_mod.getIo(), name);
     try file.writeStreamingAll(io_mod.getIo(), "\ndescription: valid large skill\n---\n\n");
-    const body_chunk = [_]u8{'x'} ** (16 * 1024);
+    const body_chunk = @as([(16 * 1024)]u8, @splat('x'));
     for (0..257) |_| try file.writeStreamingAll(io_mod.getIo(), &body_chunk);
     try file.writeStreamingAll(io_mod.getIo(), "\nLARGE_SKILL_TAIL\n");
 }

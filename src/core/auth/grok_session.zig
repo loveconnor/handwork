@@ -7,6 +7,7 @@ const profile_paths = @import("../shared/profile_paths.zig");
 const types = @import("../shared/types.zig");
 const secret = @import("secret.zig");
 const session_presence = @import("session_presence.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const schema_version: i64 = 1;
@@ -273,7 +274,7 @@ test "Grok account identity is bounded and safe for HTTP headers" {
     try std.testing.expect(validAccountId("acct_123"));
     try std.testing.expect(!validAccountId(""));
     try std.testing.expect(!validAccountId("acct\r\ninjected"));
-    try std.testing.expect(!validAccountId("a" ** 1025));
+    try std.testing.expect(!validAccountId(repeat("a", 1025)));
 
     const invalid =
         \\{"version":1,"access_token":"access","refresh_token":"refresh","expires_at_ms":1234,"account_id":"acct\ninjected"}

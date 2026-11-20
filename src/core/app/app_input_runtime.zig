@@ -76,6 +76,7 @@ const input_full_transcript_runtime = @import("input_full_transcript_runtime.zig
 const input_selection_runtime = @import("input_selection_runtime.zig");
 const input_limit_feedback = @import("input_limit_feedback.zig");
 const app_upgrade_runtime = @import("app_upgrade_runtime.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 test {
     _ = file_picker_path;
@@ -88,7 +89,6 @@ const ToolPermissionDecision = types.ToolPermissionDecision;
 
 pub const file_picker_completion_cap = input_completion_runtime.file_picker_completion_cap;
 const ctrl_g_upgrade_byte: u8 = 7;
-const ctrl_x_manager_byte: u8 = 24;
 
 fn classifyResumeFailure(err: anyerror) session_catalog.ResumeFailure {
     return switch (err) {
@@ -1481,11 +1481,6 @@ pub fn Runtime(comptime App: type) type {
             return false;
         }
 
-        fn presentedSubagentApproval(app: *const App) bool {
-            _ = app;
-            return false;
-        }
-
         fn approvalOwnsCurrentSurface(app: *const App) bool {
             return app.approval_prompt.isActive();
         }
@@ -1936,7 +1931,7 @@ pub fn Runtime(comptime App: type) type {
             return app.auth.popPickerStage(app.alloc);
         }
 
-        fn cancelPromptRetryAfterAuth(app: *App) void {
+        pub fn cancelPromptRetryAfterAuth(app: *App) void {
             if (comptime @hasDecl(App, "cancelPromptRetryAfterAuth")) {
                 app.cancelPromptRetryAfterAuth();
             }
@@ -2398,13 +2393,6 @@ pub fn Runtime(comptime App: type) type {
             app.shell.render_requests.request(.footer);
         }
 
-        fn closeSkillsMenu(app: *App) bool {
-            if (comptime !@hasField(App, "skills")) return false;
-            if (!app.skills.menu.active) return false;
-            app.skills.closeMenu();
-            return true;
-        }
-
         fn closeHelpMenu(app: *App, clear_query: bool) bool {
             if (!app.input_runtime.help_menu.active) return false;
             app.input_runtime.help_menu.close();
@@ -2762,7 +2750,7 @@ pub fn Runtime(comptime App: type) type {
             app.shell.render_requests.request(.footer);
         }
 
-        fn refreshUsageMenu(app: *App, scope: usage_report.Scope) !void {
+        pub fn refreshUsageMenu(app: *App, scope: usage_report.Scope) !void {
             if (comptime !runtime_profile.allows(App, .profile_usage)) return;
             if (comptime @hasDecl(App, "refreshUsageMenu")) {
                 try app.refreshUsageMenu(scope);
@@ -2771,7 +2759,7 @@ pub fn Runtime(comptime App: type) type {
             }
         }
 
-        fn reloadUsageMenu(app: *App, scope: usage_report.Scope) !void {
+        pub fn reloadUsageMenu(app: *App, scope: usage_report.Scope) !void {
             if (comptime !runtime_profile.allows(App, .profile_usage)) return;
             if (comptime @hasDecl(App, "reloadUsageMenu")) {
                 try app.reloadUsageMenu(scope);
@@ -3474,14 +3462,6 @@ const FakeApprovalShell = struct {
         self.transcript.deinit(alloc);
     }
 
-    fn updateRawBytesEntry(_: *FakeApprovalShell, _: std.mem.Allocator, _: u32, _: []const u8) !bool {
-        return false;
-    }
-
-    fn appendRawTranscriptEntry(_: *FakeApprovalShell, _: std.mem.Allocator, _: []const u8) !u32 {
-        return 1;
-    }
-
     pub fn scrollFullTranscript(
         _: *FakeApprovalShell,
         _: input_action.MouseWheel,
@@ -3540,10 +3520,6 @@ const FakeApprovalCancelApp = struct {
         self.input_runtime.entities.image_tokens.clearRetainingCapacity();
         for (self.pending_images.items) |image| types.freeImageAttachment(self.alloc, image);
         self.pending_images.clearRetainingCapacity();
-    }
-
-    fn ensureTrailingBlankRow(self: *FakeApprovalCancelApp) !void {
-        try self.transcript.appendSlice(self.alloc, "\n\n");
     }
 
     fn writeTranscript(self: *FakeApprovalCancelApp, content: []const u8, redraw: bool) !void {
@@ -3607,12 +3583,7 @@ const FakeApprovalCancelApp = struct {
 
 const RoutingSubagents = struct {
     active: bool = false,
-    main_approval_presented: bool = false,
     handled_keys: usize = 0,
-    handled_raw_keys: usize = 0,
-    handled_actions: usize = 0,
-    last_handled_key: ?u8 = null,
-    last_main_approval_id: ?u64 = null,
     toggle_view_calls: usize = 0,
     manager_paste: core_input_runtime.Runtime = .{},
 
@@ -3624,46 +3595,8 @@ const RoutingSubagents = struct {
         return self.active;
     }
 
-    pub fn mainApprovalPresented(self: *const RoutingSubagents) bool {
-        return self.main_approval_presented;
-    }
-
     pub fn count(_: *const RoutingSubagents) usize {
         return 0;
-    }
-
-    pub fn panelText(_: *RoutingSubagents, alloc: std.mem.Allocator, _: u16, _: u16, _: transcript_runtime.Styles) ![]u8 {
-        return alloc.dupe(u8, "");
-    }
-
-    pub fn managerPasteActive(self: *const RoutingSubagents) bool {
-        return self.active and self.manager_paste.paste.active();
-    }
-
-    pub fn beginManagerPaste(self: *RoutingSubagents) void {
-        self.manager_paste.paste.begin(.decision_prompt, std.math.maxInt(usize));
-    }
-
-    pub fn consumeManagerPasteByte(
-        self: *RoutingSubagents,
-        alloc: std.mem.Allocator,
-        byte: u8,
-    ) !bool {
-        if (!self.managerPasteActive()) return false;
-        try self.manager_paste.paste.consumeByte(alloc, byte);
-        return true;
-    }
-
-    pub fn settleManagerPasteDeliveryEpoch(
-        self: *RoutingSubagents,
-        _: std.mem.Allocator,
-    ) bool {
-        switch (self.manager_paste.paste.settleDeliveryEpoch()) {
-            .none => return false,
-            .finish => self.manager_paste.paste.resetWithTrace(.decision_prompt_active),
-            .reject => self.manager_paste.paste.resetWithTrace(.unsafe_suffix),
-        }
-        return true;
     }
 };
 
@@ -4065,7 +3998,7 @@ const RoutingFakeApp = struct {
         var count: usize = 0;
         for (self.model_completion_values) |value| {
             if (count == out.len) break;
-            if (query.len > 0 and std.ascii.indexOfIgnoreCase(value, query) == null) continue;
+            if (query.len > 0 and std.ascii.findIgnoreCase(value, query) == null) continue;
             out[count] = value;
             count += 1;
         }
@@ -4303,10 +4236,6 @@ const RoutingFakeApp = struct {
         const depth = self.shell.transcriptPresentationDepth().transition(event);
         _ = try self.shell.setTranscriptPresentationDepth(self.alloc, depth);
         return depth;
-    }
-
-    pub fn writeSubagentSnapshot(self: *RoutingFakeApp) !void {
-        self.subagents.toggle_view_calls += 1;
     }
 
     pub fn admitPendingApprovalResize(self: *RoutingFakeApp) bool {
@@ -6872,7 +6801,7 @@ test "app_input_runtime bare model Tab keeps current selection across catalog re
 test "app_input_runtime bare model Tab keeps current selection beyond completion window" {
     const alloc = std.testing.allocator;
     const current_model = "anthropic/claude-opus-4.8";
-    var completions = [_][]const u8{"anthropic/claude-opus-4.8-preview"} ** 33;
+    var completions = @as([33][]const u8, @splat("anthropic/claude-opus-4.8-preview"));
     completions[completions.len - 1] = current_model;
 
     var app = try RoutingFakeApp.init(alloc);
@@ -9983,7 +9912,7 @@ test "app_input_runtime question freeform rejects paste beyond input limit" {
     app.question_prompt.moveChoice(-1);
 
     try feedRoutingBytes(&app, "\x1b[200~");
-    try feedRoutingBytes(&app, "x" ** 4097);
+    try feedRoutingBytes(&app, repeat("x", 4097));
     try feedRoutingBytes(&app, "\x1b[201~");
 
     try std.testing.expectEqual(paste_framing.Owner.none, app.input_runtime.paste.owner);
@@ -11633,43 +11562,13 @@ fn installReadyRoutingFileApproval(app: *RoutingFakeApp) !void {
     });
 }
 
-const ApprovalOwnershipBinding = struct {
-    child_id: []const u8,
-};
-
 const ApprovalOwnershipSubagents = struct {
     view_active: bool = true,
     child_id: []const u8 = "selected-child",
-    presented_binding: ?ApprovalOwnershipBinding = null,
-    card_binding: ?ApprovalOwnershipBinding = null,
 
     pub fn isViewActive(self: *const ApprovalOwnershipSubagents) bool {
         return self.view_active;
     }
-
-    pub fn childRouteId(self: *const ApprovalOwnershipSubagents) ?[]const u8 {
-        return self.child_id;
-    }
-
-    pub fn mainApprovalBinding(
-        self: *const ApprovalOwnershipSubagents,
-        _: u64,
-    ) ?ApprovalOwnershipBinding {
-        return self.presented_binding;
-    }
-
-    pub fn mainApprovalCardBinding(
-        self: *const ApprovalOwnershipSubagents,
-        _: u64,
-    ) ?ApprovalOwnershipBinding {
-        return self.card_binding;
-    }
-};
-
-const ApprovalOwnershipApp = struct {
-    approval_prompt: approval_prompt.ApprovalPrompt = .{},
-    approval_screen: interaction_state.ApprovalScreenState = .{},
-    subagents: ApprovalOwnershipSubagents = .{},
 };
 
 test "app_input_runtime consumes legacy X10 reports during active file approval" {
@@ -13798,7 +13697,7 @@ test "app_input_runtime disabled prompt history skips composer recall recording"
 test "app_input_runtime accepted large paste recalls compact and editable" {
     const alloc = std.testing.allocator;
     const placeholder = "[Pasted text #7, 1 line]";
-    const backing = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const backing = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     var app = FakeSubmitApp{ .alloc = alloc };
     defer app.deinit();
 
@@ -15571,7 +15470,7 @@ test "app_input_runtime finalizePastedBlock registers large text placeholder ato
     var app = FakeSubmitApp{ .alloc = alloc };
     defer app.deinit();
 
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
 
     try app.input_runtime.insertionState().insertByte(alloc, 'a', .clear);
     try app.input_runtime.paste.buffer.appendSlice(alloc, large_paste);
@@ -15589,7 +15488,7 @@ test "app_input_runtime finalizePastedBlock registers large text placeholder ato
 
 test "app_input_runtime large paste replaces selection within its expanded byte budget" {
     const alloc = std.testing.allocator;
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     var app = FakeSubmitApp{ .alloc = alloc };
     defer app.deinit();
     try app.input_runtime.textReplacementState().replace(alloc, "abcde");
@@ -15610,7 +15509,7 @@ test "app_input_runtime rejects a large paste when its backing text does not fit
     const alloc = std.testing.allocator;
     var app = FakeSubmitApp{ .alloc = alloc };
     defer app.deinit();
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     try app.input_runtime.textReplacementState().replace(alloc, "draft");
     try app.input_runtime.paste.buffer.appendSlice(alloc, large_paste);
 
@@ -15627,7 +15526,7 @@ test "app_input_runtime rejects a large paste when its backing text does not fit
 
 test "app_input_runtime multiple large pastes share one expanded byte budget" {
     const alloc = std.testing.allocator;
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
     var app = FakeSubmitApp{ .alloc = alloc };
     defer app.deinit();
 
@@ -15646,7 +15545,7 @@ test "app_input_runtime multiple large pastes share one expanded byte budget" {
 
 test "app_input_runtime finalizePastedBlock leaves large paste unchanged on allocation failure" {
     const base = std.testing.allocator;
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
 
     var saw_failure = false;
     var fail_index: usize = 0;
@@ -15676,7 +15575,7 @@ test "app_input_runtime finalizePastedBlock leaves large paste unchanged on allo
 
 test "app_input_runtime finishPaste leaves no orphan placeholder after late finalization failure" {
     const base = std.testing.allocator;
-    const large_paste = "x" ** (paste_blocks.large_paste_char_threshold + 1);
+    const large_paste = repeat("x", paste_blocks.large_paste_char_threshold + 1);
 
     var saw_failure = false;
     var fail_index: usize = 0;

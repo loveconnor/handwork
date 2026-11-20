@@ -3207,7 +3207,9 @@ const dark_to_light_theme_tokens = [_]ThemeToken{
     .{ .from = "\x1b[1;38;5;252m", .to = "\x1b[1;38;5;238m" },
     .{ .from = "\x1b[38;5;252m", .to = "\x1b[38;5;238m" },
     .{ .from = "\x1b[38;5;250m", .to = "\x1b[38;5;241m" },
-    .{ .from = "\x1b[38;5;245m", .to = "\x1b[38;5;247m" },
+    .{ .from = "\x1b[38;5;248m", .to = "\x1b[38;5;242m" },
+    .{ .from = "\x1b[38;5;242m", .to = "\x1b[38;5;246m" },
+    .{ .from = "\x1b[38;5;245m", .to = "\x1b[38;5;243m" },
 };
 
 const light_to_dark_theme_tokens = [_]ThemeToken{
@@ -3216,7 +3218,9 @@ const light_to_dark_theme_tokens = [_]ThemeToken{
     .{ .from = "\x1b[1;38;5;238m", .to = "\x1b[1;38;5;252m" },
     .{ .from = "\x1b[38;5;238m", .to = "\x1b[38;5;252m" },
     .{ .from = "\x1b[38;5;241m", .to = "\x1b[38;5;250m" },
-    .{ .from = "\x1b[38;5;247m", .to = "\x1b[38;5;245m" },
+    .{ .from = "\x1b[38;5;242m", .to = "\x1b[38;5;248m" },
+    .{ .from = "\x1b[38;5;246m", .to = "\x1b[38;5;242m" },
+    .{ .from = "\x1b[38;5;243m", .to = "\x1b[38;5;245m" },
 };
 
 fn themeOwnsRawEntry(class: RawEntryClass) bool {

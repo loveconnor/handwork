@@ -66,7 +66,7 @@ fn composeSetupChoiceRow(
     const enabled = view.choiceEnabled(choice);
     const style = if (selected and enabled) ui_render.selected_completion_style else ui_render.dim_style;
     try row.appendSlice(alloc, style);
-    try row.appendSlice(alloc, if (selected and enabled) "› " else "  ");
+    try row.appendSlice(alloc, if (selected and enabled) "❯ " else "  ");
 
     const value_col = detailValueColumn(width);
     const label_width = value_col -| 2;
@@ -271,7 +271,7 @@ fn composeOnboardingPickerRow(
         const label = std.fmt.bufPrint(
             &label_buf,
             "{s}{s}",
-            .{ if (selected) "   › " else "     ", view.choiceLabel(choice) },
+            .{ if (selected) "   ❯ " else "     ", view.choiceLabel(choice) },
         ) catch view.choiceLabel(choice);
         try row_text.appendClipped(alloc, &row, label, width);
         try row.appendSlice(alloc, ui_render.reset_style);
@@ -453,7 +453,7 @@ fn composeSignInPickerRow(
         6 => if (accepts_manual_code)
             "   enter submits or reopens browser · esc cancels"
         else
-            "   enter reopens browser · esc cancels",
+            "   enter reopens browser    esc cancels",
         else => "",
     };
     try row_text.appendClipped(alloc, &row, label, width);
@@ -560,8 +560,10 @@ fn slashMenuLayoutForCounts(
     if (result_count == 0) return null;
 
     const row_budget = inlinePickerRowBudget(terminal_rows, input_extra, banner_rows);
-    const show_header = row_budget > 2;
-    const header_rows: u16 = if (show_header) 2 else 0;
+    // The palette has no header: the count lives in the hint row instead,
+    // so every budgeted row shows a result.
+    const show_header = false;
+    const header_rows: u16 = 0;
     const selectable_rows = row_budget - header_rows;
     const selected = selection_index % result_count;
     const window_start = updateEdgeScrollPickerWindowStart(current_window_start, result_count, selected, selectable_rows);
@@ -1181,52 +1183,30 @@ fn composeSlashMenuRow(
     column_widths: SlashMenuColumnWidths,
     width: u16,
 ) !std.ArrayList(u8) {
-    var row: std.ArrayList(u8) = .empty;
-    errdefer row.deinit(alloc);
-    if (width == 0) return row;
-
-    // Selection is signaled by brightness alone (like the model picker); no
-    // caret marker. The two-column indent stays fixed so rows stay aligned.
-    try row.appendSlice(alloc, if (selected) ui_render.selected_completion_style else ui_render.dim_style);
-    try row.appendSlice(alloc, "  ");
-
-    const content_width: usize = @as(usize, width) -| 1;
-    const marker_width: usize = 2;
-    if (content_width <= marker_width) {
-        try row.appendSlice(alloc, ui_render.reset_style);
-        return row;
-    }
-    try row_text.appendSingleLineEllipsized(alloc, &row, content.label, content_width - marker_width);
+    // Results live inside the composer panel: labels line up under the typed
+    // text, the selection is a soft inset bar, and descriptions recede.
+    if (width < 8) return .empty;
+    const bar_width: usize = @as(usize, width) - 2;
+    const lead: usize = 2;
+    const right_pad: usize = 2;
+    var inner: std.ArrayList(u8) = .empty;
+    defer inner.deinit(alloc);
+    try inner.appendNTimes(alloc, ' ', lead);
+    try inner.appendSlice(alloc, if (selected) ui_render.hint_style else ui_render.system_notice_text_style);
+    const label_budget = bar_width -| (lead + right_pad);
+    try row_text.appendSingleLineEllipsized(alloc, &inner, content.label, label_budget);
+    try inner.appendSlice(alloc, ui_render.reset_style);
 
     const label_width = display_width.visibleWidth(content.label);
-    const column_gap: usize = 3;
-    const description_start = @min(content_width, marker_width + @max(column_widths.label, label_width) + column_gap);
-    try appendSpacesToVisibleWidth(alloc, &row, description_start);
-
-    const metadata_width = display_width.visibleWidth(content.metadata);
-    const min_description_width: usize = 24;
-    const metadata_start = content_width -| column_widths.metadata;
-    const metadata_fits = metadata_width > 0 and column_widths.metadata > 0 and column_widths.metadata <= content_width;
-    const show_metadata = if (content.description.len > 0)
-        metadata_fits and metadata_start >= description_start + min_description_width + column_gap
-    else
-        metadata_fits and metadata_start >= description_start + column_gap;
-    const description_width = if (show_metadata)
-        metadata_start - description_start - column_gap
-    else
-        content_width - description_start;
-
-    if (content.description.len > 0 and description_width > 0) {
-        try row.appendSlice(alloc, ui_render.dim_style);
-        try row_text.appendSingleLineEllipsized(alloc, &row, content.description, description_width);
+    const column_gap: usize = 4;
+    const description_start = lead + @max(column_widths.label, label_width) + column_gap;
+    if (content.description.len > 0 and description_start + 8 < bar_width -| right_pad) {
+        try appendSpacesToVisibleWidth(alloc, &inner, description_start);
+        try inner.appendSlice(alloc, if (selected) ui_render.statusline_style else ui_render.dim_style);
+        try row_text.appendSingleLineEllipsized(alloc, &inner, content.description, bar_width - right_pad - description_start);
+        try inner.appendSlice(alloc, ui_render.reset_style);
     }
-    if (show_metadata) {
-        try appendSpacesToVisibleWidth(alloc, &row, metadata_start);
-        try row.appendSlice(alloc, ui_render.dim_style);
-        try row.appendSlice(alloc, content.metadata);
-    }
-    try row.appendSlice(alloc, ui_render.reset_style);
-    return row;
+    return row_text.composePanelInsetRow(alloc, inner.items, width, selected);
 }
 
 fn appendSpacesToVisibleWidth(alloc: Allocator, row: *std.ArrayList(u8), target_width: usize) !void {
@@ -1418,7 +1398,7 @@ test "slash menu rows prioritize marker label description and category by width"
     defer wide.deinit(std.testing.allocator);
     try std.testing.expect(std.mem.startsWith(u8, wide.items, ui_render.selected_completion_style));
     try std.testing.expect(std.mem.find(u8, wide.items, ui_render.system_notice_label_style) == null);
-    try std.testing.expect(std.mem.find(u8, wide.items, "❯") == null);
+    try std.testing.expect(std.mem.find(u8, wide.items, "❯") != null);
     try std.testing.expect(std.mem.find(u8, wide.items, "/model") != null);
     try std.testing.expect(std.mem.find(u8, wide.items, "Model") != null);
     try std.testing.expect(display_width.visibleWidthIgnoringAnsi(wide.items) < 100);
@@ -1436,7 +1416,7 @@ test "slash menu rows prioritize marker label description and category by width"
 
     var narrow = try composeSlashMenuOptionRow(std.testing.allocator, picker_test_slash_registry, "/m", &.{}, 0, true, column_widths, 42, true);
     defer narrow.deinit(std.testing.allocator);
-    try std.testing.expect(std.mem.find(u8, narrow.items, "❯") == null);
+    try std.testing.expect(std.mem.find(u8, narrow.items, "❯") != null);
     try std.testing.expect(std.mem.find(u8, narrow.items, "/model") != null);
     try std.testing.expect(std.mem.find(u8, narrow.items, "Model") == null);
     try std.testing.expect(std.mem.find(u8, narrow.items, "…") != null);
@@ -2206,7 +2186,7 @@ test "provider onboarding offers Codex and OpenAI at full and compact heights" {
             try screen.appendSlice(alloc, row.items);
             try screen.append(alloc, '\n');
         }
-        try std.testing.expect(std.mem.find(u8, screen.items, "› OpenAI") != null);
+        try std.testing.expect(std.mem.find(u8, screen.items, "❯ OpenAI") != null);
         if (rows > 2) try std.testing.expect(std.mem.find(u8, screen.items, "Codex") != null);
         for ([_][]const u8{"/setup"}) |removed| {
             try std.testing.expect(std.mem.find(u8, screen.items, removed) == null);

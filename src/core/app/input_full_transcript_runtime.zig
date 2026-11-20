@@ -140,11 +140,17 @@ pub fn Runtime(comptime App: type) type {
                 }
                 if (to == .compact)
                     try app_lifecycle.openCompactTranscript(
-                        app.alloc, &app.terminal, &app.shell, &app.metrics,
+                        app.alloc,
+                        &app.terminal,
+                        &app.shell,
+                        &app.metrics,
                     )
                 else
                     try app_lifecycle.openFullTranscript(
-                        app.alloc, &app.terminal, &app.shell, &app.metrics,
+                        app.alloc,
+                        &app.terminal,
+                        &app.shell,
+                        &app.metrics,
                     );
                 requestActiveSurfaceFrame(app);
             } else {

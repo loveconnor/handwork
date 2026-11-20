@@ -10,6 +10,7 @@ const terminal_contracts = @import("../terminal/contracts.zig");
 const terminal_client_runtime = @import("../terminal/client.zig");
 const terminal_ui_projection = @import("../terminal/ui_projection.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 const test_builtin_tools = if (builtin.is_test)
     @import("../../builtins/tools.zig")
 else
@@ -20,7 +21,6 @@ const ToolCall = types.ToolCall;
 const max_run_command_activity_bytes = 120;
 const max_run_command_activity_source_bytes = max_run_command_activity_bytes * max_run_command_activity_bytes;
 pub const max_run_command_reflow_bytes = max_run_command_activity_source_bytes;
-pub const max_auto_permission_reason_presentation_bytes: usize = 160;
 
 pub const ToolActionInput = struct {
     tool_registry: tool_dispatch.Registry,
@@ -200,7 +200,7 @@ test "subagent rows project request identity state and bounded safe previews" {
     try std.testing.expect(text_utils.isTerminalSafe(unsafe.label));
     try std.testing.expect(text_utils.isTerminalSafe(unsafe.detail));
     try std.testing.expect(std.mem.find(u8, unsafe.detail, "日本語") != null);
-    const long = try subagentPreview(alloc, "日本語" ** 100);
+    const long = try subagentPreview(alloc, repeat("日本語", 100));
     defer alloc.free(long);
     try std.testing.expect(long.len <= 120);
     try std.testing.expect(text_utils.isTerminalSafe(long));
@@ -964,7 +964,7 @@ test "run command activity projects line boundaries without changing other bytes
 
 test "run command detail uses the caller bound without changing activity labels" {
     const alloc = std.testing.allocator;
-    const command = "printf " ++ ("alpha-beta-gamma-delta-" ** 8);
+    const command = "printf " ++ repeat("alpha-beta-gamma-delta-", 8);
     const arguments_json = try std.fmt.allocPrint(
         alloc,
         "{{\"command\":{f}}}",
@@ -996,7 +996,7 @@ test "run command detail uses the caller bound without changing activity labels"
     try std.testing.expect(activity.detail.len <= max_run_command_activity_bytes);
     try std.testing.expect(std.mem.endsWith(u8, activity.detail, "..."));
 
-    const hidden_workspace_path = "printf " ++ ("prefix-" ** 20) ++ " /Users/example/workspace/file";
+    const hidden_workspace_path = "printf " ++ repeat("prefix-", 20) ++ " /Users/example/workspace/file";
     try std.testing.expectEqual(
         @as(?[]u8, null),
         try formatRunCommandDetailBounded(
@@ -1126,7 +1126,7 @@ test "tool presentation formats bounded web search action detail" {
 
 test "tool presentation bounds a large multiline run command activity" {
     const alloc = std.testing.allocator;
-    const arguments_json = "{\"command\":\"" ++ ("é\\r\\n" ** 20_000) ++ "\"}";
+    const arguments_json = "{\"command\":\"" ++ repeat("é\\r\\n", 20_000) ++ "\"}";
     const label = try formatPlainAction(alloc, .{
         .tool_registry = test_tool_registry,
         .call = .{
@@ -1275,7 +1275,7 @@ test "captured display target uses retained command without consuming output" {
 
 test "terminal display target bounds and sanitizes command metadata" {
     const alloc = std.testing.allocator;
-    const target = try formatTerminalDisplayTarget(alloc, "/tmp/workspace", "/tmp/workspace/build\n\x1b[31m" ++ ("é" ** 120));
+    const target = try formatTerminalDisplayTarget(alloc, "/tmp/workspace", "/tmp/workspace/build\n\x1b[31m" ++ repeat("é", 120));
     defer alloc.free(target);
     try std.testing.expect(std.mem.startsWith(u8, target, "./build "));
     try std.testing.expect(target.len <= max_run_command_activity_bytes);

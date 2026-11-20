@@ -976,14 +976,14 @@ pub fn CompletionRuntime(comptime App: type) type {
             return filePickerEligible(app) and hasFileQuery(app);
         }
 
-        fn isCurrentFileCompletion(app: *App, query: []const u8, path: []const u8, kind: file_index.CandidateKind) bool {
+        pub fn isCurrentFileCompletion(app: *App, query: []const u8, path: []const u8, kind: file_index.CandidateKind) bool {
             if (comptime @hasDecl(App, "isCurrentFileCompletion")) {
                 return app.isCurrentFileCompletion(query, path, kind);
             }
             return true;
         }
 
-        fn fileCompletionsDependOnIndex(app: *App, query: []const u8) bool {
+        pub fn fileCompletionsDependOnIndex(app: *App, query: []const u8) bool {
             if (comptime @hasDecl(App, "fileCompletionsDependOnIndex")) {
                 return app.fileCompletionsDependOnIndex(query);
             }
@@ -1033,7 +1033,7 @@ pub fn CompletionRuntime(comptime App: type) type {
             return count;
         }
 
-        fn catalogModelCompletion(app: *App, model: []const u8) ?[]const u8 {
+        pub fn catalogModelCompletion(app: *App, model: []const u8) ?[]const u8 {
             if (comptime @hasDecl(App, "catalogModelCompletion")) return app.catalogModelCompletion(model);
 
             var buf: [32][]const u8 = undefined;

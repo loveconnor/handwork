@@ -17,6 +17,7 @@ const update_notes = @import("../upgrade/update_notes.zig");
 const update_target = @import("../upgrade/update_target.zig");
 const workspace_access = @import("../workspace/workspace_access.zig");
 const workspace_commands = @import("../workspace/workspace_commands.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -528,30 +529,39 @@ pub const StatusSnapshot = struct {
     pub fn renderInteractiveBody(self: StatusSnapshot, alloc: Allocator) ![]u8 {
         var out: std.Io.Writer.Allocating = .init(alloc);
         defer out.deinit();
+        const w = &out.writer;
 
-        try out.writer.print("model={s}\n", .{self.model});
-        {
-            try out.writer.print("model_source={s}\n", .{provider_catalog.label(self.provider)});
+        // Aligned "Label  value" rows read as a settings sheet, not a log.
+        // Rows start below the notice label so every value shares one column.
+        try w.writeByte('\n');
+        try w.print("{s: <13}{s}  ({s})\n", .{ "Model", self.model, provider_catalog.label(self.provider) });
+        try w.print("{s: <13}{s}", .{ "Auth", self.auth.activeSourceLabel() });
+        if (self.auth.expired) try w.writeAll(" · expired");
+        if (self.auth.refreshable()) try w.writeAll(" · refreshable");
+        try w.writeByte('\n');
+        try w.print("{s: <13}", .{"Providers"});
+        try writeConnectedProvidersText(w, self.auth);
+        try w.writeByte('\n');
+        if (self.auth_help) |help| try w.print("{s: <13}{s}\n", .{ "", help });
+        try w.print("{s: <13}{s}\n", .{ "Permissions", permissions.permissionModeDisplayLabel(self.permission_mode) });
+        try w.print("{s: <13}{s}\n", .{ "Workspace", self.workspace_root });
+        try w.print("{s: <13}{d} {s} · {d} session {s} · ", .{
+            "Session",
+            self.history_turns,
+            if (self.history_turns == 1) "turn" else "turns",
+            self.session_permission_grants,
+            if (self.session_permission_grants == 1) "grant" else "grants",
+        });
+        if (self.agent_step_limit == 0) {
+            try w.writeAll("no step limit\n");
+        } else {
+            try w.print("step limit {d}\n", .{self.agent_step_limit});
         }
-        try out.writer.print("update_channel={s}\n", .{self.update_channel});
-        try out.writer.print("build_channel={s}\n", .{self.build_channel});
-        if (self.build_revision.len > 0) {
-            try out.writer.print("build_revision={s}\n", .{self.build_revision});
+        try w.print("{s: <13}{s}", .{ "Build", self.build_channel });
+        if (self.build_revision.len > 0) try w.print(" · {s}", .{self.build_revision});
+        if (!std.mem.eql(u8, self.update_channel, self.build_channel)) {
+            try w.print(" · updates {s}", .{self.update_channel});
         }
-        try out.writer.print("auth={s}\n", .{self.auth.activeSourceLabel()});
-        {
-            try out.writer.writeAll("connected_providers=");
-            try writeConnectedProvidersText(&out.writer, self.auth);
-            try out.writer.writeByte('\n');
-        }
-        try out.writer.print("auth_refreshable={}\n", .{self.auth.refreshable()});
-        if (self.auth.expired) try out.writer.writeAll("auth_expired=true\n");
-        if (self.auth_help) |help| try out.writer.print("auth_help={s}\n", .{help});
-        try out.writer.print("permission_mode={s}\n", .{permissions.permissionModeDisplayLabel(self.permission_mode)});
-        try out.writer.print("workspace={s}\n", .{self.workspace_root});
-        try out.writer.print("history_turns={d}\n", .{self.history_turns});
-        try out.writer.print("session_permission_grants={d}\n", .{self.session_permission_grants});
-        try out.writer.print("agent_step_limit={d}", .{self.agent_step_limit});
         return try out.toOwnedSlice();
     }
 
@@ -992,7 +1002,7 @@ fn writeUtcTimestamp(writer: *std.Io.Writer, timestamp_ms: i64) !void {
 
     try writer.print("{d:0>4}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2}.{d:0>3} UTC", .{
         year_day.year,
-        @intFromEnum(month_day.month),
+        @backingInt(month_day.month),
         month_day.day_index + 1,
         day.getHoursIntoDay(),
         day.getMinutesIntoHour(),
@@ -2119,7 +2129,7 @@ test "core session list snapshot text and json stay stable" {
         script_text,
     );
 
-    const long_title = "a" ** session_display_metadata.max_title_bytes;
+    const long_title = repeat("a", session_display_metadata.max_title_bytes);
     var long_session = sessions[0];
     long_session.title = @constCast(long_title);
     const long_text = try (SessionListSnapshot{ .sessions = @as(*const [1]session_store.SessionSummary, &long_session) }).renderText(std.testing.allocator);

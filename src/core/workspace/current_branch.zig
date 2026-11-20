@@ -1,6 +1,7 @@
 const std = @import("std");
 const io_mod = @import("../shared/io.zig");
 const text_utils = @import("../shared/text_utils.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const max_branch_bytes: usize = 255;
 const max_metadata_bytes: usize = 4096;
@@ -157,7 +158,7 @@ test "current branch parses only bounded local branch refs" {
     try std.testing.expect(parseHead("0123456789abcdef0123456789abcdef01234567\n") == null);
     try std.testing.expect(parseHead("ref: refs/tags/v1\n") == null);
     try std.testing.expect(parseHead("ref: refs/heads/bad\x1b[31m\n") == null);
-    try std.testing.expect(parseHead("ref: refs/heads/" ++ ("x" ** 256) ++ "\n") == null);
+    try std.testing.expect(parseHead("ref: refs/heads/" ++ repeat("x", 256) ++ "\n") == null);
 }
 
 test "current branch reads nested worktree head without spawning Git" {
@@ -212,7 +213,7 @@ test "current branch rejects missing detached malformed oversized and symlinked 
     try writeTestFile(
         tmp.dir,
         "repo/.git/HEAD",
-        "ref: refs/heads/" ++ ("x" ** (max_metadata_bytes + 1)),
+        "ref: refs/heads/" ++ repeat("x", max_metadata_bytes + 1),
     );
     try std.testing.expect(try read(alloc, cwd) == null);
 

@@ -29,8 +29,8 @@ pub const ProviderSelection = struct {
 pub fn parse(value: []const u8) ?ProviderId {
     if (std.ascii.eqlIgnoreCase(value, "codex")) return .codex;
     if (std.ascii.eqlIgnoreCase(value, "grok")) return .grok;
-    inline for (std.meta.fields(ProviderId)) |field| {
-        if (std.ascii.eqlIgnoreCase(value, field.name)) return @enumFromInt(field.value);
+    inline for (@typeInfo(ProviderId).@"enum".field_names, @typeInfo(ProviderId).@"enum".field_values) |field_name, field_value| {
+        if (std.ascii.eqlIgnoreCase(value, field_name)) return @fromBackingInt(@intCast(field_value));
     }
     return null;
 }

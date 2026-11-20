@@ -39,6 +39,7 @@ const command_admission = @import("../../permissions/command_admission.zig");
 const permission_auto_classifier = @import("../../permissions/auto_classifier.zig");
 const auto_classifier_context = @import("../../permissions/auto_classifier_context.zig");
 const subagent_model_contract = @import("../../subagent/model_contract.zig");
+const comptimeRepeat = @import("../../shared/comptime_repeat.zig").repeat;
 
 const runtime_config = @import("config.zig");
 const bounded_prompt = @import("../../config/bounded_prompt.zig");
@@ -5656,7 +5657,7 @@ pub fn prepareRetainedCompactionWindow(
 test "retained context ends an unfinished turn at its completed exchange" {
     var arena_state = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena_state.deinit();
-    const calls = [_]types.ToolCall{.{ .id = "large-write", .name = "write_file", .arguments_json = "x" ** 32_000 }};
+    const calls = [_]types.ToolCall{.{ .id = "large-write", .name = "write_file", .arguments_json = comptimeRepeat("x", 32_000) }};
     const results = [_]types.PersistedToolResult{.{
         .tool_call_id = @constCast("large-write"),
         .tool_name = @constCast("write_file"),
@@ -5747,7 +5748,7 @@ test "manual compaction fixed context measures prepared skills and host instruct
     config.host_instructions = "HOST_COMPACTION_INSTRUCTIONS";
     config.skill_catalog = .{ .skills = &.{.{
         .name = "compaction-workflow",
-        .description = "workflow description " ** 100,
+        .description = comptimeRepeat("workflow description ", 100),
         .path = "/skills/compaction-workflow",
         .source = .global_handwork,
     }} };
@@ -5821,12 +5822,22 @@ pub fn compactContextTransaction(
         null;
     var stage: compaction_activity.Stage = .preparation;
     if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage);
-    errdefer |err| {
+    return compactContextTransactionStaged(alloc, deps, request, operation_id, &stage) catch |err| {
         if (operation_id) |id| {
             deps.compaction_activity.?.settle(deps.ctx, id, compaction_activity.failure(err, stage, request.cancel_flag.load(.seq_cst)));
             if (request.failure_provenance) |out| out.* = .{ .operation_id = id, .turn_id = request.trace_ctx.turn_id, .err = err };
         }
-    }
+        return err;
+    };
+}
+
+fn compactContextTransactionStaged(
+    alloc: Allocator,
+    deps: *const AgentRuntimeDeps,
+    request: ContextCompactionTransactionRequest,
+    operation_id: ?compaction_activity.OperationId,
+    stage: *compaction_activity.Stage,
+) !?ContextCompactionTransactionResult {
     if (request.cancel_flag.load(.seq_cst)) return error.Cancelled;
     var plan_input = runtime_prompt_context.CompactionPlanInput{
         .trigger = request.trigger,
@@ -5866,8 +5877,8 @@ pub fn compactContextTransaction(
         request.uncertain_source_message_count,
     );
     if (request.cancel_flag.load(.seq_cst)) return error.Cancelled;
-    stage = .summary;
-    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage);
+    stage.* = .summary;
+    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage.*);
     var compacted = try runtime_context_compaction.compact(
         alloc,
         request.source_messages,
@@ -5901,16 +5912,16 @@ pub fn compactContextTransaction(
         },
     );
     errdefer compacted.deinit(alloc);
-    stage = .validation;
-    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage);
+    stage.* = .validation;
+    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage.*);
     if (request.cancel_flag.load(.seq_cst)) return error.Cancelled;
     const candidate_cost = try request.continuation.measure(alloc, deps.agent_stream_provider, compacted.handoff);
     if (candidate_cost.estimated_input_tokens > fixed_cost.estimated_input_tokens +| accepted_tokens) {
         return error.ContextCapacityExceeded;
     }
     if (request.cancel_flag.load(.seq_cst)) return error.Cancelled;
-    stage = .publication;
-    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage);
+    stage.* = .publication;
+    if (operation_id) |id| deps.compaction_activity.?.running(deps.ctx, id, stage.*);
     try commitContextCompaction(deps, .{
         .summary = compacted.handoff,
         .removed_turn_count = request.removed_turn_count,
@@ -5955,7 +5966,7 @@ test "compaction activity automatic error provenance excludes secondary finaliza
             const model = "provider/compaction-provenance";
             host.fake.available_capability_overrides = &.{.{ .model = model, .capabilities = .{ .context_window = 45_000 } }};
             if (secondary_failure) host.fake.finalization_error = error.ContextCapacityExceeded;
-            var provider = support.FakeProvider.init(alloc, &.{.{ .content = "\"" ** 10_000 }});
+            var provider = support.FakeProvider.init(alloc, &.{.{ .content = comptimeRepeat("\"", 10_000) }});
             defer provider.deinit();
             var fixture: support.PromptFixture = .{};
             var job = fixture.job();
@@ -5963,7 +5974,7 @@ test "compaction activity automatic error provenance excludes secondary finaliza
             job.model = @constCast(model);
             var history = [_]HistoryTurn{.{ .assistant = .{
                 .user = .{ .text = @constCast("earlier request") },
-                .assistant = @constCast("history " ** 19_000),
+                .assistant = @constCast(comptimeRepeat("history ", 19_000)),
             } }};
             job.history = &history;
             var deps = host.fake.deps();
@@ -6077,7 +6088,7 @@ test "automatic compaction interruption persists transport cancellation and pres
         job.model = @constCast(model);
         var history = [_]HistoryTurn{.{ .assistant = .{
             .user = .{ .text = @constCast("earlier request") },
-            .assistant = @constCast("history " ** 19_000),
+            .assistant = @constCast(comptimeRepeat("history ", 19_000)),
         } }};
         job.history = &history;
         var agent: runtime_agent.Agent = .{};
@@ -6214,7 +6225,7 @@ test "compaction activity transaction settles only after publication and preserv
         deps.compaction_activity = .{ .begin = Host.begin, .running = Host.running, .settle = Host.settle };
         deps.commit_context_compaction = .{ .commit = Host.commit };
         deps.push_interactive_notice = null;
-        var source = [_]ChatMessage{.{ .role = .user, .content = "recorded source " ** 100 }};
+        var source = [_]ChatMessage{.{ .role = .user, .content = comptimeRepeat("recorded source ", 100) }};
         var provenance: ?compaction_activity.ErrorProvenance = null;
         const request: ContextCompactionTransactionRequest = .{
             .trigger = .manual,

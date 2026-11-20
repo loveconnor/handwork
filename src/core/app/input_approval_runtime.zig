@@ -17,6 +17,7 @@ const session = @import("../session/session.zig");
 const interaction_state = @import("../../ui/footer/interaction_state.zig");
 const approval_prompt = @import("../permissions/approval_prompt.zig");
 const render_request = @import("../../ui/render_request.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const ToolPermissionDecision = types.ToolPermissionDecision;
 
@@ -434,20 +435,20 @@ pub fn ApprovalRuntime(comptime App: type) type {
             requestActiveSurfaceFrame(app);
         }
 
-        fn claimApprovalAffirmative(app: *App) bool {
+        pub fn claimApprovalAffirmative(app: *App) bool {
             if (comptime @hasDecl(App, "claimApprovalAffirmative")) {
                 return app.claimApprovalAffirmative();
             }
             return false;
         }
 
-        fn releaseApprovalAffirmative(app: *App) void {
+        pub fn releaseApprovalAffirmative(app: *App) void {
             if (comptime @hasDecl(App, "releaseApprovalAffirmative")) {
                 app.releaseApprovalAffirmative();
             }
         }
 
-        fn admitPendingApprovalResize(app: *App) void {
+        pub fn admitPendingApprovalResize(app: *App) void {
             if (comptime @hasDecl(App, "admitPendingApprovalResize")) {
                 _ = app.admitPendingApprovalResize();
             }
@@ -489,7 +490,7 @@ test "approval wheel keeps scrolling a committed command review after review syn
     defer app.deinit();
     const request: permission_request.PermissionRequest = .{
         .id = 42,
-        .label = "shell.run " ++ ("x" ** 2_400),
+        .label = "shell.run " ++ repeat("x", 2_400),
     };
     try std.testing.expect(try app.approval_prompt.syncRequest(alloc, request));
     try std.testing.expect(try approval_screen.needsScreen(

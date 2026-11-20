@@ -352,7 +352,7 @@ fn ProviderAdapter(comptime App: type) type {
             Concrete.playMaxCue(app, cue);
         }
 
-        fn dispatchAttentionRequired(
+        pub fn dispatchAttentionRequired(
             raw: *anyopaque,
             turn_id: u64,
             kind: hooks.AttentionKind,

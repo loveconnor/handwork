@@ -236,13 +236,6 @@ const ConnectedRequestWatch = struct {
         return phase_error(current);
     }
 
-    fn finish_error(
-        self: *ConnectedRequestWatch,
-        transport_error: anyerror,
-    ) anyerror {
-        return self.finish() orelse transport_error;
-    }
-
     fn win(self: *ConnectedRequestWatch, winner: Phase) bool {
         std.debug.assert(!is_active(winner));
         std.debug.assert(winner != .completed);

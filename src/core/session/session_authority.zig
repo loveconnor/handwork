@@ -293,7 +293,7 @@ pub fn entryExistsRelative(
 /// stays platform-agnostic. Syscall failures map to `error.InvalidSessionFormat`.
 fn statFileDevice(session_dir: *io_mod.VerifiedDir, name: []const u8) !u64 {
     var path_buffer: [std.c.PATH_MAX]u8 = undefined;
-    const path_z = std.fmt.bufPrintZ(&path_buffer, "{s}", .{name}) catch
+    const path_z = std.mem.printSentinel(&path_buffer, "{s}", .{name}, 0) catch
         return error.InvalidSessionFormat;
     return switch (builtin.os.tag) {
         .linux => blk: {
@@ -359,7 +359,7 @@ pub fn eventFileStat(
         .device = device,
         .inode = @intCast(stat.inode),
         .kind = .regular,
-        .mode = @intFromEnum(stat.permissions),
+        .mode = @backingInt(stat.permissions),
         .link_count = @intCast(stat.nlink),
         .size = stat.size,
         .mtime_ns = stat.mtime.nanoseconds,

@@ -1,13 +1,7 @@
 //! Windows console setup for the existing UTF-8 / VT terminal renderer.
 const std = @import("std");
 const builtin = @import("builtin");
-const win = if (builtin.os.tag == .windows) @cImport({
-    // Import API declarations only: Zig 0.16 cannot translate MinGW's
-    // fortified wide-string inline wrappers in ReleaseSafe mode.
-    @cDefine("_FORTIFY_SOURCE", "0");
-    @cDefine("WIN32_LEAN_AND_MEAN", "1");
-    @cInclude("windows.h");
-}) else struct {};
+const win = if (builtin.os.tag == .windows) @import("windows_console_c") else struct {};
 
 const Handle = std.os.windows.HANDLE;
 const utf8_code_page = 65001;

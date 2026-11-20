@@ -5,6 +5,7 @@ const types = @import("../../core/shared/types.zig");
 const display_width = @import("../../core/shared/display_width.zig");
 const sort_utils = @import("../../core/shared/sort_utils.zig");
 const ui_render = @import("../render.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const TranscriptEntry = transcript_blocks.TranscriptEntry;
 const ToolDetailRecord = transcript_blocks.ToolDetailRecord;
@@ -67,52 +68,6 @@ pub const Projection = struct {
             .bytes = bytes,
         } });
     }
-
-    pub fn replaceSuffix(
-        self: *Projection,
-        alloc: std.mem.Allocator,
-        start_index: usize,
-        suffix: *Projection,
-    ) !void {
-        std.debug.assert(start_index <= self.entry_actions.items.len);
-        try self.entry_actions.ensureTotalCapacity(
-            alloc,
-            start_index + suffix.entry_actions.items.len,
-        );
-        var retained_owned_count: usize = 0;
-        for (self.owned_overrides.items) |owned| {
-            if (owned.entry_index < start_index) retained_owned_count += 1;
-        }
-        try self.owned_overrides.ensureTotalCapacity(
-            alloc,
-            retained_owned_count + suffix.owned_overrides.items.len,
-        );
-
-        var retained_index: usize = 0;
-        for (self.owned_overrides.items) |owned| {
-            if (owned.entry_index < start_index) {
-                self.owned_overrides.items[retained_index] = owned;
-                retained_index += 1;
-            } else {
-                alloc.free(owned.bytes);
-                alloc.free(owned.line_provenance);
-            }
-        }
-        self.owned_overrides.items.len = retained_index;
-        self.entry_actions.items.len = start_index;
-        for (suffix.entry_actions.items) |action| {
-            self.entry_actions.appendAssumeCapacity(action);
-        }
-        for (suffix.owned_overrides.items) |owned| {
-            self.owned_overrides.appendAssumeCapacity(.{
-                .entry_index = start_index + owned.entry_index,
-                .bytes = owned.bytes,
-                .line_provenance = owned.line_provenance,
-            });
-        }
-        suffix.entry_actions.items.len = 0;
-        suffix.owned_overrides.items.len = 0;
-    }
 };
 
 const OwnedOverride = struct {
@@ -144,6 +99,18 @@ const category_labels = [_][]const u8{
     "browser",
 };
 const command_category_index = 5;
+
+const CategoryPhrase = struct { capital_verb: []const u8, verb: []const u8, singular: []const u8, plural: []const u8 };
+const category_phrases = [category_labels.len]CategoryPhrase{
+    .{ .capital_verb = "Read", .verb = "read", .singular = "file", .plural = "files" },
+    .{ .capital_verb = "Listed", .verb = "listed", .singular = "path", .plural = "paths" },
+    .{ .capital_verb = "Wrote", .verb = "wrote", .singular = "file", .plural = "files" },
+    .{ .capital_verb = "Edited", .verb = "edited", .singular = "file", .plural = "files" },
+    .{ .capital_verb = "Opened", .verb = "opened", .singular = "item", .plural = "items" },
+    .{ .capital_verb = "Ran", .verb = "ran", .singular = "command", .plural = "commands" },
+    .{ .capital_verb = "Ran", .verb = "ran", .singular = "agent", .plural = "agents" },
+    .{ .capital_verb = "Browsed", .verb = "browsed", .singular = "page", .plural = "pages" },
+};
 
 const Summary = struct {
     total: usize = 0,
@@ -483,10 +450,10 @@ fn formatGroupHeader(
 ) ![]u8 {
     var out: std.Io.Writer.Allocating = .init(alloc);
     errdefer out.deinit();
-    try out.writer.print("● {d} tool call{s}", .{
-        summary.total,
-        if (summary.total == 1) "" else "s",
-    });
+    // The header reads as a sentence ("Read 3 files · ran 1 command") rather
+    // than a tally of tool calls.
+    try out.writer.writeAll("●");
+    var wrote_part = false;
     var emitted: [category_labels.len]bool = @splat(false);
     for (0..category_labels.len) |_| {
         var next_index: ?usize = null;
@@ -499,12 +466,16 @@ fn formatGroupHeader(
         const index = next_index orelse break;
         emitted[index] = true;
         const count = summary.categories[index];
-        const label = if (index == command_category_index and count != 1)
-            "commands"
-        else
-            category_labels[index];
-        try appendSegment(&out.writer, count, label);
+        const phrase = category_phrases[index];
+        try out.writer.writeAll(if (wrote_part) " · " else " ");
+        try out.writer.print("{s} {d} {s}", .{
+            if (wrote_part) phrase.verb else phrase.capital_verb,
+            count,
+            if (count == 1) phrase.singular else phrase.plural,
+        });
+        wrote_part = true;
     }
+    if (!wrote_part) try out.writer.print(" {d} tool call{s}", .{ summary.total, if (summary.total == 1) "" else "s" });
     try appendSegment(&out.writer, summary.completion_unreported, "unreported");
     try appendSegment(&out.writer, summary.not_executed, "not executed");
     try appendSegment(&out.writer, summary.timed_out, "timed out");
@@ -563,11 +534,10 @@ fn formatGroupBlock(
     defer scratch_state.deinit();
     const scratch = scratch_state.allocator();
 
-    var out: std.Io.Writer.Allocating = .init(alloc);
-    errdefer out.deinit();
-    try out.writer.writeAll(header);
-
-    var static_index: usize = 0;
+    // Children are collected first so their action verbs can share a column.
+    const Child = struct { entry_id: u32, phrase: []const u8, detail: ?*const ToolDetailRecord, repeats: usize = 1 };
+    var children: std.ArrayList(Child) = .empty;
+    var verb_width: usize = 0;
     for (status_indices) |status_index| {
         const entry = entries[status_index];
         const entry_id = toolStatusEntryId(entry) orelse continue;
@@ -583,19 +553,42 @@ fn formatGroupBlock(
             raw_phrase,
             detail,
         ) orelse raw_phrase;
-        static_index += 1;
-        const connector = if (!focused_in_group and static_index == static_count) "└" else "├";
-        const child = try std.fmt.allocPrint(scratch, "{s} {s}", .{ connector, phrase });
-        const clipped = try clipSummary(scratch, child, cols);
-        try lines.append(alloc, .{ .entry = .{ .entry_id = entry_id, .entry_class = .tool_status, .projection_part = .group_child } });
-        const accented = if (entryShowsDiffStats(detail))
-            try accentTrailingDiffStats(scratch, clipped, style.text_style)
-        else
-            clipped;
-        try out.writer.writeByte('\n');
-        if (style.text_style.len > 0) try out.writer.writeAll(style.text_style);
-        try out.writer.writeAll(accented);
-        if (style.text_style.len > 0) try out.writer.writeAll(style.reset_style);
+        // Identical back-to-back calls fold into one line with a count.
+        if (children.items.len > 0 and !entryShowsDiffStats(detail)) {
+            const last = &children.items[children.items.len - 1];
+            if (std.mem.eql(u8, last.phrase, phrase) and !entryShowsDiffStats(last.detail)) {
+                last.repeats += 1;
+                continue;
+            }
+        }
+        try children.append(scratch, .{ .entry_id = entry_id, .phrase = phrase, .detail = detail });
+        verb_width = @max(verb_width, display_width.visibleWidth(phraseVerb(phrase)));
+    }
+
+    var out: std.Io.Writer.Allocating = .init(alloc);
+    errdefer out.deinit();
+
+    // A lone call needs no counted header: the call itself is the line.
+    const single = children.items.len == 1 and children.items[0].repeats == 1 and !focused_in_group and summary.total == 1;
+    if (single) {
+        const child = children.items[0];
+        try out.writer.writeAll(style.marker_style);
+        try out.writer.writeAll("●");
+        try out.writer.writeAll(style.reset_style);
+        try out.writer.writeByte(' ');
+        try writeToolChild(scratch, &out.writer, child.phrase, 0, child.detail, cols -| 2, style);
+        lines.items[0] = .{ .entry = .{ .entry_id = child.entry_id, .entry_class = .tool_status, .projection_part = .group_header } };
+    } else {
+        try out.writer.writeAll(header);
+        for (children.items) |child| {
+            try lines.append(alloc, .{ .entry = .{ .entry_id = child.entry_id, .entry_class = .tool_status, .projection_part = .group_child } });
+            try out.writer.writeAll("\n  ");
+            const phrase = if (child.repeats > 1)
+                try std.fmt.allocPrint(scratch, "{s} ×{d}", .{ child.phrase, child.repeats })
+            else
+                child.phrase;
+            try writeToolChild(scratch, &out.writer, phrase, verb_width, child.detail, cols -| 2, style);
+        }
     }
 
     for (status_indices) |status_index| {
@@ -617,6 +610,50 @@ fn formatGroupBlock(
     const bytes = try out.toOwnedSlice();
     errdefer alloc.free(bytes);
     return .{ .bytes = bytes, .lines = try lines.toOwnedSlice(alloc) };
+}
+
+/// Action verb at the start of a status phrase ("Read", "Edited", "Ran").
+fn phraseVerb(phrase: []const u8) []const u8 {
+    const space = std.mem.findScalar(u8, phrase, ' ') orelse return phrase;
+    return phrase[0..space];
+}
+
+fn toolVerbStyle(style: SummaryStyle) []const u8 {
+    if (style.text_style.len == 0) return "";
+    return if (ui_render.is_light) "\x1b[38;5;241m" else "\x1b[38;5;250m";
+}
+
+/// One tool call: the verb a step brighter and padded to the group's verb
+/// column, the target in the quieter summary tone, diff stats accented.
+fn writeToolChild(
+    scratch: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    phrase: []const u8,
+    verb_column: usize,
+    detail: ?*const ToolDetailRecord,
+    cols: u16,
+    style: SummaryStyle,
+) !void {
+    const clipped = try clipSummary(scratch, phrase, cols);
+    const verb = phraseVerb(clipped);
+    var rest = clipped[verb.len..];
+    if (rest.len > 0 and rest[0] == ' ') rest = rest[1..];
+    const verb_style = toolVerbStyle(style);
+    if (verb_style.len > 0) try writer.writeAll(verb_style);
+    try writer.writeAll(verb);
+    if (verb_style.len > 0) try writer.writeAll(style.reset_style);
+    if (rest.len == 0) return;
+    const pad = @max(verb_column, display_width.visibleWidth(verb)) - display_width.visibleWidth(verb) + 1;
+    const room = @as(usize, cols) -| (display_width.visibleWidth(verb) + pad);
+    try writer.splatByteAll(' ', pad);
+    const fitted = try clipSummary(scratch, rest, @intCast(@min(room, std.math.maxInt(u16))));
+    const accented = if (entryShowsDiffStats(detail))
+        try accentTrailingDiffStats(scratch, fitted, style.text_style)
+    else
+        fitted;
+    if (style.text_style.len > 0) try writer.writeAll(style.text_style);
+    try writer.writeAll(accented);
+    if (style.text_style.len > 0) try writer.writeAll(style.reset_style);
 }
 
 fn reprojectTruncatedCommandPhrase(
@@ -674,7 +711,8 @@ fn installExpandedGroup(
         const entry = entries[status_index];
         const entry_id = toolStatusEntryId(entry) orelse continue;
         const detail = detailForEntry(details, detail_indices, entry_id, null);
-        const connector = if (child_index + 1 == status_indices.len) "└" else "├";
+        // Children indent under the header text instead of hanging off a tree.
+        const connector = " ";
         const child = try formatExpandedChild(alloc, entry, detail, connector, cols);
         defer alloc.free(child);
         const bytes = if (child_index == 0)
@@ -1523,7 +1561,7 @@ test "minimal command details expose running completed and failed process states
 
 test "minimal completed command rows reproject stored arguments at the current width" {
     const alloc = std.testing.allocator;
-    const command = "printf " ++ ("alpha-beta-gamma-delta-" ** 8);
+    const command = "printf " ++ repeat("alpha-beta-gamma-delta-", 8);
     const arguments_json = try std.fmt.allocPrint(
         alloc,
         "{{\"command\":{f}}}",
@@ -1576,7 +1614,7 @@ test "minimal completed command rows reproject stored arguments at the current w
     defer legacy.deinit(alloc);
     try std.testing.expect(std.mem.endsWith(u8, legacy.entry_actions.items[0].override.bytes, "..."));
 
-    const relative_command = "cd ./packages/cli && " ++ ("printf relative-path " ** 6);
+    const relative_command = "cd ./packages/cli && " ++ repeat("printf relative-path ", 6);
     const relative_arguments_json = try std.fmt.allocPrint(
         alloc,
         "{{\"command\":{f}}}",

@@ -5,6 +5,7 @@ const session_child_store = @import("../session/session_child_store.zig");
 const session_store = @import("../session/session_store.zig");
 const types = @import("../shared/types.zig");
 const text_utils = @import("../shared/text_utils.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const schema_version: u64 = 2;
@@ -48,7 +49,7 @@ pub const Outcome = enum { completed, failed, cancelled, interrupted };
 
 pub const ActiveWork = struct {
     id: []u8,
-    request_fingerprint: [32]u8 = [_]u8{0} ** 32,
+    request_fingerprint: [32]u8 = @as([32]u8, @splat(0)),
     message: []u8,
     root_user_intent_context: []u8 = &.{},
     root_user_messages: [][]u8 = &.{},
@@ -943,7 +944,7 @@ test "subagent failure codec reads historical absence and rejects invalid detail
     defer parsed.deinit();
     const record = &parsed.value.object.getPtr("children").?.array.items[0];
     const bad_values = [_]std.json.Value{
-        .{ .string = "x" ** (types.ModelFailureDiagnostic.max_bytes + 1) },
+        .{ .string = repeat("x", types.ModelFailureDiagnostic.max_bytes + 1) },
         .{ .string = "unsafe\x1b[31m" },
         .{ .integer = 7 },
     };
@@ -995,7 +996,7 @@ test "interrupted active work clears ownership and remains round trippable" {
     defer registry.deinit(alloc);
     var active = ActiveWork{
         .id = try alloc.dupe(u8, "work-1"),
-        .request_fingerprint = [_]u8{7} ** 32,
+        .request_fingerprint = @as([32]u8, @splat(7)),
         .message = try alloc.dupe(u8, "review this"),
         .created_at_ms = 1,
     };
@@ -1014,7 +1015,7 @@ test "interrupted active work clears ownership and remains round trippable" {
     try std.testing.expectEqual(Phase.interrupted, child.phase);
     try std.testing.expect(child.active == null);
     try std.testing.expectEqualStrings("work-1", child.last_work_id.?);
-    try std.testing.expectEqual([_]u8{7} ** 32, child.last_request_fingerprint.?);
+    try std.testing.expectEqual(@as([32]u8, @splat(7)), child.last_request_fingerprint.?);
     try std.testing.expectEqual(Outcome.interrupted, child.last_outcome.?);
     const encoded = try renderRegistry(alloc, registry);
     defer alloc.free(encoded);

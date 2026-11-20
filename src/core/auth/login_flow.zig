@@ -27,8 +27,6 @@ pub const LoginError = error{
     NoRefreshToken,
 };
 
-pub const remote_revocation_warning = "Warning: signed out locally, but the remote session could not be revoked.";
-
 pub const LogoutResult = struct {
     session_deleted: bool = false,
     local_durability_failed: bool = false,
@@ -614,14 +612,6 @@ const BrowserOpenPrompt = struct {
             .enabled = browserOpenEnabled(io_mod.getenv("HANDWORK_NO_OPEN_BROWSER") != null, stdin_is_tty, host.current()),
         };
     }
-
-    fn writeWaitingMessage(self: BrowserOpenPrompt) !void {
-        if (self.enabled) {
-            try writeStdout("Waiting for authentication. press enter to open this in your browser, or use the URL manually.\n");
-        } else {
-            try writeStdout("Waiting for authentication...\n");
-        }
-    }
 };
 
 fn browserOpenEnabled(no_open_browser: bool, stdin_is_tty: bool, host_capabilities: host.Capabilities) bool {
@@ -688,10 +678,6 @@ fn discardStdinLine() void {
         if (n == 0) return;
         if (std.mem.findScalar(u8, buf[0..n], '\n') != null) return;
     }
-}
-
-fn writeStdout(text: []const u8) !void {
-    try std.Io.File.stdout().writeStreamingAll(io_mod.getIo(), text);
 }
 
 const ScriptedPollResult = enum {

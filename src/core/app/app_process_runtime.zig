@@ -41,8 +41,18 @@ pub fn Runtime(comptime App: type) type {
             const work = (try app.worker.tryTakeNextWork(std.heap.c_allocator)) orelse return;
             defer worker_runtime.freeWorkItem(std.heap.c_allocator, work);
             defer app.worker.finishProcessing();
-            errdefer |err| settleCompactionWorkFailure(&app.worker, work, err);
+            runTakenCooperativePrompt(app, work, event_handlers, flush_frame) catch |err| {
+                settleCompactionWorkFailure(&app.worker, work, err);
+                return err;
+            };
+        }
 
+        fn runTakenCooperativePrompt(
+            app: *App,
+            work: worker_runtime.WorkItem,
+            event_handlers: app_worker_runtime.WorkerEventHandlers,
+            flush_frame: *const fn (*App) anyerror!void,
+        ) !void {
             try app_worker_runtime.Runtime(App).tick(
                 app,
                 event_handlers,
@@ -172,7 +182,7 @@ pub fn Runtime(comptime App: type) type {
 }
 
 test "compaction activity error routing requires exact operation and turn provenance" {
-    const id: compaction_activity.OperationId = @enumFromInt(1);
+    const id: compaction_activity.OperationId = @fromBackingInt(@intCast(1));
     const task: worker_runtime.WorkItem = .{ .compact_context = .{
         .operation_id = id,
         .turn_id = 7,
@@ -185,7 +195,7 @@ test "compaction activity error routing requires exact operation and turn proven
     try std.testing.expect(!compactionErrorHandled(task, null, error.InvalidCompactionHandoff));
     try std.testing.expect(!compactionErrorHandled(task, provenance, error.OutOfMemory));
     var stale = provenance;
-    stale.operation_id = @enumFromInt(2);
+    stale.operation_id = @fromBackingInt(@intCast(2));
     try std.testing.expect(!compactionErrorHandled(task, stale, provenance.err));
     stale = provenance;
     stale.turn_id = 8;

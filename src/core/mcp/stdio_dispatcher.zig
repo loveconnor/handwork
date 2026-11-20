@@ -1697,7 +1697,7 @@ fn terminateChild(child_id: std.process.Child.Id) void {
     switch (builtin.os.tag) {
         .windows => {
             const windows = std.os.windows;
-            switch (windows.ntdll.NtTerminateProcess(child_id, @enumFromInt(1))) {
+            switch (windows.ntdll.NtTerminateProcess(child_id, @fromBackingInt(@intCast(1)))) {
                 .SUCCESS, .PROCESS_IS_TERMINATING, .ACCESS_DENIED => {},
                 else => |status| debug_trace.logf(
                     "mcp",
@@ -1921,7 +1921,7 @@ fn createShellDispatcher(script: []const u8) !struct {
 
 fn expectProcessReaped(pid: std.posix.pid_t) !void {
     for (0..100) |_| {
-        std.posix.kill(pid, @enumFromInt(0)) catch |err| switch (err) {
+        std.posix.kill(pid, @fromBackingInt(@intCast(0))) catch |err| switch (err) {
             error.ProcessNotFound => return,
             else => {},
         };

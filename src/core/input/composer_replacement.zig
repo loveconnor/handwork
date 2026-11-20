@@ -515,7 +515,7 @@ test "range replacement removes matching image attachment" {
 
 test "allocation failure leaves selection replacement unchanged" {
     const backing = std.testing.allocator;
-    const replacement = [_]u8{'x'} ** 1024;
+    const replacement = @as([1024]u8, @splat('x'));
     var failing = std.testing.FailingAllocator.init(backing, .{});
     const alloc = failing.allocator();
     var fixture: Fixture = .{};
@@ -524,6 +524,8 @@ test "allocation failure leaves selection replacement unchanged" {
     _ = fixture.edit.beginSelection(1);
     _ = fixture.edit.extendSelection(2);
     failing.fail_index = failing.alloc_index;
+    // Zig 0.17's testing allocator can grow the buffer in place.
+    failing.resize_fail_index = failing.resize_index;
 
     try std.testing.expectError(
         error.OutOfMemory,

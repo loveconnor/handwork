@@ -37,13 +37,6 @@ test {
     _ = activity_runtime;
 }
 
-fn allocDimmedTranscriptLine(alloc: std.mem.Allocator, text: []const u8) ![]u8 {
-    if (std.mem.endsWith(u8, text, "\n")) {
-        return std.fmt.allocPrint(alloc, "{s}{s}{s}\n", .{ ui_render.dim_style, text[0 .. text.len - 1], reset_style });
-    }
-    return std.fmt.allocPrint(alloc, "{s}{s}{s}", .{ ui_render.dim_style, text, reset_style });
-}
-
 fn discardTable(_: *anyopaque, table: assistant_presentation.TablePayload) !void {
     var owned = table;
     owned.deinit(std.heap.c_allocator);
@@ -419,12 +412,14 @@ pub fn Runtime(comptime App: type) type {
         }
 
         fn persistFinishedPrompt(app: *App, finished: types.FinishedPrompt) !void {
-            errdefer |err| app_session_runtime.Runtime(App).recordFailedHistoryDelivery(app, err);
-            if (comptime @hasField(App, "session")) {
-                try app_session_runtime.Runtime(App).appendFinishedPrompt(app, finished);
-            } else {
-                try app.appendFinishedPrompt(finished);
-            }
+            const result = if (comptime @hasField(App, "session"))
+                app_session_runtime.Runtime(App).appendFinishedPrompt(app, finished)
+            else
+                app.appendFinishedPrompt(finished);
+            result catch |err| {
+                app_session_runtime.Runtime(App).recordFailedHistoryDelivery(app, err);
+                return err;
+            };
         }
 
         fn settleDeferredFinish(app: *App) !void {
@@ -1428,12 +1423,12 @@ const FakeWorker = struct {
     reset_cancel_after_take_events: bool = false,
     admission_snapshot: worker_runtime.InteractiveAdmissionSnapshot = .open,
 
-    fn compactionActivitySnapshot(self: *FakeWorker) @import("../output/compaction_activity.zig").Snapshot {
+    pub fn compactionActivitySnapshot(self: *FakeWorker) @import("../output/compaction_activity.zig").Snapshot {
         self.compaction_reads += 1;
         return self.compaction.snapshot;
     }
 
-    fn expireCompactionActivity(self: *FakeWorker, id: @import("../output/compaction_activity.zig").OperationId, revision: u64, now_ms: i64) bool {
+    pub fn expireCompactionActivity(self: *FakeWorker, id: @import("../output/compaction_activity.zig").OperationId, revision: u64, now_ms: i64) bool {
         return self.compaction.expire(id, revision, now_ms);
     }
 
@@ -1447,7 +1442,7 @@ const FakeWorker = struct {
         self.events.deinit(std.heap.c_allocator);
     }
 
-    fn pushEvent(self: *FakeWorker, alloc: std.mem.Allocator, event: WorkerEvent) !void {
+    pub fn pushEvent(self: *FakeWorker, alloc: std.mem.Allocator, event: WorkerEvent) !void {
         const owned = try worker_runtime.dupeWorkerEvent(alloc, event);
         errdefer worker_runtime.freeWorkerEvent(alloc, owned);
         try self.pushOwnedEvent(alloc, owned);
@@ -1508,7 +1503,7 @@ const FakeWorker = struct {
         };
     }
 
-    fn interactiveAdmissionSnapshot(self: *FakeWorker) worker_runtime.InteractiveAdmissionSnapshot {
+    pub fn interactiveAdmissionSnapshot(self: *FakeWorker) worker_runtime.InteractiveAdmissionSnapshot {
         return self.admission_snapshot;
     }
 
@@ -1537,18 +1532,18 @@ const FakeWorker = struct {
         _ = snapshot;
     }
 
-    fn activeTurnId(self: *FakeWorker) u64 {
+    pub fn activeTurnId(self: *FakeWorker) u64 {
         return self.active_turn_id;
     }
 
-    fn propagateHistoryTurn(self: *FakeWorker, alloc: std.mem.Allocator, turn: types.HistoryTurn, max_history_turns: usize) !void {
+    pub fn propagateHistoryTurn(self: *FakeWorker, alloc: std.mem.Allocator, turn: types.HistoryTurn, max_history_turns: usize) !void {
         _ = alloc;
         _ = turn;
         _ = max_history_turns;
         self.propagated_history_turns += 1;
     }
 
-    fn propagateGrant(self: *FakeWorker, alloc: std.mem.Allocator, tool_name: []const u8, target_path: []const u8) !void {
+    pub fn propagateGrant(self: *FakeWorker, alloc: std.mem.Allocator, tool_name: []const u8, target_path: []const u8) !void {
         _ = alloc;
         _ = tool_name;
         _ = target_path;
@@ -1588,7 +1583,7 @@ const FakeApprovalPrompt = struct {
         return changed;
     }
 
-    fn syncReview(self: *FakeApprovalPrompt, review: ?*const diff_mod.FileReview) bool {
+    pub fn syncReview(self: *FakeApprovalPrompt, review: ?*const diff_mod.FileReview) bool {
         const request = self.request orelse {
             const changed = self.review != null;
             self.review = null;
@@ -1657,47 +1652,13 @@ const FakeShell = struct {
         },
     },
     raw_entries: std.ArrayList([]u8) = .empty,
-    updated_entries: usize = 0,
     last_class: transcript_runtime.RawEntryClass = .unknown_raw,
-    trim_calls: usize = 0,
     fail_next_update: bool = false,
 
     fn deinit(self: *FakeShell, alloc: std.mem.Allocator) void {
         self.lifecycle.deinit(alloc);
         for (self.raw_entries.items) |entry| alloc.free(entry);
         self.raw_entries.deinit(alloc);
-    }
-
-    fn nativeHistoryActive(self: *const FakeShell) bool {
-        return self.native_history_active;
-    }
-
-    fn trimTrailingBlankLines(self: *FakeShell) void {
-        self.trim_calls += 1;
-    }
-
-    fn appendRawTranscriptEntry(self: *FakeShell, alloc: std.mem.Allocator, line: []const u8) !u32 {
-        try self.raw_entries.append(alloc, try alloc.dupe(u8, line));
-        return @intCast(self.raw_entries.items.len);
-    }
-
-    fn appendRawTranscriptEntryClassified(self: *FakeShell, alloc: std.mem.Allocator, line: []const u8, class: transcript_runtime.RawEntryClass) !u32 {
-        self.last_class = class;
-        return self.appendRawTranscriptEntry(alloc, line);
-    }
-
-    fn updateRawBytesEntry(self: *FakeShell, alloc: std.mem.Allocator, entry_id: u32, line: []const u8) !bool {
-        const index = entry_id - 1;
-        alloc.free(self.raw_entries.items[index]);
-        self.raw_entries.items[index] = try alloc.dupe(u8, line);
-        self.updated_entries += 1;
-        return true;
-    }
-
-    fn setRawEntryClass(self: *FakeShell, entry_id: u32, class: transcript_runtime.RawEntryClass) bool {
-        _ = entry_id;
-        self.last_class = class;
-        return true;
     }
 
     pub fn applyToolLifecycle(
@@ -1771,30 +1732,19 @@ const FakeShell = struct {
         return self.lifecycle.lifecyclePinCount();
     }
 
-    fn replaceableEntryId(self: *FakeShell) ?u32 {
-        _ = self;
-        return null;
-    }
-
     fn resetCommandOutputDisplay(self: *FakeShell, alloc: std.mem.Allocator, reason: []const u8) void {
         _ = alloc;
         _ = reason;
         self.command_output_display = .{};
     }
 
-    fn openCommandOutputLifecycleId(self: *const FakeShell) ?types.ToolLifecycleId {
+    pub fn openCommandOutputLifecycleId(self: *const FakeShell) ?types.ToolLifecycleId {
         return self.lifecycle.openCommandOutputLifecycleId();
     }
 };
 
 const FakePacer = struct {
-    flushed: usize = 0,
     completed_assistant_presentation_tail: bool = false,
-
-    fn flushPendingText(self: *FakePacer, callbacks: anytype) !void {
-        _ = callbacks;
-        self.flushed += 1;
-    }
 
     fn hasCompletedAssistantPresentationTail(self: *const FakePacer) bool {
         return self.completed_assistant_presentation_tail;
@@ -1805,35 +1755,6 @@ const FakeSubagents = struct {
     view_active: bool = false,
     child_busy: bool = false,
     child_shell: FakeShell = .{},
-    child_render_requests: render_request.RenderRequestState = .{},
-
-    const ChildPresentationView = struct {
-        chat: struct {
-            busy_value: bool,
-
-            fn busy(self: @This()) bool {
-                return self.busy_value;
-            }
-        },
-    };
-
-    fn isViewActive(self: FakeSubagents) bool {
-        return self.view_active;
-    }
-
-    fn childPresentationView(self: *FakeSubagents) ?ChildPresentationView {
-        if (!self.view_active) return null;
-        return .{ .chat = .{ .busy_value = self.child_busy } };
-    }
-
-    fn childConversationRuntime(self: *FakeSubagents) ?*FakeShell {
-        if (!self.view_active) return null;
-        return &self.child_shell;
-    }
-
-    fn activeRenderRequests(self: *FakeSubagents) *render_request.RenderRequestState {
-        return &self.child_render_requests;
-    }
 
     fn deinit(self: *FakeSubagents, alloc: std.mem.Allocator) void {
         self.child_shell.deinit(alloc);
@@ -1882,10 +1803,6 @@ const FakeApp = struct {
         self.transcript.deinit(self.alloc);
     }
 
-    fn pacerCallbacks(self: *FakeApp) void {
-        _ = self;
-    }
-
     pub fn appendFinishedPrompt(self: *FakeApp, finished: types.FinishedPrompt) !void {
         if (self.finish_persistence_error) |err| return err;
         const owned = try types.dupeFinishedPrompt(self.alloc, finished);
@@ -1894,57 +1811,13 @@ const FakeApp = struct {
         if (finished.snapshot_file_ownership) |ownership| ownership.transfer();
     }
 
-    fn writeTranscript(self: *FakeApp, text: []const u8, record: bool) !void {
-        _ = record;
-        try self.transcript.appendSlice(self.alloc, text);
-    }
-
-    fn writeDomainNotice(self: *FakeApp, notice: types.SemanticNotice, _: bool) !void {
+    pub fn writeDomainNotice(self: *FakeApp, notice: types.SemanticNotice, _: bool) !void {
         try self.transcript.appendSlice(self.alloc, notice.topic);
         try self.transcript.appendSlice(self.alloc, ":");
         try self.transcript.appendSlice(self.alloc, notice.body);
     }
 
-    fn writeTranscriptClassified(self: *FakeApp, text: []const u8, record: bool, class: transcript_runtime.RawEntryClass) !void {
-        self.last_class = class;
-        try self.writeTranscript(text, record);
-    }
-
-    fn appendReplaceableTranscriptLine(self: *FakeApp, text: []const u8) !u32 {
-        self.replaceable_count += 1;
-        try self.transcript.appendSlice(self.alloc, text);
-        return @intCast(self.replaceable_count);
-    }
-
-    fn appendReplaceableTranscriptLineClassified(self: *FakeApp, text: []const u8, class: transcript_runtime.RawEntryClass) !u32 {
-        self.last_class = class;
-        return self.appendReplaceableTranscriptLine(text);
-    }
-
-    fn appendReplaceableTranscriptLineSilent(self: *FakeApp, text: []const u8) !u32 {
-        self.replaceable_silent_count += 1;
-        try self.transcript.appendSlice(self.alloc, text);
-        return @intCast(self.replaceable_silent_count);
-    }
-
-    fn appendReplaceableTranscriptLineSilentClassified(self: *FakeApp, text: []const u8, class: transcript_runtime.RawEntryClass) !u32 {
-        self.last_class = class;
-        return self.appendReplaceableTranscriptLineSilent(text);
-    }
-
-    fn replaceTrailingTranscriptLine(self: *FakeApp, text: []const u8) !bool {
-        self.replace_count += 1;
-        try self.transcript.appendSlice(self.alloc, text);
-        return false;
-    }
-
-    fn replaceTrailingTranscriptLineSilent(self: *FakeApp, text: []const u8) !bool {
-        self.replace_silent_count += 1;
-        try self.transcript.appendSlice(self.alloc, text);
-        return false;
-    }
-
-    fn dispatchAttentionRequired(
+    pub fn dispatchAttentionRequired(
         self: *FakeApp,
         turn_id: u64,
         kind: @import("../hooks/hooks.zig").AttentionKind,
@@ -2134,7 +2007,7 @@ const PacedTranscriptBridge = struct {
         self.notice_count += 1;
     }
 
-    fn appendHistoryTurn(raw: *anyopaque, finished: types.FinishedPrompt) !HistoryDelivery {
+    pub fn appendHistoryTurn(raw: *anyopaque, finished: types.FinishedPrompt) !HistoryDelivery {
         const self: *PacedTranscriptBridge = @ptrCast(@alignCast(raw));
         self.history_count += 1;
         if (try self.pacer.deferFinish(self.app.alloc, finished)) return .retained;

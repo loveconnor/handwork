@@ -356,7 +356,7 @@ pub const Capture = struct {
             self.digest_started = true;
         }
         var header: [frame_header_bytes]u8 = undefined;
-        header[0] = @intFromEnum(stream);
+        header[0] = @backingInt(stream);
         std.mem.writeInt(u64, header[1..], @intCast(bytes.len), .little);
         self.content_hasher.update(&header);
         self.content_hasher.update(bytes);
@@ -369,7 +369,7 @@ pub const Capture = struct {
         bytes: []const u8,
     ) !void {
         var header: [frame_header_bytes]u8 = undefined;
-        header[0] = @intFromEnum(stream);
+        header[0] = @backingInt(stream);
         const payload_len = std.math.cast(u64, bytes.len) orelse
             return error.ReplayFrameTooLarge;
         std.mem.writeInt(u64, header[1..], payload_len, .little);
@@ -1819,7 +1819,7 @@ test "saved command replay pages and searches beyond eight mebibytes with bounde
     defer arena_state.deinit();
     const arena = arena_state.allocator();
     const capture = try Capture.create(arena, 1024, &capability);
-    var chunk = [_]u8{'x'} ** 8192;
+    var chunk = @as([8192]u8, @splat('x'));
     chunk[chunk.len - 1] = '\n';
     for (0..1025) |_| try capture.appendAcceptedRequired(arena, .stdout, &chunk);
     try capture.appendAcceptedRequired(arena, .stderr, "TAIL-SENTINEL-9MIB\n");
@@ -1899,7 +1899,7 @@ test "command replay reader rejects descriptor and frame corruption" {
     );
 
     const empty_handle = "handwork-command-replay-empty-frame.bin";
-    var empty_replay = [_]u8{0} ** (replay_magic.len + frame_header_bytes);
+    var empty_replay = @as([(replay_magic.len + frame_header_bytes)]u8, @splat(0));
     @memcpy(empty_replay[0..replay_magic.len], replay_magic);
     var empty_file = try capability.createExclusiveFile(
         alloc,

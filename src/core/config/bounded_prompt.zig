@@ -1,6 +1,7 @@
 //! Default bounded operating policy. Identity, permissions and communication are shared
 //! byte-for-byte with the default prompt; embedded/custom host policy is never rewritten.
 const std = @import("std");
+const comptimeRepeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const default_prompt = @embedFile("../../builtins/system_prompt.md");
 const operation_start = policyBoundary(default_prompt, "# Efficient execution");
@@ -93,7 +94,7 @@ test "bounded prompt preserves authority and custom policy while reducing operat
 
 test "bounded prompt finds policy boundaries at compile time with LF and CRLF" {
     inline for (.{ "\n", "\r\n" }) |newline| {
-        const prefix = "identity" ++ newline ++ ("padding" ++ newline) ** 2048;
+        const prefix = "identity" ++ newline ++ comptimeRepeat(("padding" ++ newline), 2048);
         const operations = "# Efficient execution" ++ newline ++ "operation policy" ++ newline;
         const authority = "# Workspace and permissions" ++ newline ++ "authority policy" ++ newline;
         const prompt = prefix ++ operations ++ authority;

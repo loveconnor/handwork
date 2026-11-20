@@ -19,8 +19,8 @@ const command_output_content = @import("../../core/tooling/command_output_conten
 const render_engine = @import("../render_engine.zig");
 const source_preparation = @import("source_preparation.zig");
 const transcript_release = @import("../../core/output/transcript_release.zig");
-const transcript_writer = @import("writer.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Metrics = types.Metrics;
@@ -1204,13 +1204,6 @@ pub const PreparedTranscriptSurfacePaint = struct {
             self.source_line_provenance
         else
             self.line_provenance.items;
-    }
-
-    pub fn rowProvenance(self: *const PreparedTranscriptSurfacePaint, row: u16) ?transcript_blocks.LineProvenance {
-        for (self.row_provenance.items) |item| {
-            if (item.row == row) return item.source;
-        }
-        return null;
     }
 
     pub fn projectionArea(self: *const PreparedTranscriptSurfacePaint) render_engine.frame_layout.FrameRect {
@@ -3423,11 +3416,6 @@ fn paintTranscriptIntoSurfaceWithLimit(
     };
 }
 
-const TestFullRepaintMode = enum {
-    enabled,
-    diagnostic_wipe_only,
-};
-
 const TestFooterGeometry = struct {
     top: u16 = 0,
 };
@@ -3436,10 +3424,6 @@ const TestFooterViewport = struct {
     externally_invalidated: bool = false,
     has_frame: bool = false,
     geometry: TestFooterGeometry = .{},
-
-    fn invalidateAfterExternalClear(self: *TestFooterViewport) void {
-        self.externally_invalidated = true;
-    }
 };
 
 const TestPaintTrace = struct {
@@ -3475,11 +3459,6 @@ const TestTranscriptPainterHost = struct {
 
     fn deinit(self: *TestTranscriptPainterHost) void {
         self.emitted.deinit(self.alloc);
-    }
-
-    fn emit(self: *TestTranscriptPainterHost, _: *Metrics, bytes: []const u8) !void {
-        try self.emitted.appendSlice(self.alloc, bytes);
-        if (self.shadow) |shadow| try shadow.feed(bytes);
     }
 
     fn footerTopRowForExtra(self: *TestTranscriptPainterHost, _: u16) u16 {
@@ -3837,7 +3816,7 @@ test "empty hard line start maps to its exact visual row" {
 
 test "inexact measured endpoint resumes from its containing target row" {
     const alloc = std.testing.allocator;
-    const record = "a" ** 249;
+    const record = repeat("a", 249);
     const flow =
         record ++ "\n" ++
         record ++ "\n" ++
@@ -3892,9 +3871,9 @@ test "inexact measured endpoint resumes from its containing target row" {
     );
     defer rendered.deinit(alloc);
     try std.testing.expectEqual(@as(usize, 9), rendered.rows.items[0].bytes.len);
-    try std.testing.expectEqualStrings("a" ** 9, rendered.rows.items[0].bytes);
+    try std.testing.expectEqualStrings(repeat("a", 9), rendered.rows.items[0].bytes);
     try std.testing.expectEqual(@as(u16, 1), rendered.rows.items[0].rows_painted);
-    try std.testing.expectEqualStrings("a" ** 9, rendered.last_visible_line);
+    try std.testing.expectEqualStrings(repeat("a", 9), rendered.last_visible_line);
     const cursor = calculateViewportCursor(
         layout,
         20,
@@ -3915,7 +3894,7 @@ test "inexact measured endpoint resumes from its containing target row" {
 }
 
 test "committed measured endpoint advances by source hard-row groups" {
-    const flow = ("a" ** 21) ++ "\n" ++ ("b" ** 21) ++ "\n";
+    const flow = repeat("a", 21) ++ "\n" ++ repeat("b", 21) ++ "\n";
     const advanced = advanceMeasuredHistoryOriginForCommittedRows(
         flow,
         .{
@@ -4057,7 +4036,7 @@ test "transcript surface painter renders soft wrap across three rows" {
 
 test "transcript surface painter materializes an ANSI-only logical row" {
     const alloc = std.testing.allocator;
-    const styled_notice = "\x1b[2m" ++ ("x" ** 391) ++ "\x1b[0m";
+    const styled_notice = "\x1b[2m" ++ repeat("x", 391) ++ "\x1b[0m";
     try std.testing.expectEqual(@as(usize, 399), styled_notice.len);
 
     var batch = try transcriptTestBatch(alloc, styled_notice ++ "\n\x1b[0m", 123);

@@ -22,6 +22,7 @@ const lifecycle_hooks = @import("../../../hooks/hooks.zig");
 const tool_dispatch = @import("../../../tooling/tool_dispatch.zig");
 const model_tool_schema = @import("../../../tooling/model_tool_schema.zig");
 const prompt_context = @import("../prompt_context.zig");
+const comptimeRepeat = @import("../../../shared/comptime_repeat.zig").repeat;
 
 const test_support = @import("support.zig");
 
@@ -127,11 +128,6 @@ fn expectFailedLifecycleContains(
         return;
     }
     return error.TestExpectedEqual;
-}
-
-fn expectNoticeContains(hooks: *const FakeAgentRuntimeDeps, index: usize, needle: []const u8) !void {
-    try std.testing.expect(index < hooks.system_notices.items.len);
-    try std.testing.expect(std.mem.find(u8, hooks.system_notices.items[index], needle) != null);
 }
 
 fn expectRouteStatus(
@@ -415,27 +411,6 @@ fn expectRootFieldAbsent(provider: *const FakeProvider, index: usize, field: []c
     var parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
     defer parsed.deinit();
     try std.testing.expect(parsed.value.object.get(field) == null);
-}
-
-fn expectProviderPromptStringEntry(provider: *const FakeProvider, index: usize, entry_index: usize, expected: []const u8) !void {
-    const alloc = std.testing.allocator;
-    try std.testing.expect(index < provider.request_bodies.items.len);
-
-    var parsed = try std.json.parseFromSlice(std.json.Value, alloc, provider.request_bodies.items[index], .{});
-    defer parsed.deinit();
-
-    const prompt = try test_support.providerPromptEntries(parsed.arena.allocator(), parsed.value);
-    try std.testing.expect(entry_index < prompt.len);
-    const entry = prompt[entry_index];
-    try std.testing.expect(entry == .object);
-    const content = entry.object.get("content") orelse return error.TestExpectedPromptMessageMissing;
-    const text = if (content == .string) content else blk: {
-        if (content != .array or content.array.items.len != 1 or content.array.items[0] != .object)
-            return error.TestExpectedSingleTextPart;
-        break :blk content.array.items[0].object.get("text") orelse return error.TestExpectedText;
-    };
-    try std.testing.expect(text == .string);
-    try std.testing.expectEqualStrings(expected, text.string);
 }
 
 fn expectProviderToolResultOutput(
@@ -943,7 +918,7 @@ test "processQueuedPrompt delivers dense under-budget Vision evidence unchanged"
     const persisted = hooks.history_turns.items[0].assistant.execution.tool_steps[0].tool_results[0];
     try std.testing.expectEqual(types.PersistedToolStatus.success, persisted.status);
     try std.testing.expectEqual(@as(usize, 40), std.mem.count(u8, persisted.output, "visible item "));
-    try std.testing.expect(std.mem.find(u8, persisted.output, "x" ** 5000) != null);
+    try std.testing.expect(std.mem.find(u8, persisted.output, comptimeRepeat("x", 5000)) != null);
     try expectProviderToolResultOutput(&provider, 2, "call_vision_dense_evidence", persisted.output);
     try expectBodyNotContains(&provider, 2, image_path);
 }
@@ -1990,10 +1965,10 @@ test "processQueuedPrompt recovers from Vision capacity failure with a narrower 
     try std.testing.expectEqual(@as(usize, 1), countNeedle(provider.request_bodies.items[3], "\"type\":\"input_image\""));
     try expectBodyContains(&provider, 2, "output_limit_exceeded");
     try expectBodyContains(&provider, 2, "narrower focus or fewer images");
-    try expectBodyNotContains(&provider, 2, "a" ** 1024);
+    try expectBodyNotContains(&provider, 2, comptimeRepeat("a", 1024));
     try expectBodyContains(&provider, 4, "narrow validated evidence");
     try expectBodyContains(&provider, 4, "READY");
-    try expectBodyNotContains(&provider, 4, "a" ** 1024);
+    try expectBodyNotContains(&provider, 4, comptimeRepeat("a", 1024));
     const execution = hooks.history_turns.items[0].assistant.execution;
     try std.testing.expectEqual(@as(usize, 2), execution.tool_steps.len);
     try std.testing.expectEqual(types.PersistedToolStatus.failure, execution.tool_steps[0].tool_results[0].status);
@@ -3048,7 +3023,7 @@ test "processQueuedPrompt semantically compacts history at eighty percent and co
     var history = [_]HistoryTurn{
         .{ .assistant = .{
             .user = .{ .text = @constCast("AUTO_HISTORY_USER_SENTINEL") },
-            .assistant = @constCast("AUTO_HISTORY_ASSISTANT_SENTINEL\n" ++ ("h" ** 150_000)),
+            .assistant = @constCast("AUTO_HISTORY_ASSISTANT_SENTINEL\n" ++ (comptimeRepeat("h", 150_000))),
             .execution = .{ .tool_steps = &restored_steps },
         } },
         .{ .assistant = .{
@@ -3112,12 +3087,12 @@ test "automatic compaction rejects fixed request overhead above its total target
     hooks.available_capability_overrides = &overrides;
     var fixture = PromptFixture{};
     var config = fixture.config();
-    config.system_prompt = "fixed instruction " ** 10_000;
+    config.system_prompt = comptimeRepeat("fixed instruction ", 10_000);
     var job = fixture.job();
     job.model = @constCast(model);
     var history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("earlier request") },
-        .assistant = @constCast("history " ** 30_000),
+        .assistant = @constCast(comptimeRepeat("history ", 30_000)),
     } }};
     job.history = &history;
 
@@ -3140,13 +3115,13 @@ test "automatic compaction shrinks recent history to fit fixed instructions" {
     hooks.available_capability_overrides = &overrides;
     var fixture = PromptFixture{};
     var config = fixture.config();
-    config.system_prompt = "i" ** 104_000;
+    config.system_prompt = comptimeRepeat("i", 104_000);
     var job = fixture.job();
     job.model = @constCast(model);
     var history = [_]HistoryTurn{
-        .{ .assistant = .{ .user = .{ .text = @constCast("older") }, .assistant = @constCast("OLD_BUDGET_FACT " ++ ("h" ** 380_000)) } },
-        .{ .assistant = .{ .user = .{ .text = @constCast("middle") }, .assistant = @constCast("MIDDLE_BUDGET_FACT " ++ ("m" ** 8_000)) } },
-        .{ .assistant = .{ .user = .{ .text = @constCast("recent") }, .assistant = @constCast("RECENT_BUDGET_FACT " ++ ("r" ** 8_000)) } },
+        .{ .assistant = .{ .user = .{ .text = @constCast("older") }, .assistant = @constCast("OLD_BUDGET_FACT " ++ (comptimeRepeat("h", 380_000))) } },
+        .{ .assistant = .{ .user = .{ .text = @constCast("middle") }, .assistant = @constCast("MIDDLE_BUDGET_FACT " ++ (comptimeRepeat("m", 8_000))) } },
+        .{ .assistant = .{ .user = .{ .text = @constCast("recent") }, .assistant = @constCast("RECENT_BUDGET_FACT " ++ (comptimeRepeat("r", 8_000))) } },
     };
     job.history = &history;
     try runFakePrompt(&provider, &hooks, config, job);
@@ -3174,7 +3149,7 @@ test "compaction remeasures its rebuilt continuation after calibrated preflight"
     var completions: [6]FakeCompletion = undefined;
     for (ids, 0..) |id, index| {
         calls[index] = .{toolCall(id, "read_file", "{\"path\":\"fixture.txt\"}")};
-        states[index] = try std.fmt.allocPrint(alloc, "[{{\"type\":\"reasoning\",\"encrypted_content\":\"{s}\",\"summary\":[]}}]", .{"r" ** 200_000});
+        states[index] = try std.fmt.allocPrint(alloc, "[{{\"type\":\"reasoning\",\"encrypted_content\":\"{s}\",\"summary\":[]}}]", .{comptimeRepeat("r", 200_000)});
         initialized += 1;
         completions[index] = .{ .tool_calls = &calls[index], .provider_state_json = states[index], .usage = .{ .input_tokens = inputs[index] } };
     }
@@ -3210,7 +3185,7 @@ test "compaction can summarize the newest exchange when fixed context prevents r
         defer tmp.cleanup();
         const result_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
         defer alloc.free(result_dir);
-        const calls = [_]ToolCall{toolCall("completed-large-write", "write_file", "{\"path\":\"large.txt\",\"content\":\"" ++ ("x" ** 68_000) ++ "\"}")};
+        const calls = [_]ToolCall{toolCall("completed-large-write", "write_file", "{\"path\":\"large.txt\",\"content\":\"" ++ (comptimeRepeat("x", 68_000)) ++ "\"}")};
         var provider = FakeProvider.init(alloc, &.{
             .{ .tool_calls = &calls },
             .{ .content = "The large write completed. Do not repeat it." },
@@ -3226,7 +3201,7 @@ test "compaction can summarize the newest exchange when fixed context prevents r
         hooks.exec_plans = &.{.{ .result = .{ .model_output = "Write completed." } }};
         var fixture = PromptFixture{};
         var config = fixture.config();
-        config.system_prompt = "i" ** 16_000;
+        config.system_prompt = comptimeRepeat("i", 16_000);
         config.tool_result_dir = result_dir;
         var job = fixture.job();
         job.model = @constCast(model);
@@ -3236,14 +3211,14 @@ test "compaction can summarize the newest exchange when fixed context prevents r
         try std.testing.expectEqual(@as(usize, 3), provider.request_bodies.items.len);
         try expectBodyContains(&provider, 1, "completed-large-write");
         try expectBodyContains(&provider, 2, "context_handoff");
-        try expectBodyNotContains(&provider, 2, "x" ** 68_000);
+        try expectBodyNotContains(&provider, 2, comptimeRepeat("x", 68_000));
         try std.testing.expectEqual(@as(usize, 1), hooks.successful_effect_count.load(.seq_cst));
     }
 }
 
 test "automatic compaction validates serialized handoff cost before committing" {
     const alloc = std.testing.allocator;
-    var provider = FakeProvider.init(alloc, &.{.{ .content = "\"" ** 10_000 }});
+    var provider = FakeProvider.init(alloc, &.{.{ .content = comptimeRepeat("\"", 10_000) }});
     defer provider.deinit();
     const model = "provider/escaped-compaction-summary";
     const overrides = [_]ModelCapabilityOverride{.{
@@ -3258,7 +3233,7 @@ test "automatic compaction validates serialized handoff cost before committing" 
     job.model = @constCast(model);
     var history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("earlier request") },
-        .assistant = @constCast("history " ** 19_000),
+        .assistant = @constCast(comptimeRepeat("history ", 19_000)),
     } }};
     job.history = &history;
 
@@ -3435,7 +3410,7 @@ test "cancelled automatic compaction is retried by the next prompt" {
     var history = [_]HistoryTurn{
         .{ .assistant = .{
             .user = .{ .text = @constCast("CANCELLED_AUTO_HISTORY_USER") },
-            .assistant = @constCast("CANCELLED_AUTO_HISTORY_ASSISTANT\n" ++ ("h" ** 150_000)),
+            .assistant = @constCast("CANCELLED_AUTO_HISTORY_ASSISTANT\n" ++ (comptimeRepeat("h", 150_000))),
         } },
         .{ .assistant = .{
             .user = .{ .text = @constCast("CANCELLED_AUTO_RECENT_USER") },
@@ -3501,9 +3476,9 @@ test "retained context automatic compaction continues with the exact recent para
     defer tmp.cleanup();
     const result_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(result_dir);
-    const old_text = "OLDER_HISTORY_SENTINEL " ++ ("o" ** 52_000);
-    const result_a = "RECENT_EXACT_A\n" ++ ("a" ** 13_000);
-    const result_b = "RECENT_EXACT_B\n" ++ ("b" ** 13_000);
+    const old_text = "OLDER_HISTORY_SENTINEL " ++ (comptimeRepeat("o", 52_000));
+    const result_a = "RECENT_EXACT_A\n" ++ (comptimeRepeat("a", 13_000));
+    const result_b = "RECENT_EXACT_B\n" ++ (comptimeRepeat("b", 13_000));
     const history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("previous work") },
         .assistant = @constCast(old_text),
@@ -3547,8 +3522,8 @@ test "retained context automatic compaction continues with the exact recent para
     try expectBodyContains(&provider, 2, "context_handoff");
     try expectBodyContains(&provider, 2, "retained-a");
     try expectBodyContains(&provider, 2, "retained-b");
-    try expectBodyContains(&provider, 2, "a" ** 13_000);
-    try expectBodyContains(&provider, 2, "b" ** 13_000);
+    try expectBodyContains(&provider, 2, comptimeRepeat("a", 13_000));
+    try expectBodyContains(&provider, 2, comptimeRepeat("b", 13_000));
     try expectBodyNotContains(&provider, 2, "OLDER_HISTORY_SENTINEL");
     try std.testing.expectEqual(@as(usize, 2), hooks.successful_effect_count.load(.seq_cst));
     const completed = hooks.history_turns.items[hooks.history_turns.items.len - 1].assistant;
@@ -3565,8 +3540,8 @@ test "retained context compaction preserves recovered historical replay" {
     defer tmp.cleanup();
     const result_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(result_dir);
-    const old_text = "OLDER_HISTORY_SENTINEL " ++ ("o" ** 52_000);
-    const recent_result = "RECENT_RECOVERED_RESULT\n" ++ ("r" ** 1_000);
+    const old_text = "OLDER_HISTORY_SENTINEL " ++ (comptimeRepeat("o", 52_000));
+    const recent_result = "RECENT_RECOVERED_RESULT\n" ++ (comptimeRepeat("r", 1_000));
     const model = "provider/retained-recovery";
     const state = "[{\"type\":\"reasoning\",\"encrypted_content\":\"retained_reasoning\",\"summary\":[]},{\"type\":\"message\",\"offset\":0,\"length\":42,\"phase\":\"final_answer\",\"id\":\"discarded_text\"}]";
     var calls = [_]ToolCall{toolCall("old_read", "read_file", "{\"path\":\"a.txt\"}")};
@@ -3630,13 +3605,13 @@ test "processQueuedPrompt does not compact away its only recent exchange" {
     const capabilities = [_]ModelCapabilityOverride{.{ .model = model, .capabilities = .{ .context_window = 3_000 } }};
     hooks.available_capability_overrides = &capabilities;
     hooks.permission_decisions = &.{.once};
-    hooks.exec_plans = &.{.{ .result = .{ .model_output = "RECENT_ONLY\n" ++ ("r" ** 10_000) } }};
+    hooks.exec_plans = &.{.{ .result = .{ .model_output = "RECENT_ONLY\n" ++ (comptimeRepeat("r", 10_000)) } }};
     var fixture = PromptFixture{};
     var job = fixture.job();
     job.model = @constCast(model);
     try runFakePrompt(&provider, &hooks, fixture.config(), job);
     try std.testing.expectEqual(@as(usize, 2), provider.request_bodies.items.len);
-    try expectBodyContains(&provider, 1, "r" ** 10_000);
+    try expectBodyContains(&provider, 1, comptimeRepeat("r", 10_000));
     try expectBodyNotContains(&provider, 1, "context_handoff");
     try std.testing.expectEqual(@as(usize, 1), hooks.successful_effect_count.load(.seq_cst));
     try std.testing.expectEqual(@as(usize, 1), hooks.history_turns.items.len);
@@ -3649,7 +3624,7 @@ test "automatic compaction summarizes a newest exchange larger than the input wi
     defer tmp.cleanup();
     const result_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(result_dir);
-    const arguments = "{\"path\":\"large.txt\",\"content\":\"" ++ ("x" ** 40_000) ++ "\"}";
+    const arguments = "{\"path\":\"large.txt\",\"content\":\"" ++ (comptimeRepeat("x", 40_000)) ++ "\"}";
     var provider = FakeProvider.init(alloc, &.{
         .{ .tool_calls = &.{toolCall("oversized-newest", "write_file", arguments)} },
         .{ .content = "The large file was written successfully. Do not repeat the write." },
@@ -3673,7 +3648,7 @@ test "automatic compaction summarizes a newest exchange larger than the input wi
     try expectBodyContains(&provider, 1, "Tool write_file (success)");
     try expectBodyContains(&provider, 1, "oversized-newest");
     try expectBodyContains(&provider, 2, "context_handoff");
-    try expectBodyNotContains(&provider, 2, "x" ** 40_000);
+    try expectBodyNotContains(&provider, 2, comptimeRepeat("x", 40_000));
     try std.testing.expectEqual(@as(usize, 1), hooks.successful_effect_count.load(.seq_cst));
     try std.testing.expectEqualStrings("Continued after the large write.", hooks.finish_assistant_text.?);
 }
@@ -3703,7 +3678,7 @@ test "interruption after automatic compaction retains the recent and new executi
     hooks.available_capability_overrides = &overrides;
     hooks.permission_decisions = &.{ .once, .once };
     hooks.exec_plans = &.{
-        .{ .result = .{ .model_output = "x" ** (10 * 1024) } },
+        .{ .result = .{ .model_output = comptimeRepeat("x", (10 * 1024)) } },
         .{ .result = .{ .model_output = "later result" } },
     };
     var fixture = PromptFixture{};
@@ -3714,7 +3689,7 @@ test "interruption after automatic compaction retains the recent and new executi
 
     var history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("earlier work") },
-        .assistant = @constCast("o" ** 80_000),
+        .assistant = @constCast(comptimeRepeat("o", 80_000)),
     } }};
     job.history = &history;
 
@@ -3758,7 +3733,7 @@ test "context overflow after automatic compaction retries with new execution" {
     hooks.available_capability_overrides = &overrides;
     hooks.permission_decisions = &.{ .once, .once };
     hooks.exec_plans = &.{
-        .{ .result = .{ .model_output = "x" ** (10 * 1024) } },
+        .{ .result = .{ .model_output = comptimeRepeat("x", (10 * 1024)) } },
         .{ .result = .{ .model_output = "later result" } },
     };
     var fixture = PromptFixture{};
@@ -3769,7 +3744,7 @@ test "context overflow after automatic compaction retries with new execution" {
 
     var history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("earlier work") },
-        .assistant = @constCast("o" ** 80_000),
+        .assistant = @constCast(comptimeRepeat("o", 80_000)),
     } }};
     job.history = &history;
 
@@ -3805,7 +3780,7 @@ test "compaction preserves an incomplete handle-free result when it cannot fit" 
     defer hooks.deinit();
     hooks.permission_decisions = &.{.once};
     hooks.exec_plans = &.{.{ .result = .{
-        .model_output = "ineligible result\n" ++ ("x" ** (70 * 1024)),
+        .model_output = "ineligible result\n" ++ (comptimeRepeat("x", (70 * 1024))),
     } }};
     var fixture = PromptFixture{};
     var job = fixture.job();
@@ -4451,7 +4426,7 @@ test "processQueuedPrompt retains complete skill content without granting ordina
         hooks.tool_registry = builtin_tools.registry;
         const result: runtime_tool_contracts.ToolExecutionResult = .{
             .model_content_kind = case.kind,
-            .model_output = "SKILL START\n" ++ ("required instruction\n" ** 1400) ++ "COMPLETE_SKILL_TAIL",
+            .model_output = "SKILL START\n" ++ (comptimeRepeat("required instruction\n", 1400)) ++ "COMPLETE_SKILL_TAIL",
         };
         hooks.exec_plans = &.{ .{ .result = result }, .{ .result = result } };
         var fixture = PromptFixture{};
@@ -4600,7 +4575,7 @@ test "processQueuedPrompt skill catalog is invariant under harmless request expa
         .{ .name = "alpha", .description = "Unrelated instructions", .path = "/tmp/skills/alpha", .source = .global_handwork },
         .{ .name = "release", .description = "Release the package", .path = "/tmp/skills/release", .source = .global_handwork },
     };
-    const prompts = [_][]const u8{ "Release the package", "Release the package." ++ (" Keep existing behavior unchanged." ** 24) };
+    const prompts = [_][]const u8{ "Release the package", "Release the package." ++ (comptimeRepeat(" Keep existing behavior unchanged.", 24)) };
     var first: ?[]u8 = null;
     defer if (first) |value| alloc.free(value);
     for (prompts) |prompt| {
@@ -4632,7 +4607,7 @@ test "processQueuedPrompt skill catalog is invariant under harmless request expa
 test "processQueuedPrompt prepares each origin skill catalog with its supplied model and workspace" {
     const alloc = std.testing.allocator;
     const Skill = @import("../../../skills/skill_runtime.zig").Skill;
-    const description = "Instruction detail. " ** 50;
+    const description = comptimeRepeat("Instruction detail. ", 50);
     const names = [_][]const u8{ "alpha", "beta", "gamma", "delta" };
     const cases = [_]struct { model: []const u8, workspace: []const u8, context_window: u32, child: bool }{
         .{ .model = "fixture/parent-model", .workspace = "/tmp/parent-workspace", .context_window = 64_000, .child = false },
@@ -4723,7 +4698,7 @@ test "processQueuedPrompt keeps supplied system prompt components in stable orde
     }};
     config.skill_catalog = .{ .skills = &skills };
     config.context_limits.skill_catalog_bytes = .{ .value = .{ .bytes = 1024 }, .source = .command_line };
-    config.host_instructions = "host guidance-order instructions\n" ++ ("Required host instruction.\n" ** 80);
+    config.host_instructions = "host guidance-order instructions\n" ++ (comptimeRepeat("Required host instruction.\n", 80));
     config.model_prompt_overlay = "model guidance-order overlay";
     var job = fixture.job();
     job.history = history[0..];
@@ -8423,7 +8398,7 @@ test "processQueuedPrompt records request composition without exposing diagnosti
 
 test "request efficiency integration deduplicates provider input but preserves executed reads and durable results" {
     const alloc = std.testing.allocator;
-    const output = "EXACT_REPEAT_SENTINEL\n" ++ ("r" ** 2000);
+    const output = "EXACT_REPEAT_SENTINEL\n" ++ (comptimeRepeat("r", 2000));
     const first = [_]ToolCall{toolCall("first-read", "read_file", "{\"path\":\"same.txt\"}")};
     const second = [_]ToolCall{toolCall("second-read", "read_file", "{\"path\":\"same.txt\"}")};
     var provider = FakeProvider.init(alloc, &.{ .{ .tool_calls = &first }, .{ .tool_calls = &second }, .{ .content = "Done" } });

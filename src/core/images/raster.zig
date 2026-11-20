@@ -52,14 +52,6 @@ pub const Raster = struct {
         return self.pixels[@as(usize, y) * stride ..][0..stride];
     }
 
-    pub fn hasTransparency(self: Raster) bool {
-        var i: usize = 3;
-        while (i < self.pixels.len) : (i += 4) {
-            if (self.pixels[i] != 255) return true;
-        }
-        return false;
-    }
-
     /// Copies rows `[top, top + height)` into a new raster.
     pub fn cropRows(self: Raster, alloc: Allocator, top: u32, height: u32) !Raster {
         if (height == 0 or top >= self.height) return error.InvalidImage;

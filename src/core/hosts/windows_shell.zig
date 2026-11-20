@@ -1,15 +1,7 @@
 //! Open web URLs through the Windows shell without command-line interpretation.
 const std = @import("std");
 const builtin = @import("builtin");
-const c = if (builtin.os.tag == .windows) @cImport({
-    // Import API declarations only: Zig 0.16 cannot translate MinGW's
-    // fortified wide-string inline wrappers in ReleaseSafe mode.
-    @cDefine("_FORTIFY_SOURCE", "0");
-    @cDefine("WIN32_LEAN_AND_MEAN", "1");
-    @cInclude("windows.h");
-    @cInclude("shellapi.h");
-    @cInclude("objbase.h");
-}) else struct {};
+const c = if (builtin.os.tag == .windows) @import("windows_shell_c") else struct {};
 
 pub fn isWebUrl(url: []const u8) bool {
     if (std.mem.indexOfScalar(u8, url, 0) != null) return false;

@@ -456,8 +456,8 @@ fn catalogFingerprint(documents: []const Document) u64 {
 fn requestHash(request: Request, domain: Domain) u64 {
     var hash = std.hash.Wyhash.init(0x7265717565737421);
     updateHashField(&hash, request.query.raw);
-    hash.update(&.{@intFromEnum(domain)});
-    hash.update(&.{@intFromEnum(request.relevance_policy)});
+    hash.update(&.{@backingInt(domain)});
+    hash.update(&.{@backingInt(request.relevance_policy)});
     if (request.server) |server| updateHashField(&hash, server);
     return hash.final();
 }

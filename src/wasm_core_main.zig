@@ -102,4 +102,3 @@ fn fetchCliModelCatalog(
         .failed => |failed| .{ .failure = failed },
     };
 }
-

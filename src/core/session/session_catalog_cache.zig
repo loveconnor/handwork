@@ -6,6 +6,7 @@ const session_codec = @import("session_codec.zig");
 const session_layout = @import("session_layout.zig");
 const session_store = @import("session_store.zig");
 const summary_codec = @import("session_summary_codec.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Sha256 = std.crypto.hash.sha2.Sha256;
@@ -432,7 +433,7 @@ fn addRankingFile(hash: *Sha256, dir: std.Io.Dir, name: []const u8) !bool {
 // no-follow observation; unsupported targets cannot produce ranking cache hits.
 fn addDevice(hash: *Sha256, dir: std.Io.Dir, name: []const u8) !void {
     var buffer: [std.Io.Dir.max_path_bytes]u8 = undefined;
-    const path = try std.fmt.bufPrintZ(&buffer, "{s}", .{name});
+    const path = try std.mem.printSentinel(&buffer, "{s}", .{name}, 0);
     const device: u64 = switch (@import("builtin").os.tag) {
         .linux => blk: {
             const linux = std.os.linux;
@@ -471,7 +472,7 @@ fn sameStat(a: std.Io.File.Stat, b: std.Io.File.Stat) bool {
 }
 
 fn addStat(hash: *Sha256, stat: std.Io.File.Stat) void {
-    const values = [_]u128{ @bitCast(@as(i128, stat.inode)), stat.nlink, stat.size, @intFromEnum(stat.kind), @intFromEnum(stat.permissions), @bitCast(@as(i128, stat.mtime.nanoseconds)), @bitCast(@as(i128, stat.ctime.nanoseconds)) };
+    const values = [_]u128{ @bitCast(@as(i128, stat.inode)), stat.nlink, stat.size, @backingInt(stat.kind), @backingInt(stat.permissions), @bitCast(@as(i128, stat.mtime.nanoseconds)), @bitCast(@as(i128, stat.ctime.nanoseconds)) };
     var bytes: [16]u8 = undefined;
     for (values) |value| {
         std.mem.writeInt(u128, &bytes, value, .little);
@@ -725,7 +726,7 @@ test "catalog ranking missing or malformed generation requires rebuilding" {
     defer tmp.cleanup();
     var dir = io_mod.VerifiedDir{ .dir = try tmp.dir.openDir(std.testing.io, ".", .{ .iterate = true, .follow_symlinks = false }) };
     defer dir.close();
-    const prefix = "[{\"id\":\"legacy\",\"fingerprint\":\"" ++ "1" ** 64 ++ "\",\"value\":{\"legacy_ranking\":{\"workspace_root\":\"/workspace\",\"updated_at_ms\":20";
+    const prefix = "[{\"id\":\"legacy\",\"fingerprint\":\"" ++ repeat("1", 64) ++ "\",\"value\":{\"legacy_ranking\":{\"workspace_root\":\"/workspace\",\"updated_at_ms\":20";
     for ([_][]const u8{ prefix ++ "}}}]", prefix ++ ",\"generation\":[1]}}}]", prefix ++ ",\"generation\":null}}}]" }) |payload| {
         var digest: Fingerprint = undefined;
         Sha256.hash(payload, &digest, .{});

@@ -51,7 +51,6 @@ pub const default_max_read_file_lines: usize = 400;
 pub const default_max_read_file_line_len: usize = 2000;
 
 pub const web_search_unavailable_message = "web_search is unavailable: no web search provider is configured for this runtime";
-pub const web_fetch_unavailable_message = "web_fetch is unavailable: no local WebFetch runtime is installed";
 pub const terminal_unavailable_message =
     "{\"error\":{\"tool\":\"shell\",\"code\":\"unsupported_host\",\"retryable\":false}}";
 const terminal_saved_session_required_message =
@@ -638,7 +637,7 @@ fn labelValueForKind(kind: LabelArgKind, args: std.json.ObjectMap) ?[]const u8 {
     return switch (kind) {
         .none => null,
         .name => optionalStringArg(args, "name"),
-        .path => optionalStringArg(args, "path"),
+        .path => optionalStringArg(args, "path") orelse firstBatchPath(args),
         .pattern => optionalStringArg(args, "pattern"),
         .url => optionalStringArg(args, "url"),
         .command => optionalStringArg(args, "command"),
@@ -651,6 +650,16 @@ fn labelValueForKind(kind: LabelArgKind, args: std.json.ObjectMap) ?[]const u8 {
         .selector => optionalStringArg(args, "selector"),
         .session_id => optionalStringArg(args, "session_id"),
     };
+}
+
+/// Batch reads pass `files: [{ path, ... }]`; label them by the first path
+/// instead of the generic "file" fallback.
+fn firstBatchPath(args: std.json.ObjectMap) ?[]const u8 {
+    const files = args.get("files") orelse return null;
+    if (files != .array or files.array.items.len == 0) return null;
+    const first = files.array.items[0];
+    if (first != .object) return null;
+    return optionalStringArg(first.object, "path");
 }
 
 fn optionalStringArg(args: std.json.ObjectMap, key: []const u8) ?[]const u8 {

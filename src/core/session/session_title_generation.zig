@@ -7,6 +7,7 @@ const session = @import("session.zig");
 const stream_provider = @import("../agent/stream_provider.zig");
 const provider_step = @import("../agent/runtime/provider_step.zig");
 const types = @import("../shared/types.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -367,7 +368,7 @@ test "promptExcerpt trims and bounds usable text" {
     try std.testing.expect(promptExcerpt("/compact") == null);
     try std.testing.expectEqualStrings("/compact extra", promptExcerpt("/compact extra").?);
 
-    const long = "x" ** (max_prompt_excerpt_bytes + 100);
+    const long = repeat("x", max_prompt_excerpt_bytes + 100);
     try std.testing.expectEqual(@as(usize, max_prompt_excerpt_bytes), promptExcerpt(long).?.len);
 }
 
@@ -413,7 +414,7 @@ test "sanitizeGeneratedTitle normalizes model output" {
 
 test "sanitizeGeneratedTitle enforces the byte cap on a UTF-8 boundary" {
     const alloc = std.testing.allocator;
-    const long = (try sanitizeGeneratedTitle(alloc, "word " ** 40)).?;
+    const long = (try sanitizeGeneratedTitle(alloc, repeat("word ", 40))).?;
     defer alloc.free(long);
     try std.testing.expect(long.len <= max_generated_title_bytes);
     try std.testing.expect(std.unicode.utf8ValidateSlice(long));
@@ -431,12 +432,12 @@ test "sanitizeGeneratedTitle bounds oversized single-line model output" {
     const alloc = std.testing.allocator;
     // A pathological title response can emit several KB on one line; the cap
     // must hold without overrunning the pre-sized strip buffer.
-    const oversized = "x" ** 4096;
+    const oversized = repeat("x", 4096);
     const capped = (try sanitizeGeneratedTitle(alloc, oversized)).?;
     defer alloc.free(capped);
     try std.testing.expectEqual(@as(usize, max_generated_title_bytes), capped.len);
 
-    const oversized_with_controls = ("ab\x07" ** 1024) ++ "";
+    const oversized_with_controls = repeat("ab\x07", 1024) ++ "";
     const stripped = (try sanitizeGeneratedTitle(alloc, oversized_with_controls)).?;
     defer alloc.free(stripped);
     try std.testing.expect(stripped.len <= max_generated_title_bytes);

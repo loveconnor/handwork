@@ -38,7 +38,7 @@ pub const CatalogPublicOnly = union(enum) {
     chatgpt_subscription,
     grok_subscription,
 
-    fn credentialSource(self: CatalogPublicOnly) ?Source {
+    pub fn credentialSource(self: CatalogPublicOnly) ?Source {
         return switch (self) {
             .no_credential => null,
 

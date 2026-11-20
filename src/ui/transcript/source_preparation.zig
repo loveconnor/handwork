@@ -9,6 +9,7 @@ const render_engine = @import("../render_engine.zig");
 const user_message_card = @import("../assistant/user_message_card.zig");
 const ui_render = @import("../render.zig");
 const types = @import("../../core/shared/types.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const transcript_blocks = render_engine.transcript_blocks;
@@ -605,9 +606,9 @@ test "retention rebase deleted soft wrapped entry does not transfer partial rows
 
 test "retention rebase indexes a large removed entry run once" {
     const alloc = std.testing.allocator;
-    var before = try prepareIndexedFullTranscriptWindowSourceInterruptible(alloc, try alloc.dupe(u8, "x\n" ** 20_000), 80, null);
+    var before = try prepareIndexedFullTranscriptWindowSourceInterruptible(alloc, try alloc.dupe(u8, repeat("x\n", 20_000)), 80, null);
     defer before.deinit(alloc);
-    var after = try prepareIndexedFullTranscriptWindowSourceInterruptible(alloc, try alloc.dupe(u8, "x\n" ** 10_000), 80, null);
+    var after = try prepareIndexedFullTranscriptWindowSourceInterruptible(alloc, try alloc.dupe(u8, repeat("x\n", 10_000)), 80, null);
     defer after.deinit(alloc);
     const old_lines = try alloc.alloc(transcript_blocks.LineProvenance, 20_000);
     before.line_provenance = old_lines;
@@ -628,7 +629,7 @@ test "retention rebase maps raw soft wraps and byte endpoints" {
     defer before.deinit(alloc);
     var after = try prepareIndexedFullTranscriptWindowSourceInterruptible(alloc, try alloc.dupe(u8, text[2..]), 3, null);
     defer after.deinit(alloc);
-    const provenance = [_]transcript_blocks.LineProvenance{.{ .entry = .{ .entry_id = 1, .entry_class = .unknown_raw } }} ** 2;
+    const provenance = @as([2]transcript_blocks.LineProvenance, @splat(.{ .entry = .{ .entry_id = 1, .entry_class = .unknown_raw } }));
     before.line_provenance = try alloc.dupe(transcript_blocks.LineProvenance, &provenance);
     after.line_provenance = try alloc.dupe(transcript_blocks.LineProvenance, &provenance);
     const entries = [_]RetentionEntryRows{.{
@@ -1140,7 +1141,7 @@ fn buildCompactTranscriptProjectionInterruptible(
         focused_entry_id,
         collapseToolCalls(self),
         .{
-            .marker_style = user_message_card.promptMarkerStyle(),
+            .marker_style = ui_render.statusline_style,
             .text_style = ui_render.statusline_style,
             .reset_style = "\x1b[0m",
         },

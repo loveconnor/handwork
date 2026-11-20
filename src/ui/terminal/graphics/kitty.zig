@@ -34,11 +34,6 @@ pub fn writeTransmitPng(writer: *std.Io.Writer, image_id: u32, png: []const u8, 
     }
 }
 
-/// Frees image `image_id` and its placements in the terminal.
-pub fn writeDelete(writer: *std.Io.Writer, image_id: u32) !void {
-    try writer.print("\x1b_Ga=d,d=I,i={d},q=2\x1b\\", .{image_id});
-}
-
 /// Capability query: a supporting terminal answers `ESC _ G i=<id>;OK ESC \`.
 pub fn queryBytes(query_id: u32) [64]u8 {
     var buf: [64]u8 = @splat(0);

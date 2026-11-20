@@ -5,6 +5,7 @@ const text_utils = @import("../shared/text_utils.zig");
 const types = @import("../shared/types.zig");
 const artifact_digest = @import("artifact_digest.zig");
 const session_child_store = @import("session_child_store.zig");
+const repeat = @import("../shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 
@@ -573,7 +574,7 @@ test "large result storage creates stable handle and bounded preview" {
     const dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(dir);
 
-    var bytes = [_]u8{'x'} ** (large_result_threshold_bytes + 128);
+    var bytes = @as([(large_result_threshold_bytes + 128)]u8, @splat('x'));
     const prepared = try prepare(alloc, dir, "call/1", "run_command", bytes.len, bytes[0..], 64 * 1024);
     defer alloc.free(prepared.model_output);
     defer alloc.free(@constCast(prepared.memory.output_handle.?));
@@ -626,7 +627,7 @@ test "saved preparation externalizes small results" {
 test "inline cap and stored preview keep complete codepoints" {
     const alloc = std.testing.allocator;
 
-    const inline_text = "x" ++ ("\xc3\xa9" ** 300);
+    const inline_text = "x" ++ repeat("\xc3\xa9", 300);
     for ([_]usize{ 128, 129 }) |cap| {
         const prepared = try prepare(alloc, null, "call/2", "grep_files", inline_text.len, inline_text, cap);
         defer alloc.free(prepared.model_output);
@@ -640,7 +641,7 @@ test "inline cap and stored preview keep complete codepoints" {
     defer tmp.cleanup();
     const dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(dir);
-    const stored_text = "x" ++ ("\xc3\xa9" ** 8200);
+    const stored_text = "x" ++ repeat("\xc3\xa9", 8200);
     const stored = try prepare(alloc, dir, "call/3", "run_command", stored_text.len, stored_text, 64 * 1024);
     defer alloc.free(stored.model_output);
     defer alloc.free(@constCast(stored.memory.output_handle.?));
@@ -657,7 +658,7 @@ test "large result handles never expose token-shaped call ids" {
     const dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(dir);
 
-    var bytes = [_]u8{'x'} ** (large_result_threshold_bytes + 1);
+    var bytes = @as([(large_result_threshold_bytes + 1)]u8, @splat('x'));
     const secret_id = "sk-abcdefghijklmnop";
     const prepared = try prepare(
         alloc,
@@ -700,7 +701,7 @@ fn expectLargeResultPreparationLeavesNoOrphan(route: PrepareRoute) !void {
     );
     defer capability.deinit();
 
-    var bytes = [_]u8{'x'} ** (large_result_threshold_bytes + 128);
+    var bytes = @as([(large_result_threshold_bytes + 128)]u8, @splat('x'));
     var reached_success = false;
     var fail_index: usize = 0;
     while (fail_index < 128) : (fail_index += 1) {
@@ -776,7 +777,7 @@ fn expectExistingLargeResultSurvivesPreparationFailure(
     );
     defer capability.deinit();
 
-    var bytes = [_]u8{'x'} ** (large_result_threshold_bytes + 128);
+    var bytes = @as([(large_result_threshold_bytes + 128)]u8, @splat('x'));
     const seeded_handle = try storeLargeResultManaged(
         base,
         &capability,

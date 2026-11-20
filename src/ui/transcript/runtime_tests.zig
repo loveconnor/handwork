@@ -13,6 +13,7 @@ const transcript_writer = @import("writer.zig");
 const ui_render = @import("../render.zig");
 const user_message_card = @import("../assistant/user_message_card.zig");
 const vt_emulator = @import("../../core/terminal/engine.zig");
+const repeat = @import("../../core/shared/comptime_repeat.zig").repeat;
 
 const Allocator = std.mem.Allocator;
 const Layout = types.Layout;
@@ -3616,7 +3617,7 @@ test "width change does not compare semantic offsets across projections" {
         .selection = testSelection(9),
     };
     defer prepared.deinit(alloc);
-    try prepared.line_visual_rows.appendSlice(alloc, &([_]u16{1} ** 16));
+    try prepared.line_visual_rows.appendSlice(alloc, &(@as([16]u16, @splat(1))));
 
     const facts = runtime.planTranscriptScroll(&prepared);
     try std.testing.expect(facts.source_compatible);
@@ -5549,7 +5550,7 @@ test "partial transcript transition records exact recovery debt" {
         .cursor = .{ .cursor_row = 4, .cursor_col = 1, .replaceable_row = 4 },
     };
     defer prepared.deinit(alloc);
-    try prepared.line_visual_rows.appendSlice(alloc, &([_]u16{1} ** 16));
+    try prepared.line_visual_rows.appendSlice(alloc, &(@as([16]u16, @splat(1))));
     const scroll_plan = render_engine.frame_scroll_plan.merge(runtime.layout.rows, 1, 0, 5);
     var plan = testPaintPlan(&runtime, prepared.selection);
     const target_layout = render_engine.frame_layout.CommittedLayoutSnapshot.fromPaintPlan(plan);
@@ -5710,7 +5711,7 @@ test "recovery area-only endpoint movement preserves semantic debt" {
     const alloc = std.testing.allocator;
     const stable_flow = "stable\n";
     const attempt_flow = stable_flow ++ "attempt\n";
-    const attempt_rows = [_]u16{1} ** 10;
+    const attempt_rows = @as([10]u16, @splat(1));
     var runtime = TranscriptRuntime{
         .layout = transcriptTestLayout(20, 10, 6),
         .owned_top_row = 5,
@@ -5747,8 +5748,8 @@ test "recovery source growth plus area movement counts only source visual growth
     const stable_flow = "stable\n";
     const attempt_flow = stable_flow ++ "attempt\n";
     const grown_flow = attempt_flow ++ "growth one\ngrowth two\n";
-    const attempt_rows = [_]u16{1} ** 10;
-    const grown_rows = [_]u16{1} ** 12;
+    const attempt_rows = @as([10]u16, @splat(1));
+    const grown_rows = @as([12]u16, @splat(1));
     var runtime = TranscriptRuntime{
         .layout = transcriptTestLayout(20, 10, 6),
         .owned_top_row = 5,
@@ -5983,7 +5984,7 @@ test "incompatible recovery source stays on rebase path after partial repaint" {
     const attempt_flow = stable_flow ++ "attempt\n";
     const replacement_flow = "replacement\n";
     const grown_replacement_flow = replacement_flow ++ "growth\n";
-    const attempt_rows = [_]u16{1} ** 10;
+    const attempt_rows = @as([10]u16, @splat(1));
     var runtime = TranscriptRuntime{
         .layout = transcriptTestLayout(20, 10, 6),
         .owned_top_row = 5,
@@ -6983,7 +6984,7 @@ test "committed deferred shrink installs target geometry before recovery stabili
     const alloc = std.testing.allocator;
     const stable_flow = "0\n1\n2\n3";
     const attempt_flow = stable_flow ++ "\n4\n5\n6\n7\n8\n9";
-    const visual_rows = [_]u16{1} ** 10;
+    const visual_rows = @as([10]u16, @splat(1));
 
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -7151,8 +7152,8 @@ test "recovery forward area movement stabilizes at acknowledged semantic endpoin
     const stable_flow = "stable\n";
     const attempt_flow = stable_flow ++ "attempt\n";
     const grown_flow = attempt_flow ++ "growth one\ngrowth two\n";
-    const attempt_rows = [_]u16{1} ** 10;
-    const grown_rows = [_]u16{1} ** 12;
+    const attempt_rows = @as([10]u16, @splat(1));
+    const grown_rows = @as([12]u16, @splat(1));
     var runtime = TranscriptRuntime{
         .layout = transcriptTestLayout(20, 10, 6),
         .owned_top_row = 5,
@@ -7338,7 +7339,7 @@ test "recovery backward area movement stabilizes at acknowledged semantic endpoi
     const alloc = std.testing.allocator;
     const stable_flow = "stable\n";
     const attempt_flow = stable_flow ++ "attempt\n";
-    const attempt_rows = [_]u16{1} ** 10;
+    const attempt_rows = @as([10]u16, @splat(1));
     var runtime = TranscriptRuntime{
         .layout = transcriptTestLayout(20, 10, 6),
         .owned_top_row = 5,
@@ -7469,7 +7470,7 @@ test "same-width backward footer candidate retains one coherent stable anchor" {
         },
     };
     defer prepared.deinit(alloc);
-    var line_rows = [_]u16{4} ** 100;
+    var line_rows = @as([100]u16, @splat(4));
     for (line_rows[0..17]) |*rows| rows.* = 5;
     line_rows[87] = 3;
     try prepared.line_visual_rows.appendSlice(alloc, &line_rows);
@@ -10435,7 +10436,7 @@ fn checkOrdinaryAssistantStreamAllocationFailures(
     test_case: AssistantStreamFastPathCase,
     witness: *AssistantStreamFastPathFailureWitness,
 ) !void {
-    const continuation = [_]u8{'b'} ** 4096;
+    const continuation = @as([4096]u8, @splat('b'));
     const chunk: []const u8 = switch (test_case) {
         .opening => "first chunk",
         .continuation => &continuation,
@@ -14577,7 +14578,7 @@ test "transcript lifecycle identity updates are idempotent and atomic" {
             .activity_kind = .read,
         } });
     }
-    const authoritative_id = lifecycleId(1, "authoritative-" ++ ("x" ** 800));
+    const authoritative_id = lifecycleId(1, "authoritative-" ++ repeat("x", 800));
     const record_capacity_before = runtime.lifecycle_state.records.capacity();
     _ = try runtime.applyToolLifecycle(alloc, .{ .authoritative_started = .{
         .id = authoritative_id,
@@ -15861,7 +15862,7 @@ test "capped parallel lifecycle progress keeps bounded allocations and pins" {
     try std.testing.expect(runtime.toolDetailForEntry(first_entry_id) != null);
     try std.testing.expect(runtime.toolDetailForEntry(second_entry_id) != null);
     const capacity_after_start = runtime.tool_details.capacity;
-    const progress_text = "● Reading progress " ++ ("x" ** 256);
+    const progress_text = "● Reading progress " ++ repeat("x", 256);
     _ = try runtime.applyToolLifecycle(alloc, .{ .progress = .{
         .id = lifecycleId(1, call_ids[0]),
         .text = progress_text,
