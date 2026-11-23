@@ -72,9 +72,9 @@ jobs:
           path: |
             .zig-cache
             .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          key: desktop-zig-0.17.1-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
           restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
+            desktop-zig-0.17.1-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - name: Build the bundled native engine
         working-directory: .
@@ -197,9 +197,9 @@ jobs:
           path: |
             .zig-cache
             .zig-global-cache
-          key: desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
+          key: desktop-zig-0.17.1-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-${{ github.sha }}
           restore-keys: |
-            desktop-zig-0.16.0-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
+            desktop-zig-0.17.1-${{ runner.os }}-${{ matrix.arch || runner.arch }}-${{ hashFiles('build.zig.zon') }}-
       - run: node scripts/install-zig.mjs
       - working-directory: .
         run: node scripts/package-native.mjs --target=darwin-arm64

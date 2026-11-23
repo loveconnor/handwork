@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-const version = '0.16.0';
+const version = '0.17.1';
 const system = process.platform === 'darwin' ? 'macos' : 'windows';
 const architecture = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 const indexResponse = await fetch('https://ziglang.org/download/index.json');
