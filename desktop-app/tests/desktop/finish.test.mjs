@@ -79,3 +79,19 @@ test('IPC and settings accept export formats and background mode only in valid s
   assert.equal(validSettingsPatch('app', { keepRunning: 'yes' }), false);
   assert.equal(validSettingsPatch('project', { keepRunning: true }), false);
 });
+
+test('appearance preferences accept only the offered accents and palettes, app-wide', () => {
+  assert.equal(validSettingsPatch('app', { accent: 'violet', lightPalette: 'mist', darkPalette: 'black' }), true);
+  assert.equal(validSettingsPatch('app', { accent: '#ff00ff' }), false);
+  assert.equal(validSettingsPatch('app', { lightPalette: 'graphite' }), false);
+  assert.equal(validSettingsPatch('app', { darkPalette: 'sand' }), false);
+  assert.equal(validSettingsPatch('project', { accent: 'blue' }), false);
+});
+
+test('backdrop shaders accept only the offered shaders and strengths, app-wide', () => {
+  assert.equal(validSettingsPatch('app', { backdrop: 'aurora', backdropStrength: 'vivid' }), true);
+  assert.equal(validSettingsPatch('app', { backdrop: 'none' }), true);
+  assert.equal(validSettingsPatch('app', { backdrop: 'plasma' }), false);
+  assert.equal(validSettingsPatch('app', { backdropStrength: 1 }), false);
+  assert.equal(validSettingsPatch('project', { backdrop: 'silk' }), false);
+});

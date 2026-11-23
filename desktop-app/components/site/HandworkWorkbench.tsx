@@ -542,7 +542,10 @@ export function HandworkWorkbench({ api, workspace, request, onClose, treeHost, 
   useEffect(() => reportContext.current());
   useEffect(() => () => { window.clearTimeout(contextTimer.current); contextKey.current = ''; onContextRef.current?.(null); }, []);
 
-  const mainEditor = tabsHost === undefined ? undefined
+  // One editor raises its tabs into the window's title row. Split editors keep a tab row each, so
+  // side by side panes line up instead of one starting higher than the other.
+  const editorPanes = Object.values(state.layout.panes).filter(pane => pane.kind === 'editor').length;
+  const mainEditor = tabsHost === undefined || editorPanes > 1 ? undefined
     : state.layout.panes[lastEditor.current]?.kind === 'editor' ? lastEditor.current
     : Object.values(state.layout.panes).find(pane => pane.kind === 'editor')?.id;
   const nameInput = (kind: 'file' | 'directory', depth: number, initial: string, error?: string) => <TreeNameInput key={edit?.kind === 'rename' ? `rename:${edit.path}` : `new:${kind}`} kind={kind} depth={depth} initial={initial} error={error}
@@ -571,11 +574,12 @@ export function HandworkWorkbench({ api, workspace, request, onClose, treeHost, 
     })}</>;
   };
 
-  const paneActions = (id: string, kind: 'editor' | 'terminal') => <div className="handwork-pane-actions">
+  // In the title row the main editor offers splits and a terminal, not a close: that row is the window's, and an X there reads as closing the IDE.
+  const paneActions = (id: string, kind: 'editor' | 'terminal', raised = false) => <div className="handwork-pane-actions">
     <HoverTooltip content="Split right"><Button size="icon-sm" variant="ghost" aria-label="Split right" onClick={() => kind === 'editor' ? splitEditor(id, 'row') : newTerminal(id, 'row')}><Columns2 aria-hidden width={14} height={14} /></Button></HoverTooltip>
     <HoverTooltip content="Split down"><Button size="icon-sm" variant="ghost" aria-label="Split down" onClick={() => kind === 'editor' ? splitEditor(id, 'column') : newTerminal(id, 'column')}><Rows2 aria-hidden width={14} height={14} /></Button></HoverTooltip>
-    {kind === 'editor' && <HoverTooltip content="New terminal (⌃`)"><Button size="icon-sm" variant="ghost" aria-label="New terminal" onClick={() => newTerminal(id)}><SquareTerminal aria-hidden width={14} height={14} /></Button></HoverTooltip>}
-    {Object.keys(state.layout.panes).length > 1 && <HoverTooltip content={kind === 'terminal' ? 'Close terminal' : 'Close pane'}><Button size="icon-sm" variant="ghost" aria-label={kind === 'terminal' ? 'Close terminal' : 'Close pane'} onClick={() => closePane(id)}><X aria-hidden width={14} height={14} /></Button></HoverTooltip>}
+    {kind === 'editor' && <HoverTooltip content={`New terminal (${shortcutLabel('Control+\`')})`}><Button size="icon-sm" variant="ghost" aria-label="New terminal" onClick={() => newTerminal(id)}><SquareTerminal aria-hidden width={14} height={14} /></Button></HoverTooltip>}
+    {!raised && Object.keys(state.layout.panes).length > 1 && <HoverTooltip content={kind === 'terminal' ? 'Close terminal' : 'Close pane'}><Button size="icon-sm" variant="ghost" aria-label={kind === 'terminal' ? 'Close terminal' : 'Close pane'} onClick={() => closePane(id)}><X aria-hidden width={14} height={14} /></Button></HoverTooltip>}
   </div>;
 
   // Right-click in an editor: what other editors offer, for the selection or the symbol under it.
@@ -638,26 +642,29 @@ export function HandworkWorkbench({ api, workspace, request, onClose, treeHost, 
             <button type="button" className="handwork-editor-tab-close" data-dirty={dirty || undefined} aria-label={dirty ? `Close ${baseName(path)}, unsaved changes` : `Close ${baseName(path)}`} onClick={() => { if (!dragging.current) closeTab(pane.id, path); }}><span className="handwork-editor-dirty" aria-hidden /><X aria-hidden width={12} height={12} /></button>
           </Reorder.Item>;
         })}</Reorder.Group>;
-    // Raised into the title row, the tabs and the pane's actions leave the pane without a header.
+    // The file's own state sits at the end of its tab row, before the pane's tools: a Code/Preview switch
+    // for Markdown, Save while there are unsaved edits, and the language server while it has news.
+    // A saved file says nothing; its tab, and the tree, already say which file it is.
+    const fileState = file && file.status === 'ready' ? <div className="handwork-editor-state-group">
+      {isMarkdown(file.path) && <div className="handwork-view-switch" role="radiogroup" aria-label="Show as">
+        {(['source', 'preview'] as const).map(mode => {
+          const on = (mode === 'preview') === previewing;
+          return <button key={mode} type="button" role="radio" aria-checked={on} data-on={on || undefined}
+            onClick={() => setState(current => ({ ...current, previews: mode === 'preview' ? [...new Set([...(current.previews ?? []), file.path])] : (current.previews ?? []).filter(path => path !== file.path) }))}>
+            {mode === 'preview' ? 'Preview' : 'Code'}</button>;
+        })}
+      </div>}
+      {support && <LanguageStatus status={support.status(file.path)} onRestart={() => support.restart(file.path)} />}
+      {file.saving ? <span className="handwork-editor-state" role="status"><LoaderCircle aria-hidden width={12} height={12} className="motion-safe:animate-spin" />Saving</span>
+        : isDirty(file) ? <Button size="xs" variant="outline" className="handwork-editor-save" title={`Save (${shortcutLabel('Mod+S')})`} onClick={() => void save(file.path)}>Save</Button>
+        : null}
+    </div> : null;
+    // Raised into the title row, the tabs and the pane's actions leave the pane without a header:
+    // the code starts right under the window's one row of tabs.
     const raised = pane.id === mainEditor;
     return <>
-      {raised ? <>{tabsHost && createPortal(tabs, tabsHost)}{actionsHost && createPortal(paneActions(pane.id, 'editor'), actionsHost)}</>
-        : <div className="handwork-pane-header">{tabs}{paneActions(pane.id, 'editor')}</div>}
-      {file && <div className="handwork-editor-bar">
-        <span className="handwork-editor-path" title={file.path}>{file.path.split('/').map((part, index, parts) => <span key={index} data-last={index === parts.length - 1 || undefined}>{part}</span>)}</span>
-        {file.status === 'ready' && isMarkdown(file.path) && <div className="handwork-view-switch" role="radiogroup" aria-label="Show as">
-          {(['source', 'preview'] as const).map(mode => {
-            const on = (mode === 'preview') === previewing;
-            return <button key={mode} type="button" role="radio" aria-checked={on} data-on={on || undefined}
-              onClick={() => setState(current => ({ ...current, previews: mode === 'preview' ? [...new Set([...(current.previews ?? []), file.path])] : (current.previews ?? []).filter(path => path !== file.path) }))}>
-              {mode === 'preview' ? 'Preview' : 'Code'}</button>;
-          })}
-        </div>}
-        {file.saving ? <span className="handwork-editor-state"><LoaderCircle aria-hidden width={12} height={12} className="motion-safe:animate-spin" />Saving</span>
-          : isDirty(file) ? <Button size="xs" variant="outline" className="handwork-editor-save" onClick={() => void save(file.path)}>Save</Button>
-          : file.status === 'ready' ? <span className="handwork-editor-state">Saved</span> : null}
-        {support && file.status === 'ready' && <LanguageStatus status={support.status(file.path)} onRestart={() => support.restart(file.path)} />}
-      </div>}
+      {raised ? <>{tabsHost && createPortal(tabs, tabsHost)}{actionsHost && createPortal(<>{fileState}{paneActions(pane.id, 'editor', true)}</>, actionsHost)}</>
+        : <div className="handwork-pane-header">{tabs}{fileState}{paneActions(pane.id, 'editor')}</div>}
       {file?.conflict && <div className="handwork-editor-notice" role="alert">
         <span>{baseName(file.path)} changed on disk since you opened it.</span>
         <Button size="xs" variant="ghost" onClick={() => void reload(file.path)}>Reload</Button>
@@ -722,7 +729,7 @@ export function HandworkWorkbench({ api, workspace, request, onClose, treeHost, 
             <button type="button" className="handwork-terminal-tab-close" aria-label={`Close ${label}`} onClick={() => closeShell(pane.id, tab.id)}><X aria-hidden width={12} height={12} /></button>
           </div>;
         })}
-        <HoverTooltip content="New terminal (⌃⇧`)"><Button size="icon-sm" variant="ghost" className="handwork-terminal-new" aria-label="New terminal" onClick={() => setLayout(layout => addTerminalTab(layout, pane.id))}><Plus aria-hidden width={14} height={14} /></Button></HoverTooltip>
+        <HoverTooltip content={`New terminal (${shortcutLabel('Control+Shift+\`')})`}><Button size="icon-sm" variant="ghost" className="handwork-terminal-new" aria-label="New terminal" onClick={() => setLayout(layout => addTerminalTab(layout, pane.id))}><Plus aria-hidden width={14} height={14} /></Button></HoverTooltip>
       </div>
       {paneActions(pane.id, 'terminal')}
     </div>
@@ -869,7 +876,7 @@ function TreeNameInput({ kind, depth, initial, error, onCommit, onCancel }: { ki
 function LanguageStatus({ status, onRestart }: { status: ServerStatus | null; onRestart: () => void }) {
   if (!status || status.state === 'off') return null;
   if (status.state === 'starting' || (status.state === 'ready' && status.progress)) return <span className="handwork-language-status" role="status" title={status.progress}>
-    <LoaderCircle aria-hidden width={11} height={11} className="motion-safe:animate-spin" />{status.state === 'starting' ? `Starting ${status.name}` : status.progress}
+    <LoaderCircle aria-hidden width={11} height={11} className="motion-safe:animate-spin" />{status.state === 'starting' ? (status.name ? `Starting ${status.name}` : 'Starting language server') : status.progress}
   </span>;
   if (status.state === 'ready') return <span className="handwork-language-status" data-state="ready" title={`${status.name} language server: ⌘-click or F12 to go to a definition, ⇧F12 for references, F2 to rename`}><span className="handwork-language-dot" aria-hidden />{status.name}</span>;
   return <HoverTooltip content={status.message ?? `The ${status.name} language server is not running.`}>

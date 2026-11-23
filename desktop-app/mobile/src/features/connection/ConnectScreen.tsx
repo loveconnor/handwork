@@ -106,7 +106,7 @@ export function ConnectScreen() {
           >
             Follow your coding sessions and send messages from your phone.
             To connect, open Handwork on your desktop and go to Settings →
-            Connections → Pair phone.
+            Mobile → Pair phone.
           </Text>
         </Animated.View>
         <Animated.View
@@ -144,6 +144,15 @@ export function ConnectScreen() {
               <Text style={styles.secondaryLabel}>Paste a pairing link</Text>
             </LiquidView>
           </View>
+          {/* A sample workspace on the phone, for a look round without a desktop. */}
+          <Pressable
+            onPress={() => void connection.startDemo()}
+            disabled={connection.working}
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Text style={styles.demoLabel}>Try the demo</Text>
+          </Pressable>
         </Animated.View>
       </View>
       <PairingLinkSheet
@@ -172,7 +181,7 @@ export function ConnectScreen() {
           ) : null}
           <View style={{ padding: 24, paddingBottom: insets.bottom + 24 }}>
             <Text style={[connectionStyles.subtitle, { textAlign: "center" }]}>
-              In Handwork on your desktop, open Settings → Connections → Pair
+              In Handwork on your desktop, open Settings → Mobile → Pair
               phone, then scan the QR code.
             </Text>
             <Pressable onPress={() => setScanning(false)}>
@@ -312,6 +321,13 @@ const useStyles = themedStyles((colors) => ({
     justifyContent: "center",
   },
   secondaryLabel: { color: colors.content, fontSize: 16, fontWeight: "600" },
+  demoLabel: {
+    color: withAlpha(colors.content, 0.78),
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingVertical: 8,
+  },
 }));
 
 /** The connection screens' shared styles, in a palette's colours. */

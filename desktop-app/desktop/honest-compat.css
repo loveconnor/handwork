@@ -72,11 +72,13 @@
   --border: var(--hui-color-border-base-secondary);
   --input: var(--hui-color-border-base-secondary);
   --ring: var(--hui-color-border-accent-emphasis);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* A muted, warm-harmonized series (slate, sage, ochre, terracotta, plum)
+     that sits with the sand neutrals instead of the stock shadcn rainbow. */
+  --chart-1: oklch(0.55 0.1 250);
+  --chart-2: oklch(0.64 0.09 165);
+  --chart-3: oklch(0.72 0.12 75);
+  --chart-4: oklch(0.58 0.13 30);
+  --chart-5: oklch(0.52 0.08 310);
   --sidebar: var(--hui-color-background-base-secondary);
   --sidebar-foreground: var(--hui-color-foreground-base-primary);
   --sidebar-primary: var(--hui-color-background-neutral-emphasis);
@@ -97,9 +99,9 @@
 }
 
 [data-theme="dark"] {
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-1: oklch(0.7 0.1 250);
+  --chart-2: oklch(0.74 0.09 165);
+  --chart-3: oklch(0.8 0.11 78);
+  --chart-4: oklch(0.7 0.12 32);
+  --chart-5: oklch(0.68 0.08 310);
 }

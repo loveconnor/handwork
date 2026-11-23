@@ -2,8 +2,8 @@
 import { HoverTooltip } from "@/components/ui/tooltip";
 import { useEffect, useState, type ReactNode } from 'react';
 import { ContextMeter } from 'honestui/ai/context-meter';
-import { Check, Copy, FileText, Folder, FolderOpen, MessagesSquare, Paperclip, Shield, SquareArrowOutUpRight, BookText, Settings as SettingsIcon } from 'honestui/icons';
-import { Dialog, DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter } from '@/components/ui/dialog';
+import { Check, Copy, SquareArrowOutUpRight } from 'honestui/icons';
+import { Dialog, DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogBody } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProviderLogo } from './ProviderLogo';
@@ -37,11 +37,17 @@ function rule(value: unknown): keyof typeof actions | undefined {
   return action && Object.hasOwn(actions, action) ? action as keyof typeof actions : undefined;
 }
 
-function Card({ icon, title, action, children }: { icon: ReactNode; title: string; action?: ReactNode; children: ReactNode }) {
-  return <section className="handwork-details-card" aria-label={title}>
-    <header><span className="handwork-details-card-icon">{icon}</span><h3>{title}</h3>{action}</header>
+/** One flat section of the sheet: a small label, then its rows. Hairlines separate sections. */
+function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return <section className="handwork-details-section" aria-label={title}>
+    <header><h3>{title}</h3>{action}</header>
     {children}
   </section>;
+}
+
+/** A key/value line: label left, value right. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return <div><dt>{label}</dt><dd>{children}</dd></div>;
 }
 
 function Skeleton({ lines = 2 }: { lines?: number }) {
@@ -65,7 +71,7 @@ function chatAttachments(conversation: Conversation) {
 /**
  * Everything that shapes the open chat's replies, in one place: model settings,
  * context, where it works, instruction files, tool rules, and attachments.
- * Anything the engine does not report is labelled rather than guessed.
+ * Anything that is not known yet is left out rather than guessed.
  */
 export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, options, conversation, onOpenSettings, onOpenFile }: {
   open: boolean; onOpenChange: (open: boolean) => void; api?: DesktopAPI; title: string; chatId?: string;
@@ -95,6 +101,8 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
   const providerId = option('provider')?.currentValue ?? '';
   const fast = option('fast_mode')?.currentValue;
   const fastOn = !!fast && /^(on|true)$/i.test(fast);
+  const model = choice('model');
+  const provider = choice('provider');
   const effort = choice('effort');
   const mode = choice('mode');
   const attachments = chatAttachments(conversation);
@@ -104,80 +112,74 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
   const openImage = (file: EntryAttachment) => { onOpenChange(false); onOpenFile?.({ name: file.name, mimeType: file.mimeType, data: file.data }); };
   const loading = !details && !failure;
   const standalone = details?.standalone;
+  // Only what is known is shown; an unreported model leaves the section out.
+  const hasModel = !!(provider || effort || fast || conversation.used !== undefined);
   const copyId = () => { if (!chatId) return; void navigator.clipboard.writeText(chatId).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {}); };
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogPopup className="handwork-chat-details" initialFocus={() => document.querySelector<HTMLElement>('.handwork-chat-details')}>
-      <DialogHeader>
-        <DialogTitle>Chat details</DialogTitle>
-        <HoverTooltip content={title}><DialogDescription className="handwork-details-subtitle" >{title}</DialogDescription></HoverTooltip>
+      <DialogHeader className="handwork-details-header">
+        <span className="handwork-details-eyebrow" aria-hidden>Chat details</span>
+        <DialogTitle className="handwork-details-title" title={title}>{title}</DialogTitle>
+        {(model || mode) && <DialogDescription className="handwork-details-subtitle">
+          {model && <span className="handwork-details-model"><ProviderLogo provider={providerId} size={13} />{model}</span>}
+          {model && mode && !standalone && <span aria-hidden className="handwork-details-dot" />}
+          {mode && !standalone && <span>{mode}</span>}
+        </DialogDescription>}
       </DialogHeader>
       <DialogBody className="handwork-details-body">
-        <section className="handwork-details-hero" aria-label="Model">
-          <div className="handwork-details-model">
-            <span className="handwork-details-logo"><ProviderLogo provider={providerId} size={22} /></span>
-            <div className="handwork-details-model-text">
-              <strong>{choice('model') ?? 'Model not reported'}</strong>
-              <span>{choice('provider') ?? 'The engine did not report a provider'}</span>
-            </div>
-          </div>
-          {(effort || fast || (mode && !standalone)) && <div className="handwork-details-badges">
-            {effort && <Badge variant="secondary" size="sm">{capitalized(effort)} effort</Badge>}
-            {fast && <Badge variant={fastOn ? 'default' : 'secondary'} size="sm">Fast mode {fastOn ? 'on' : 'off'}</Badge>}
-            {mode && !standalone && <Badge variant="outline" size="sm">{mode} mode</Badge>}
-          </div>}
-          <div className="handwork-details-context">
-            <span>Context</span>
-            {conversation.used !== undefined
-              ? conversation.capacity ? <div className="handwork-details-meter"><ContextMeter used={conversation.used} limit={conversation.capacity} /><p>{compact(conversation.used)} of {compact(conversation.capacity)} tokens</p></div> : <p>{conversation.used.toLocaleString()} tokens used. The model’s limit was not reported.</p>
-              : <p>Reported after the first reply.</p>}
-          </div>
-        </section>
+        {hasModel && <Section title="Setup">
+          <dl className="handwork-details-facts">
+            {provider && <Fact label="Provider">{provider}</Fact>}
+            {effort && <Fact label="Effort">{capitalized(effort)}</Fact>}
+            {fast && <Fact label="Fast mode">{fastOn ? 'On' : 'Off'}</Fact>}
+            {conversation.used !== undefined && <Fact label="Context">{conversation.capacity
+              ? <span className="handwork-details-meter"><ContextMeter used={conversation.used} limit={conversation.capacity} /><span>{compact(conversation.used)}<span className="handwork-details-meta"> / {compact(conversation.capacity)}</span></span></span>
+              : `${conversation.used.toLocaleString()} tokens used`}</Fact>}
+          </dl>
+        </Section>}
 
         {failure && <p role="alert" className="handwork-details-alert">{failure}</p>}
 
-        {!failure && <Card icon={standalone ? <MessagesSquare aria-hidden width={14} height={14} /> : <Folder aria-hidden width={14} height={14} />} title="Where it works">
+        {!failure && <Section title={standalone ? 'Where it works' : 'Folders'}>
           {loading ? <Skeleton /> : standalone
             ? <p className="handwork-details-note">Standalone chat with no project folder. Handwork can search the web and read files attached here, but cannot open or change other files.</p>
             : details && <ul className="handwork-details-rows">
               <li>
-                <FolderOpen aria-hidden width={15} height={15} />
-                <div className="handwork-details-row-text"><span>{folderName(details.workspace)}</span><HoverTooltip content={details.workspace}><code >{shortPath(details.workspace, details.home)}</code></HoverTooltip></div>
+                <div className="handwork-details-row-text"><span>{folderName(details.workspace)}</span><HoverTooltip content={details.workspace}><small>{shortPath(details.workspace, details.home)}</small></HoverTooltip></div>
                 <RevealButton label={details.workspace} onClick={() => reveal(details.workspace)} />
               </li>
               {details.directories.map(folder => <li key={folder}>
-                <Folder aria-hidden width={15} height={15} />
-                <div className="handwork-details-row-text"><span>{folderName(folder)} <Badge variant="secondary" size="sm">Extra folder</Badge></span><HoverTooltip content={folder}><code >{shortPath(folder, details.home)}</code></HoverTooltip></div>
+                <div className="handwork-details-row-text"><span>{folderName(folder)} <span className="handwork-details-meta">Extra folder</span></span><HoverTooltip content={folder}><small>{shortPath(folder, details.home)}</small></HoverTooltip></div>
                 <RevealButton label={folder} onClick={() => reveal(folder)} />
               </li>)}
             </ul>}
-        </Card>}
+        </Section>}
 
-        {!failure && <Card icon={<BookText aria-hidden width={14} height={14} />} title="Instructions">
+        {!failure && <Section title="Instructions">
           {loading ? <Skeleton /> : standalone
             ? <p className="handwork-details-note">Standalone chats do not read AGENTS.md files.</p>
             : details && <>
               {details.instructions.length ? <ul className="handwork-details-rows">{details.instructions.map(file => <li key={file.path}>
-                <FileText aria-hidden width={15} height={15} />
-                <div className="handwork-details-row-text"><span>{scopeLabels[file.scope]} <span className="handwork-details-meta">{formatBytes(file.bytes)}</span></span><HoverTooltip content={file.path}><code >{shortPath(file.path, details.home)}</code></HoverTooltip></div>
+                <div className="handwork-details-row-text"><span>{scopeLabels[file.scope]} <span className="handwork-details-meta">{formatBytes(file.bytes)}</span></span><HoverTooltip content={file.path}><small>{shortPath(file.path, details.home)}</small></HoverTooltip></div>
                 <RevealButton label={file.path} onClick={() => reveal(file.path)} />
-              </li>)}</ul> : <p className="handwork-details-note">No AGENTS.md files apply yet. Add instructions in Settings › Personalization.</p>}
-              <p className="handwork-details-footnote">AGENTS.md files in subfolders also apply when Handwork works there. Which ones were used is not reported.</p>
+              </li>)}</ul> : <p className="handwork-details-note">No AGENTS.md files apply yet. <button type="button" className="handwork-details-link" onClick={() => { onOpenChange(false); onOpenSettings(); }}>Add instructions in Settings</button></p>}
+              <p className="handwork-details-footnote">AGENTS.md files in subfolders also apply when Handwork works there.</p>
             </>}
-        </Card>}
+        </Section>}
 
-        {!failure && !standalone && <Card icon={<Shield aria-hidden width={14} height={14} />} title="Tool permissions">
+        {!failure && !standalone && <Section title="Tool permissions">
           {loading ? <Skeleton lines={3} /> : details && <>
-            <dl className="handwork-details-tools">{tools.map(([id, label]) => {
+            <dl className="handwork-details-facts">{tools.map(([id, label]) => {
               const project = rule(details.permissions.project[id]);
               const action = project ?? rule(details.permissions.global[id]);
-              return <div key={id}><dt>{label}</dt><dd>{action ? <HoverTooltip content={project ? 'Set for this project' : 'Set for all projects'}><Badge variant={actions[action].variant} size="sm" >{actions[action].label}{project ? ' · project' : ''}</Badge></HoverTooltip> : <Badge variant="secondary" size="sm">Default</Badge>}</dd></div>;
+              return <Fact key={id} label={label}>{action ? <HoverTooltip content={project ? 'Set for this project' : 'Set for all projects'}><Badge variant={actions[action].variant} size="sm" >{actions[action].label}{project ? ' · project' : ''}</Badge></HoverTooltip> : <span className="handwork-details-meta">Default</span>}</Fact>;
             })}</dl>
             <p className="handwork-details-footnote">Path-specific rules can still apply. Changes take effect after you reconnect.</p>
           </>}
-        </Card>}
+        </Section>}
 
-        <Card icon={<Paperclip aria-hidden width={14} height={14} />} title="Attachments" action={attachments.length > 0 && <span className="handwork-details-count">{attachments.length}</span>}>
+        <Section title="Attachments" action={attachments.length > 0 && <span className="handwork-details-count">{attachments.length}</span>}>
           {!attachments.length ? <p className="handwork-details-note">No files attached yet.</p> : <>
             {images.length > 0 && <ul className="handwork-details-thumbs">{(allFiles ? images : images.slice(0, 8)).map(({ file, key, message }) => <li key={key}>
               <HoverTooltip content={`${file.name} · message ${message}${file.size ? ` · ${formatBytes(file.size)}` : ''}`}><button type="button" onClick={() => openImage(file)} aria-label={`Open ${file.name} from message ${message}`} >
@@ -185,18 +187,22 @@ export function HandworkChatDetails({ open, onOpenChange, api, title, chatId, op
               </button></HoverTooltip>
             </li>)}</ul>}
             {files.length > 0 && <ul className="handwork-details-rows">{(allFiles ? files : files.slice(0, 5)).map(({ file, key, message }) => <li key={key}>
-              <FileText aria-hidden width={15} height={15} />
-              <div className="handwork-details-row-text"><span>{file.name}</span><span className="handwork-details-meta">Message {message}{file.size ? ` · ${formatBytes(file.size)}` : ''}</span></div>
+              <div className="handwork-details-row-text"><span>{file.name}</span><small>Message {message}{file.size ? ` · ${formatBytes(file.size)}` : ''}</small></div>
               {file.uri?.startsWith('file:') && <RevealButton label={file.name} onClick={() => reveal(file.uri!)} />}
             </li>)}</ul>}
             {(images.length > 8 || files.length > 5) && <Button variant="ghost" size="xs" className="handwork-details-more" onClick={() => setAllFiles(value => !value)}>{allFiles ? 'Show fewer' : `Show all ${attachments.length}`}</Button>}
           </>}
-        </Card>
+        </Section>
+
+        {chatId && <Section title="Chat ID">
+          <ul className="handwork-details-rows">
+            <li>
+              <div className="handwork-details-row-text"><code className="handwork-details-id" title={chatId}>{chatId}</code></div>
+              <Button variant="ghost" size="icon-sm" className="handwork-details-reveal handwork-details-copy" data-copied={copied || undefined} aria-label={copied ? 'Copied' : 'Copy chat ID'} title={copied ? 'Copied' : 'Copy'} onClick={copyId}>{copied ? <Check aria-hidden width={13} height={13} /> : <Copy aria-hidden width={13} height={13} />}</Button>
+            </li>
+          </ul>
+        </Section>}
       </DialogBody>
-      <DialogFooter className="handwork-details-footer">
-        {chatId && <Button variant="ghost" size="sm" onClick={copyId} title={chatId}>{copied ? <Check aria-hidden width={14} height={14} /> : <Copy aria-hidden width={14} height={14} />}{copied ? 'Copied' : 'Copy chat ID'}</Button>}
-        <Button variant="outline" size="sm" onClick={() => { onOpenChange(false); onOpenSettings(); }}><SettingsIcon aria-hidden width={14} height={14} />Settings</Button>
-      </DialogFooter>
     </DialogPopup>
   </Dialog>;
 }

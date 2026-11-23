@@ -119,6 +119,9 @@ vi.mock("@/features/connection/ConnectionNotice", () => ({
 vi.mock("@/features/connection/nativeLink", () => ({
   hasNativeTranscript: false,
 }));
+vi.mock("@/features/connection/ConnectionProvider", () => ({
+  useNativeTranscripts: () => false,
+}));
 vi.mock("@/features/connection/useProjectChanges", () => ({
   useProjectChanges: (project: string, enabled: boolean, path?: string) => {
     desktop.changes(project, enabled);

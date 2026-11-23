@@ -6,9 +6,10 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { generateSystemPrompt, honestChatSpec } from 'honestui/genui/server';
 import { DesktopBackend } from '../../electron/backend.mjs';
+import { desktopChatSpec, excludedComponentNames } from '../../electron/genui-components.mjs';
 
 const desktopPrompt = JSON.parse(readFileSync(new URL('../../electron/genui-prompt.json', import.meta.url)));
-const playgroundPrompt = generateSystemPrompt({ library: honestChatSpec });
+const playgroundPrompt = generateSystemPrompt({ library: desktopChatSpec });
 const standalonePrompt = JSON.parse(readFileSync(new URL('../../electron/standalone-prompt.json', import.meta.url)));
 
 test('standalone chats keep the playground prompt with math formatting guidance, including when reopened', async () => {
@@ -47,6 +48,16 @@ test('standalone chats keep the playground prompt with math formatting guidance,
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('prompts leave out components the packaged renderer cannot run', () => {
+  for (const name of excludedComponentNames) {
+    assert.ok(honestChatSpec.components[name], `${name} is no longer upstream; drop it from the exclusions`);
+    assert.equal(desktopChatSpec.components[name], undefined);
+    assert.equal(desktopChatSpec.schema.$defs[name], undefined);
+    for (const prompt of [standalonePrompt, desktopPrompt]) assert.ok(!new RegExp(`\\b${name}\\b`).test(prompt), `${name} appears in a prompt`);
+  }
+  assert.ok(desktopChatSpec.components.Artifact);
 });
 
 test('standalone chats still require native isolation support', async () => {

@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Check, LoaderCircle, X } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
 import type { DesktopAPI, ProviderUpdate } from '@/lib/desktop-api';
@@ -13,6 +12,8 @@ const cleanError = (cause: unknown) => cause instanceof Error ? cause.message.re
 /**
  * Offers updates for the software behind connected providers, as the native
  * app did for its agents: checked once per launch, dismissed for this run only.
+ * It sits in the sidebar footer beside the app's own update, so updates have
+ * one home and never cover the conversation.
  */
 export function HandworkProviderUpdates({ api, providers, ready }: { api?: DesktopAPI; providers: string[]; ready: boolean }) {
   const [updates, setUpdates] = useState<ProviderUpdate[]>([]);
@@ -43,9 +44,9 @@ export function HandworkProviderUpdates({ api, providers, ready }: { api?: Deskt
     }
   };
 
-  return createPortal(<section className="handwork-provider-updates" role="status" aria-label="Provider updates">
+  return <section className="handwork-provider-updates" role="status" aria-label="Provider updates">
     <header>
-      <span>{updates.length === 1 ? 'Provider update available' : 'Provider updates available'}</span>
+      <span>{updates.length === 1 ? 'Update available' : 'Updates available'}</span>
       {pending.length > 1 && <Button size="sm" variant="ghost" className="handwork-provider-updates-all" onClick={() => start(pending)}>Update all</Button>}
       <Button size="icon-sm" variant="ghost" className="handwork-provider-updates-close" aria-label="Dismiss provider updates" title="Dismiss until next launch" disabled={busy} onClick={() => setDismissed(true)}><X aria-hidden width={14} height={14} /></Button>
     </header>
@@ -72,6 +73,6 @@ export function HandworkProviderUpdates({ api, providers, ready }: { api?: Deskt
           </Button>}
       </article>;
     })}</div>
-    <footer>{anyUpdated ? 'Handwork uses the new versions from your next message.' : 'Updates bring the latest models and fixes.'}</footer>
-  </section>, document.body);
+    {anyUpdated && <footer>Handwork uses the new versions from your next message.</footer>}
+  </section>;
 }

@@ -9,7 +9,7 @@ export function parseInvitation(text: string): Invitation {
   const url = new URL(text.trim());
   if (url.protocol !== "handwork:" || url.hostname !== "pair")
     throw new Error(
-      "Scan a Handwork pairing code from desktop Settings → Connections",
+      "Scan a Handwork pairing code from desktop Settings → Mobile",
     );
   const code = url.searchParams.get("i");
   if (!code || !/^[A-Za-z0-9_-]+$/.test(code))

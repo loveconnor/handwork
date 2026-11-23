@@ -47,11 +47,11 @@ export function HandworkBackup({ api, disabled, busy, run, onMessage, onRestored
   const anything = !!preview && Object.entries(restoreChoices(preview)).some(([id, available]) => available && chosen[id as RestoreCategory]);
   return <>
     <h3>Backup and restore</h3>
-    <p className="handwork-settings-note">A backup is one file with your chats and their attachments, saved prompts, preferences, archived chats, chat versions, drafts, and queued messages. API keys, sign-ins, and engine settings are never included. Keep backups somewhere private: they contain your full chat history.</p>
-    <div className="handwork-settings-buttons">
-      <Button size="sm" variant="outline" disabled={disabled} onClick={() => void backUp()}>Back up…</Button>
-      <Button size="sm" variant="ghost" disabled={disabled || busy} title={busy ? 'Wait for running replies to finish' : undefined} onClick={() => void choose()}>Restore from backup…</Button>
-    </div>
+    <p className="handwork-settings-note">Chats, attachments, prompts, preferences, and drafts in one file. Keys and sign-ins are left out.</p>
+    <div className="handwork-setting-row"><div><span className="handwork-setting-title">Back up</span><p>Keep it somewhere private. It holds your full history.</p></div>
+      <div className="handwork-setting-control"><Button size="sm" variant="outline" disabled={disabled} onClick={() => void backUp()}>Back up…</Button></div></div>
+    <div className="handwork-setting-row"><div><span className="handwork-setting-title">Restore from backup</span><p>Preview a backup and choose what to bring back.</p></div>
+      <div className="handwork-setting-control"><Button size="sm" variant="outline" disabled={disabled || busy} title={busy ? 'Wait for running replies to finish' : undefined} onClick={() => void choose()}>Restore…</Button></div></div>
     <Dialog open={!!preview} onOpenChange={value => { if (!value && !restoring) setPreview(undefined); }}>
       <DialogContent className="handwork-chat-dialog handwork-restore-dialog" showCloseButton={!restoring}>
         <DialogHeader>

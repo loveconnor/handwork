@@ -1,5 +1,13 @@
 import { requireOptionalNativeModule } from "expo";
 import { Platform } from "react-native";
+import {
+  DEMO_FINGERPRINT,
+  demoCloseWatch,
+  demoNextUpdates,
+  demoOpenWatch,
+  demoRequest,
+  isDemoWatch,
+} from "./demo";
 
 type NativeLink = {
   execute(input: string): Promise<string>;
@@ -19,6 +27,9 @@ export type Desktop = {
   deviceId: string;
 };
 export type Pairing = { desktop: Desktop; identity: Identity };
+/** Whether this is the sample workspace, answered on the phone, not a desktop. */
+export const isDemo = (pairing: Pairing | null | undefined) =>
+  pairing?.desktop.fingerprint === DEMO_FINGERPRINT;
 
 export async function nativeCall<T>(input: object): Promise<T> {
   if (!module)
@@ -34,6 +45,7 @@ export function request<T>(
   params: object = {},
   id = makeCommandId(),
 ): Promise<T> {
+  if (isDemo(pairing)) return demoRequest<T>(method, params);
   return nativeCall({
     operation: "exchange",
     identity: pairing.identity,
@@ -51,6 +63,7 @@ export async function openWatch(
   method: string,
   params: object,
 ): Promise<number> {
+  if (isDemo(pairing)) return demoOpenWatch(params);
   const { watchId } = await nativeCall<{ watchId: number }>({
     operation: "watch",
     identity: pairing.identity,
@@ -65,6 +78,7 @@ export async function nextUpdates<T>(
   watchId: number,
   timeoutMs: number,
 ): Promise<T[]> {
+  if (isDemoWatch(watchId)) return demoNextUpdates<T>(watchId, timeoutMs);
   const { updates } = await nativeCall<{ updates: T[] }>({
     operation: "next",
     watchId,
@@ -73,6 +87,7 @@ export async function nextUpdates<T>(
   return updates;
 }
 export function closeWatch(watchId: number) {
+  if (isDemoWatch(watchId)) return Promise.resolve(demoCloseWatch(watchId));
   return nativeCall({ operation: "unwatch", watchId }).catch(() => {});
 }
 export function makeCommandId() {

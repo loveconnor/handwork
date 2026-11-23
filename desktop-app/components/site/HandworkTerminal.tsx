@@ -7,19 +7,23 @@ import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 import type { DesktopAPI } from '@/lib/desktop-api';
 
-// The native app's palettes, so a terminal looks the same in both.
-const ANSI_DARK = { black: '#1d2428', red: '#f87171', green: '#4ade80', yellow: '#fbbf24', blue: '#60a5fa', magenta: '#c084fc', cyan: '#22d3ee', white: '#e8eef2', brightBlack: '#64748b', brightRed: '#fca5a5', brightGreen: '#86efac', brightYellow: '#fde68a', brightBlue: '#93c5fd', brightMagenta: '#d8b4fe', brightCyan: '#67e8f9', brightWhite: '#f8fafc' };
-const ANSI_LIGHT = { black: '#383a42', red: '#e45649', green: '#50a14f', yellow: '#c18401', blue: '#4078f2', magenta: '#a626a4', cyan: '#0184bc', white: '#fafafa', brightBlack: '#7c8591', brightRed: '#df6b60', brightGreen: '#68b567', brightYellow: '#d19a2f', brightBlue: '#5c89f5', brightMagenta: '#b54bb3', brightCyan: '#1f9cc9', brightWhite: '#ffffff' };
+// Tuned to the app's neutrals: ink and graphite for black and white, and hues
+// that sit beside the status colours (a touch less saturated than Tailwind or
+// One Dark) while staying far enough apart to tell red, yellow and magenta,
+// or green and cyan, apart at a glance. Light hues hold >= 4.5:1 on the white
+// panel; dark ones are soft pastels on graphite.
+const ANSI_DARK = { black: '#3a3a3d', red: '#e5806f', green: '#82c59b', yellow: '#e2bd6f', blue: '#8fb1e6', magenta: '#c9a2e3', cyan: '#78c3c8', white: '#c4c4c9', brightBlack: '#8d8d93', brightRed: '#f0a194', brightGreen: '#a3d8b6', brightYellow: '#eed49a', brightBlue: '#b2caf0', brightMagenta: '#dcc0ef', brightCyan: '#9fd6da', brightWhite: '#ededef' };
+const ANSI_LIGHT = { black: '#21201c', red: '#bb3e2d', green: '#2f7a4c', yellow: '#91660f', blue: '#3563ae', magenta: '#8b4a9f', cyan: '#1d7682', white: '#a8a7a1', brightBlack: '#82827c', brightRed: '#d0533f', brightGreen: '#3f8f5d', brightYellow: '#ab7c1f', brightBlue: '#4c7bc6', brightMagenta: '#a061b4', brightCyan: '#2b8b97', brightWhite: '#cfceca' };
 
 const isDark = () => document.documentElement.classList.contains('dark');
 function theme() {
   const dark = isDark();
   const styles = getComputedStyle(document.documentElement);
-  const foreground = styles.getPropertyValue('--hui-color-foreground-base-primary').trim() || (dark ? '#eeeeec' : '#21201c');
+  const foreground = styles.getPropertyValue('--hui-color-foreground-base-primary').trim() || (dark ? '#ededef' : '#21201c');
   // The GPU renderer paints its own background, so it takes the panel's colour.
-  const background = styles.getPropertyValue('--hw-panel').trim() || (dark ? '#1a1a19' : '#ffffff');
+  const background = styles.getPropertyValue('--hw-panel').trim() || (dark ? '#171718' : '#ffffff');
   return {
-    background, foreground, cursor: foreground, cursorAccent: dark ? '#000000' : '#ffffff',
+    background, foreground, cursor: foreground, cursorAccent: background,
     selectionBackground: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)', selectionInactiveBackground: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
     ...(dark ? ANSI_DARK : ANSI_LIGHT),
   };
@@ -45,7 +49,9 @@ export function HandworkTerminal({ api, workspace, terminalId, focused, onOpened
   useEffect(() => {
     if (!host.current) return;
     const xterm = new Terminal({
-      cursorBlink: true, cursorStyle: 'bar', cursorWidth: 2, fontSize: codeFontSize(), lineHeight: 1.35, scrollback: 4000,
+      cursorBlink: true, cursorStyle: 'bar', cursorInactiveStyle: 'bar', cursorWidth: 2, fontSize: codeFontSize(), lineHeight: 1.35, scrollback: 4000,
+      // Colours a program pairs badly (bright white on a red badge, white on the light panel) are nudged until they read.
+      minimumContrastRatio: 4.5,
       fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--hui-font-family-mono').trim() || 'ui-monospace, SFMono-Regular, Menlo, monospace',
       theme: theme(), macOptionIsMeta: navigator.platform.startsWith('Mac'),
     });

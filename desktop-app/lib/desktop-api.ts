@@ -1,6 +1,14 @@
 import type { ChatBranch } from './chat-versions';
+export type AccentColor = 'ink' | 'blue' | 'violet' | 'green' | 'amber' | 'rose';
+export type LightPalette = 'sand' | 'paper' | 'mist';
+export type DarkPalette = 'graphite' | 'slate' | 'black';
+/** A live shader behind the window frame; 'none' keeps the frame flat. */
+export type Backdrop = 'none' | 'aurora' | 'silk' | 'nebula' | 'dune';
+export type BackdropStrength = 'subtle' | 'balanced' | 'vivid';
 export type DesktopPreferences = {
   theme: 'system' | 'light' | 'dark'; uiFontSize: number; codeFontSize: number;
+  /** The color of primary actions, focus and selection. `ink` keeps the app colorless. */
+  accent: AccentColor; lightPalette: LightPalette; darkPalette: DarkPalette; backdrop: Backdrop; backdropStrength: BackdropStrength;
   sendKey: 'enter' | 'modifier-enter'; restoreChats: boolean;
   /** `status` groups chats by what they need (working, waiting on you…) behind tabs, then by project. */
   sidebarLayout: 'projects' | 'status'; preferredEditor: 'system' | 'vscode' | 'cursor' | 'zed';
@@ -38,7 +46,7 @@ export type ChatDetails = {
 export type FilePreview = { name: string; path: string; size: number; kind: 'image' | 'text' | 'other'; mimeType?: string; data?: string; text?: string; truncated?: boolean; allowed: boolean; canOpen: boolean; canReveal: boolean };
 export type ChatSearchResult = { sessionId: string; title: string; role: 'user' | 'assistant'; messageIndex: number; matches: number; updatedAt: number; snippet: string };
 export type SubscriptionUsageWindow = { id: string; label: string; usedPercent: number | null; resetsAt: number | null; windowMinutes: number | null };
-export type SubscriptionUsage = { plan: string | null; windows: SubscriptionUsageWindow[]; observedAt?: number | null; source?: 'sdk-events' };
+export type SubscriptionUsage = { plan: string | null; windows: SubscriptionUsageWindow[]; observedAt?: number | null; source?: 'sdk-events'; /** False when plan limits don't apply to the sign-in (API key, cloud provider). */ available?: boolean };
 /** A banked reward that clears Codex usage windows once. `expiresAt` is Unix ms. */
 export type CodexResetCredit = { id: string; title: string | null; description: string | null; expiresAt: number | null };
 /** `email` is the Codex sign-in the resets belong to, which can differ from Handwork's. */

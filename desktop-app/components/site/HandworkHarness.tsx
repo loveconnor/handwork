@@ -11,14 +11,13 @@ import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { PromptBar } from "@/components/ui/prompt-bar";
 import { LoadingState } from "honestui/ai/loading-state";
 import { HandworkConversation } from "@/components/site/HandworkConversation";
-import { ApprovalCard } from "honestui/ai/approval-card";
+import { HandworkApproval } from "@/components/site/HandworkApproval";
 import HandworkTranscript, { type MessageVersion } from "@/components/site/HandworkTranscript";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { IconFileText, IconSettings, IconMic, IconPlus, IconClose } from "@/components/atoms/Icons";
-import { ComposerOptions, HandworkTheme, chooseTheme } from "@/components/site/HandworkControls";
+import { ComposerOptions, chooseTheme } from "@/components/site/HandworkControls";
 import type { SettingsSnapshot, Attachment, DesktopAPI, SessionResult, ProjectSuggestion, ChatPreference, SavedPrompt, ModelPreferences, RestoreResult, SavedDraft } from "@/lib/desktop-api";
 import { useLocalDictation } from '@/lib/use-local-dictation';
 import { applyUpdate, availableCommands, configOptions, emptyConversation, withSavedUsage, permissionFromEvent, providerList, record, text, type Command, type ConfigOption, type Conversation, type Entry, type Permission, type ProviderInfo } from "@/lib/desktop-state";
@@ -41,13 +40,15 @@ import { draftKey, splitDrafts } from '@/lib/draft-recovery';
 import { queueConfiguration, type ConfigChange } from '@/lib/configuration-queue';
 import { HandworkSubscriptionUsage } from '@/components/site/HandworkSubscriptionUsage';
 import { HandworkAttachmentTray } from "@/components/site/HandworkAttachmentTray";
+import { HandworkBackdrop } from './HandworkBackdrop';
+import { HandworkDictation } from './HandworkDictation';
 import { HandworkChatDetails } from "@/components/site/HandworkChatDetails";
 import { HandworkTabs } from "@/components/site/HandworkTabs";
 import { HandworkWorkbench, type EditorContext, type WorkbenchCommand, type WorkbenchRequest } from "@/components/site/HandworkWorkbench";
 import { fileUri } from "@/lib/language-servers";
 import { HandworkProviderUpdates } from "@/components/site/HandworkProviderUpdates";
 import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuSeparator, MenuShortcut, MenuGroup, MenuGroupLabel } from "@/components/ui/menu";
-import { Search, RefreshCw, RotateCcw, SquarePen, FolderPlus, Folder, MessageSquare, TextSearch, BookText, Bookmark, SquareDashedMousePointer, Paperclip, Settings as SettingsIcon, Download, Activity, GitCompare, Pencil, Cpu, Plug, Gauge, Shield, SunMoon, Archive, ArchiveRestore, Keyboard, History, Star, Info, Hand, CodeXml, FileCode, TextSelect, GitBranch } from "honestui/icons";
+import { Search, RefreshCw, RotateCcw, SquarePen, FolderPlus, Folder, MessageSquare, TextSearch, BookText, Bookmark, SquareDashedMousePointer, Paperclip, Settings as SettingsIcon, Download, Activity, GitCompare, Pencil, Cpu, Plug, Gauge, Shield, SunMoon, Archive, ArchiveRestore, Keyboard, History, Star, Info, Hand, CodeXml, Ellipsis, FolderTree, Check, FileCode, TextSelect, GitBranch, CircleAlert, SquareSlash, X } from "honestui/icons";
 import { isMac, promptSlug, promptVariables, shortcutLabel } from "@/lib/saved-prompts";
 import { applyAppearance } from "@/lib/appearance";
 import { modelDisplayName } from "@/lib/model-presentation";
@@ -71,6 +72,8 @@ function readConversation(snapshot: { title: string; updates: unknown[] }, fallb
   return snapshot.updates.reduce<Conversation>((current, update) => applyUpdate(current, record(update)), { ...emptyConversation(), title: snapshot.title || fallbackTitle });
 }
 
+/** The window width, in CSS pixels, at and below which the sidebar folds to its rail on its own. */
+const NARROW_WINDOW = 980;
 const sidebarCacheKey = 'handwork-sidebar-v1';
 function cachedSidebar(): { projects: string[]; sessions: SavedSession[] } {
   try {
@@ -121,7 +124,6 @@ export default function HandworkHarness() {
   queuesRef.current = queues;
   const savedQueues = useRef(new Map<string, string>());
   const queuesLoaded = useRef(false);
-  const restoredQueueCount = useRef(0);
   const [chatRequest, setChatRequest] = useState<string>();
   // Tab and chat actions from the app menu, handled with the current state.
   const [tabRequest, setTabRequest] = useState<{ action: TabAction; at: number }>();
@@ -159,6 +161,14 @@ export default function HandworkHarness() {
   const [answering, setAnswering] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // A notice is a passing confirmation: it fades on its own, given longer when it is long or offers an action.
+  useEffect(() => {
+    if (!notice) return;
+    // A short confirmation ("Response copied.") is gone in about 2.5s; longer text gets up to 8s, and one with an action longer still.
+    const delay = noticeAction?.notice === notice ? Math.min(12000, 8000 + notice.length * 45) : Math.min(8000, 2500 + Math.max(0, notice.length - 24) * 45);
+    const timer = setTimeout(() => { setNotice(current => current === notice ? "" : current); setNoticeAction(current => current?.notice === notice ? undefined : current); }, delay);
+    return () => clearTimeout(timer);
+  }, [notice, noticeAction]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsNavHost, setSettingsNavHost] = useState<HTMLDivElement | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -239,11 +249,34 @@ export default function HandworkHarness() {
   const providerOptions = useRef(new Map<string, ConfigOption[]>());
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 700px)");
-    const update = () => setNarrowSidebar(media.matches);
+    // Below this width the sidebar steps back to its rail on its own, and opening it floats it over
+    // the chat as a sheet. The open or closed choice made on a wide window is kept for when it is wide again.
+    const media = window.matchMedia(`(max-width: ${NARROW_WINDOW}px)`);
+    const update = () => { setNarrowSidebar(media.matches); setNarrowSidebarOpen(false); };
     update(); media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+  // The floating sheet leaves when the person looks elsewhere: a click outside it, or Escape.
+  useEffect(() => {
+    if (!narrowSidebar || !narrowSidebarOpen) return;
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target?.closest || target.closest('.handwork-sidebar, [data-slot="sidebar-toggle"], [role="menu"], [role="dialog"], [role="alertdialog"], [data-base-ui-portal], [data-floating-ui-portal]')) return;
+      setNarrowSidebarOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')) return;
+      setNarrowSidebarOpen(false);
+    };
+    // A file opened from the tree in the sheet is what the person came for: the sheet steps aside for it.
+    const opened = (event: MouseEvent) => {
+      if ((event.target as Element | null)?.closest?.('.handwork-sidebar .handwork-tree-row[data-kind="file"]')) setNarrowSidebarOpen(false);
+    };
+    document.addEventListener('pointerdown', outside, true);
+    document.addEventListener('click', opened);
+    window.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('click', opened); window.removeEventListener('keydown', escape); };
+  }, [narrowSidebar, narrowSidebarOpen]);
 
   function rememberOptions(next: ConfigOption[]) {
     confirmedOptions.current = next;
@@ -352,7 +385,6 @@ export default function HandworkHarness() {
       if (!mounted) return;
       const restoredQueue = restoreQueues(savedQueueList ?? []);
       savedQueues.current = restoredQueue.keys;
-      restoredQueueCount.current = restoredQueue.count;
       queuesLoaded.current = true;
       if (restoredQueue.count) { setQueues(restoredQueue.queues); setPausedQueues(restoredQueue.paused); setRestoredQueues(new Set(restoredQueue.paused)); }
       // Keep every original until it has been moved durably to an open chat.
@@ -402,7 +434,7 @@ export default function HandworkHarness() {
           setUnreadSessions(current => new Set(current).add(failedSession));
           return;
         }
-        setError(text(params.message) || "The Handwork engine stopped. Reopen the project to reconnect.");
+        setError(text(params.message) || "Handwork lost its connection to this project. Reopen the project to reconnect.");
         setPermissions([]);
         setSessionId("");
         activeSession.current = "";
@@ -1232,7 +1264,7 @@ export default function HandworkHarness() {
     return () => window.removeEventListener('keydown', onKey);
   }, [showProjectTools, ideView]);
   const closeReviewPanel = () => {
-    document.getElementById(filesOpen ? 'handwork-files-trigger' : changesOpen ? 'handwork-changes-trigger' : 'handwork-activity-trigger')?.focus();
+    document.getElementById(changesOpen ? 'handwork-changes-trigger' : 'handwork-more-trigger')?.focus();
     setFilesOpen(false); setChangesOpen(false); setActivityOpen(false); setActivityRequested(false);
   };
   // In the IDE view the column beside the code holds the chat, or source control or activity in its place.
@@ -1248,6 +1280,25 @@ export default function HandworkHarness() {
     setIdeChat(!showing); setChangesOpen(false); setActivityOpen(false); setActivityRequested(false);
     if (!showing) requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')?.focus());
   };
+  // Where there is no room beside the chat (or the code), a side panel floats over it as a sheet;
+  // the stylesheet marks that with --hw-overlay. Reaching back to what it covers puts it away.
+  const sidePanelOpen = ideView ? ideSide !== 'none' : filesOpen || changesOpen || activityOpen;
+  useEffect(() => {
+    const body = workspaceBody.current;
+    if (!sidePanelOpen || !body) return;
+    const sheets = () => [...body.querySelectorAll<HTMLElement>(ideView ? ':scope > .handwork-ide-chat-head, :scope > .handwork-thread, :scope > .handwork-review-panel:not(.handwork-ide-main)' : ':scope > .handwork-review-panel')]
+      .filter(element => getComputedStyle(element).getPropertyValue('--hw-overlay').trim() === '1');
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target?.closest || !body.contains(target)) return;
+      const floating = sheets();
+      if (!floating.length || floating.some(sheet => sheet.contains(target)) || target.closest('.handwork-review-resize, .handwork-ide-chat-reveal')) return;
+      if (ideView && ideSide === 'chat') setIdeChat(false);
+      else { setFilesOpen(false); setChangesOpen(false); setActivityOpen(false); setActivityRequested(false); }
+    };
+    document.addEventListener('pointerdown', outside, true);
+    return () => document.removeEventListener('pointerdown', outside, true);
+  }, [sidePanelOpen, ideView, ideSide]);
   // Files named in the chat open in the editor beside it, when they are in the project.
   const openFileTarget = (file: FileTarget) => {
     const root = (ideView ? ideProject : workspace).replace(/[\\/]+$/, '');
@@ -1302,7 +1353,6 @@ export default function HandworkHarness() {
     return () => { active = false; };
     // Git answers for the project a chat is connected to, so a new chat's branch shows once it connects.
   }, [api, landing, greetingProject, sessionId]);
-  const landingPath = greetingProject.replace(/^\/(Users|home)\/[^/]+/, '~');
   const landingChanges = projectChangeState.snapshot?.workspace === greetingProject && projectChangeState.snapshot.kind === 'repository' ? projectChangeState.snapshot.totalFiles : undefined;
   const suggestionRoute = JSON.stringify(options.filter(option => ["provider", "model", "effort", "fast_mode"].includes(option.id)).map(option => [option.id, option.currentValue]));
   const suggestionKey = workspace + suggestionRoute;
@@ -1448,13 +1498,7 @@ export default function HandworkHarness() {
       });
     }
   }, [api, queues, pausedQueues]);
-  // Queues saved before a restart are announced once the first chat is open.
-  useEffect(() => {
-    const count = restoredQueueCount.current;
-    if (!count || !startupReady || !sessionId || working) return;
-    restoredQueueCount.current = 0;
-    setNotice(`${count} queued message${count === 1 ? " was" : "s were"} saved when Handwork closed. ${count === 1 ? "It is" : "They are"} paused so you can review before sending.`);
-  }, [startupReady, sessionId, working]);
+  // Queues saved before a restart need no notice: the queue's own header says they are paused.
   // Chats that need the person (approvals, failed or paused replies, paused queues), then working chats.
   const approvalCounts = new Map<string, number>();
   for (const [id, list] of permissionCache.current) if (id !== sessionId && list.length) approvalCounts.set(id, list.length);
@@ -1493,7 +1537,7 @@ export default function HandworkHarness() {
       setNoticeAction({ notice: issue.message, label: "Try again", run: () => { clearIssue(target.id); void latest.current.retryLast(); } });
     }
     const controls: Record<AttentionKind, string> = {
-      approval: '[data-attention="approval"] :is([role="radio"][tabindex="0"], [role="checkbox"], textarea, button:not([disabled]))',
+      approval: '[data-attention="approval"] [data-primary]:not([disabled])',
       failed: '[data-attention="queue"] [data-primary], [data-attention="error"] button:not([disabled])',
       interrupted: '[data-attention="recovery"] button:not([disabled]), [data-attention="notice"] button:not([disabled])',
       queue: '[data-attention="queue"] [data-primary]',
@@ -1616,7 +1660,7 @@ export default function HandworkHarness() {
     ...(ideView ? [{ id: "ide-chat", label: ideSide === "chat" ? "Hide chat" : "Show chat", icon: <MessageSquare aria-hidden />, shortcut: "Mod+J", keywords: "conversation column panel", run: toggleIdeChat }] : []),
     { id: "open-project", label: "Open project…", icon: <FolderPlus aria-hidden />, keywords: "folder workspace add", disabled: blocked || !api, run: openProject },
     { id: "find", label: "Find in chat", icon: <TextSearch aria-hidden />, shortcut: "Mod+F", keywords: "search text conversation", disabled: !shownConversation.entries.length, run: () => openFind() },
-    { id: 'slash-commands', label: 'Slash commands', icon: <BookText aria-hidden />, keywords: 'slash commands help', run: () => { setPalettePage('commands'); setPaletteOpen(true); } },
+    { id: 'slash-commands', label: 'Slash commands', icon: <SquareSlash aria-hidden />, keywords: 'slash commands help', run: () => { setPalettePage('commands'); setPaletteOpen(true); } },
     { id: "prompts", label: "Saved prompts", icon: <BookText aria-hidden />, keywords: "library snippets templates", disabled: !api, run: () => setLibrary({ open: true }) },
     ...(draft.trim() ? [{ id: "save-prompt", label: "Save draft as prompt", icon: <Bookmark aria-hidden />, keywords: "snippet template library", run: () => setLibrary({ open: true, draft }) }] : []),
     { id: "screenshot", label: "Take screenshot", icon: <SquareDashedMousePointer aria-hidden />, keywords: "capture screen window region image attach", disabled: !api?.captureScreen || blocked || capturing || attachments.length >= 10, run: () => void captureScreenshot() },
@@ -1679,7 +1723,7 @@ export default function HandworkHarness() {
         setNoticeAction({ notice: message, label: "Undo", run: () => { editQueue(target, items => [...removed, ...items.filter(item => !removed.some(entry => entry.id === item.id))]); setPausedQueues(current => new Set(current).add(target)); } });
       }} />}
     {viewedChat?.archived && <div className="handwork-archived-banner" role="status"><Archive aria-hidden width={14} height={14} /><span>This chat is archived. Sending a message restores it.</span><Button size="xs" variant="outline" onClick={() => void archiveChat(viewedChat, false)}><ArchiveRestore aria-hidden width={12} height={12} />Restore</Button></div>}
-    <PromptBar sendKey={preferences?.app.sendKey} value={draft} onValueChange={setDraft} hasExternalAttachments={attachments.length > 0} placeholder={busy && !pendingChat ? "Queue a follow-up…" : shownConversation.entries.length ? "Reply to Handwork…" : workspaceName ? `Ask about ${workspaceName}…` : "Ask Handwork…"}
+    <PromptBar sendKey={preferences?.app.sendKey} value={draft} onValueChange={setDraft} hasExternalAttachments={attachments.length > 0} placeholder={busy && !pendingChat ? "Queue a follow-up…" : shownConversation.entries.length ? "Reply to Handwork…" : workspaceName ? "Describe a task or ask a question…" : "Ask Handwork…"}
       onQueue={busy && !pendingChat ? ({ text: queued }) => {
         dictation.cancel();
         const target = sessionId;
@@ -1743,11 +1787,9 @@ export default function HandworkHarness() {
       actions={<>
         <ComposerOptions options={composerOptions} browsingOnly={!sessionId && composerOptions.length > 0} disabled={busy || working || picking || navigating || unavailable} syncing={configuring} onChange={(id, value) => void configure(id, value)}
           shortcuts={shortcuts} onChooseModel={model => void chooseModel(model)} onFavorite={api?.setModelFavorite ? favorite => void favoriteModel(favorite) : undefined} />
-        {dictation.status.available && <>
-          <Button size="icon-sm" variant="ghost" aria-label={dictation.phase === 'recording' ? "Stop dictation" : dictation.phase === 'transcribing' ? "Transcribing…" : "Dictate offline"} title={dictation.phase === 'recording' ? "Stop dictation (maximum 2 minutes)" : "Dictate offline · English"} aria-pressed={dictation.phase === 'recording'} disabled={unavailable || blocked || dictation.phase === 'starting' || dictation.phase === 'transcribing'} onClick={() => void dictation.toggle()}><IconMic size={16} /></Button>
-          {dictation.phase !== 'idle' && <span role="status">{dictation.phase === 'starting' ? 'Opening microphone…' : dictation.phase === 'recording' ? 'Listening…' : 'Transcribing…'}</span>}
-          {dictation.phase !== 'idle' && <Button size="icon-sm" variant="ghost" aria-label="Cancel dictation" title="Cancel dictation" onClick={dictation.cancel}><IconClose size={14} /></Button>}
-        </>}
+        {dictation.status.available && (dictation.phase === 'idle'
+          ? <Button size="icon-sm" variant="ghost" aria-label="Dictate offline" title="Dictate offline · English" disabled={unavailable || blocked} onClick={() => void dictation.toggle()}><IconMic size={16} /></Button>
+          : <HandworkDictation phase={dictation.phase} level={dictation.level} startedAt={dictation.startedAt} onStop={() => void dictation.toggle()} onCancel={dictation.cancel} />)}
       </>} />
   </div>;
   // Open chats and their details; in the IDE view they head the chat column instead of the title row.
@@ -1756,8 +1798,11 @@ export default function HandworkHarness() {
     selectDisabled={picking || !api} closeDisabled={picking || !api} newDisabled={picking || !api}
     onSelect={tab => { if (tab.id !== STARTING_TAB) openChat({ ...tab, label: chatPreferences[tab.id]?.title || tab.label }); }} onClose={id => { if (id !== STARTING_TAB) closeTab(id); }}
     onNew={() => openNewTab(workspace)} />;
+  // With the engine or session gone, the error itself offers the way back.
+  const canReconnect = !!api && !sessionId && !working && !pendingChat && (!!workspace || shownConversation.entries.length > 0);
   const detailsButton = <Button className="handwork-details-trigger" size="icon-sm" variant="ghost" aria-label="Chat details" title={`Chat details (${shortcutLabel("Mod+I")})`} aria-haspopup="dialog" disabled={!api || !sessionId || !!pendingChat} onClick={() => setDetailsOpen(true)}><Info aria-hidden width={15} height={15} /></Button>;
-  return <main className={`handwork-app ${desktopWindows ? 'handwork-windows' : ''} ${desktopMac ? "handwork-mac" : ""}`}>
+  return <main className={`handwork-app ${desktopWindows ? 'handwork-windows' : ''} ${desktopMac ? "handwork-mac" : ""}`} data-narrow={narrowSidebar || undefined}>
+    <HandworkBackdrop />
     {desktopMac && <div aria-hidden className="app-drag handwork-titlebar" />}
     {desktopWindows && api && <HandworkWindowControls api={api} maximized={maximized} onState={state => { setFullscreen(state.fullscreen); setMaximized(state.maximized); }} />}
     <Dialog open={!!projectToDelete} onOpenChange={open => { if (!open) setProjectToDelete(undefined); }}>
@@ -1787,14 +1832,13 @@ export default function HandworkHarness() {
     <HandworkFileViewer file={viewingFile} api={api} onClose={() => setViewingFile(undefined)} />
     <HandworkCommandReport command={reportCommand} api={api} onClose={() => setReportCommand(undefined)} />
     <HandworkChatDetails open={detailsOpen} onOpenChange={setDetailsOpen} api={api} title={activeChat?.label || conversation.title || "New chat"} chatId={sessionId || undefined} options={options} conversation={withSavedUsage(conversation, chatPreferences[sessionId]?.usage)} onOpenSettings={() => setSettingsOpen(true)} onOpenFile={setViewingFile} />
-    <HandworkProviderUpdates api={api} ready={providersReady} providers={providers.filter(provider => provider.connected).map(provider => provider.id)} />
     <HandworkShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} preferences={preferences?.app} desktop={!!api} />
     <SidebarNav collapsed={narrowSidebar ? !narrowSidebarOpen : peekable ? !sidebarPeek : sidebarCollapsed}
       // The toggle in a floating sidebar keeps it open.
       onCollapsedChange={collapsed => { if (narrowSidebar) setNarrowSidebarOpen(!collapsed); else if (peekable) { setSidebarCollapsed(false); setSidebarPeek(false); } else setSidebarCollapsed(collapsed); }}
       data-peek={peekable && sidebarPeek ? "" : undefined} data-ide-rail={peekable && !sidebarPeek ? "" : undefined} onPointerEnter={peekable ? () => peek(true) : undefined} onPointerLeave={peekable ? () => peek(false) : undefined} collapsedFooter={peekable ? <span className="handwork-sidebar-edge" aria-hidden /> : <div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} compact prepareRestart={prepareUpdateRestart} /><Button variant="ghost" size="icon" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /></Button></div>} className="handwork-sidebar" header={<div className="handwork-sidebar-heading"><h1 data-slot="handwork-brand" className="handwork-brand">Handwork</h1></div>}
-      items={settingsOpen || ideView ? [] : [{ id: 'search', label: 'Search chats', icon: <Search aria-hidden width={16} height={16} /> }]} onNavigate={() => setPaletteOpen(true)} threads={[]} onThreadSelect={() => {}}
-      onNewChat={settingsOpen || ideView ? undefined : () => openNewTab(workspace)}
+      items={settingsOpen || ideView ? [] : [{ id: 'search', label: 'Search chats', icon: <Search aria-hidden width={16} height={16} /> }]} onNavigate={() => { setNarrowSidebarOpen(false); setPaletteOpen(true); }} threads={[]} onThreadSelect={() => {}}
+      onNewChat={settingsOpen || ideView ? undefined : () => { setNarrowSidebarOpen(false); openNewTab(workspace); }}
       collapsedNewChat={<MenuGroup>
         <MenuGroupLabel>New chat in</MenuGroupLabel>
         <MenuItem disabled={picking || !api} onClick={() => openNewTab()}><MessageSquare aria-hidden width={14} height={14} />General</MenuItem>
@@ -1803,29 +1847,35 @@ export default function HandworkHarness() {
       </MenuGroup>}
       content={settingsOpen ? <div className="handwork-settings-rail" ref={setSettingsNavHost} /> : ideView ? <div className="handwork-ide-tree" ref={setIdeTreeHost} /> : <HandworkSidebarContent layout={preferences?.app.sidebarLayout} attention={attentionKinds} projects={projects} sessions={chatRows} activeSession={shownSession} runningSession={sessionId} runningSessions={runningSessions} unreadSessions={unreadSessions} queuedSessions={queuedCounts} busy={busy} connecting={working || navigating} disabled={picking || !api} chatDisabled={picking || !api}
         onDismissIssue={clearIssue} onDeleteProject={project => setProjectToDelete(project)}
-        onAdd={openProject} onNewProjectChat={project => openNewTab(project)} onChat={chat => { const item = attention.find(item => item.id === chat.id); if (item) openAttention(item); else openChat(chat); }} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)} onArchive={(chat, archived) => void archiveChat(chat, archived)}
+        onAdd={openProject} onNewProjectChat={project => openNewTab(project)} onChat={chat => { setNarrowSidebarOpen(false); const item = attention.find(item => item.id === chat.id); if (item) openAttention(item); else openChat(chat); }} openSessions={tabs.map(tab => tab.id)} onClose={closeTab} onPin={chat => void pinChat(chat)} onArchive={(chat, archived) => void archiveChat(chat, archived)}
         onRename={chat => { setChatAction({ kind: "rename", chat }); setChatName(chat.label); setChatActionError(""); }} onDelete={chat => { setChatAction({ kind: "delete", chat }); setChatActionError(""); }} />}
-      footer={<div className="handwork-sidebar-footer-stack"><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" aria-label="Settings" title="Settings" aria-pressed={settingsOpen} onClick={() => setSettingsOpen(true)}><IconSettings size={16} /><span data-sidebar-fade>Settings</span></Button><div className="handwork-provider-usage-icons">{providers.filter(provider => provider.connected && ['codex', 'claude'].includes(provider.id)).map(provider => <HandworkSubscriptionUsage key={provider.id} api={api} active provider={provider.id === 'claude' ? 'claude' : 'codex'} compact />)}</div><HandworkTheme /></div></div>} />
+      footer={<div className="handwork-sidebar-footer-stack"><HandworkProviderUpdates api={api} ready={providersReady} providers={providers.filter(provider => provider.connected).map(provider => provider.id)} /><HandworkUpdate api={api} busy={busy || working || configuring || !!busyProvider} prepareRestart={prepareUpdateRestart} /><div className="handwork-sidebar-footer"><Button variant="ghost" size="sm" aria-label="Settings" title="Settings" aria-pressed={settingsOpen} onClick={() => setSettingsOpen(true)}><IconSettings size={16} /><span data-sidebar-fade>Settings</span></Button><div className="handwork-provider-usage-icons">{providers.filter(provider => provider.connected && ['codex', 'claude'].includes(provider.id)).map(provider => <HandworkSubscriptionUsage key={provider.id} api={api} active provider={provider.id === 'claude' ? 'claude' : 'codex'} compact />)}</div></div></div>} />
     <section className="handwork-workspace" aria-label="Conversation workspace" hidden={settingsOpen}>
       <header className="handwork-header" aria-label="Conversation toolbar">
         {peekable && <Button className="handwork-ide-settings" size="icon-sm" variant="ghost" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}><IconSettings size={16} /></Button>}
         {ideView ? <div className="handwork-ide-file-tabs" ref={setIdeTabsHost} /> : chatTabs}
         <div className="handwork-header-drag" aria-hidden />
-        {!ideView && detailsButton}
+        {!ideView && !(showProjectTools || ideAvailable) && detailsButton}
         {(showProjectTools || ideAvailable) && <div className="handwork-header-actions">
           {ideView && <div className="handwork-ide-pane-actions" ref={setIdeActionsHost} />}
-          <Button id="handwork-ide-trigger" size="icon-sm" variant="ghost" aria-pressed={ideView} aria-label="IDE view" title={`${ideView ? "Leave IDE view" : "IDE view"} (${shortcutLabel("Mod+Shift+E")})`} onClick={toggleIdeView}><CodeXml aria-hidden width={15} height={15} /></Button>
-          {(showProjectTools || ideView) && <>
-          {ideView
-            ? <Button id="handwork-chat-trigger" size="xs" variant="ghost" aria-pressed={ideSide === "chat"} title={`${ideSide === "chat" ? "Hide chat" : "Show chat"} (${shortcutLabel("Mod+J")})`} onClick={toggleIdeChat}><MessageSquare aria-hidden width={14} height={14} />Chat</Button>
-            : <Button id="handwork-files-trigger" size="xs" variant="ghost" aria-pressed={filesOpen} onClick={() => { setFilesOpen(value => !value); setChangesOpen(false); setActivityOpen(false); }}>Files</Button>}
+          {/* Three controls: the Changes tab (the panel people reach for most,
+              with its live count), a labelled way into the code view, and one
+              More menu for everything else, so nothing up here is a riddle. */}
+          {(showProjectTools || ideView) && <div className="handwork-header-segments" role="group" aria-label="Side panels">
+          {ideView && <Button id="handwork-chat-trigger" size="xs" variant="ghost" aria-pressed={ideSide === "chat"} title={`${ideSide === "chat" ? "Hide chat" : "Show chat"} (${shortcutLabel("Mod+J")})`} onClick={toggleIdeChat}>Chat</Button>}
           <ChangesTrigger open={changesOpen} fileCount={projectChangeState.snapshot?.totalFiles ?? 0} added={changesComplete ? addedLines : undefined} removed={changesComplete ? removedLines : undefined} onClick={() => { setChangesOpen(value => !value); setActivityOpen(false); setFilesOpen(false); }} />
-          <Button id="handwork-activity-trigger" size="xs" variant="ghost" aria-pressed={activityOpen && !filesOpen && !changesOpen} onClick={() => { setActivityOpen(value => !value || filesOpen || changesOpen); setChangesOpen(false); setFilesOpen(false); }}>Activity</Button>
-          </>}
-
+          </div>}
+          <Button id="handwork-ide-trigger" size="xs" variant="ghost" aria-pressed={ideView} title={`${ideView ? "Leave code view" : "Open code view"} (${shortcutLabel("Mod+Shift+E")})`} onClick={toggleIdeView}><CodeXml aria-hidden width={14} height={14} />Code</Button>
+          <Menu>
+            <MenuTrigger render={<Button id="handwork-more-trigger" className="handwork-header-more" size="icon-sm" variant="ghost" aria-label="More" title="More" />}><Ellipsis aria-hidden width={16} height={16} /></MenuTrigger>
+            <MenuPopup align="end" sideOffset={6} className="handwork-header-menu" aria-label="More">
+              {!ideView && showProjectTools && <MenuItem onClick={() => { setFilesOpen(value => !value); setChangesOpen(false); setActivityOpen(false); }}><FolderTree aria-hidden />Files{filesOpen && <Check aria-hidden className="handwork-header-menu-on" />}</MenuItem>}
+              {(showProjectTools || ideView) && <MenuItem onClick={() => { setActivityOpen(value => !value || filesOpen || changesOpen); setChangesOpen(false); setFilesOpen(false); }}><Activity aria-hidden />Activity{activityOpen && !filesOpen && !changesOpen && <Check aria-hidden className="handwork-header-menu-on" />}</MenuItem>}
+              {!ideView && <>{(showProjectTools) && <MenuSeparator />}<MenuItem disabled={!api || !sessionId || !!pendingChat} onClick={() => setDetailsOpen(true)}><Info aria-hidden />Chat details<MenuShortcut>{shortcutLabel("Mod+I")}</MenuShortcut></MenuItem></>}
+            </MenuPopup>
+          </Menu>
         </div>}
       </header>
-      {error && !(shownConversation.canContinue && failedPrompt?.session === sessionId && failedPrompt.error === error) && <div role="alert" className="handwork-notice" data-attention="error"><Badge variant="error">Error</Badge><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}</div>}
       {!api && <p className="handwork-notice">Open the Electron app with npm run desktop:dev to use local Handwork. This browser preview cannot access your files or run commands.</p>}
       <div ref={workspaceBody} className="handwork-workspace-body" data-switching={loadingVersion || undefined} data-layout={ideView ? "ide" : undefined} data-side={ideView ? ideSide : undefined} style={ideView && ideSideWidth ? { "--handwork-ide-side-width": `${ideSideWidth}px` } as CSSProperties : undefined}>
       {ideView && <><aside className="handwork-review-panel handwork-ide-main" data-panel="files" aria-label="Code"><div className="handwork-panel-content"><HandworkWorkbench api={api} workspace={ideProject} request={workbenchRequest} treeHost={ideTreeHost} tabsHost={ideTabsHost ?? undefined} actionsHost={ideActionsHost ?? undefined} onContext={setEditorContext} onAsk={askAboutSelection} refresh={replies}
@@ -1838,20 +1888,27 @@ export default function HandworkHarness() {
           measure={() => (ideSide === "chat" ? workspaceBody.current?.querySelector(":scope > .handwork-thread") : reviewPanel.current)?.getBoundingClientRect().width} onResize={setIdeSideWidth} />}</>}
       <HandworkConversation landing={landing} sessionKey={scrollKey} busy={busy || working || !!pendingChat}
         overlay={<HandworkFindBar open={find.open && !landing} focusSignal={find.focus} query={find.query} sessionKey={shownSession} onQueryChange={query => setFind(current => ({ ...current, query }))} onClose={() => { setFind(current => ({ ...current, open: false })); focusComposer(); }} />}
-        footer={<>{composer}{landing && !writable && workspace && sessionId && preferences?.effective.suggestions !== false && <div className="handwork-suggestions" aria-label="Suggested prompts">{projectSuggestions.map(({ label, prompt }) => <Button key={label} variant="ghost" size="sm" disabled={unavailable || blocked} onClick={() => {
+        footer={<>{/* Errors and notices float just above the composer, where the eye already is, instead of pushing the card down under the tabs. */}
+        <div className="handwork-toasts" aria-live="polite">
+          {error && !(shownConversation.canContinue && failedPrompt?.session === sessionId && failedPrompt.error === error) && <div role="alert" className="handwork-toast" data-attention="error"><CircleAlert aria-hidden width={15} height={15} /><span>{error.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")}</span>{failedPrompt?.session === sessionId && failedPrompt.error === error && !busy && <Button className="handwork-toast-action" size="xs" variant="outline" disabled={blocked} onClick={() => void retryLast()}><RotateCcw aria-hidden width={12} height={12} />Try again</Button>}{canReconnect && <Button className="handwork-toast-action" data-primary size="xs" disabled={blocked} onClick={() => void sessionAction(workspace ? "connect" : "chat")}><RotateCcw aria-hidden width={12} height={12} />Reconnect</Button>}<button type="button" className="handwork-toast-close" aria-label="Dismiss error" onClick={() => setError("")}><X aria-hidden width={13} height={13} /></button></div>}
+          {/* A plain confirmation is a small pill that leaves on its own; one with an action keeps it and a close. */}
+          {notice && (noticeAction?.notice === notice
+            ? <div role="status" className="handwork-toast" data-attention="notice"><span>{notice}</span><Button className="handwork-toast-action" size="xs" variant="outline" disabled={blocked} onClick={() => { const action = noticeAction; setNotice(""); setNoticeAction(undefined); action.run(); }}>{noticeAction.label}</Button><button type="button" className="handwork-toast-close" aria-label="Dismiss" onClick={() => { setNotice(""); setNoticeAction(undefined); }}><X aria-hidden width={13} height={13} /></button></div>
+            : <div role="status" className="handwork-toast" data-attention="notice" data-variant="pill"><span>{notice}</span></div>)}
+        </div>{composer}{landing && !writable && workspace && sessionId && preferences?.effective.suggestions !== false && <div className="handwork-suggestions" aria-label="Suggested prompts">{projectSuggestions.map(({ label, prompt }) => <Button key={label} variant="ghost" size="sm" disabled={unavailable || blocked} onClick={() => {
         setDraft(prompt);
         requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')?.focus());
       }}><span>{label}</span></Button>)}
-        {suggestionState.key === suggestionKey && suggestionState.status === "loading" && <span role="status" className="handwork-suggestion-status">Finding useful next steps…</span>}
+        {suggestionState.key === suggestionKey && suggestionState.status === "loading" && <span role="status" className="handwork-suggestion-status"><span className="handwork-sr-only">Finding useful next steps…</span><i aria-hidden /><i aria-hidden /><i aria-hidden /></span>}
         {suggestionState.key === suggestionKey && suggestionState.status === "failed" && <Button variant="ghost" size="sm" disabled={blocked} onClick={() => setSuggestionRetry(value => value + 1)}>Retry suggestions</Button>}
       </div>}</>}>
         {(writable ? !firstMessage : !pendingChat && conversation.entries.length === 0) && <div className="handwork-empty" data-kind={workspaceName ? 'project' : 'general'}>
           <h2>{workspaceName ? <>What’s next for <HoverTooltip content={greetingProject}><span className="handwork-greeting-project" >{workspaceName}</span></HoverTooltip>?</> : "What can I help with?"}</h2>
           {(sessionId || writable) && (workspaceName
             ? <div className="handwork-landing-meta">
-              <span title={greetingProject}><Folder aria-hidden width={13} height={13} />{landingPath}</span>
+              {/* The greeting already names the project (its path is the name's tooltip); the line says only where the work stands. */}
               {landingBranch?.workspace === greetingProject && landingBranch.branch && <span><GitBranch aria-hidden width={13} height={13} />{landingBranch.branch}</span>}
-              {landingChanges !== undefined && <span>{landingChanges === 0 ? 'No uncommitted changes' : `${landingChanges} uncommitted ${landingChanges === 1 ? 'change' : 'changes'}`}</span>}
+              {landingChanges !== undefined && <span data-changes={landingChanges === 0 ? 'clean' : 'dirty'}>{landingChanges === 0 ? 'No uncommitted changes' : `${landingChanges} uncommitted ${landingChanges === 1 ? 'change' : 'changes'}`}</span>}
             </div>
             : <p className="handwork-landing-sub">Ask a question, attach a file, or type / for a saved prompt.</p>)}
           {!sessionId && !writable && <>{working ? <p role="status">{workspaceName ? "Connecting to your project…" : "Starting your chat…"}</p> : <><p>{workspaceName ? "Reconnect to continue working with your code." : "Ask a question or attach a file to get started."}</p><Button disabled={!api || blocked} variant="outline" size="sm" onClick={() => void sessionAction(workspace ? "connect" : "chat")}>{workspace ? "Reconnect" : "New chat"}</Button></>}</>}
@@ -1860,17 +1917,16 @@ export default function HandworkHarness() {
           recovery={shownConversation.recovery} canContinue={shownConversation.canContinue} onContinue={() => void continueResponse()} continuationDisabled={blocked || !api || !sessionId || !!pendingChat}
           onRetry={canRegenerate && !pendingChat && !blocked ? () => void retryLast() : undefined} versionFor={versionFor}
           workspace={showProjectTools ? workspace : undefined} onOpenFile={openFileTarget} onRevealFile={target => void api?.revealFile(target).catch(cause => setError((cause instanceof Error ? cause.message : String(cause)).replace(/^Error invoking remote method '[^']+': (Error: )?/, "")))} />}
-        {(pendingChat ? [] : permissions).map(permission => <div key={permission.id} data-attention="approval"><ApprovalCard questions={[{ id: permission.id.toString(), prompt: `${permission.title}\n${permission.detail}`, type: "single", required: true, options: permission.options.map(option => ({ value: option.optionId, label: option.name })) }]}
-          onSubmit={async answers => { const selected = answers[permission.id.toString()]?.selected[0]; if (selected && !answering) await answerPermission(permission.id, selected); }} /></div>)}
+        {(pendingChat ? [] : permissions).map(permission => <div key={permission.id} data-attention="approval"><HandworkApproval permission={permission} answering={answering}
+          onAnswer={optionId => { if (!answering) void answerPermission(permission.id, optionId).catch(() => {}); }} /></div>)}
         {writable && firstMessage && <div className="handwork-loading"><LoadingState label="Starting chat…" /></div>}
         {busy && !pendingChat && <div className="handwork-loading"><LoadingState label={permissions.length ? "Waiting for your approval" : "Handwork is working"} /></div>}
-        {notice && <div role="status" className="handwork-notice" data-attention="notice"><span>{notice}</span>{noticeAction?.notice === notice && <Button className="handwork-notice-action" size="xs" variant="outline" disabled={blocked} onClick={() => { const action = noticeAction; setNotice(""); setNoticeAction(undefined); action.run(); }}>{noticeAction.label}</Button>}</div>}
       </HandworkConversation>
       {(showProjectTools || activityRequested) && (ideView ? changesOpen || activityOpen : filesOpen || changesOpen || activityOpen && (tools.length > 0 || activityRequested)) && <>{!ideView && <ResizeHandle className="handwork-review-resize" orientation="vertical" direction={-1} label="Resize panel" min={300}
           max={() => (reviewPanel.current?.parentElement?.clientWidth ?? 1200) - 360}
           measure={() => reviewPanel.current?.getBoundingClientRect().width} onResize={setReviewWidth} />}
       <aside id="handwork-review-panel" ref={reviewPanel} tabIndex={-1} className="handwork-review-panel" data-panel={filesOpen && !ideView ? "files" : changesOpen ? "changes" : "activity"} data-sized={reviewWidth && !ideView ? "" : undefined} style={reviewWidth && !ideView ? { "--handwork-review-width": `${reviewWidth}px` } as CSSProperties : undefined} aria-label={changesOpen ? "Changes" : "Activity"} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeReviewPanel(); } }}>
-        {(!filesOpen || ideView) && <div className="handwork-panel-header"><h2>{changesOpen ? "Source control" : "Activity"}</h2><div className="handwork-panel-actions">{changesOpen && !!workspace && <Button size="icon-sm" variant="link" aria-label="Refresh project changes" title="Refresh project changes" disabled={projectChangeState.loading} onClick={projectChangeState.refresh}><RefreshCw size={14} aria-hidden /></Button>}<Button size="icon-sm" variant="ghost" aria-label="Close panel" title="Close panel (Escape)" onClick={closeReviewPanel}><IconClose size={16} /></Button></div></div>}
+        {(!filesOpen || ideView) && <div className="handwork-panel-header"><h2>{changesOpen ? "Changes" : "Activity"}</h2><div className="handwork-panel-actions">{changesOpen && !!workspace && <Button size="icon-sm" variant="link" aria-label="Refresh project changes" title="Refresh project changes" disabled={projectChangeState.loading} onClick={projectChangeState.refresh}><RefreshCw size={14} aria-hidden /></Button>}<Button size="icon-sm" variant="ghost" aria-label="Close panel" title="Close panel (Escape)" onClick={closeReviewPanel}><IconClose size={16} /></Button></div></div>}
         <div className="handwork-panel-content">{filesOpen && !ideView ? <HandworkWorkbench api={api} workspace={chatProject} request={workbenchRequest} onClose={closeReviewPanel} refresh={replies} /> : changesOpen ? <HandworkChanges modelLabel={currentModel ? modelDisplayName(currentModel.options.find(choice => choice.value === currentModel.currentValue)?.name ?? currentModel.currentValue) : undefined} modelPending={configuring || navigating} onWrite={api ? async () => { await configTail.current; return api.gitCommitMessage(changesProject); } : undefined} key={changesProject} api={api} workspace={changesProject} snapshot={projectChangeState.snapshot} loading={projectChangeState.loading} error={projectChangeState.error} onChanged={projectChangeState.refresh} /> : <HandworkActivity entries={shownConversation.entries} workspaceName={workspaceName} used={shownUsage.used} capacity={shownUsage.capacity} />}</div>
       </aside></>}
       </div>

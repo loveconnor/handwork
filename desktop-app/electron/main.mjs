@@ -161,7 +161,8 @@ function createWindow() {
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 16 } } : {}),
     // Integrate Windows caption buttons into the app toolbar, like macOS.
     ...(process.platform === 'win32' ? { titleBarStyle: 'hidden', titleBarOverlay: false } : {}),
-    backgroundColor: '#121211',
+    // Match the system theme's chrome so a light-mode launch doesn't flash dark.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0f0f10' : '#f6f5f2',
     webPreferences: {
       preload: path.join(root, 'electron', 'preload.cjs'),
       sandbox: true, contextIsolation: true, nodeIntegration: false,

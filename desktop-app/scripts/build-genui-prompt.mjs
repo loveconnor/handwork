@@ -2,12 +2,12 @@ import { writeFile } from 'node:fs/promises';
 import './copy-map-worker.mjs';
 import { buildSlashCommands } from './build-slash-commands.mjs';
 await buildSlashCommands();
-import { generateSystemPrompt, honestChatSpec } from 'honestui/genui/server';
-import { desktopComponentNames } from '../electron/genui-components.mjs';
+import { generateSystemPrompt } from 'honestui/genui/server';
+import { desktopChatSpec, desktopComponentNames } from '../electron/genui-components.mjs';
 const mathFormattingRule = String.raw`For mathematical notation, use LaTeX \cdot for a centered multiplication dot, never a baseline period. Keep sentence punctuation distinct from multiplication. Separate proof labels from equations with spacing, for example \qquad\text{(IH)}, rather than joining a label with a period.`;
 const components = Object.fromEntries(desktopComponentNames.map(name => {
-  if (!honestChatSpec.components[name]) throw new Error(`Missing Honest AI component: ${name}`);
-  return [name, honestChatSpec.components[name]];
+  if (!desktopChatSpec.components[name]) throw new Error(`Missing Honest AI component: ${name}`);
+  return [name, desktopChatSpec.components[name]];
 }));
 const prompt = generateSystemPrompt({ library: { root: 'Stack', components }, promptOptions: {
   preamble: "You are Handwork in the desktop app. Respond in Markdown with optional fenced honestai programs. Use interactive components when they help the user; most replies only need prose.",
@@ -31,5 +31,6 @@ const prompt = generateSystemPrompt({ library: { root: 'Stack', components }, pr
 }});
 await writeFile(new URL('../electron/genui-prompt.json', import.meta.url), JSON.stringify(prompt));
 // Match HonestAI's playground route: generateSystemPrompt({ library: chatSpec }).
-// Keep the complete spec, including its chat preamble, rules, and examples.
-await writeFile(new URL('../electron/standalone-prompt.json', import.meta.url), JSON.stringify(generateSystemPrompt({ library: honestChatSpec }) + '\n\n' + mathFormattingRule));
+// Keep the complete spec, including its chat preamble, rules, and examples, minus
+// the components the desktop renderer leaves out.
+await writeFile(new URL('../electron/standalone-prompt.json', import.meta.url), JSON.stringify(generateSystemPrompt({ library: desktopChatSpec }) + '\n\n' + mathFormattingRule));

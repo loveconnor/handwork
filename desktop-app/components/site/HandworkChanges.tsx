@@ -32,7 +32,6 @@ export function ChangesTrigger({ open, fileCount, added, removed, onClick }: {
   const showTotals = fileCount > 0 && added !== undefined && removed !== undefined;
   const description = `Changes${showTotals ? `, ${added} added lines, ${removed} removed lines` : ''}`;
   return <Button id="handwork-changes-trigger" className="handwork-changes-trigger" size="sm" variant="ghost" aria-label={description} title={description} aria-expanded={open} aria-controls={open ? 'handwork-review-panel' : undefined} onClick={onClick}>
-    <FileDiff className="handwork-changes-icon" aria-hidden strokeWidth={1.5} />
     <span className="handwork-changes-label">Changes</span>
     {showTotals && <span className="handwork-changes-totals" aria-hidden><ChangeCounts added={added} removed={removed} /></span>}
   </Button>;

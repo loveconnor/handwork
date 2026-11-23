@@ -21,18 +21,25 @@ const chrome = EditorView.theme({
   // Opaque so code scrolled sideways passes under the line numbers, not through them.
   '.cm-gutters': { backgroundColor: 'var(--hw-panel, var(--hui-color-background-base-primary))', border: 'none', color: 'var(--hui-color-foreground-base-tertiary)' },
   '.cm-lineNumbers .cm-gutterElement': { padding: '0 6px 0 14px', minWidth: '28px', fontVariantNumeric: 'tabular-nums' },
-  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--hui-color-foreground-base-secondary)' },
+  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--hui-color-foreground-base-primary)' },
   '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-base-primary) 3.5%, transparent)' },
-  '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-info-primary, #3b7be0) 22%, transparent) !important' },
+  // Ink is the only accent: the selection is a neutral tint, dimmer while the editor is unfocused.
+  '.cm-selectionBackground, ::selection': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-base-primary) 8%, transparent) !important' },
+  '&.cm-focused .cm-selectionBackground, &.cm-focused ::selection': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-base-primary) 15%, transparent) !important' },
   '.cm-cursor': { borderLeftColor: 'var(--hui-color-foreground-base-primary)', borderLeftWidth: '1.5px' },
   '.cm-matchingBracket': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-base-primary) 10%, transparent)', outline: 'none' },
-  '.cm-selectionMatch': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-warning-primary, #b46b12) 14%, transparent)' },
-  '.cm-foldGutter .cm-gutterElement': { padding: '0 4px', color: 'var(--hui-color-foreground-base-tertiary)' },
+  '.cm-selectionMatch': { backgroundColor: 'color-mix(in oklab, var(--hui-color-foreground-base-primary) 7%, transparent)', boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--hui-color-foreground-base-primary) 14%, transparent)', borderRadius: '2px' },
+  // Fold markers wait in the gutter until it is pointed at; a folded line keeps its marker.
+  '.cm-foldGutter .cm-gutterElement': { padding: '0 4px', color: 'var(--hui-color-foreground-base-tertiary)', opacity: '0', transition: 'opacity 150ms ease' },
+  '.cm-gutters:hover .cm-foldGutter .cm-gutterElement, .cm-foldGutter .cm-gutterElement:has([title^="Unfold"])': { opacity: '1' },
+  '.cm-foldGutter .cm-gutterElement:hover': { color: 'var(--hui-color-foreground-base-primary)' },
+  '.cm-foldPlaceholder': { margin: '0 2px', padding: '0 5px', border: 'none', borderRadius: '4px', backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-base-primary) 8%, transparent)', color: 'var(--hui-color-foreground-base-secondary)' },
   // The find bar floats over the top-right of the code instead of pushing it down.
   '.cm-panels': { backgroundColor: 'transparent', color: 'inherit', border: 'none' },
   '.cm-panels.cm-panels-top': { position: 'absolute', top: '8px', right: '14px', left: '14px', zIndex: 300, display: 'flex', justifyContent: 'flex-end', border: 'none', pointerEvents: 'none' },
-  '.cm-searchMatch': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-warning-primary, #b46b12) 22%, transparent)' },
-  '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: 'color-mix(in srgb, var(--hui-color-foreground-warning-primary, #b46b12) 40%, transparent)' },
+  // Matches mix in oklab so dark mode reads amber, not brown; the current one is filled and ringed.
+  '.cm-searchMatch': { backgroundColor: 'color-mix(in oklab, var(--hui-color-foreground-warning-primary, #b46b12) 18%, transparent)', boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--hui-color-foreground-warning-primary, #b46b12) 30%, transparent)', borderRadius: '2px' },
+  '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: 'color-mix(in oklab, var(--hui-color-foreground-warning-primary, #b46b12) 36%, transparent)', boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--hui-color-foreground-warning-primary, #b46b12) 70%, transparent)' },
   // Suggestions and lint messages float like the app's own menus.
   '.cm-tooltip': { border: '0.5px solid var(--hui-color-border-base-primary)', borderRadius: '8px', backgroundColor: 'var(--hui-color-background-base-primary)', color: 'var(--hui-color-foreground-base-primary)', boxShadow: 'var(--hui-shadow-soft)', overflow: 'hidden' },
   '.cm-tooltip.cm-tooltip-autocomplete > ul': { padding: '4px', maxHeight: '15em', fontFamily: 'var(--hui-font-family-mono, ui-monospace, monospace)', fontSize: '12.5px' },

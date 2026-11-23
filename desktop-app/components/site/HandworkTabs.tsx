@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from 'react';
-import { LoaderCircle, MessageSquare, Plus, X } from 'honestui/icons';
+import { LoaderCircle, Plus, X } from 'honestui/icons';
 import { HoverTooltip } from '@/components/ui/tooltip';
 import { bindHorizontalWheel } from '@/lib/horizontal-scroll';
 import { shortcutLabel } from '@/lib/saved-prompts';
@@ -100,9 +100,10 @@ export function HandworkTabs({ tabs, activeId, titleOf, running, unread, attenti
         onAuxClick={event => { if (event.button === 1 && !closeDisabled) { event.preventDefault(); onClose(tab.id); } }}>
         <HoverTooltip content={[title, project, state].filter(Boolean).join(' · ')}>
           <button type="button" role="tab" className="handwork-tab-button" aria-selected={active} aria-label={[title, state].filter(Boolean).join(', ')} disabled={selectDisabled} onClick={() => onSelect(tab)}>
-            <span className="handwork-tab-icon" data-kind={flagged || (working ? 'running' : fresh ? 'unread' : undefined)} aria-hidden>
-              {flagged ? <AttentionIcon kind={flagged} size={14} /> : working ? <LoaderCircle width={14} height={14} className="motion-safe:animate-spin" /> : fresh ? <span className="handwork-chat-unread" /> : <MessageSquare width={14} height={14} />}
-            </span>
+            {/* An icon only when it says something: needs you, working, or unread. Every tab is a chat, so a resting one is just its title. */}
+            {(flagged || working || fresh) && <span className="handwork-tab-icon" data-kind={flagged || (working ? 'running' : 'unread')} aria-hidden>
+              {flagged ? <AttentionIcon kind={flagged} size={14} /> : working ? <LoaderCircle width={14} height={14} className="motion-safe:animate-spin" /> : <span className="handwork-chat-unread" />}
+            </span>}
             <span className="handwork-tab-label">{title}</span>
           </button>
         </HoverTooltip>

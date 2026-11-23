@@ -35,10 +35,26 @@ export default function HandworkUpdate({ api, busy, compact = false, prepareRest
       else await api.checkUpdates();
     } catch (error) { setFailure(error instanceof Error ? error.message : String(error)); }
   }
-  return <div className="handwork-update">
-    <Button variant={state.status === 'downloaded' || state.status === 'available' ? 'secondary' : 'ghost'} size={compact ? 'icon-sm' : 'sm'} className={compact ? undefined : 'handwork-update-button'} disabled={blocked} aria-label={label} title={message} onClick={() => void activate()}>
-      <RefreshCw size={16} aria-hidden />{!compact && <span>{label}</span>}
+  if (compact) return <div className="handwork-update">
+    <Button variant={state.status === 'downloaded' || state.status === 'available' ? 'secondary' : 'ghost'} size="icon-sm" disabled={blocked} aria-label={label} title={message} onClick={() => void activate()}>
+      <RefreshCw size={16} aria-hidden />
     </Button>
-    {!compact && message !== 'Check for updates.' && <span role="status" className="handwork-update-status">{message}</span>}
+  </div>;
+  // One quiet row, no heavier than New chat: a dot, what is happening, and the one thing to do.
+  const failed = state.status === 'error' || !!failure;
+  const title = {
+    idle: 'Check for updates', checking: 'Checking for updates…', available: 'Update available',
+    downloading: 'Downloading update', downloaded: 'Update ready', installing: 'Restarting…', error: 'Update failed', unavailable: 'Updates unavailable',
+  }[state.status];
+  const action = state.status === 'downloaded' ? 'Restart' : state.status === 'available' ? 'Download' : state.status === 'error' ? 'Retry' : '';
+  return <div className="handwork-update" data-status={state.status} data-failed={failed || undefined}>
+    <div className="handwork-update-row" title={message}>
+      <span className="handwork-update-dot" aria-hidden />
+      <span className="handwork-update-title">{failed && state.status !== 'error' ? 'Update failed' : title}</span>
+      {state.status === 'downloading' && <span className="handwork-update-progress">{state.progress ?? 0}%</span>}
+      {action && <Button variant="ghost" size="xs" className="handwork-update-action" disabled={blocked} aria-label={label} title={message} onClick={() => void activate()}>{action}</Button>}
+    </div>
+    {state.status === 'downloading' && <span className="handwork-update-bar" aria-hidden><span style={{ width: `${state.progress ?? 0}%` }} /></span>}
+    {message !== 'Check for updates.' && <span role="status" className={failed ? 'handwork-update-status' : 'sr-only'}>{message}</span>}
   </div>;
 }

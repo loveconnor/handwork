@@ -17,10 +17,11 @@ export function HandworkQueue({ items, paused, restored, busy, onEdit, onRemove,
   onResume: () => void; onSendNow: (item: QueuedMessage) => void; onClear: () => void;
 }) {
   const count = `${items.length} queued`;
-  const status = restored && paused ? `Saved before Handwork closed · ${count}` : paused ? `Queue paused · ${count}` : busy ? `Sends after this reply · ${count}` : 'Sending next…';
+  const status = restored && paused ? `${count} · paused since restart` : paused ? `${count} · paused` : busy ? `${count} · sends after this reply` : 'Sending next…';
+  const detail = restored && paused ? 'Saved when Handwork closed, and paused so you can review before sending.' : undefined;
   return <section className="handwork-queue" aria-label="Queued messages" data-attention="queue">
     <header>
-      <span>{status}</span>
+      <span title={detail}>{status}</span>
       {paused && <span className="handwork-queue-actions">
         <Button variant="ghost" size="xs" title="Remove every queued message" onClick={onClear}>Clear</Button>
         <Button data-primary variant="ghost" size="xs" title={busy ? 'Send these after the current reply' : 'Send these in order now'} onClick={busy ? onResume : () => onSendNow(items[0])}>{busy ? 'Resume' : 'Send next'}</Button>

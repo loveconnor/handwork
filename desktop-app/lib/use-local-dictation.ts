@@ -31,6 +31,10 @@ export function useLocalDictation({ api, composerKey, onText, onError }: {
   const [status, setStatus] = useState<VoiceStatus>({ available: false });
   const [phase, setPhase] = useState<Phase>('idle');
   const phaseRef = useRef<Phase>('idle');
+  // The microphone's loudness, 0–1, for a live meter. A ref, not state, so a
+  // meter can read it every frame without re-rendering the composer.
+  const level = useRef(0);
+  const [startedAt, setStartedAt] = useState(0);
   const capture = useRef<Capture | null>(null);
   const epoch = useRef(0);
   const currentKey = useRef(composerKey);
@@ -120,7 +124,13 @@ export function useLocalDictation({ api, composerKey, onText, onError }: {
       recording.node = new AudioWorkletNode(recording.context, 'voice-recorder');
       recording.node.port.onmessage = event => {
         if (epoch.current !== recording.epoch) return;
-        if (event.data.samples) recording.chunks.push(event.data.samples);
+        if (event.data.samples) {
+          const samples: Float32Array = event.data.samples;
+          recording.chunks.push(samples);
+          let sum = 0;
+          for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+          level.current = Math.min(1, Math.sqrt(sum / Math.max(1, samples.length)) * 6);
+        }
         if (event.data.stopped) recording.stopped?.();
         if (event.data.limit) void finishRef.current();
       };
@@ -133,6 +143,8 @@ export function useLocalDictation({ api, composerKey, onText, onError }: {
           cancel(); callbacks.current.onError('Your microphone disconnected. Reconnect it and try again.');
         }
       };
+      level.current = 0;
+      setStartedAt(Date.now());
       setPhaseNow('recording');
       recording.timer = setTimeout(() => void finishRef.current(), 120000);
     } catch (error) {
@@ -141,5 +153,5 @@ export function useLocalDictation({ api, composerKey, onText, onError }: {
     }
   }, [api, status.available, finish, cancel, setPhaseNow]);
 
-  return { status, phase, toggle, cancel };
+  return { status, phase, toggle, cancel, level, startedAt };
 }

@@ -67,7 +67,8 @@ const theme = EditorView.theme({
   '.cm-gitGutter': { width: '3px', marginLeft: '2px' },
   '.cm-gitGutter .cm-gutterElement': { padding: '0' },
   '.cm-gitChange-added': { background: 'var(--hui-color-foreground-success-primary, #3fa36b)' },
-  '.cm-gitChange-modified': { background: 'var(--hui-color-foreground-info-primary, #3b82f6)' },
+  // Modified is amber, like the Modified dot in source control, so a change reads the same in both places.
+  '.cm-gitChange-modified': { background: 'var(--hui-color-foreground-warning-primary, #b46b12)' },
   '.cm-gitChange-deleted': { background: 'linear-gradient(to bottom, var(--hui-color-foreground-danger-primary, #e5484d) 0 3px, transparent 3px)' },
 });
 

@@ -4,7 +4,7 @@ import {
   ReconnectingStatus,
   useOffline,
 } from "@/features/connection/ConnectionNotice";
-import { hasNativeTranscript } from "@/features/connection/nativeLink";
+import { useNativeTranscripts } from "@/features/connection/ConnectionProvider";
 import { GeneratedChatContext } from "@/features/sessions/GeneratedChatContext";
 import { useProjectChanges } from "@/features/connection/useProjectChanges";
 import { useProjectWorktrees } from "@/features/connection/useProjectWorktrees";
@@ -114,7 +114,8 @@ export function ProjectScreen({
   // The session's watch opens as its push starts: its first turns, landing
   // before, would hold the slide back.
   const pushStarted = usePushStarted(!!sessionId);
-  const conversation = useConversation(sessionId ?? null, pushStarted, hasNativeTranscript && !normalChat);
+  const nativeTranscripts = useNativeTranscripts();
+  const conversation = useConversation(sessionId ?? null, pushStarted, nativeTranscripts && !normalChat);
 
   // Where a new session works, shared by the header and expanded composer.
   const [workspace, setWorkspace] = useState<Workspace>({ mode: "current" });
@@ -569,7 +570,7 @@ function SessionTranscript({
   normalChat: boolean;
 }) {
   const { sendMessage } = useWorkspace();
-  const native = hasNativeTranscript && !normalChat;
+  const native = useNativeTranscripts() && !normalChat;
   const generatedChat = useMemo(() => normalChat ? {
     busy,
     send: async (text: string) => {

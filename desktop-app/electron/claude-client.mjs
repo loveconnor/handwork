@@ -83,6 +83,33 @@ export async function discoverClaudeModels({ cwd, locate = claudeBinary, query, 
   } finally { clearTimeout(timer); release(); connection?.close(); }
 }
 
+/** Asks Claude Code for its /usage plan limits. Initialization only: no user
+ *  prompt or model inference, and the CLI itself talks to claude.ai. */
+export async function fetchClaudeUsageReport({ cwd = homedir(), locate = claudeBinary, query, timeout = 15000 } = {}) {
+  const binary = await locate();
+  const run = query || (await import('@anthropic-ai/claude-agent-sdk')).query;
+  const controller = new AbortController();
+  let release;
+  const waiting = new Promise(resolve => { release = resolve; });
+  async function* input() { await waiting; }
+  let connection;
+  let timer;
+  try {
+    connection = run({ prompt: input(), options: {
+      cwd, pathToClaudeCodeExecutable: binary, executable: 'node',
+      abortController: controller, persistSession: false,
+      settingSources: ['user', 'project', 'local'],
+      env: { ...process.env, PATH: searchDirectories().join(path.delimiter) },
+    } });
+    const read = connection.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET;
+    if (typeof read !== 'function') throw new Error('This Claude Code version cannot report usage.');
+    return await Promise.race([
+      read.call(connection, { skipBehaviors: true }),
+      new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Claude Code usage check timed out.')); }, timeout); }),
+    ]);
+  } finally { clearTimeout(timer); release(); connection?.close(); }
+}
+
 /** Routes Claude Code through its official SDK while retaining the native ACP engine. */
 export class ClaudeClient extends EventEmitter {
   constructor(options, { native = new AcpClient(options), query, discover = discoverClaudeModels, status = claudeStatus, locate = claudeBinary, directory = path.join(homedir(), '.handwork', 'sessions') } = {}) {

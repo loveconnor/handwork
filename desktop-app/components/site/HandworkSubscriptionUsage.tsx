@@ -98,12 +98,14 @@ export function HandworkSubscriptionUsage({ api, active, compact = false, provid
   // A row that just finished stays until the list refreshes past it.
   const finished = step?.phase === 'done' || step?.phase === 'failed' ? step : undefined;
 
-  const details = <section className={styles.usage} aria-labelledby={titleId} aria-busy={loading}>
+  // In settings the usage sits under the provider's own row, so it drops the
+  // repeated logo and name and reads as a quiet sub-section of that row.
+  const details = <section className={styles.usage} data-inline={!compact || undefined} aria-labelledby={titleId} aria-busy={loading}>
     <div className={styles.header}>
-      <span className={styles.mark} aria-hidden><ProviderLogo provider={provider} size={16} /></span>
+      {compact && <span className={styles.mark} aria-hidden><ProviderLogo provider={provider} size={16} /></span>}
       <div className={styles.heading}>
-        <span id={titleId} className={styles.title}>{name} usage{usage?.plan && <span className={styles.plan}>{usage.plan.replaceAll('_', ' ')}</span>}</span>
-        <span className={styles.updated}>{usage?.source === 'sdk-events' && !updatedAt ? 'Waiting for a Claude usage report' : updatedLabel(updatedAt, now, !!api)}</span>
+        <span id={titleId} className={styles.title}>{compact ? `${name} usage` : <>Usage<span className="sr-only"> for {name}</span></>}{usage?.plan && <span className={styles.plan}>{usage.plan.replaceAll('_', ' ')}</span>}</span>
+        <span className={styles.updated}>{usage?.source === 'sdk-events' && !updatedAt ? 'No report yet' : updatedLabel(updatedAt, now, !!api)}</span>
       </div>
       <Button size="icon-sm" variant="ghost" className={styles.refresh} disabled={!api || !active || loading} onClick={() => { refresh.current(); void loadResets(); }} aria-label={`Refresh ${name} subscription usage`} title="Refresh">
         <RefreshCw aria-hidden width={14} height={14} className={loading ? 'motion-safe:animate-spin' : undefined} />
@@ -112,7 +114,7 @@ export function HandworkSubscriptionUsage({ api, active, compact = false, provid
     {error && usage && <p className={styles.stale} role="status">Could not refresh usage. Showing the last reading.</p>}
     {!usage && !error && <p className={styles.empty} role="status">{api ? 'Checking your allowance…' : 'Open the desktop app to view your allowance.'}</p>}
     {!usage && error && <p className={styles.empty} role="status">Could not load usage. {error}</p>}
-    {usage && usage.windows.length === 0 && <p className={styles.empty}>{provider === 'claude' ? 'Claude has not reported usage limits to Handwork yet. Usage and reset times appear when its SDK reports them during a chat.' : 'OpenAI has not reported usage limits for this account.'}</p>}
+    {usage && usage.windows.length === 0 && <p className={styles.empty}>{provider === 'claude' ? usage.available === false ? 'Plan limits don’t apply to this sign-in, such as an API key or cloud provider.' : usage.observedAt ? 'Claude Code didn’t report any plan limits for this account.' : 'Claude Code couldn’t report usage yet. Try refreshing in a moment.' : 'No usage limits found for this account yet.'}</p>}
     {usage && usage.windows.length > 0 && <div className={styles.windows} data-stale={!!error || undefined}>{usage.windows.map(item => <UsageWindow key={item.id} item={item} now={now} />)}</div>}
     {resetRows.length > 0 && <section className={styles.resets} aria-label="Banked resets">
       <div className={styles.resetsHeader}>
@@ -142,7 +144,7 @@ export function HandworkSubscriptionUsage({ api, active, compact = false, provid
       })}</div>
     </section>}
     {finished && <p className={styles.outcome} data-good={finished.good || undefined} data-failed={finished.phase === 'failed' || undefined} role="status">{finished.message}</p>}
-    <p className={styles.note}>{provider === 'claude' ? 'Last usage reported by Claude Code, shared across your account. Refresh reads the latest report; it does not send a model request. Claude does not expose banked reset credits here.' : 'Shared across apps using your Codex subscription.'}</p>
+    <p className={styles.note}>{provider === 'claude' ? 'Shared across your Claude account. Refreshing doesn’t use any messages.' : 'Shared across apps using your Codex subscription.'}</p>
   </section>;
 
   if (!compact) return details;

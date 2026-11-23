@@ -5,11 +5,13 @@ import { Search } from 'honestui/icons';
 import { Dialog, DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogBody } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { DesktopPreferences } from '@/lib/desktop-api';
-import { isMac, matchScore, shortcutKeys } from '@/lib/saved-prompts';
+import { isMac, matchScore, shortcutLabel } from '@/lib/saved-prompts';
 import { shortcutGroups } from '@/lib/shortcuts';
 
+/** One keycap per combination ("⌘⇧T"), matching the command palette, so a
+    row reads as a single chord rather than a strip of separate keys. */
 function Keys({ keys }: { keys: string }) {
-  return <span className="handwork-shortcut-keys">{shortcutKeys(keys).map((key, index) => <kbd key={index}>{key}</kbd>)}</span>;
+  return <kbd className="handwork-shortcut-keys">{shortcutLabel(keys)}</kbd>;
 }
 
 /** A read-only reference of every keyboard shortcut, grouped by where it works. */
@@ -23,7 +25,7 @@ export function HandworkShortcuts({ open, onOpenChange, preferences, desktop }: 
     .filter(group => group.items.length), [preferences?.sendKey, preferences?.quickEntryShortcut, desktop, query]);
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogPopup className="handwork-shortcuts" initialFocus={() => document.getElementById('handwork-shortcut-filter')}>
-      <DialogHeader><DialogTitle>Keyboard shortcuts</DialogTitle><DialogDescription>Open this list any time with <kbd>{shortcutKeys('Mod').join('')}</kbd><kbd>/</kbd> or from the command palette.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>Keyboard shortcuts</DialogTitle><DialogDescription>Open this list any time with <kbd>{shortcutLabel('Mod+/')}</kbd> or from the command palette.</DialogDescription></DialogHeader>
       <DialogBody>
         <div className="handwork-shortcut-filter">
           <Search aria-hidden width={14} height={14} />

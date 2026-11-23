@@ -80,7 +80,7 @@ export default function HandworkQuickEntry() {
     {error && <p role="alert" className="handwork-quick-error">{error}</p>}
     <div className="handwork-quick-controls">
       <Button type="button" variant="ghost" size="sm" disabled={!api || capturing} onClick={() => void capture()}><SquareDashedMousePointer aria-hidden width={15} height={15} />{capturing ? 'Capturing…' : 'Screenshot'}</Button>
-      <span className="handwork-quick-hint"><kbd>↵</kbd> opens a new chat · <kbd>esc</kbd> closes</span>
+      <span className="handwork-quick-hint"><kbd>↵</kbd> opens a new chat · <kbd>Esc</kbd> closes</span>
       <Button type="submit" size="icon" className="handwork-quick-send" aria-label="Send to Handwork" title={isMac ? 'Send (↵)' : 'Send (Enter)'} disabled={!canSend}><ArrowUp aria-hidden strokeWidth={2} /></Button>
     </div>
   </form>;

@@ -1,6 +1,6 @@
-/* Laid out as the native app's usage popover: a header that says whose usage
-   and how fresh, one tinted card per limit, then any banked resets. Cards are
-   a faint tint and a hairline, never a shadow. */
+/* A header that says whose usage and how fresh, one flat meter per limit,
+   then any banked resets. Meters are type and a thin track, never cards, so
+   nothing nests inside the settings row or the popover. */
 .usage {
   --usage-card: color-mix(in srgb, var(--hui-color-foreground-base-primary) 4.5%, transparent);
   --usage-ring: color-mix(in srgb, var(--hui-color-foreground-base-primary) 7%, transparent);
@@ -8,35 +8,41 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 14px;
-  padding: 12px;
-  border-radius: var(--hui-radius-3, 10px);
-  background: var(--hui-color-background-base-secondary);
+  padding: 0;
+  /* No frame of its own: the tinted limit cards are the only containers, so
+     the page never shows a card inside a card. */
+  background: transparent;
+  box-shadow: none;
   color: var(--hui-color-foreground-base-primary);
   font-size: calc(var(--handwork-ui-font-size, 14px) - 2px);
   line-height: 1.45;
 }
 
 .header { display: flex; align-items: flex-start; gap: 10px; }
-.mark { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--usage-card); box-shadow: inset 0 0 0 1px var(--usage-ring); }
+.mark { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--usage-card); }
 .heading { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; font-size: calc(var(--handwork-ui-font-size, 14px) - 1px); font-weight: 500; line-height: 18px; }
 .plan { font-size: 0.85em; font-weight: 400; text-transform: capitalize; color: var(--hui-color-foreground-base-tertiary); }
 .updated { font-size: 0.9em; color: var(--hui-color-foreground-base-tertiary); }
+.usage[data-inline] .header { align-items: center; }
+.usage[data-inline] .heading { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; }
+.usage[data-inline] .title { font-size: 1em; }
 .usage .refresh { flex-shrink: 0; margin: -2px -4px 0 0; color: var(--hui-color-foreground-base-tertiary); --hui-scale-pressed: 0.94; }
 .usage .refresh:not(:disabled):hover { color: var(--hui-color-foreground-base-primary); }
 
-.windows { display: grid; gap: 6px; }
-.window, .credit { padding: 10px 12px; border-radius: 8px; background: var(--usage-card); box-shadow: inset 0 0 0 1px var(--usage-ring); }
+.windows { display: grid; gap: 14px; padding-block: 2px; }
+.window { padding: 0; }
+.credit { padding: 10px 12px; border-radius: 8px; background: var(--usage-card); }
 .windowHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 0.95em; }
-.windowHeader > :first-child { font-weight: 500; color: var(--hui-color-foreground-base-secondary); }
-.remaining { flex-shrink: 0; font-weight: 500; }
+.windowHeader > :first-child { font-weight: 450; color: var(--hui-color-foreground-base-primary); }
+.remaining { flex-shrink: 0; font-weight: 450; color: var(--hui-color-foreground-base-secondary); }
 .remaining[data-low], .limit { color: var(--hui-color-foreground-danger-primary); }
-.track { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 3px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 10%, transparent); }
+.track { height: 4px; margin-top: 7px; overflow: hidden; border-radius: 2px; background: color-mix(in srgb, var(--hui-color-foreground-base-primary) 9%, transparent); }
 .fill { display: block; width: 100%; height: 100%; transform-origin: left; background: var(--hui-color-foreground-base-primary); border-radius: inherit; transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1); }
 .fill[data-low] { background: var(--hui-color-foreground-danger-primary); }
 .windows[data-stale] .fill { opacity: 0.45; }
 .reset { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 0.9em; color: var(--hui-color-foreground-base-tertiary); }
-.reset > :first-child { flex-shrink: 0; white-space: nowrap; color: var(--hui-color-foreground-base-secondary); }
+.reset > :first-child { flex-shrink: 0; white-space: nowrap; }
 .exact { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
 
 .empty, .stale, .note, .outcome { margin: 0; overflow-wrap: anywhere; }
@@ -71,4 +77,4 @@
 
 .summary { margin-left: auto; flex-shrink: 0; color: var(--hui-color-foreground-base-secondary); --hui-scale-pressed: 0.96; }
 .popup { width: 320px; max-width: calc(100vw - 24px); max-height: min(560px, var(--available-height, 80dvh)); overflow-y: auto; padding: 0; border-radius: 12px; }
-.popup .usage { margin: 0; padding: 12px; background: transparent; }
+.popup .usage { margin: 0; padding: 12px; background: transparent; box-shadow: none; }

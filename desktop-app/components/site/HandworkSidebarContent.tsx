@@ -1,9 +1,8 @@
 "use client";
 import { HoverTooltip } from "@/components/ui/tooltip";
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { Archive, ArchiveRestore, ChevronDown, CornerDownRight, LoaderCircle, Plus, Ellipsis, Pencil, Pin, X, Trash2 } from 'honestui/icons';
 import { Button } from '@/components/ui/button';
-import { AttentionIcon } from './HandworkAttention';
 import type { AttentionKind } from '@/lib/attention';
 import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuSeparator } from '@/components/ui/menu';
 import { CHAT_STATUSES, chatStatus, orderSidebarChats, readSidebarKeys, readStatusTabs, sidebarChatTime, visibleSidebarChats, type ChatStatus } from '@/lib/sidebar-chats';
@@ -13,6 +12,7 @@ function storedKeys(key: string) {
 }
 
 type Chat = { id: string; label: string; workspace?: string; updatedAt?: string; pinned?: boolean; archived?: boolean };
+const ROW_SELECTOR = '.handwork-chat-row, .handwork-recents-heading, .handwork-project-name, .handwork-show-more, .handwork-status-add';
 const projectName = (project: string) => project.split(/[\\/]/).filter(Boolean).pop() || project;
 
 function CollapsibleChats({ open, children }: { open: boolean; children: ReactNode }) {
@@ -66,6 +66,20 @@ export function HandworkSidebarContent({ layout = 'projects', attention, project
     const label = waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : working ? `${working} working` : `${unread} unread`;
     return <span className="handwork-group-signal" data-needs={!!waiting || undefined} aria-label={label} title={label}>{waiting || working || unread}<span className="handwork-group-mark" data-kind={waiting ? 'needs' : working ? 'working' : 'unread'} aria-hidden>{waiting ? '!' : null}</span></span>;
   };
+  // Arrow keys walk the list as one column (headings, chats, Show more), skipping folded groups,
+  // so the sidebar reads like a list rather than a long run of Tab stops.
+  const walk = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key) || event.altKey || event.metaKey || event.ctrlKey) return;
+    const from = event.target as HTMLElement;
+    if (!from.matches(ROW_SELECTOR)) return;
+    const rows = [...event.currentTarget.querySelectorAll<HTMLElement>(ROW_SELECTOR)].filter(row => !row.closest('[inert]') && !(row as HTMLButtonElement).disabled && row.offsetParent !== null);
+    const index = rows.indexOf(from);
+    const next = event.key === 'Home' ? rows[0] : event.key === 'End' ? rows.at(-1) : rows[index + (event.key === 'ArrowDown' ? 1 : -1)];
+    if (!next) return;
+    event.preventDefault();
+    next.focus();
+    next.scrollIntoView({ block: 'nearest' });
+  };
   const chatRow = (chat: Chat, group: string) => {
     const current = activeSession === chat.id && (group === 'recents' ? !chat.workspace : group === 'archived' || chat.workspace === group);
     const running = runningSessions ? runningSessions.has(chat.id) : busy && runningSession === chat.id;
@@ -77,12 +91,13 @@ export function HandworkSidebarContent({ layout = 'projects', attention, project
     const unread = unreadSessions.has(chat.id) && !current;
     const status = flagged ? flagLabel : running ? 'Working' : unread ? 'New response' : 'Read';
     return <div key={`${group}-${chat.id}`} className={`handwork-chat-item ${current ? 'is-active' : ''}`} data-needs={flagged === 'approval' || undefined} data-unread={unread || undefined}>
-    <Button className="handwork-chat-row" variant="ghost" size="sm" disabled={chatDisabled} title={group === 'archived' && chat.workspace ? `${chat.label} · ${projectName(chat.workspace)}` : chat.label} aria-description={chat.archived ? "Archived chat" : chat.pinned ? "Pinned chat" : undefined} aria-current={current ? 'page' : undefined} onClick={() => onChat(chat)}>
-      {flagged || running || unread ? <HoverTooltip content={status}><span className="handwork-chat-status" data-kind={flagged || (running ? 'running' : 'unread')} role="img" aria-label={status}>{flagged ? <AttentionIcon kind={flagged} size={14} /> : running ? <LoaderCircle aria-hidden width={14} height={14} className="motion-safe:animate-spin" /> : <span className="handwork-chat-unread" aria-hidden />}</span></HoverTooltip> : <span className="handwork-chat-status" aria-hidden />}
+    <Button className="handwork-chat-row" variant="ghost" size="sm" disabled={chatDisabled} title={`${group === 'archived' && chat.workspace ? `${chat.label} · ${projectName(chat.workspace)}` : chat.label}${flagged ? ` · ${flagLabel}` : ''}`} aria-description={chat.archived ? "Archived chat" : chat.pinned ? "Pinned chat" : undefined} aria-current={current ? 'page' : undefined} onClick={() => onChat(chat)}>
+      {!flagged && (running || unread) ? <HoverTooltip content={status}><span className="handwork-chat-status" data-kind={running ? 'running' : 'unread'} role="img" aria-label={status}>{running ? <LoaderCircle aria-hidden width={14} height={14} className="motion-safe:animate-spin" /> : <span className="handwork-chat-unread" aria-hidden />}</span></HoverTooltip> : <span className="handwork-chat-status" aria-hidden />}
       <span className="handwork-chat-label">{chat.label}</span>
       {chat.pinned && !chat.archived && <Pin className="handwork-chat-pin" aria-label="Pinned" width={11} height={11} />}
       {queued > 0 && <span className="handwork-chat-queued" aria-label={`${queued} queued messages`}><CornerDownRight aria-hidden />{queued}</span>}
-      <span className="handwork-chat-time" data-status={flagged || running || undefined} title={chat.updatedAt ? new Date(chat.updatedAt).toLocaleString() : undefined}>{flagged === 'approval' ? 'Needs you' : running ? 'Working' : sidebarChatTime(chat.updatedAt, now)}</span>
+      {/* Anything waiting on the person is one small dot where the time goes; the tooltip and label carry the detail. */}
+      <span className={flagged ? 'handwork-chat-time handwork-chat-dot' : 'handwork-chat-time'} data-status={flagged || running || undefined} data-kind={flagged ? (flagged === 'failed' ? 'danger' : 'warning') : undefined} role={flagged ? 'img' : undefined} aria-label={flagged ? flagLabel : undefined} title={!flagged && chat.updatedAt ? new Date(chat.updatedAt).toLocaleString() : undefined}>{flagged ? <span aria-hidden /> : running ? 'Working' : sidebarChatTime(chat.updatedAt, now)}</span>
     </Button>
     <Menu>
       <MenuTrigger render={<Button className="handwork-chat-menu-trigger" variant="ghost" size="icon-sm" aria-label={`Options for ${chat.label}`} title="Chat options" disabled={disabled} />}><Ellipsis aria-hidden width={16} height={16} /></MenuTrigger>
@@ -122,7 +137,7 @@ export function HandworkSidebarContent({ layout = 'projects', attention, project
     // Click to add or remove a tab; the last one stays, so the list is never filtered to nothing.
     const flip = (id: ChatStatus) => setStatusTabs(current => current.includes(id) ? (current.length > 1 ? current.filter(item => item !== id) : current) : CHAT_STATUSES.map(item => item.id).filter(item => item === id || current.includes(item)));
     const emptyMessage = statusTabs.length === 1 ? CHAT_STATUSES.find(item => item.id === statusTabs[0])!.empty : 'No chats match these tabs.';
-    return <div className="handwork-sidebar-groups" data-layout="status">
+    return <div className="handwork-sidebar-groups" data-layout="status" onKeyDown={walk}>
       <div className="handwork-status-tabs" role="toolbar" aria-label="Show chats by status">{CHAT_STATUSES.map(item => {
         const on = statusTabs.includes(item.id);
         const count = counts.get(item.id) ?? 0;
@@ -147,10 +162,10 @@ export function HandworkSidebarContent({ layout = 'projects', attention, project
       {archivedSection}
     </div>;
   }
-  return <div className="handwork-sidebar-groups">
+  return <div className="handwork-sidebar-groups" onKeyDown={walk}>
     <span className="sr-only" role="status" aria-label={connecting ? 'Connecting to Handwork' : busy ? 'Working' : activeSession ? 'Native Handwork' : 'Not connected'}>{connecting ? 'Connecting to Handwork' : busy ? 'Working' : activeSession ? 'Native Handwork' : 'Not connected'}</span>
     {(normalChats.length > 0 || projects.length === 0) && <section aria-label="General chats">
-      <Button variant="ghost" size="sm" className="handwork-recents-heading" aria-expanded={recentsOpen} onClick={() => toggle(setCollapsed, 'recents')}><ChevronDown className="handwork-section-chevron" aria-hidden width={12} height={12} /><span>General</span>{groupSignal(normalChats)}</Button>
+      <Button variant="ghost" size="sm" className="handwork-recents-heading" aria-expanded={recentsOpen} onClick={() => toggle(setCollapsed, 'recents')}><ChevronDown className="handwork-section-chevron" aria-hidden width={12} height={12} /><span>General</span>{!recentsOpen && groupSignal(normalChats)}</Button>
       <CollapsibleChats open={recentsOpen}><div className="handwork-recent-chats">{shownChats(normalChats, 'recents').map(chat => chatRow(chat, 'recents'))}
         {!normalChats.length && <span className="handwork-sidebar-empty">{emptyLabel(archived.filter(chat => !chat.workspace).length, 'No chats outside projects yet')}</span>}
         {(shownChats(normalChats, 'recents').length < normalChats.length || expanded.has('recents') && normalChats.length > 5) && <Button variant="ghost" size="sm" className="handwork-show-more" onClick={() => toggle(setExpanded, 'recents')}>{expanded.has('recents') ? 'Show fewer' : 'Show more'}</Button>}
@@ -163,7 +178,7 @@ export function HandworkSidebarContent({ layout = 'projects', attention, project
       const shown = shownChats(chats, project);
       return <section key={project} aria-label={projectName(project)}>
         <div className="handwork-project-heading">
-          <Button variant="ghost" size="sm" className="handwork-project-name" title={project} aria-expanded={open} onClick={() => toggle(setCollapsed, project)}><ChevronDown className="handwork-section-chevron" aria-hidden width={12} height={12} /><span>{projectName(project)}</span>{groupSignal(chats)}</Button>
+          <Button variant="ghost" size="sm" className="handwork-project-name" title={project} aria-expanded={open} onClick={() => toggle(setCollapsed, project)}><ChevronDown className="handwork-section-chevron" aria-hidden width={12} height={12} /><span>{projectName(project)}</span>{!open && groupSignal(chats)}</Button>
           <Menu>
             <MenuTrigger render={<Button className="handwork-project-menu-trigger" variant="ghost" size="icon-sm" aria-label={`Options for project ${projectName(project)}`} title="Project options" disabled={disabled} />}><Ellipsis aria-hidden width={16} height={16} /></MenuTrigger>
             <MenuPopup align="start" side="right" sideOffset={6} className="handwork-chat-menu" aria-label="Project options">

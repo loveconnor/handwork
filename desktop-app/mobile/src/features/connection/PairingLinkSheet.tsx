@@ -51,7 +51,7 @@ export function PairingLinkSheet({
             Paste a pairing link
           </Text>
           <Text style={styles.hint}>
-            On your desktop, open Settings → Connections, choose Pair phone, and
+            On your desktop, open Settings → Mobile, choose Pair phone, and
             copy the link.
           </Text>
           <TextInput

@@ -7,8 +7,8 @@ import { EventEmitter } from 'node:events';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { readClaudeUsage } from './claude-usage.mjs';
-import { ClaudeClient, claudeStatus } from './claude-client.mjs';
+import { claudeUsageGeneration, claudeUsageReportedAt, readClaudeUsage, recordClaudeUsageReport } from './claude-usage.mjs';
+import { ClaudeClient, claudeStatus, fetchClaudeUsageReport } from './claude-client.mjs';
 import { CodexResets } from './codex-resets.mjs';
 import { ProjectFiles } from './project-files.mjs';
 import { Terminals } from './terminals.mjs';
@@ -118,11 +118,12 @@ export async function localProviderRunning(baseUrl) {
 }
 
 export class DesktopBackend extends EventEmitter {
-  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new ClaudeClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats'), savedPrompts = new SavedPrompts(), chatSearch = new ChatSearchIndex(path.join(settingsService.home || homedir(), '.handwork', 'sessions')), drafts = new DraftStore(), queues = new QueueStore(), trustedFiles = new TrustedFiles(), modelPreferences = new ModelPreferences(), shell = null, codexResets = new CodexResets(), providerUpdates = new ProviderUpdates({ openExternal: url => shell?.openExternal(url) }) }) {
+  constructor({ binary, settingsService = new SettingsService(), notify = () => {}, projects = new ProjectStore(), chatPreferences = new ChatPreferences(), clientFactory = (options) => new ClaudeClient(options), probe = localProviderRunning, voice = noVoice, attachmentDirectory = path.join(tmpdir(), 'handwork-attachments'), chatDirectory = path.join(settingsService.home || homedir(), '.handwork', 'desktop-chats'), savedPrompts = new SavedPrompts(), chatSearch = new ChatSearchIndex(path.join(settingsService.home || homedir(), '.handwork', 'sessions')), drafts = new DraftStore(), queues = new QueueStore(), trustedFiles = new TrustedFiles(), modelPreferences = new ModelPreferences(), shell = null, codexResets = new CodexResets(), claudeUsageReport = fetchClaudeUsageReport, providerUpdates = new ProviderUpdates({ openExternal: url => shell?.openExternal(url) }) }) {
     super();
     this.binary = binary;
     this.deletingSessions = new Map();
     this.resets = codexResets;
+    this.claudeUsageReport = claudeUsageReport;
     // Ignored files come from git itself, so the tree follows the project's real .gitignore rules.
     this.projectFiles = new ProjectFiles({ ignored: gitIgnored, trash: shell ? target => shell.trashItem(target) : null });
     this.languageServers = new LanguageServers({ emit: event => this.emit('event', event) });
@@ -1009,8 +1010,19 @@ export class DesktopBackend extends EventEmitter {
   }
 
   providerUsage(provider) {
-    if (provider === 'claude') return claudeStatus().then(connected => {
+    if (provider === 'claude') return claudeStatus().then(async connected => {
       if (!connected) throw new Error('Sign in to Claude Code to view its usage.');
+      // Each check starts Claude Code briefly, so a fresh report is reused for
+      // a couple of minutes; chats keep it current in between.
+      if (Date.now() - Math.max(claudeUsageReportedAt(), this.claudeUsageTriedAt || 0) > 120_000) {
+        this.claudeUsageTriedAt = Date.now();
+        const generation = claudeUsageGeneration();
+        this.claudeUsageJob ??= this.claudeUsageReport()
+          .then(report => recordClaudeUsageReport(report, generation))
+          .finally(() => { this.claudeUsageJob = null; });
+        // Fall back to what chats reported if Claude Code can't answer.
+        try { await this.claudeUsageJob; } catch { /* Keep the chat-reported windows. */ }
+      }
       return readClaudeUsage();
     });
     if (provider !== 'codex') return Promise.reject(new Error('Subscription usage is only available for Codex'));

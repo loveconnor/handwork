@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { Alert, Linking, StyleSheet, Switch, Text, View } from "react-native";
 
 import { useConnection } from "@/features/connection/ConnectionProvider";
+import { isDemo } from "@/features/connection/nativeLink";
 import { MONOS_ENABLED } from "@/features/connection/selection";
 import { useNotificationsBlocked } from "@/features/notifications/SessionNotifications";
 import { useAppearancePreference } from "@/features/settings/appearance";
@@ -45,14 +46,17 @@ export default function SettingsScreen() {
   const params = project ? { projectId: project.id } : {};
   const connection = useConnection();
   const selected = connection.selection;
+  const demo = isDemo(connection.pairing);
   const disconnect = () =>
     Alert.alert(
-      "Disconnect desktop?",
-      "You can pair again by scanning a new code. Your workspace choices will be remembered.",
+      demo ? "Leave the demo?" : "Disconnect desktop?",
+      demo
+        ? "You can then pair with Handwork on your desktop."
+        : "You can pair again by scanning a new code. Your workspace choices will be remembered.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Disconnect",
+          text: demo ? "Leave" : "Disconnect",
           style: "destructive",
           onPress: () => {
             void connection
@@ -78,7 +82,9 @@ export default function SettingsScreen() {
             {connection.pairing?.desktop.name}
           </Text>
           <Text style={styles.desktopStatus}>
-            {connection.connected
+            {demo
+              ? "A sample workspace on this phone. Nothing here runs on a computer."
+              : connection.connected
               ? "Connected to desktop"
               : "Desktop unavailable. Your saved workspace stays here."}
           </Text>
@@ -194,7 +200,7 @@ export default function SettingsScreen() {
       <View style={[styles.card, styles.lastCard]}>
         <SettingsRow
           icon="computerOff"
-          label="Disconnect desktop"
+          label={demo ? "Leave demo" : "Disconnect desktop"}
           showChevron={false}
           destructive
           onPress={disconnect}

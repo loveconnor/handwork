@@ -19,7 +19,10 @@ import type {
   Message,
   Turn,
 } from "@/features/workspace/types";
+import { DEMO_DESKTOP, DEMO_IDENTITY, DEMO_SELECTION, resetDemo } from "./demo";
 import {
+  hasNativeTranscript,
+  isDemo,
   nativeCall,
   parseInvitation,
   request,
@@ -49,6 +52,8 @@ type Connection = {
   working: boolean;
   error: string | null;
   pair: (text: string) => Promise<void>;
+  /** Opens the sample workspace, which needs no desktop. */
+  startDemo: () => Promise<void>;
   refresh: () => Promise<void>;
   select: (selection: MobileSelection) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -76,10 +81,14 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
           Storage.getItem(PAIRING),
           SecureStore.getItemAsync(IDENTITY),
         ]);
-        if (disposed || !desktop || !identity) return;
+        if (disposed || !desktop) return;
+        const savedDesktop: Desktop = JSON.parse(desktop);
+        // The demo has no identity; it never leaves the phone.
+        const demo = isDemo({ desktop: savedDesktop, identity: DEMO_IDENTITY });
+        if (!demo && !identity) return;
         const value: Pairing = {
-          desktop: JSON.parse(desktop),
-          identity: JSON.parse(identity),
+          desktop: savedDesktop,
+          identity: demo ? DEMO_IDENTITY : JSON.parse(identity!),
         };
         const [chosen, saved] = await Promise.all([
           Storage.getItem(key(value.desktop.fingerprint, "selection")),
@@ -216,6 +225,26 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
       setWorking(false);
     }
   }, [refresh]);
+  const startDemo = useCallback(async () => {
+    if (pairingNow.current) return;
+    resetDemo();
+    const value: Pairing = { desktop: DEMO_DESKTOP, identity: DEMO_IDENTITY };
+    await Promise.all([
+      Storage.setItem(PAIRING, JSON.stringify(DEMO_DESKTOP)),
+      Storage.setItem(
+        key(DEMO_DESKTOP.fingerprint, "selection"),
+        JSON.stringify(DEMO_SELECTION),
+      ),
+    ]);
+    generation.current++;
+    active.current = value;
+    setPairing(value);
+    setCatalog(EMPTY);
+    lastCatalog.current = null;
+    setSelection(DEMO_SELECTION);
+    setError(null);
+    await refresh();
+  }, [refresh]);
   const select = useCallback(async (value: MobileSelection) => {
     const pairing = active.current;
     if (!pairing) return;
@@ -237,7 +266,8 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     setError(null);
     await Storage.removeItem(PAIRING);
     if (value) {
-      void request(value, "device.leave").catch(() => {});
+      if (isDemo(value)) resetDemo();
+      else void request(value, "device.leave").catch(() => {});
       await Storage.removeItem(key(value.desktop.fingerprint, "catalog"));
     }
     // Keep this installation's identity, so a new invitation can recover cleanly.
@@ -265,6 +295,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
       working,
       error,
       pair,
+      startDemo,
       refresh,
       select,
       disconnect,
@@ -279,6 +310,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
       working,
       error,
       pair,
+      startDemo,
       refresh,
       select,
       disconnect,
@@ -308,6 +340,12 @@ function sameItems<T extends { id: string }>(previous: T[], next: T[]): T[] {
   return merged.length === previous.length && merged.every((item, i) => item === previous[i])
     ? previous
     : merged;
+}
+/** Whether transcripts are drawn by the native view, which reads the desktop
+ *  itself: not in the demo, whose turns come from the phone. */
+export function useNativeTranscripts() {
+  const pairing = use(Context)?.pairing;
+  return hasNativeTranscript && !isDemo(pairing);
 }
 export function useConnection() {
   const value = use(Context);

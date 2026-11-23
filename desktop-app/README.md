@@ -29,7 +29,7 @@ See [mobile/README.md](mobile/README.md) for phone builds. No phone source or na
 
 ## Validation
 
-Desktop and mobile use HonestUI 0.3.0. After upgrading it in both packages, run `npm run styles:chat` to refresh the scoped mobile renderer styles and prose snapshot. Shared UI components in `components/ui/` are copied from the package and retain Handwork's workspace and composer extensions.
+Desktop and mobile use HonestUI 0.4.0. After upgrading it in both packages, run `npm run styles:chat` to refresh the scoped mobile renderer styles and prose snapshot. Shared UI components in `components/ui/` are copied from the package and retain Handwork's workspace and composer extensions.
 
 ```sh
 npm run typecheck

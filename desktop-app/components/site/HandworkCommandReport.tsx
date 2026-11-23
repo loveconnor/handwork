@@ -25,7 +25,7 @@ export default function HandworkCommandReport({ command, api, onClose }: { comma
     if (!command) return;
     setResult(undefined); setError(undefined);
     let current = true;
-    if (!api?.commandReport) { setError({ command, message: 'This engine connection does not provide terminal reports. Restart with the updated desktop build.' }); return; }
+    if (!api?.commandReport) { setError({ command, message: 'Restart Handwork to see this report.' }); return; }
     void api.commandReport(command).then(result => { if (current) setResult(result); }).catch(cause => { if (current) setError({ command, message: cause instanceof Error ? cause.message : String(cause) }); });
     return () => { current = false; };
   }, [command, api]);
@@ -33,9 +33,9 @@ export default function HandworkCommandReport({ command, api, onClose }: { comma
   const failure = error && error.command === command ? error.message : undefined;
   return <Dialog open={!!command} onOpenChange={open => { if (!open) onClose(); }}>
     <DialogPopup className="handwork-command-report" finalFocus={() => document.querySelector<HTMLTextAreaElement>('[data-slot="prompt-bar-input"]')}>
-      <DialogHeader><DialogTitle>{command ? titles[command] : 'Terminal report'}</DialogTitle><DialogDescription>From the terminal engine, without sending a model prompt.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>{command ? titles[command] : 'Terminal report'}</DialogTitle><DialogDescription>Read directly from Handwork. No message is sent.</DialogDescription></DialogHeader>
       <DialogBody>
-        {failure ? <p role="alert">{failure}</p> : shown ? <>{shown.exitCode !== 0 && <p role="status" className="handwork-report-warning">The engine reported issues, exit code {shown.exitCode}.</p>}<ReportValue value={shown.data} /></> : <p role="status">Loading report…</p>}
+        {failure ? <p role="alert">{failure}</p> : shown ? <>{shown.exitCode !== 0 && <p role="status" className="handwork-report-warning">Finished with issues (code {shown.exitCode}).</p>}<ReportValue value={shown.data} /></> : <p role="status">Loading report…</p>}
       </DialogBody>
       <DialogFooter><Button onClick={onClose}>Done</Button></DialogFooter>
     </DialogPopup>
