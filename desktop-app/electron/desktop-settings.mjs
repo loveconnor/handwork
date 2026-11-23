@@ -14,13 +14,17 @@ export function validSettingsPatch(scope, value) {
     return typeof item === 'boolean';
   });
 }
+/** Only the entries this version understands; anything else falls back to its default. */
+const usable = (scope, value) => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([key, item]) => validSettingsPatch(scope, { [key]: item }))) : {};
 export class DesktopSettings {
   constructor(file) { this.file = file; this.memory = { app: {}, projects: {}, startup: { tabs: [], active: '' } }; }
   read() {
     if (!this.file || !existsSync(this.file)) return structuredClone(this.memory);
     const data = JSON.parse(readFileSync(this.file, 'utf8'));
     if (data?.version !== 1 || !data.app || !data.projects || typeof data.projects !== 'object') throw new Error('Desktop settings could not be read. Keep the file for recovery.');
-    if ((Object.keys(data.app).length && !validSettingsPatch('app', data.app)) || Object.values(data.projects).some(value => !value || typeof value !== 'object' || (Object.keys(value).length && !validSettingsPatch('project', value)))) throw new Error('Desktop settings contain invalid preferences. Keep the file for recovery.');
+    // Preferences this version doesn't know (written by a newer one sharing the
+    // profile) or can't use are left in the file but never block the app.
+    if (typeof data.app !== 'object' || Array.isArray(data.app)) data.app = {};
     return data;
   }
   write(data) {
@@ -34,8 +38,8 @@ export class DesktopSettings {
   }
   snapshot(workspace = '') {
     const data = this.read();
-    const app = { ...settingDefaults, ...data.app };
-    const project = workspace && Object.hasOwn(data.projects, workspace) ? data.projects[workspace] : {};
+    const app = { ...settingDefaults, ...usable('app', data.app) };
+    const project = workspace && Object.hasOwn(data.projects, workspace) ? usable('project', data.projects[workspace]) : {};
     return { app, project, effective: { ...app, ...project }, workspace, initialized: !!this.file && existsSync(this.file) };
   }
   update(scope, patch, workspace = '') {
@@ -49,7 +53,7 @@ export class DesktopSettings {
   /** Applies preferences from a backup. Invalid values are ignored; startup tabs stay local. */
   importPreferences({ app, projects }) {
     const data = this.read();
-    const valid = (scope, value) => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([key, item]) => validSettingsPatch(scope, { [key]: item }))) : {};
+    const valid = usable;
     const incoming = valid('app', app);
     const overrides = projects && typeof projects === 'object' && !Array.isArray(projects)
       ? Object.fromEntries(Object.entries(projects).filter(([workspace]) => path.isAbsolute(workspace) && !workspace.includes('\0')).map(([workspace, value]) => [workspace, valid('project', value)]).filter(([, value]) => Object.keys(value).length))

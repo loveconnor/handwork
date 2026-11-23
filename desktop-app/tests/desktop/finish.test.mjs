@@ -7,7 +7,7 @@ import path from 'node:path';
 import { DesktopBackend } from '../../electron/backend.mjs';
 import { readableUserText, chatsToMarkdown, exportFileName } from '../../electron/chat-export.mjs';
 import { validateArguments } from '../../electron/ipc.mjs';
-import { validSettingsPatch } from '../../electron/desktop-settings.mjs';
+import { validSettingsPatch, DesktopSettings } from '../../electron/desktop-settings.mjs';
 import { prepareMath } from '../../lib/markdown-math.ts';
 
 test('math is recognised without turning prices or code into equations', () => {
@@ -94,4 +94,24 @@ test('backdrop shaders accept only the offered shaders and strengths, app-wide',
   assert.equal(validSettingsPatch('app', { backdrop: 'plasma' }), false);
   assert.equal(validSettingsPatch('app', { backdropStrength: 1 }), false);
   assert.equal(validSettingsPatch('project', { backdrop: 'silk' }), false);
+});
+
+test('settings from a newer version never block the app and are kept for it', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'handwork-settings-'));
+  try {
+    const file = path.join(directory, 'desktop-settings.json');
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(file, JSON.stringify({ version: 1, app: { theme: 'dark', backdrop: 'dune', futureThing: 'x', accent: 'plaid' }, projects: { '/w': { suggestions: false, futureKey: 1 } } }));
+    const settings = new DesktopSettings(file);
+    const snapshot = settings.snapshot('/w');
+    assert.equal(snapshot.app.theme, 'dark');
+    assert.equal(snapshot.app.backdrop, 'dune');
+    assert.equal(snapshot.app.accent, 'ink');
+    assert.equal('futureThing' in snapshot.app, false);
+    assert.equal(snapshot.effective.suggestions, false);
+    settings.update('app', { theme: 'light' });
+    const saved = JSON.parse(await readFile(file, 'utf8'));
+    assert.equal(saved.app.futureThing, 'x');
+    assert.equal(saved.app.theme, 'light');
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
